@@ -1,0 +1,33 @@
+---
+description: writing git commit messages
+globs: *
+alwaysApply: false
+---
+# Git Commit Message Generation Rule
+
+This rule provides guidelines for generating meaningful git commit messages based on staged changes.
+
+## Process for Generating Commit Messages
+
+When asked to write a commit message:
+
+1. First, analyze what files have been staged using `git diff --staged --name-only`
+2. For each staged file (excluding those in the /docs folder):
+   - Use `git diff --staged [file]` to examine the specific changes
+   - Understand the nature and purpose of the changes
+3. Categorize changes appropriately (feature, bugfix, refactor, etc.)
+4. Write a concise, descriptive commit message that:
+   - Has a clear, specific title line (50 chars or less)
+   - Includes a more detailed description if needed
+   - Follows conventional commit format when appropriate
+   - Focuses on WHY changes were made, not just WHAT was changed
+
+## Important Notes
+
+- Ignore any files in the /docs folder - do not include these in your analysis or message
+- Focus on code and configuration changes that affect functionality
+- Prioritize clarity and specificity over brevity
+- When multiple unrelated changes are staged, suggest splitting into separate commits
+- when you do "git diff --staged" on a file or set of files, always pipe the output to the `cat` utility
+
+## Example Format
