@@ -1,0 +1,20 @@
+{
+  "name": "electron-sql-template",
+  "version": "1.0.0",
+  "description": "Electron app template for connecting to SQL Server with profile management.",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^28.0.0" 
+  },
+  "dependencies": {
+    "mssql": "^10.0.1", 
+    "sqlite3": "^5.1.7"
+  }
+} 
