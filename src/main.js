@@ -115,11 +115,12 @@ ipcMain.handle('login', async (event, config) => {
     };
 
     try {
-        currentPool = await sql.connect(sqlConfig);
+        // Connect using the SQL config
+        currentPool = await new sql.ConnectionPool(sqlConfig).connect();
         console.log('Connected to SQL Server.');
 
-        // Test connection with SELECT USER_NAME()
-        const result = await currentPool.request().query('SELECT SUSER_SNAME() AS username'); // Correct function for SQL Server is SUSER_SNAME() or CURRENT_USER
+        // Test connection with SELECT SUSER_SNAME()
+        const result = await currentPool.request().query('SELECT SUSER_SNAME() AS username');
 
         if (result.recordset && result.recordset.length > 0) {
             const username = result.recordset[0].username;

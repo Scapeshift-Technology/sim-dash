@@ -54,7 +54,7 @@ async function initializeSchema(db) {
     `;
     try {
         await db.runAsync(createTableSql);
-        console.log(''Profiles' table ensured.');
+        console.log("'Profiles' table ensured.");
     } catch (err) {
         console.error('Error creating profiles table:', err.message);
         throw err; // Re-throw error to be caught by caller
