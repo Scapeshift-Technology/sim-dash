@@ -73,6 +73,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Add this step for Windows
+      - name: Update package.json version from tag
+        if: startsWith(github.ref, 'refs/tags/') # Only run on tag pushes
+        # Use PowerShell to remove the leading 'v' from the tag name
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          npm pkg set version="$version"
+
       - name: Build Windows application
         run: npm run dist
         env:
@@ -106,6 +115,11 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Update package.json version from tag
+        if: startsWith(github.ref, 'refs/tags/') # Only run on tag pushes
+        # Extract the version number by removing the leading 'v' using shell commands
+        run: VERSION=$(echo "${{ github.ref_name }}" | sed 's/^v//') && npm pkg set version="$VERSION"
 
       - name: Build macOS application (x64 + arm64)
         run: npm run dist
