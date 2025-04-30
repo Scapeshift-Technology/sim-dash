@@ -28,6 +28,16 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      - name: Install Electron System Dependencies
+        run: >
+          sudo apt-get update && sudo apt-get install -y
+          libgtk-3-0
+          libgbm-dev
+          libnotify-dev
+          libnss3
+          libxss1
+          libasound2
+
       # Run tests only on Linux, as they require database connectivity
       # Skip connecting to the real DB in CI by adding a --skip-db flag (if you implement this)
       # or use a test DB container for integration tests
