@@ -1,15 +1,18 @@
 name: CI/CD Pipeline
 
-# Trigger the workflow on push to main branch
+# Trigger the workflow on push to main (for tests/builds) and tags (for releases)
 on:
   push:
     branches: [ main ]
+    tags: [ 'v*.*.*' ] # Trigger on version tags like v1.0.0
   # Optionally enable manual triggering from the Actions tab
   workflow_dispatch:
 
 jobs:
   # Test job - can be run on a Linux runner to save costs
   test:
+    # Run tests on main branch pushes, but not on tag pushes to avoid duplicate runs
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
@@ -45,7 +48,9 @@ jobs:
 
   # Windows build job
   build-windows:
-    needs: test # Only run if tests pass
+    # Run builds on main branch pushes OR tag pushes
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    needs: test # Only run if tests pass (and tests only run on main/manual)
     runs-on: windows-latest
     timeout-minutes: 30
     steps:
@@ -69,13 +74,15 @@ jobs:
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: windows-app
+          name: windows-app-${{ github.sha }} # Add SHA to artifact name for uniqueness between main/tag builds
           path: dist/*.exe
           if-no-files-found: error
 
   # macOS build job (Intel + M1)
   build-macos:
-    needs: test # Only run if tests pass
+    # Run builds on main branch pushes OR tag pushes
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    needs: test # Only run if tests pass (and tests only run on main/manual)
     runs-on: macos-latest
     timeout-minutes: 30
     steps:
@@ -99,12 +106,58 @@ jobs:
       - name: Upload macOS artifacts (x64 + arm64)
         uses: actions/upload-artifact@v4
         with:
-          name: macos-app
+          name: macos-app-${{ github.sha }} # Add SHA to artifact name for uniqueness
           path: |
             dist/*.dmg
             dist/*-mac.zip
           if-no-files-found: error
 
-  # Optional: Add a release job to create GitHub releases
-  # This would typically include a step to create a GitHub release and upload assets
-  # You can add this once the basic workflow is working correctly 
+  # Release job - runs only on tag pushes
+  release:
+    needs: [build-windows, build-macos]
+    # Only run this job if the trigger was a tag push
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest # Use ubuntu for release steps, typically faster/cheaper
+    timeout-minutes: 15
+    permissions:
+      contents: write # Needed to create releases
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-app-${{ github.sha }} # Match the uploaded artifact name
+          path: ./artifacts/windows
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-app-${{ github.sha }} # Match the uploaded artifact name
+          path: ./artifacts/macos
+
+      - name: List downloaded files # Optional: for debugging
+        run: ls -R ./artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # Use the tag name for the release, e.g., v0.0.1
+          tag_name: ${{ github.ref_name }}
+          # Use the tag name in the release title, e.g., "Release v0.0.1"
+          name: Release ${{ github.ref_name }}
+          # Automatically generate release notes based on commits since the last tag
+          generate_release_notes: true
+          # Optional: Add a custom message to the release body (markdown supported)
+          # body: |
+          #   Initial public auto-built release.
+          #   Download the assets below.
+          files: |
+            ./artifacts/windows/*.exe
+            ./artifacts/macos/*.dmg
+            ./artifacts/macos/*.zip
+          # Use the default GITHUB_TOKEN for authentication
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
