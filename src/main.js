@@ -3,6 +3,23 @@ const path = require('path');
 const dbHelper = require('./db'); // Local SQLite helper
 const sql = require('mssql'); // SQL Server driver
 
+// --- Development ---
+// Conditionally enable hot-reloading in development mode
+if (process.env.NODE_ENV === 'development') {
+  console.log('Development mode: Enabling electron-reload');
+  try {
+    require('electron-reload')(__dirname, {
+      // Note: __dirname is src/
+      // electron binary path is ../node_modules/.bin/electron
+      electron: require('path').join(__dirname, '..', 'node_modules', '.bin', 'electron'),
+      hardResetMethod: 'exit' // Recommended method for restarts
+    });
+  } catch (err) {
+    console.error('Failed to start electron-reload:', err);
+  }
+}
+// --- End Development ---
+
 let mainWindow;
 let db; // Local SQLite database connection
 let currentPool = null; // Active SQL Server connection pool
