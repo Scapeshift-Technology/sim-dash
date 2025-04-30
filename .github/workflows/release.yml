@@ -1,0 +1,62 @@
+name: Release Pipeline
+
+# Trigger the workflow on tag pushes (e.g., v1.0.0)
+on:
+  push:
+    tags: [ 'v*.*.*' ]
+
+jobs:
+  # Build job - Calls the reusable build workflow for the tag
+  build:
+    permissions:
+      contents: read # Read needed to call the reusable workflow
+      # The called workflow defines its own permissions (needs read)
+    uses: ./.github/workflows/build.yml
+    with:
+      # Pass the tag ref (e.g., v1.2.3) as the version input
+      version: ${{ github.ref_name }}
+    secrets: inherit # Pass secrets like GITHUB_TOKEN
+
+  # Release job - runs only on tag pushes
+  release:
+    # Depend on the build job that called the reusable workflow
+    needs: [build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # Need write permission to create releases and upload assets
+    steps:
+      # Artifacts are created by the called 'build' job
+      # Download them using the names output by the reusable workflow
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          # Use the output from the 'build' job
+          name: ${{ needs.build.outputs.windows_artifact_name }}
+          path: ./artifacts/windows
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          # Use the output from the 'build' job
+          name: ${{ needs.build.outputs.macos_artifact_name }}
+          path: ./artifacts/macos
+
+      - name: List downloaded files # Optional: for debugging
+        run: ls -R ./artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            ./artifacts/windows/*.exe
+            ./artifacts/macos/*.dmg
+            ./artifacts/macos/*.zip
+        env:
+          # Use the GITHUB_TOKEN from the environment, which has write permissions
+          # due to the job's `permissions` setting
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

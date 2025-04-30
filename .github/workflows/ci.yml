@@ -1,0 +1,51 @@
+name: CI Pipeline
+
+# Trigger the workflow on push to main
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  # Test job
+  test:
+    runs-on: windows-latest # Keeping windows-latest as per previous config
+    timeout-minutes: 20
+    permissions:
+      contents: read # Read needed for checkout
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Mask DB Password
+        run: echo "::add-mask::${{ secrets.TEST_DB_PASSWORD }}"
+
+      - name: Run Playwright tests
+        run: npm test
+        env:
+          DB_HOST: ${{ secrets.TEST_DB_HOST }}
+          DB_PORT: ${{ secrets.TEST_DB_PORT }}
+          DB_NAME: ${{ secrets.TEST_DB_NAME }}
+          DB_USER: ${{ secrets.TEST_DB_USER }}
+          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
+
+  # Build job - Calls the reusable build workflow
+  build:
+    needs: test
+    permissions:
+      contents: read # Read needed to call the reusable workflow
+      # Note: The called workflow (`build.yml`) defines its own permissions
+    uses: ./.github/workflows/build.yml
+    # No inputs are passed, so package.json version will not be updated by the reusable workflow
+    secrets: inherit # Pass secrets like GITHUB_TOKEN and any DB secrets if build needs them 

@@ -1,0 +1,138 @@
+name: Reusable Build Workflow
+
+# This workflow is callable by other workflows
+on:
+  workflow_call:
+    inputs:
+      # Optional: The tag name (e.g., v1.2.3) used to update package.json
+      # If not provided, package.json version won't be updated.
+      version:
+        description: 'Optional version tag (e.g., v1.2.3) to set in package.json'
+        required: false
+        type: string
+    # Expose the artifact names as outputs so the caller knows what to download
+    outputs:
+      windows_artifact_name:
+        description: 'Name of the Windows build artifact'
+        value: ${{ jobs.build-windows.outputs.artifact_name }}
+      macos_artifact_name:
+        description: 'Name of the macOS build artifact'
+        value: ${{ jobs.build-macos.outputs.artifact_name }}
+
+jobs:
+  # Windows build job
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read # Only need read access to check out code
+    outputs:
+      # Define an output for the artifact name
+      artifact_name: windows-app-${{ github.sha }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Update package.json version from input tag (if provided)
+        if: inputs.version != '' # Only run if the version input is not empty
+        shell: pwsh
+        run: |
+          $tag = "${{ inputs.version }}"
+          Write-Host "Input version tag: $tag"
+          $version = $tag -replace '^v', ''
+          Write-Host "Setting package.json version to: $version"
+          npm pkg set version="$version"
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to set package version"
+            exit 1
+          }
+
+      - name: Generate Build Info File (Windows)
+        shell: pwsh
+        run: |
+          $buildTime = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
+          $content = ConvertTo-Json @{ buildTimeISO = $buildTime }
+          Set-Content -Path "src/build-info.json" -Value $content
+          Write-Host "Created src/build-info.json with build time: $buildTime"
+
+      - name: Build Windows application
+        # Build only, don't publish
+        run: npm run dist -- --publish never
+        env:
+          # Provide the token even for builds in case electron-builder needs it
+          # for non-publishing tasks (like checking existing releases - though publish never should prevent this)
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          # Use the defined output artifact name
+          name: ${{ steps.build-windows.outputs.artifact_name }}
+          path: dist/*.exe
+          if-no-files-found: error
+
+  # macOS build job (Intel + M1)
+  build-macos:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read # Only need read access to check out code
+    outputs:
+       # Define an output for the artifact name
+      artifact_name: macos-app-${{ github.sha }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Update package.json version from input tag (if provided)
+        if: inputs.version != '' # Only run if the version input is not empty
+        run: |
+          TAG="${{ inputs.version }}"
+          echo "Input version tag: $TAG"
+          VERSION=$(echo "$TAG" | sed 's/^v//')
+          echo "Setting package.json version to: $VERSION"
+          npm pkg set version="$VERSION"
+          if [ $? -ne 0 ]; then
+            echo "Failed to set package version"
+            exit 1
+          fi
+
+      - name: Generate Build Info File (macOS)
+        run: |
+          BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          echo "{"buildTimeISO": "$BUILD_TIME"}" > src/build-info.json
+          echo "Created src/build-info.json with build time: $BUILD_TIME"
+
+      - name: Build macOS application (x64 + arm64)
+        # Build only, don't publish
+        run: npm run dist -- --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload macOS artifacts (x64 + arm64)
+        uses: actions/upload-artifact@v4
+        with:
+          # Use the defined output artifact name
+          name: ${{ steps.build-macos.outputs.artifact_name }}
+          path: |
+            dist/*.dmg
+            dist/*-mac.zip
+          if-no-files-found: error 
