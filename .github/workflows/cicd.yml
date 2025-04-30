@@ -1,0 +1,107 @@
+name: CI/CD Pipeline
+
+# Trigger the workflow on push to main branch
+on:
+  push:
+    branches: [ main ]
+  # Optionally enable manual triggering from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  # Test job - can be run on a Linux runner to save costs
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      # Run tests only on Linux, as they require database connectivity
+      # Skip connecting to the real DB in CI by adding a --skip-db flag (if you implement this)
+      # or use a test DB container for integration tests
+      - name: Run Playwright tests
+        run: npm test
+        env:
+          DB_HOST: ${{ secrets.TEST_DB_HOST }}
+          DB_PORT: ${{ secrets.TEST_DB_PORT }}
+          DB_NAME: ${{ secrets.TEST_DB_NAME }}
+          DB_USER: ${{ secrets.TEST_DB_USER }}
+          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
+
+  # Windows build job
+  build-windows:
+    needs: test # Only run if tests pass
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Windows application
+        run: npm run dist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-app
+          path: dist/*.exe
+          if-no-files-found: error
+
+  # macOS build job (Intel + M1)
+  build-macos:
+    needs: test # Only run if tests pass
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build macOS application (x64 + arm64)
+        run: npm run dist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload macOS artifacts (x64 + arm64)
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-app
+          path: |
+            dist/*.dmg
+            dist/*-mac.zip
+          if-no-files-found: error
+
+  # Optional: Add a release job to create GitHub releases
+  # This would typically include a step to create a GitHub release and upload assets
+  # You can add this once the basic workflow is working correctly 
