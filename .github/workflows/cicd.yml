@@ -31,6 +31,9 @@ jobs:
       # Run tests only on Linux, as they require database connectivity
       # Skip connecting to the real DB in CI by adding a --skip-db flag (if you implement this)
       # or use a test DB container for integration tests
+      - name: Mask DB Password
+        run: echo "::add-mask::${{ secrets.TEST_DB_PASSWORD }}"
+
       - name: Run Playwright tests
         run: npm test
         env:
