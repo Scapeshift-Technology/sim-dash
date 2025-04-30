@@ -27,8 +27,8 @@ jobs:
     permissions:
       contents: read # Only need read access to check out code
     outputs:
-      # Define an output for the artifact name
-      artifact_name: windows-app-${{ github.sha }}
+      # Define an output for the artifact name, referencing the step output below
+      artifact_name: ${{ steps.set_artifact_name_win.outputs.artifact_name }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -56,6 +56,10 @@ jobs:
             exit 1
           }
 
+      - name: Define Windows Artifact Name
+        id: set_artifact_name_win # Give the step an ID
+        run: echo "artifact_name=windows-app-${{ github.sha }}" >> $GITHUB_OUTPUT
+
       - name: Generate Build Info File (Windows)
         shell: pwsh
         run: |
@@ -75,8 +79,8 @@ jobs:
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
-          # Use the defined output artifact name
-          name: ${{ steps.build-windows.outputs.artifact_name }}
+          # Use the step output artifact name
+          name: ${{ steps.set_artifact_name_win.outputs.artifact_name }}
           path: dist/*.exe
           if-no-files-found: error
 
@@ -87,8 +91,8 @@ jobs:
     permissions:
       contents: read # Only need read access to check out code
     outputs:
-       # Define an output for the artifact name
-      artifact_name: macos-app-${{ github.sha }}
+       # Define an output for the artifact name, referencing the step output below
+      artifact_name: ${{ steps.set_artifact_name_mac.outputs.artifact_name }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -115,6 +119,10 @@ jobs:
             exit 1
           fi
 
+      - name: Define macOS Artifact Name
+        id: set_artifact_name_mac # Give the step an ID
+        run: echo "artifact_name=macos-app-${{ github.sha }}" >> $GITHUB_OUTPUT
+
       - name: Generate Build Info File (macOS)
         run: |
           BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -130,8 +138,8 @@ jobs:
       - name: Upload macOS artifacts (x64 + arm64)
         uses: actions/upload-artifact@v4
         with:
-          # Use the defined output artifact name
-          name: ${{ steps.build-macos.outputs.artifact_name }}
+          # Use the step output artifact name
+          name: ${{ steps.set_artifact_name_mac.outputs.artifact_name }}
           path: |
             dist/*.dmg
             dist/*-mac.zip
