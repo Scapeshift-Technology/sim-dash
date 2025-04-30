@@ -58,7 +58,8 @@ jobs:
 
       - name: Define Windows Artifact Name
         id: set_artifact_name_win # Give the step an ID
-        run: echo "artifact_name=windows-app-${{ github.sha }}" >> $GITHUB_OUTPUT
+        run: echo "artifact_name=windows-app-${{ github.sha }}" >> $env:GITHUB_OUTPUT
+        shell: pwsh
 
       - name: Generate Build Info File (Windows)
         shell: pwsh
