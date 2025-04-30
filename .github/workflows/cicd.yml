@@ -15,6 +15,8 @@ jobs:
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -56,6 +58,8 @@ jobs:
     needs: test # Only run if tests pass (and tests only run on main/manual)
     runs-on: windows-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -88,6 +92,8 @@ jobs:
     needs: test # Only run if tests pass (and tests only run on main/manual)
     runs-on: macos-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -123,7 +129,7 @@ jobs:
     runs-on: ubuntu-latest # Use ubuntu for release steps, typically faster/cheaper
     timeout-minutes: 15
     permissions:
-      contents: write # Needed to create releases
+      contents: write # Keep this as 'write' - Needed to create releases and upload assets
 
     steps:
       - name: Check out repository
