@@ -1,5 +1,5 @@
 {
-  "name": "electron-sql-template",
+  "name": "sim-dash",
   "version": "1.0.0",
   "description": "Electron app template for connecting to SQL Server with profile management.",
   "main": "src/main.js",
