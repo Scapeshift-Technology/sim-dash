@@ -8,5 +8,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     // Connection management
     login: (config) => ipcRenderer.invoke('login', config),
-    logout: () => ipcRenderer.invoke('logout')
+    logout: () => ipcRenderer.invoke('logout'),
+
+    // --- Added for About Window ---
+    // Listener for receiving the app version from main process
+    onVersion: (callback) => ipcRenderer.on('set-version', callback)
 }); 

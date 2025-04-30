@@ -31,7 +31,8 @@
     "files": [
       "src/**/*",
       "node_modules/**/*",
-      "package.json"
+      "package.json",
+      "src/build-info.json"
     ],
     "directories": {
       "buildResources": "assets",
@@ -42,7 +43,9 @@
     },
     "mac": {
       "category": "public.app-category.developer-tools",
-      "target": ["dmg", "zip"]
+      "target": ["dmg", "zip"],
+      "CFBundleName": "SimDash",
+      "CFBundleDisplayName": "SimDash"
     },
     "linux": {
       "target": "AppImage"
