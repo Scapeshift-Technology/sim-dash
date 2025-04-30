@@ -44,8 +44,10 @@
     "mac": {
       "category": "public.app-category.developer-tools",
       "target": ["dmg", "zip"],
-      "CFBundleName": "SimDash",
-      "CFBundleDisplayName": "SimDash"
+      "extendInfo": {
+         "CFBundleName": "SimDash",
+         "CFBundleDisplayName": "SimDash"
+      }
     },
     "linux": {
       "target": "AppImage"
