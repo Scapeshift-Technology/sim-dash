@@ -72,10 +72,15 @@ async function createMainWindow() {
         }
     });
 
-    mainWindow.loadFile(path.join(__dirname, 'index.html'));
-
-    // Open DevTools (optional)
-    // mainWindow.webContents.openDevTools();
+    // In development, use the Vite dev server
+    if (process.env.NODE_ENV === 'development') {
+        await mainWindow.loadURL('http://localhost:5173');
+        // Open DevTools in development
+        mainWindow.webContents.openDevTools();
+    } else {
+        // In production, load the built file
+        mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+    }
 
     mainWindow.on('closed', () => {
         mainWindow = null;
