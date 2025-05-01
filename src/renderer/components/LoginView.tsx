@@ -208,6 +208,7 @@ const LoginView: React.FC = () => {
                         onChange={(e) => setHost(e.target.value)}
                         disabled={isAuthLoading}
                         variant="outlined"
+                        sx={{ mb: 2 }}
                     />
                     <TextField
                         margin="normal"
@@ -221,6 +222,7 @@ const LoginView: React.FC = () => {
                         onChange={(e) => setPort(e.target.value)}
                         disabled={isAuthLoading}
                         variant="outlined"
+                        sx={{ mb: 2 }}
                     />
                     <TextField
                         margin="normal"
@@ -233,6 +235,7 @@ const LoginView: React.FC = () => {
                         onChange={(e) => setDatabase(e.target.value)}
                         disabled={isAuthLoading}
                         variant="outlined"
+                        sx={{ mb: 2 }}
                     />
                     <TextField
                         margin="normal"
@@ -245,6 +248,7 @@ const LoginView: React.FC = () => {
                         onChange={(e) => setUser(e.target.value)}
                         disabled={isAuthLoading}
                         variant="outlined"
+                        sx={{ mb: 2 }}
                     />
                     <TextField
                         margin="normal"
@@ -257,6 +261,7 @@ const LoginView: React.FC = () => {
                         onChange={(e) => setPassword(e.target.value)}
                         disabled={isAuthLoading}
                         variant="outlined"
+                        sx={{ mb: 2 }}
                     />
 
                     {/* Login Button & Progress */}
@@ -299,7 +304,7 @@ const LoginView: React.FC = () => {
                     <Grid container spacing={2} alignItems="flex-end">
                         <Grid item xs>
                              <TextField
-                                margin="dense"
+                                margin="normal"
                                 fullWidth
                                 id="profile-name-save"
                                 label="Save/Update Profile As"
@@ -308,6 +313,7 @@ const LoginView: React.FC = () => {
                                 disabled={isAuthLoading || isProfilesLoading}
                                 helperText={selectedProfileName ? `Editing '${selectedProfileName}'` : 'Enter a new name'}
                                 variant="outlined"
+                                sx={{ mb: 2 }}
                             />
                         </Grid>
                         <Grid item>

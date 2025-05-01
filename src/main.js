@@ -263,20 +263,47 @@ ipcMain.handle('login', async (event, config) => {
 });
 
 ipcMain.handle('logout', async () => {
+    console.log('IPC received: logout');
     if (currentPool) {
         try {
             await currentPool.close();
-            console.log('Connection pool closed on logout.');
             currentPool = null;
+            console.log('SQL Server connection pool closed.');
             return { success: true };
         } catch (err) {
-            console.error('Error closing connection pool on logout:', err);
-            currentPool = null; // Still nullify even if close fails
-            return { success: false, error: err.message };
+            console.error('Error closing SQL Server connection pool:', err);
+            currentPool = null; // Ensure pool is null even if close fails
+            return { success: false, message: 'Error during logout.' };
         }
+    } else {
+        console.log('Logout called but no active connection pool.');
+        return { success: true }; // No pool to close, logout is effectively done
     }
-    return { success: true }; // No pool to close
 });
+
+// --- Add Fetch Leagues Handler ---
+ipcMain.handle('fetch-leagues', async () => {
+    console.log('IPC received: fetch-leagues'); // Add logging
+    if (!currentPool) {
+        console.error('fetch-leagues: No active SQL Server connection.');
+        // Optionally throw an error instead of returning empty
+        // throw new Error('Not connected to database.');
+        return []; // Return empty array if not connected
+    }
+    try {
+        // Ensure the query matches the actual view/table and columns
+        const result = await currentPool.request().query(`SELECT League FROM dbo.League_V WHERE League IN ('MLB', 'NBA') ORDER BY League`);
+
+        console.log('Leagues fetched:', result.recordset); // Log success
+        return result.recordset; // Return the array of leagues
+    } catch (err) {
+        console.error('Error fetching leagues from SQL Server:', err);
+        // Optionally throw the error to be caught by the renderer
+        // throw err;
+        return []; // Return empty array on error
+    }
+});
+// --- End Fetch Leagues Handler ---
 
 
 // --- App Lifecycle & Menu ---

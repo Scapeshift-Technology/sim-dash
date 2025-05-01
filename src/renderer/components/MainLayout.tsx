@@ -6,10 +6,14 @@ import {
     Button,
     AppBar,
     Toolbar,
-    Container
+    Container,
+    CssBaseline
 } from '@mui/material';
 import type { AppDispatch } from '../store/store';
 import { logoutUser, selectUsername } from '../store/slices/authSlice';
+import Sidebar from './Sidebar';
+
+const drawerWidth = 240;
 
 const MainLayout: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -20,8 +24,16 @@ const MainLayout: React.FC = () => {
     };
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-            <AppBar position="static">
+        <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+            <CssBaseline />
+            <AppBar
+                position="fixed"
+                sx={{
+                    width: `calc(100% - ${drawerWidth}px)`,
+                    ml: `${drawerWidth}px`,
+                    zIndex: (theme) => theme.zIndex.drawer + 1
+                }}
+            >
                 <Toolbar>
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                         SimDash
@@ -32,17 +44,27 @@ const MainLayout: React.FC = () => {
                     </Button>
                 </Toolbar>
             </AppBar>
-            <Container component="main" sx={{ mt: 4, mb: 4, flexGrow: 1 }}>
-                {/* Main application content (sidebar, tabs, etc.) will go here */}
-                <Typography variant="h5">Main Application Area</Typography>
-                <Typography>League sidebar and content tabs will be added here.</Typography>
-            </Container>
-            <Box component="footer" sx={{ p: 2, mt: 'auto', backgroundColor: '#f5f5f5' }}>
-                <Container maxWidth="sm">
-                    <Typography variant="body2" color="text.secondary" align="center">
+            <Sidebar />
+            <Box
+                component="main"
+                sx={{
+                    flexGrow: 1,
+                    bgcolor: 'background.default',
+                    p: 3,
+                    display: 'flex',
+                    flexDirection: 'column',
+                }}
+            >
+                <Toolbar />
+                <Container sx={{ flexGrow: 1 }}>
+                    <Typography variant="h5">Main Application Area</Typography>
+                    <Typography>League sidebar added. Content tabs will be added here.</Typography>
+                </Container>
+                <Box component="footer" sx={{ p: 2, mt: 'auto', textAlign: 'center' }}>
+                    <Typography variant="body2" color="text.secondary">
                         SimDash Footer
                     </Typography>
-                </Container>
+                </Box>
             </Box>
         </Box>
     );
