@@ -32,7 +32,7 @@ jobs:
         run: echo "::add-mask::${{ secrets.TEST_DB_PASSWORD }}"
 
       - name: Run Playwright tests
-        run: npm test -- --trace on
+        run: npm run test:e2e
         env:
           DB_HOST: ${{ secrets.TEST_DB_HOST }}
           DB_PORT: ${{ secrets.TEST_DB_PORT }}
