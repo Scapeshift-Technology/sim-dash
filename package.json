@@ -5,13 +5,14 @@
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
-    "dev": "vite dev src --port 5173",
+    "dev": "vite dev src/renderer --port 5173",
     "build:renderer": "vite build",
     "build:electron": "tsc -p tsconfig.node.json --noEmitOnError false",
     "build": "npm run build:electron && npm run build:renderer",
-    "preview": "vite preview src",
+    "preview": "vite preview src/renderer",
     "electron:dev": "cross-env NODE_ENV=development electron .",
     "test": "playwright test",
+    "test:e2e": "npm run build:renderer && npm run test",
     "pack": "electron-builder --dir",
     "dist": "electron-builder"
   },

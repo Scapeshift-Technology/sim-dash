@@ -80,11 +80,11 @@ test.describe('SQL Server Connection Flow', () => {
     // --- 4. Verify Return to Initial State ---
 
     // Target the H1 inside the login view or the login view itself
-    const initialPageHeading = mainWindow.locator('#login-view h1'); // Target heading
+    const initialPageHeading = mainWindow.locator('#login-view-title'); // Target heading
 
     // Wait for the initial connection page heading to reappear
     await expect(initialPageHeading).toBeVisible();
-    await expect(initialPageHeading).toContainText('Connect to SQL Server');
+    await expect(initialPageHeading).toContainText('SimDash Login');
   });
 
 });

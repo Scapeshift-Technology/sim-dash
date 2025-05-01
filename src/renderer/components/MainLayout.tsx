@@ -26,8 +26,8 @@ const MainLayout: React.FC = () => {
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                         SimDash
                     </Typography>
-                    <Typography sx={{ mr: 2 }}>Welcome, {username || 'User'}!</Typography>
-                    <Button color="inherit" onClick={handleLogout}>
+                    <Typography id="welcome-message" sx={{ mr: 2 }}>Welcome, {username || 'User'}!</Typography>
+                    <Button id="logout-button" color="inherit" onClick={handleLogout}>
                         Logout
                     </Button>
                 </Toolbar>

@@ -16,6 +16,6 @@
     "noEmit": true, // Vite handles transpilation, TS is for type checking
     "jsx": "react-jsx"
   },
-  "include": ["./**/*.ts", "./**/*.tsx"], // Include all TS/TSX files within src
+  "include": ["./renderer/**/*"], // Look for TS files only within the renderer directory
   "references": [{ "path": "../tsconfig.node.json" }] // Reference the node config
 } 

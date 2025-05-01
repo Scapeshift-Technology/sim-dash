@@ -173,7 +173,7 @@ const LoginView: React.FC = () => {
             }}
         >
             <Paper elevation={3} sx={{ p: 4, width: '100%', maxWidth: '500px' }}>
-                <Typography variant="h4" component="h1" gutterBottom align="center">
+                <Typography id="login-view-title" variant="h4" component="h1" gutterBottom align="center">
                     SimDash Login
                 </Typography>
 
@@ -265,6 +265,7 @@ const LoginView: React.FC = () => {
                             type="submit"
                             fullWidth
                             variant="contained"
+                            id="login-button"
                             disabled={isAuthLoading || isProfilesLoading}
                             sx={{ py: 1.5 }}
                         >

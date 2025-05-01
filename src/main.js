@@ -88,6 +88,7 @@ async function createMainWindow() {
         });
     } else {
         // Production: Load the built HTML file
+        // Adjust the path to point to the built output in dist/renderer
         const indexPath = path.join(__dirname, '..', 'dist', 'renderer', 'index.html');
         console.log(`Loading production build from: ${indexPath}`);
         mainWindow.loadFile(indexPath).catch(err => {
@@ -135,7 +136,7 @@ function createAboutWindow() {
         show: false // Don't show until ready
     });
 
-    aboutWindow.loadFile(path.join(__dirname, 'about.html'));
+    aboutWindow.loadFile(path.join(__dirname, 'renderer', 'about.html'));
     // aboutWindow.setMenu(null); // Optional: remove menu bar from about window
 
     aboutWindow.once('ready-to-show', () => {

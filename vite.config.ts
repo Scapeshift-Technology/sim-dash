@@ -9,7 +9,7 @@ export default defineConfig({
   // './' is needed for Electron to find files correctly after build
   base: './',
   // Set the root directory where index.html is located
-  root: path.resolve(__dirname, 'src'),
+  root: path.resolve(__dirname, 'src/renderer'),
   build: {
     // Specify the output directory relative to the project root
     outDir: path.resolve(__dirname, 'dist/renderer'),
