@@ -51,10 +51,11 @@ SimDash is an Electron-based desktop application designed to provide users with 
     *   [x] Convert login view to a React/MUI component connected to Redux.
     *   [x] Create main application layout (conditionally rendered after login).
 *   **Phase 2: League Sidebar & Tabs**
-    *   [ ] Implement `fetch-leagues` IPC handler in `main.js`.
-    *   [ ] Create Sidebar React component using MUI.
-    *   [ ] Fetch and display leagues ('MLB', 'NBA') in the sidebar.
-    *   [ ] Implement tab management using MUI Tabs and Redux state.
+    *   [x] Implement `fetch-leagues` IPC handler in `main.js`.
+    *   [x] Create Sidebar React component using MUI.
+    *   [x] Fetch and display leagues ('MLB', 'NBA') in the sidebar.
+    *   [x] Implement resizable sidebar functionality.
+    *   [ ] Implement tab management using MUI Tabs and Redux state (JetBrains-style floating/dockable tabs).
     *   [ ] Clicking a league opens/focuses the corresponding league tab.
 *   **Phase 3: Schedule View**
     *   [ ] Install MUI Date Pickers and `dayjs`.

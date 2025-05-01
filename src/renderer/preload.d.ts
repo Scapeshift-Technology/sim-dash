@@ -21,6 +21,11 @@ interface LogoutResult {
     error?: string;
 }
 
+// Define the League type based on slice (or import if defined centrally)
+// This should match the structure returned by main process
+interface FetchedLeague {
+    League: string;
+}
 
 // Declare the electronAPI methods on the Window interface
 declare global {
@@ -34,6 +39,9 @@ declare global {
       // Connection management
       login: (config: LoginConfig) => Promise<LoginResult>;
       logout: () => Promise<LogoutResult>;
+
+      // League data
+      fetchLeagues: () => Promise<FetchedLeague[]>;
 
       // About Window Communication (Keep if needed, or remove if about window is refactored/removed)
       onVersion: (callback: (event: any, version: string) => void) => void;
