@@ -63,8 +63,17 @@ async function initializeSchema(db) {
 
 // Get all saved profiles
 async function getProfiles(db) {
-    const sql = `SELECT name, host, port, database, user, password FROM profiles ORDER BY name`;
-    return db.allAsync(sql);
+    return new Promise((resolve, reject) => {
+        db.all("SELECT * FROM profiles ORDER BY name", [], (err, rows) => {
+            if (err) {
+                console.error('Error fetching profiles from SQLite:', err.message);
+                reject(err);
+            } else {
+                console.log('[db.js] Profiles fetched from DB:', rows); // Log fetched rows
+                resolve(rows);
+            }
+        });
+    });
 }
 
 // Save or update a profile

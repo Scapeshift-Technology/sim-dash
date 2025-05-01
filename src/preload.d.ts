@@ -1,0 +1,45 @@
+// Import the types for your exposed API functions if they are complex
+// For example, if login takes specific args and returns a specific shape:
+import type { Profile } from './store/slices/profilesSlice'; // Assuming Profile type is exported
+
+interface LoginConfig {
+  host: string;
+  port: string;
+  database: string;
+  user: string;
+  password?: string;
+}
+
+interface LoginResult {
+  success: boolean;
+  username?: string;
+  error?: string;
+}
+
+interface LogoutResult {
+    success: boolean;
+    error?: string;
+}
+
+
+// Declare the electronAPI methods on the Window interface
+declare global {
+  interface Window {
+    electronAPI: {
+      // Profile management
+      getProfiles: () => Promise<Profile[]>;
+      saveProfile: (profile: Profile) => Promise<boolean>;
+      deleteProfile: (profileName: string) => Promise<boolean>;
+
+      // Connection management
+      login: (config: LoginConfig) => Promise<LoginResult>;
+      logout: () => Promise<LogoutResult>;
+
+      // About Window Communication (Keep if needed, or remove if about window is refactored/removed)
+      onVersion: (callback: (event: any, version: string) => void) => void;
+      // Add other exposed functions here...
+    };
+  }
+}
+
+// Export {}; // Add this line if you get an error about global scope modification 

@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true, // Enables compatibility with CommonJS modules
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true, // Vite handles transpilation, TS is for type checking
+    "jsx": "react-jsx"
+  },
+  "include": ["./**/*.ts", "./**/*.tsx"], // Include all TS/TSX files within src
+  "references": [{ "path": "../tsconfig.node.json" }] // Reference the node config
+} 

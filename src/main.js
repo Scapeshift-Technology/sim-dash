@@ -59,6 +59,9 @@ let aboutWindow; // Added reference for the about window
 let db; // Local SQLite database connection
 let currentPool = null; // Active SQL Server connection pool
 
+// Define the Vite development server URL
+const viteDevServerUrl = 'http://localhost:5173'; // Default Vite port
+
 async function createMainWindow() {
     mainWindow = new BrowserWindow({
         width: 800,
@@ -72,7 +75,25 @@ async function createMainWindow() {
         }
     });
 
-    mainWindow.loadFile(path.join(__dirname, 'index.html'));
+    // Load the index.html of the app.
+    if (process.env.NODE_ENV === 'development') {
+        console.log(`Loading Vite dev server: ${viteDevServerUrl}`);
+        // Development: Load from Vite dev server
+        // Make sure the Vite server is running (`npm run dev`)
+        mainWindow.loadURL(viteDevServerUrl).catch(err => {
+            console.error('Failed to load Vite dev server URL:', err);
+            console.error('Did you start the dev server with `npm run dev`?');
+            // Optionally, fall back to file loading or quit
+            // app.quit();
+        });
+    } else {
+        // Production: Load the built HTML file
+        const indexPath = path.join(__dirname, '..', 'dist', 'renderer', 'index.html');
+        console.log(`Loading production build from: ${indexPath}`);
+        mainWindow.loadFile(indexPath).catch(err => {
+            console.error('Failed to load production build:', err);
+        });
+    }
 
     // Open DevTools (optional)
     // mainWindow.webContents.openDevTools();
@@ -150,9 +171,11 @@ async function initializeDb() {
 ipcMain.handle('get-profiles', async () => {
     if (!db) return [];
     try {
-        return await dbHelper.getProfiles(db);
+        const profiles = await dbHelper.getProfiles(db);
+        console.log('[main.js] Profiles retrieved by dbHelper:', profiles); // Log result from dbHelper
+        return profiles;
     } catch (err) {
-        console.error('Error getting profiles:', err);
+        console.error('[main.js] Error getting profiles:', err);
         return []; // Return empty on error
     }
 });

@@ -4,67 +4,15 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SQL Server Connect</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>SimDash</title>
+    <!-- <link rel="stylesheet" href="styles.css"> --> <!-- CSS is now imported via JS/TS -->
 </head>
 <body>
-    <div id="app-container">
+    <!-- Add a root div for React -->
+    <div id="root"></div>
 
-        <!-- Login View -->
-        <div id="login-view">
-            <h1>Connect to SQL Server</h1>
+    <!-- Only the React root and the script tag should remain -->
 
-            <div id="profile-section">
-                <label for="profile-select">Load Profile:</label>
-                <select id="profile-select">
-                    <option value="">-- New Connection --</option>
-                    <!-- Profiles will be loaded here -->
-                </select>
-                <button id="delete-profile-button" class="button-danger">Delete Profile</button>
-            </div>
-
-            <form id="login-form">
-                <div class="form-group">
-                    <label for="host">Host:</label>
-                    <input type="text" id="host" name="host" required value="localhost">
-                </div>
-                <div class="form-group">
-                    <label for="port">Port:</label>
-                    <input type="number" id="port" name="port" required value="1433">
-                </div>
-                 <div class="form-group">
-                    <label for="database">Database:</label>
-                    <input type="text" id="database" name="database" required>
-                </div>
-                <div class="form-group">
-                    <label for="user">User:</label>
-                    <input type="text" id="user" name="user" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" name="password">
-                </div>
-                <button type="submit" id="login-button">Connect</button>
-                 <p id="login-error" class="error-message"></p>
-            </form>
-
-            <div id="save-profile-section">
-                 <hr>
-                 <label for="profile-name">Save current settings as profile:</label>
-                 <input type="text" id="profile-name" placeholder="Enter profile name">
-                 <button id="save-profile-button">Save Profile</button>
-                  <p id="profile-status" class="status-message"></p>
-            </div>
-        </div>
-
-        <!-- Main View -->
-        <div id="main-view" style="display: none;">
-            <h1 id="welcome-message">Welcome!</h1>
-            <button id="logout-button">Disconnect</button>
-        </div>
-
-    </div>
-
-    <script src="renderer.js"></script>
+    <script type="module" src="/renderer.tsx"></script> <!-- New Vite/React entry point -->
 </body>
 </html> 

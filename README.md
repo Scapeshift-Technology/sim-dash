@@ -1,46 +1,76 @@
-# Electron SQL Server Connection Template
+# SimDash - Sports Simulation Dashboard PRD
 
-This is a basic Electron application template demonstrating how to:
+## 1. Overview
 
-*   Connect to a Microsoft SQL Server database.
-*   Save and load connection profiles (host, port, db, user, password) using a local SQLite database.
-*   Switch between saved profiles.
-*   Display the SQL Server username upon successful connection.
+SimDash is an Electron-based desktop application designed to provide users with a powerful interface for viewing and interacting with sports simulation data stored in a SQL Server database, with individualized simulation configuration (e.g. "leans") stored on the user's local desktop. The application will allow users to connect to the OLTP/OLAP database with their assigned credentials, browse different sports leagues, view game schedules, analyze matchup details (e.g.: market pricing data, batting orders for MLB), and potentially adjust simulation parameters ("Leans").
 
-**Warning:** Passwords are stored in plain text in the local SQLite database (`profiles.sqlite` in the user data directory). This is insecure and intended for demonstration purposes only. In a real application, use the OS keyring (e.g., `keytar` package) or other secure storage mechanisms.
+## 2. Goals
 
-## Setup
+*   Provide a user-friendly desktop interface for accessing sports simulation data.
+*   Integrate seamlessly with a user-provided SQL Server database.
+*   Offer views for league selection, daily game schedules, and detailed matchup information.
+*   Implement interactive features for analyzing and potentially adjusting simulation data.
+*   Utilize a modern tech stack (React, Redux Toolkit, Material UI) for a robust and maintainable application.
+*   Ensure data is presented clearly, including handling time zone conversions.
 
-1.  **Clone the repository (or create the files as shown).**
-2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
-    *Note:* `npm install` might take some time as it needs to download Electron and potentially rebuild native modules like `sqlite3` and `mssql` for your specific OS and architecture.
+## 3. Core Features (Planned)
 
-## Running the App
+*   **Database Connection:** Secure login screen to connect to a specified SQL Server instance using provided credentials. Connection profiles will be saved locally (SQLite).
+*   **League Selection:** A persistent sidebar (visible after login) displaying available sports leagues (initially MLB, NBA) fetched from the database (`dbo.League_V`).
+*   **Tabbed Navigation:** Clicking a league in the sidebar opens a dedicated tab for that league (if not already open). Allows viewing multiple leagues/matchups concurrently.
+*   **Daily Schedule View:**
+    *   Each league tab will display a schedule of games for a selected date.
+    *   A date picker within each tab allows users to select the date (defaults to today).
+    *   Schedule data (`PostDtmUTC`, `Participant1`, `Participant2`, `DaySequence`) fetched from `dbo.Match_V` based on the selected league and date.
+    *   Game times (`PostDtmUTC`) will be converted and displayed in the user's local time zone.
+*   **MLB Matchup Details:**
+    *   Clicking an MLB game in the schedule view will open a new tab dedicated to that specific matchup.
+    *   This tab will display detailed information, including batting orders for both home and away teams (fetched from a relevant table/view, or perhaps API; TBD).
+*   **Interactive "Lean" Cells:** Certain data points (e.g., team/player skill levels, TBD) will be presented in interactive cells allowing users to adjust values. These adjustments ("Leans") will be synced to an appropriately-named local sqlite database, stored in app.getPath('userData').
+*   **Real-time Data Refresh:** Implement mechanisms for automatically or manually refreshing data (schedules, matchup details -- e.g. MLB Pitcher Changes from a feed) to reflect the latest information in the database.
+*   **UI/UX:** Utilize Material UI (MUI) for a clean, modern, and responsive user interface. State management handled by Redux Toolkit.
 
-```bash
-npm start
-```
+## 4. Technology Stack
 
-## How it Works
+*   **Framework:** Electron
+*   **Frontend:** React, TypeScript, HTML, CSS
+*   **UI Library:** Material UI (MUI)
+*   **State Management:** Redux Toolkit
+*   **Database (Primary):** SQL Server (via `mssql` package)
+*   **Database (Local Settings: e.g. Profiles, Leans):** SQLite (via `sqlite3` package)
+*   **Build Tool:** Vite
+*   **Date Handling:** dayjs
 
-*   **`package.json`**: Defines dependencies (`electron`, `mssql`, `sqlite3`) and the start script.
-*   **`src/main.js`**: The main Electron process. It creates the browser window, handles IPC communication for login/logout and profile management, connects to the SQL Server using `mssql`, and manages the `sqlite3` database for profiles.
-*   **`src/preload.js`**: Securely exposes necessary functions from `main.js` to the renderer process (`renderer.js`) using `contextBridge`.
-*   **`src/db.js`**: A helper module for interacting with the `sqlite3` database (creating the table, saving, loading, deleting profiles).
-*   **`src/index.html`**: The main UI file containing the login form, profile management controls, and the welcome screen.
-*   **`src/renderer.js`**: The script running in the browser window. It handles user input, calls the exposed API functions (via `window.electronAPI`) to interact with the main process, and updates the UI.
-*   **`src/styles.css`**: Basic styling for the application.
+## 5. Development Plan & Progress
 
-## Profile Storage
+*   **Phase 1: Setup & Core UI Refactor**
+    *   [x] Setup Vite build system.
+    *   [x] Install React, Redux Toolkit, MUI, and related dependencies.
+    *   [x] Refactor main window (`index.html`, `renderer.tsx`) to use React.
+    *   [x] Implement basic Redux store and MUI theme provider.
+    *   [x] Convert login view to a React/MUI component connected to Redux.
+    *   [x] Create main application layout (conditionally rendered after login).
+*   **Phase 2: League Sidebar & Tabs**
+    *   [ ] Implement `fetch-leagues` IPC handler in `main.js`.
+    *   [ ] Create Sidebar React component using MUI.
+    *   [ ] Fetch and display leagues ('MLB', 'NBA') in the sidebar.
+    *   [ ] Implement tab management using MUI Tabs and Redux state.
+    *   [ ] Clicking a league opens/focuses the corresponding league tab.
+*   **Phase 3: Schedule View**
+    *   [ ] Install MUI Date Pickers and `dayjs`.
+    *   [ ] Add Date Picker to the league tab content component.
+    *   [ ] Implement `fetch-schedule` IPC handler in `main.js`.
+    *   [ ] Fetch schedule data based on selected league and date.
+    *   [ ] Display schedule data in the league tab (initial basic table).
+    *   [ ] Implement UTC to local time conversion for display.
+*   **Phase 4: MLB Matchup Details (Future)**
+    *   [...] Define necessary SQL queries/tables.
+    *   [...] Implement matchup-specific tabs.
+    *   [...] Display batting orders.
+*   **Phase 5: Interactive Leans (Future)**
+    *   [...] Define interactive elements and database update logic.
+*   **Phase 6: Real-time Refresh & Polish (Future)**
+    *   [...] Implement data refresh mechanisms.
+    *   [...] UI/UX improvements and error handling.
 
-Connection profiles are stored in a SQLite database file named `profiles.sqlite` located in the Electron application's user data directory. You can find this directory using `app.getPath('userData')`.
-
-## SQL Server Configuration Notes
-
-*   The connection logic in `src/main.js` uses `encrypt: true` and `trustServerCertificate: true`. Adjust these settings based on your SQL Server's configuration and security requirements.
-*   `trustServerCertificate: true` is generally only suitable for local development or when connecting to servers with self-signed certificates. For production environments, you should typically set this to `false` and ensure proper certificate validation.
-*   Ensure the SQL Server instance is configured to allow TCP/IP connections and that the specified port (default 1433) is open in any firewalls.
-*   The query `SELECT SUSER_SNAME() AS username` is used to retrieve the login name in SQL Server. `USER_NAME()` retrieves the database user name, which might be different. 
+*(This document will be updated as development progresses) 

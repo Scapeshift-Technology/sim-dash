@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "skipLibCheck": true,
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "target": "ESNext",
+    "esModuleInterop": true,
+    "outDir": "dist"
+  },
+  "include": [
+    "vite.config.ts",
+    "src/main.js",
+    "src/preload.js",
+    "src/db.js"
+  ]
+} 
