@@ -3,8 +3,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
     Drawer, List, ListItemButton, ListItemText, CircularProgress, Typography, Box, Toolbar
 } from '@mui/material';
-import { AppDispatch } from '../store/store'; // Adjust path if needed
-import { fetchLeagues, selectAllLeagues, selectLeaguesLoading, selectLeaguesError, openLeagueTab } from '../store/slices/leagueSlice'; // Adjust path if needed and added openLeagueTab
+import { AppDispatch } from '@/store/store'; // Adjust path if needed
+import { fetchLeagues, selectAllLeagues, selectLeaguesLoading, selectLeaguesError, openLeagueTab } from '@/store/slices/leagueSlice'; // Adjust path if needed and added openLeagueTab
 
 // Define props for Sidebar, including width and resize handler
 interface SidebarProps {

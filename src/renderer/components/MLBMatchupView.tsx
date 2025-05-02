@@ -14,15 +14,8 @@ import {
 } from '@mui/material';
 
 // Import the lineup types
-import type { MatchupLineups, TeamLineup, Player } from '../../types/mlb';
+import type { MatchupLineups, TeamLineup, Player, MLBMatchupViewProps } from '@/types/mlb';
 
-interface MLBMatchupViewProps {
-    league: string;
-    date: string;
-    participant1: string; // Away Team
-    participant2: string; // Home Team
-    daySequence?: number;
-}
 
 const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({ 
     league,

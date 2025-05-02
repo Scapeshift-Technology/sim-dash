@@ -18,10 +18,9 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./renderer/*"],
-      "@components/*": ["./renderer/components/*"],
-      "@store/*": ["./renderer/store/*"]
+      "@/types/*": ["./types/*"]
     }
   },
-  "include": ["./renderer/**/*"], // Look for TS files only within the renderer directory
+  "include": ["./renderer/**/*", "types"], // Look for TS files only within the renderer directory
   "references": [{ "path": "../tsconfig.node.json" }] // Reference the node config
 }

@@ -1,25 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 import { current } from '@reduxjs/toolkit';
-
-// Define the structure of a connection profile
-export interface Profile {
-  name: string;
-  host: string;
-  port: number; // Store port as number internally
-  database: string;
-  user: string;
-  password?: string; // Password is saved (insecurely for now)
-}
-
-// Define the state structure for profiles
-interface ProfilesState {
-  profiles: Profile[];
-  selectedProfileName: string | null;
-  isLoading: boolean;
-  error: string | null;
-  statusMessage: string | null; // For save/delete feedback
-}
+import { Profile, ProfilesState } from '@/types/profiles';
 
 const initialState: ProfilesState = {
   profiles: [],
@@ -27,7 +9,7 @@ const initialState: ProfilesState = {
   isLoading: false,
   error: null,
   statusMessage: null,
-};
+  };
 
 // Async thunk for fetching profiles
 export const fetchProfiles = createAsyncThunk<

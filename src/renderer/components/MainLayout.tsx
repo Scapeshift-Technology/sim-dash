@@ -22,7 +22,7 @@ import {
     closeTab, 
     selectActiveTabData 
 } from '../store/slices/leagueSlice';
-import type { Tab } from '../store/slices/leagueSlice';
+import type { Tab } from '@/types/league';
 import Sidebar from './Sidebar';
 import LeagueScheduleView from './LeagueScheduleView';
 import MLBMatchupView from './MLBMatchupView';

@@ -13,14 +13,13 @@ import {
     Alert,
     Grid,
     IconButton,
-    Paper,
-    FormHelperText
+    Paper
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
 
-import type { AppDispatch, RootState } from '../store/store';
-import { loginUser, selectAuthState, clearAuthError } from '../store/slices/authSlice';
+import type { AppDispatch, RootState } from '@/store/store';
+import { loginUser, selectAuthState, clearAuthError } from '@/store/slices/authSlice';
 import {
     fetchProfiles,
     saveProfile,
@@ -29,9 +28,9 @@ import {
     selectProfilesState,
     selectProfileByName,
     clearProfileStatus,
-    clearProfileError,
-    Profile
-} from '../store/slices/profilesSlice';
+    clearProfileError
+} from '@/store/slices/profilesSlice';
+import { Profile } from '@/types/profiles';
 
 const LoginView: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();

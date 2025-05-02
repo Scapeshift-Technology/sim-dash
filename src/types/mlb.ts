@@ -33,3 +33,11 @@ export interface MatchupLineups {
     home: TeamLineup;
     away: TeamLineup;
 } 
+
+export interface MLBMatchupViewProps {
+    league: string;
+    date: string;
+    participant1: string; // Away Team
+    participant2: string; // Home Team
+    daySequence?: number;
+}

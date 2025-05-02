@@ -1,45 +1,12 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
-// Import matchup types
-// Removed unused import: import type { MatchupLineups } from '../../../types/mlb';
-
-// Define the shape of a league object based on the ACTUAL query result
-interface League {
-    League: string; // Changed from LeagueCd/LeagueDesc
-    // LeagueDesc: string; // Removed
-}
-
-// Define a type for a tab - might expand later
-interface LeagueTab {
-    id: string; // Use League name as unique ID for simplicity
-    type: 'league';
-    league: string;
-}
-
-interface MatchupTab {
-    id: string; // Unique identifier for the matchup, e.g., "MLB_2024-07-19_NYY@BOS_1"
-    type: 'matchup';
-    league: string;
-    date: string; // YYYY-MM-DD
-    participant1: string;
-    participant2: string;
-    daySequence?: number; // Optional, for MLB doubleheaders etc.
-    label: string; // Short label for the tab, e.g., "NYY @ BOS"
-}
-
-// Union type for all possible tabs
-export type Tab = LeagueTab | MatchupTab;
-
-// Define the state structure for this slice
-interface LeagueState {
-    leagues: League[];
-    loading: 'idle' | 'pending' | 'succeeded' | 'failed';
-    error: string | null;
-    // selectedLeague is less relevant now, tabs manage the view
-    // selectedLeague: string | null;
-    openTabs: Tab[]; // Array holds different tab types
-    activeTabId: string | null; // ID of the currently active tab
-}
+import {
+  League,
+  LeagueTab,
+  MatchupTab,
+  Tab,
+  LeagueState
+} from '@/types/league';
 
 const initialState: LeagueState = {
     leagues: [],

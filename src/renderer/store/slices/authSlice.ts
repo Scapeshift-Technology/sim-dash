@@ -1,40 +1,12 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store'; // Import RootState for selector typing
-
-// Define the shape of the login configuration expected by the API
-interface LoginConfig {
-  host: string;
-  port: string; // Keep as string, main process will parse
-  database: string;
-  user: string;
-  password?: string;
-}
-
-// Define the shape of the successful login response from the API
-interface LoginSuccessResponse {
-  success: true;
-  username: string;
-}
-
-// Define the shape of the failed login response from the API
-interface LoginErrorResponse {
-  success: false;
-  error: string;
-}
-
-// Define the shape of the logout response (adjust if API returns more)
-interface LogoutResponse {
-  success: boolean;
-  error?: string;
-}
-
-// Define the state structure for authentication
-interface AuthState {
-  isAuthenticated: boolean;
-  username: string | null;
-  isLoading: boolean;
-  error: string | null;
-}
+import {
+  LoginConfig,
+  LoginSuccessResponse,
+  LoginErrorResponse,
+  LogoutResponse,
+  AuthState
+} from '@/types/auth';
 
 const initialState: AuthState = {
   isAuthenticated: false,
