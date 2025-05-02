@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 // Import matchup types
-import type { MatchupLineups } from '../../../types/mlb'; // Corrected path: up three levels then into types
+// Removed unused import: import type { MatchupLineups } from '../../../types/mlb';
 
 // Define the shape of a league object based on the ACTUAL query result
 interface League {
@@ -119,7 +119,6 @@ const leagueSlice = createSlice({
 
             if (tabIndex > -1) {
                 const wasActive = state.activeTabId === tabIdToClose;
-                const closedTabType = state.openTabs[tabIndex].type;
 
                 // Remove the tab
                 state.openTabs.splice(tabIndex, 1);

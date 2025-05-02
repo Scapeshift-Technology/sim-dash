@@ -252,10 +252,14 @@ ipcMain.handle('login', async (event, config) => {
             console.log('SQL Server User:', username);
             return { success: true, username: username };
         } else {
-            throw new Error('Could not retrieve username.');
+            console.error('SQL Server connection error: Could not retrieve username.'); // Log the specific reason
+            // If the connection succeeded but username retrieval failed, we might not want to nullify the pool here.
+            // Let's keep the pool open but return failure. Nullifying happens in the outer catch for actual connection errors.
+            // currentPool = null; // Removed this line
+            return { success: false, error: 'Could not retrieve username.' };
         }
 
-    } catch (err) {
+    } catch (err) { // This catch block now only handles errors from connect() or query()
         console.error('SQL Server connection error:', err);
         currentPool = null; // Ensure pool is null on error
         return { success: false, error: err.message };
