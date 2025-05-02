@@ -10,6 +10,13 @@ export default defineConfig({
   base: './',
   // Set the root directory where index.html is located
   root: path.resolve(__dirname, 'src/renderer'),
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src/renderer'),
+      '@components': path.resolve(__dirname, 'src/renderer/components'),
+      '@store': path.resolve(__dirname, 'src/renderer/store')
+    }
+  },
   build: {
     // Specify the output directory relative to the project root
     outDir: path.resolve(__dirname, 'dist/renderer'),
