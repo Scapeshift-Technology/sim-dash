@@ -305,6 +305,49 @@ ipcMain.handle('fetch-leagues', async () => {
 });
 // --- End Fetch Leagues Handler ---
 
+// --- Add Fetch Schedule Handler ---
+ipcMain.handle('fetch-schedule', async (event, { league, date }) => {
+    console.log(`IPC received: fetch-schedule for ${league} on ${date}`);
+    if (!currentPool) {
+        console.error('fetch-schedule: No active SQL Server connection.');
+        throw new Error('Not connected to database.'); // Throw error to be caught by renderer
+    }
+    if (!league || !date) {
+        console.error('fetch-schedule: Missing league or date parameter.');
+        throw new Error('League and date are required.');
+    }
+
+    try {
+        // Basic columns common to all leagues
+        let columns = 'PostDtmUTC, Participant1, Participant2';
+        // Add MLB-specific columns
+        if (league === 'MLB') {
+            columns += ', DaySequence';
+        }
+
+        const query = `
+            SELECT ${columns}
+            FROM dbo.Match_V
+            WHERE League = @league
+            AND ScheduledDate = @date -- Assuming PostDtmUTC should be compared date-wise
+            ORDER BY PostDtmUTC ASC -- Or DaySequence for MLB if needed? TBD
+        `; // Note: Using CAST(... AS DATE) might impact performance. Consider dedicated ScheduledDate column if available.
+
+        const request = currentPool.request();
+        request.input('league', sql.VarChar, league);
+        request.input('date', sql.Date, date); // Send date as Date type
+
+        const result = await request.query(query);
+
+        console.log(`Schedule fetched for ${league} on ${date}:`, result.recordset.length, 'matches');
+        return result.recordset; // Return the array of matches
+    } catch (err) {
+        console.error(`Error fetching schedule for ${league} on ${date}:`, err);
+        throw err; // Rethrow the error to be handled by the renderer
+    }
+});
+// --- End Fetch Schedule Handler ---
+
 
 // --- App Lifecycle & Menu ---
 

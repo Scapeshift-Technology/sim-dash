@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     login: (config) => ipcRenderer.invoke('login', config),
     logout: () => ipcRenderer.invoke('logout'),
     fetchLeagues: () => ipcRenderer.invoke('fetch-leagues'),
+    fetchSchedule: ({ league, date }) => ipcRenderer.invoke('fetch-schedule', { league, date }),
 
     // --- Added for About Window ---
     // Listener for receiving the app version from main process

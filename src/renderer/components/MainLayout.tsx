@@ -17,6 +17,7 @@ import type { AppDispatch } from '../store/store';
 import { logoutUser, selectUsername } from '../store/slices/authSlice';
 import { selectOpenTabs, selectActiveTabId, setActiveTab, closeTab } from '../store/slices/leagueSlice';
 import Sidebar from './Sidebar';
+import LeagueScheduleView from './LeagueScheduleView';
 
 const MainLayout: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -124,8 +125,7 @@ const MainLayout: React.FC = () => {
                              aria-labelledby={`league-tab-${activeTabData.id}`}
                              sx={{ height: '100%' }}
                         >
-                            <Typography variant="h5">Content for {activeTabData.League.trim()}</Typography>
-                            <Typography>Schedule view or matchup details will go here.</Typography>
+                            <LeagueScheduleView key={activeTabData.id} league={activeTabData.League.trim()} />
                         </Box>
                     ) : (
                          <Box sx={{ p: 3, textAlign: 'center' }}>

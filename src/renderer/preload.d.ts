@@ -27,6 +27,15 @@ interface FetchedLeague {
     League: string;
 }
 
+// Define the structure of the data returned by fetchSchedule
+interface ScheduleItem {
+    PostDtmUTC: string;
+    Participant1: string;
+    Participant2: string;
+    DaySequence?: number; // Optional for MLB
+    // Add other potential fields returned by the query
+}
+
 // Declare the electronAPI methods on the Window interface
 declare global {
   interface Window {
@@ -42,6 +51,7 @@ declare global {
 
       // League data
       fetchLeagues: () => Promise<FetchedLeague[]>;
+      fetchSchedule: (args: { league: string; date: string }) => Promise<ScheduleItem[]>;
 
       // About Window Communication (Keep if needed, or remove if about window is refactored/removed)
       onVersion: (callback: (event: any, version: string) => void) => void;
