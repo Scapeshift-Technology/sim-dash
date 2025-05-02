@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, CircularProgress, Alert } from '@mui/material';
+import { useDispatch } from 'react-redux';
+import { Box, CircularProgress, Alert, Paper } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -12,6 +13,10 @@ import GenericScheduleTable, { ColumnDefinition } from './GenericScheduleTable';
 
 // Import the shared ScheduleItem type
 import type { ScheduleItem } from '../preload.d.ts';
+
+// Import Redux action and types
+import { openMatchupTab } from '../store/slices/leagueSlice';
+import type { AppDispatch } from '../store/store';
 
 interface LeagueScheduleViewProps {
     league: string;
@@ -56,6 +61,7 @@ const genericSortFunction = (a: ScheduleItem, b: ScheduleItem): number => {
 // --- Component Logic ---
 
 const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
+    const dispatch = useDispatch<AppDispatch>();
     const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
     const [scheduleData, setScheduleData] = useState<ScheduleItem[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
@@ -91,9 +97,21 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
     const sortFunction = isMLB ? mlbSortFunction : genericSortFunction;
     const emptyMessage = `No ${league} schedule data available for this date.`;
     const ariaLabel = `${league.toLowerCase()} schedule table`;
+
+    // Updated Row Click Handler
     const handleRowClick = (item: ScheduleItem) => {
         console.log(`Clicked ${league} Match:`, item);
-        // TODO: Implement navigation or detail view logic here
+        if (league === 'MLB' && selectedDate) {
+            dispatch(openMatchupTab({
+                league: league,
+                date: selectedDate.format('YYYY-MM-DD'),
+                participant1: item.Participant1,
+                participant2: item.Participant2,
+                daySequence: item.DaySequence,
+            }));
+        } else {
+            console.log('Row click ignored (not MLB or no date selected)');
+        }
     };
 
     const renderScheduleTable = () => {
@@ -113,19 +131,21 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
     };
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <Box sx={{ mb: 2 }}>
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                        label="Select Date"
-                        value={selectedDate}
-                        onChange={handleDateChange}
-                    />
-                </LocalizationProvider>
-            </Box>
-            <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
-                {renderScheduleTable()}
-            </Box>
+        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+            <Paper elevation={2} sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                <Box sx={{ mb: 2 }}>
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DatePicker
+                            label="Select Date"
+                            value={selectedDate}
+                            onChange={handleDateChange}
+                        />
+                    </LocalizationProvider>
+                </Box>
+                <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+                    {renderScheduleTable()}
+                </Box>
+            </Paper>
         </Box>
     );
 };

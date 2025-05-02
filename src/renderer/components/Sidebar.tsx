@@ -4,7 +4,7 @@ import {
     Drawer, List, ListItemButton, ListItemText, CircularProgress, Typography, Box, Toolbar
 } from '@mui/material';
 import { AppDispatch } from '../store/store'; // Adjust path if needed
-import { fetchLeagues, selectAllLeagues, selectLeaguesLoading, selectLeaguesError, openTab } from '../store/slices/leagueSlice'; // Adjust path if needed and added openTab
+import { fetchLeagues, selectAllLeagues, selectLeaguesLoading, selectLeaguesError, openLeagueTab } from '../store/slices/leagueSlice'; // Adjust path if needed and added openLeagueTab
 
 // Define props for Sidebar, including width and resize handler
 interface SidebarProps {
@@ -29,9 +29,9 @@ const Sidebar: React.FC<SidebarProps> = ({ currentWidth, onResize }) => {
     }, [dispatch, loading]); // Dependency array includes dispatch and loading status
 
     // Click handler for league items
-    const handleLeagueClick = (league: { League: string }) => {
-        console.log(`League clicked: ${league.League.trim()}`);
-        dispatch(openTab(league)); // Dispatch action to open/focus tab
+    const handleLeagueClick = (leagueName: string) => {
+        console.log(`League clicked: ${leagueName}`);
+        dispatch(openLeagueTab(leagueName)); // Dispatch action with league name
     };
 
     // Mouse move handler for resizing
@@ -104,7 +104,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentWidth, onResize }) => {
                 {leagues.map((league) => (
                     <ListItemButton
                         key={league.League.trim()}
-                        onClick={() => handleLeagueClick(league)}
+                        onClick={() => handleLeagueClick(league.League.trim())}
                     >
                         <ListItemText primary={league.League.trim()} />
                     </ListItemButton>

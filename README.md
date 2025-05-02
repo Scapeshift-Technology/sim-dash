@@ -58,12 +58,12 @@ SimDash is an Electron-based desktop application designed to provide users with 
     *   [ ] Implement tab management using MUI Tabs and Redux state (JetBrains-style floating/dockable tabs).
     *   [ ] Clicking a league opens/focuses the corresponding league tab.
 *   **Phase 3: Schedule View**
-    *   [ ] Install MUI Date Pickers and `dayjs`.
-    *   [ ] Add Date Picker to the league tab content component.
-    *   [ ] Implement `fetch-schedule` IPC handler in `main.js`.
-    *   [ ] Fetch schedule data based on selected league and date.
-    *   [ ] Display schedule data in the league tab (initial basic table).
-    *   [ ] Implement UTC to local time conversion for display.
+    *   [x] Install MUI Date Pickers and `dayjs`.
+    *   [x] Add Date Picker to the league tab content component.
+    *   [x] Implement `fetch-schedule` IPC handler in `main.js`.
+    *   [x] Fetch schedule data based on selected league and date.
+    *   [x] Display schedule data in the league tab (initial basic table).
+    *   [x] Implement UTC to local time conversion for display.
 *   **Phase 4: MLB Matchup Details (Future)**
     *   [...] Define necessary SQL queries/tables.
     *   [...] Implement matchup-specific tabs.

@@ -252,10 +252,14 @@ ipcMain.handle('login', async (event, config) => {
             console.log('SQL Server User:', username);
             return { success: true, username: username };
         } else {
-            throw new Error('Could not retrieve username.');
+            console.error('SQL Server connection error: Could not retrieve username.'); // Log the specific reason
+            // If the connection succeeded but username retrieval failed, we might not want to nullify the pool here.
+            // Let's keep the pool open but return failure. Nullifying happens in the outer catch for actual connection errors.
+            // currentPool = null; // Removed this line
+            return { success: false, error: 'Could not retrieve username.' };
         }
 
-    } catch (err) {
+    } catch (err) { // This catch block now only handles errors from connect() or query()
         console.error('SQL Server connection error:', err);
         currentPool = null; // Ensure pool is null on error
         return { success: false, error: err.message };
@@ -347,6 +351,76 @@ ipcMain.handle('fetch-schedule', async (event, { league, date }) => {
     }
 });
 // --- End Fetch Schedule Handler ---
+
+// --- Mock MLB Lineup Function ---
+// TODO: get real data from MLB stats api
+function getLineupsMLB(date, awayTeam, homeTeam, daySequenceNumber) {
+    console.log(`Mocking MLB Lineups for: ${awayTeam} @ ${homeTeam} on ${date} (Seq: ${daySequenceNumber ?? 'N/A'})`);
+    
+    // Simple mock data structure
+    const mockPlayer = (id, name, pos, order) => ({
+        id: id,
+        name: name,
+        position: pos,
+        battingOrder: order,
+        stats: { // Basic placeholder stats
+            hitVsL: { adj_perc_K: 0.20, adj_perc_BB: 0.08 },
+            hitVsR: { adj_perc_K: 0.22, adj_perc_BB: 0.07 },
+            pitchVsL: { adj_perc_K: 0.25, adj_perc_BB: 0.09 }, 
+            pitchVsR: { adj_perc_K: 0.24, adj_perc_BB: 0.10 },
+        }
+    });
+
+    const awayLineup = Array.from({ length: 9 }, (_, i) => 
+        mockPlayer(i + 100, `${awayTeam} Player ${i + 1}`, 'POS', i + 1)
+    );
+    const homeLineup = Array.from({ length: 9 }, (_, i) => 
+        mockPlayer(i + 200, `${homeTeam} Player ${i + 1}`, 'POS', i + 1)
+    );
+
+    const awaySP = mockPlayer(199, `${awayTeam} SP`, 'P', undefined);
+    const homeSP = mockPlayer(299, `${homeTeam} SP`, 'P', undefined);
+
+    const awayBullpen = Array.from({ length: 5 }, (_, i) => mockPlayer(i + 1000, `${awayTeam} RP ${i+1}`, 'P', undefined));
+    const homeBullpen = Array.from({ length: 5 }, (_, i) => mockPlayer(i + 2000, `${homeTeam} RP ${i+1}`, 'P', undefined));
+
+    return {
+        away: {
+            lineup: awayLineup,
+            startingPitcher: awaySP,
+            bullpen: awayBullpen,
+        },
+        home: {
+            lineup: homeLineup,
+            startingPitcher: homeSP,
+            bullpen: homeBullpen,
+        }
+    };
+}
+
+// --- Add Fetch MLB Lineup Handler ---
+ipcMain.handle('fetch-mlb-lineup', async (event, { league, date, participant1, participant2, daySequence }) => {
+    console.log(`IPC received: fetch-mlb-lineup for ${league} ${participant1}@${participant2} on ${date}`);
+    if (league !== 'MLB') {
+        console.error('fetch-mlb-lineup: Called for non-MLB league:', league);
+        throw new Error('Lineups are only available for MLB at this time.');
+    }
+    if (!date || !participant1 || !participant2) {
+        console.error('fetch-mlb-lineup: Missing required parameters.');
+        throw new Error('Date, participant1, and participant2 are required for MLB lineups.');
+    }
+
+    try {
+        // In the future, this would call an external API or query a different DB table
+        const lineupData = getLineupsMLB(date, participant1, participant2, daySequence);
+        console.log(`Mock lineup data generated for ${participant1}@${participant2}`);
+        return lineupData; 
+    } catch (err) {
+        console.error(`Error fetching/generating MLB lineup for ${participant1}@${participant2} on ${date}:`, err);
+        throw err; // Rethrow the error to be handled by the renderer
+    }
+});
+// --- End Fetch MLB Lineup Handler ---
 
 
 // --- App Lifecycle & Menu ---
