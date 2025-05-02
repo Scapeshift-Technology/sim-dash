@@ -9,8 +9,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Connection management
     login: (config) => ipcRenderer.invoke('login', config),
     logout: () => ipcRenderer.invoke('logout'),
+
+    // League/Schedule/Lineup data
     fetchLeagues: () => ipcRenderer.invoke('fetch-leagues'),
-    fetchSchedule: ({ league, date }) => ipcRenderer.invoke('fetch-schedule', { league, date }),
+    fetchSchedule: (args) => ipcRenderer.invoke('fetch-schedule', args),
+    fetchMlbLineup: (args) => ipcRenderer.invoke('fetch-mlb-lineup', args),
 
     // --- Added for About Window ---
     // Listener for receiving the app version from main process

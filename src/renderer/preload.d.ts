@@ -28,12 +28,26 @@ interface FetchedLeague {
 }
 
 // Define the structure of the data returned by fetchSchedule
-interface ScheduleItem {
+export interface ScheduleItem {
     PostDtmUTC: string;
     Participant1: string;
     Participant2: string;
     DaySequence?: number; // Optional for MLB
     // Add other potential fields returned by the query
+}
+
+// --- Add types for MLB Lineups (Imported where needed) ---
+// Re-exporting from here for simplicity in preload, adjust if needed
+export type { MatchupLineups, TeamLineup, Player, PlayerStats, Stats } from '../types/mlb';
+
+
+// Arguments for fetching MLB Lineup
+interface FetchMlbLineupArgs {
+    league: string; // Should always be 'MLB' here
+    date: string; // YYYY-MM-DD
+    participant1: string; // Away Team
+    participant2: string; // Home Team
+    daySequence?: number;
 }
 
 // Declare the electronAPI methods on the Window interface
@@ -52,6 +66,8 @@ declare global {
       // League data
       fetchLeagues: () => Promise<FetchedLeague[]>;
       fetchSchedule: (args: { league: string; date: string }) => Promise<ScheduleItem[]>;
+      // NEW: Fetch MLB Lineup
+      fetchMlbLineup: (args: FetchMlbLineupArgs) => Promise<MatchupLineups>;
 
       // About Window Communication (Keep if needed, or remove if about window is refactored/removed)
       onVersion: (callback: (event: any, version: string) => void) => void;

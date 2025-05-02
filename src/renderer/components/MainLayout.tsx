@@ -9,21 +9,30 @@ import {
     Container,
     CssBaseline,
     Tabs,
-    Tab,
+    Tab as MuiTab,
     IconButton
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import type { AppDispatch } from '../store/store';
 import { logoutUser, selectUsername } from '../store/slices/authSlice';
-import { selectOpenTabs, selectActiveTabId, setActiveTab, closeTab } from '../store/slices/leagueSlice';
+import { 
+    selectOpenTabs, 
+    selectActiveTabId, 
+    setActiveTab, 
+    closeTab, 
+    selectActiveTabData 
+} from '../store/slices/leagueSlice';
+import type { Tab } from '../store/slices/leagueSlice';
 import Sidebar from './Sidebar';
 import LeagueScheduleView from './LeagueScheduleView';
+import MLBMatchupView from './MLBMatchupView';
 
 const MainLayout: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
     const username = useSelector(selectUsername);
     const openTabs = useSelector(selectOpenTabs);
     const activeTabId = useSelector(selectActiveTabId);
+    const activeTabData = useSelector(selectActiveTabData);
     const [drawerWidth, setDrawerWidth] = useState(240);
     const minDrawerWidth = 150;
     const maxDrawerWidth = 500;
@@ -45,7 +54,31 @@ const MainLayout: React.FC = () => {
         dispatch(closeTab(tabIdToClose));
     };
 
-    const activeTabData = openTabs.find(tab => tab.id === activeTabId);
+    const renderTabContent = (tab: Tab | undefined) => {
+        if (!tab) {
+            return (
+                <Box sx={{ p: 3, textAlign: 'center' }}>
+                    <Typography>Select a league from the sidebar or open a matchup.</Typography>
+                </Box>
+            );
+        }
+
+        switch (tab.type) {
+            case 'league':
+                return <LeagueScheduleView key={tab.id} league={tab.league} />;
+            case 'matchup':
+                return <MLBMatchupView 
+                            key={tab.id} 
+                            league={tab.league} 
+                            date={tab.date} 
+                            participant1={tab.participant1} 
+                            participant2={tab.participant2} 
+                            daySequence={tab.daySequence} 
+                        />;
+            default:
+                return <Typography>Unknown tab type</Typography>;
+        }
+    };
 
     return (
         <Box sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -86,14 +119,14 @@ const MainLayout: React.FC = () => {
                             onChange={handleTabChange}
                             variant="scrollable"
                             scrollButtons="auto"
-                            aria-label="League tabs"
+                            aria-label="Open tabs"
                         >
                             {openTabs.map((tab) => (
-                                <Tab
+                                <MuiTab
                                     key={tab.id}
                                     label={
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            {tab.League.trim()}
+                                            {tab.type === 'league' ? tab.league : tab.label}
                                             <IconButton
                                                 size="small"
                                                 component="div"
@@ -105,30 +138,27 @@ const MainLayout: React.FC = () => {
                                         </Box>
                                     }
                                     value={tab.id}
-                                    id={`league-tab-${tab.id}`}
-                                    aria-controls={`league-tabpanel-${tab.id}`}
+                                    id={`tab-${tab.id}`}
+                                    aria-controls={`tabpanel-${tab.id}`}
                                 />
                             ))}
                         </Tabs>
                     </Box>
                 )}
 
-                <Container sx={{ flexGrow: 1 }} maxWidth={false}>
-                    {activeTabData ? (
-                        <Box
-                             role="tabpanel"
-                             hidden={!activeTabData}
-                             id={`league-tabpanel-${activeTabData.id}`}
-                             aria-labelledby={`league-tab-${activeTabData.id}`}
-                             sx={{ height: '100%' }}
-                        >
-                            <LeagueScheduleView key={activeTabData.id} league={activeTabData.League.trim()} />
-                        </Box>
-                    ) : (
-                         <Box sx={{ p: 3, textAlign: 'center' }}>
-                             <Typography>Select a league from the sidebar to open a tab.</Typography>
-                         </Box>
-                    )}
+                <Container 
+                    sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }} 
+                    maxWidth={false}
+                >
+                    <Box 
+                        role="tabpanel"
+                        hidden={!activeTabData}
+                        id={`tabpanel-${activeTabData?.id ?? ''}`}
+                        aria-labelledby={`tab-${activeTabData?.id ?? ''}`}
+                        sx={{ flexGrow: 1, overflow: 'auto' }}
+                    >
+                       {renderTabContent(activeTabData)}
+                    </Box>
                 </Container>
             </Box>
             
