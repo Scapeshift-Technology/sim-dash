@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, CircularProgress, Alert } from '@mui/material';
+import { Box, Typography, CircularProgress, Alert, Paper } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -113,19 +113,21 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
     };
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <Box sx={{ mb: 2 }}>
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                        label="Select Date"
-                        value={selectedDate}
-                        onChange={handleDateChange}
-                    />
-                </LocalizationProvider>
-            </Box>
-            <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
-                {renderScheduleTable()}
-            </Box>
+        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+            <Paper elevation={2} sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                <Box sx={{ mb: 2 }}>
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DatePicker
+                            label="Select Date"
+                            value={selectedDate}
+                            onChange={handleDateChange}
+                        />
+                    </LocalizationProvider>
+                </Box>
+                <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+                    {renderScheduleTable()}
+                </Box>
+            </Paper>
         </Box>
     );
 };

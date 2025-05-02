@@ -72,12 +72,9 @@ const MainLayout: React.FC = () => {
                 sx={{
                     flexGrow: 1,
                     bgcolor: 'background.default',
-                    p: 3,
+                    p: 2,
                     display: 'flex',
                     flexDirection: 'column',
-                    ml: `${drawerWidth}px`,
-                    width: `calc(100% - ${drawerWidth}px)`,
-                    pb: '64px', // Add padding to the bottom to account for the footer height
                 }}
             >
                 <Toolbar />
@@ -116,7 +113,7 @@ const MainLayout: React.FC = () => {
                     </Box>
                 )}
 
-                <Container sx={{ flexGrow: 1, py: 2 }}>
+                <Container sx={{ flexGrow: 1 }} maxWidth={false}>
                     {activeTabData ? (
                         <Box
                              role="tabpanel"
