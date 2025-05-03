@@ -8,12 +8,18 @@
     "strict": true,
     "target": "ESNext",
     "esModuleInterop": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": [
     "vite.config.ts",
     "src/main.js",
     "src/preload.js",
-    "src/db.js"
+    "src/db.js",
+    "src/services/**/*.ts",
+    "src/types/**/*.ts"
   ]
 } 

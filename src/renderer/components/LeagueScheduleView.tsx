@@ -76,7 +76,13 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
             try {
                 const dateString = selectedDate.format('YYYY-MM-DD');
                 const data: ScheduleItem[] = await window.electronAPI.fetchSchedule({ league, date: dateString });
-                setScheduleData(data);
+                const cleanedData = data.map(item => ({
+                    ...item,
+                    Participant1: item.Participant1.trim(),
+                    Participant2: item.Participant2.trim()
+                }));
+                console.log(`SCHEDULE DATA: ${JSON.stringify(cleanedData, null, 2)}`);
+                setScheduleData(cleanedData);
             } catch (err: any) {
                 console.error('Error fetching schedule:', err);
                 setError(err.message || 'Failed to fetch schedule');

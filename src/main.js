@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs'); // Import fs module
 const dbHelper = require('./db'); // Local SQLite helper
 const sql = require('mssql'); // SQL Server driver
+const { getLineupsMLB } = require('../dist/src/services/mlb/external/lineups');
 
 // Force the app name at the system level for macOS menu
 app.name = 'SimDash'; // Directly set app.name property
@@ -352,52 +353,6 @@ ipcMain.handle('fetch-schedule', async (event, { league, date }) => {
 });
 // --- End Fetch Schedule Handler ---
 
-// --- Mock MLB Lineup Function ---
-// TODO: get real data from MLB stats api
-function getLineupsMLB(date, awayTeam, homeTeam, daySequenceNumber) {
-    console.log(`Mocking MLB Lineups for: ${awayTeam} @ ${homeTeam} on ${date} (Seq: ${daySequenceNumber ?? 'N/A'})`);
-    
-    // Simple mock data structure
-    const mockPlayer = (id, name, pos, order) => ({
-        id: id,
-        name: name,
-        position: pos,
-        battingOrder: order,
-        stats: { // Basic placeholder stats
-            hitVsL: { adj_perc_K: 0.20, adj_perc_BB: 0.08 },
-            hitVsR: { adj_perc_K: 0.22, adj_perc_BB: 0.07 },
-            pitchVsL: { adj_perc_K: 0.25, adj_perc_BB: 0.09 }, 
-            pitchVsR: { adj_perc_K: 0.24, adj_perc_BB: 0.10 },
-        }
-    });
-
-    const awayLineup = Array.from({ length: 9 }, (_, i) => 
-        mockPlayer(i + 100, `${awayTeam} Player ${i + 1}`, 'POS', i + 1)
-    );
-    const homeLineup = Array.from({ length: 9 }, (_, i) => 
-        mockPlayer(i + 200, `${homeTeam} Player ${i + 1}`, 'POS', i + 1)
-    );
-
-    const awaySP = mockPlayer(199, `${awayTeam} SP`, 'P', undefined);
-    const homeSP = mockPlayer(299, `${homeTeam} SP`, 'P', undefined);
-
-    const awayBullpen = Array.from({ length: 5 }, (_, i) => mockPlayer(i + 1000, `${awayTeam} RP ${i+1}`, 'P', undefined));
-    const homeBullpen = Array.from({ length: 5 }, (_, i) => mockPlayer(i + 2000, `${homeTeam} RP ${i+1}`, 'P', undefined));
-
-    return {
-        away: {
-            lineup: awayLineup,
-            startingPitcher: awaySP,
-            bullpen: awayBullpen,
-        },
-        home: {
-            lineup: homeLineup,
-            startingPitcher: homeSP,
-            bullpen: homeBullpen,
-        }
-    };
-}
-
 // --- Add Fetch MLB Lineup Handler ---
 ipcMain.handle('fetch-mlb-lineup', async (event, { league, date, participant1, participant2, daySequence }) => {
     console.log(`IPC received: fetch-mlb-lineup for ${league} ${participant1}@${participant2} on ${date}`);
@@ -413,7 +368,7 @@ ipcMain.handle('fetch-mlb-lineup', async (event, { league, date, participant1, p
     try {
         // In the future, this would call an external API or query a different DB table
         const lineupData = getLineupsMLB(date, participant1, participant2, daySequence);
-        console.log(`Mock lineup data generated for ${participant1}@${participant2}`);
+        console.log(`Lineup data generated for ${participant1}@${participant2} #${daySequence} on ${date}`);
         return lineupData; 
     } catch (err) {
         console.error(`Error fetching/generating MLB lineup for ${participant1}@${participant2} on ${date}:`, err);
