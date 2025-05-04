@@ -7,6 +7,10 @@ require('@swc/register')({
       tsx: false
     },
     target: "es2020"
+  },
+  // Add this module option
+  module: {
+    type: "commonjs"
   }
 });
 

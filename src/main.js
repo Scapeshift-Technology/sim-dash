@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs'); // Import fs module
 const dbHelper = require('./db'); // Local SQLite helper
 const sql = require('mssql'); // SQL Server driver
-const { getLineupsMLB } = require('../dist/src/services/mlb/external/lineups');
+const { getLineupsMLB } = require('./services/mlb/external/lineups');
 
 // Force the app name at the system level for macOS menu
 app.name = 'SimDash'; // Directly set app.name property
