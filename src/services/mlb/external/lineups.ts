@@ -18,6 +18,17 @@ import {
   getMlbRosterApiRoster
 } from './mlbApi';
 
+// ---------- Main function ----------
+/**
+ * Gets the lineups for a given matchup. Attempts to fetch from MLB API first, falls back to swish analytics then to mock data if API fails.
+ * @param {string} date - The date of the game
+ * @param {string} awayTeam - The away team
+ * @param {string} homeTeam - The home team
+ * @param {number} daySequenceNumber - The day sequence number
+ * @returns {MatchupLineups} The lineups for the matchup (either real data from MLB API or mock data if API fails)
+ * @example
+ * getLineupsMLB('2025-05-05', 'Los Angeles Dodgers', 'Miami Marlins', 1)
+ */
 async function getLineupsMLB(date: string, awayTeam: string, homeTeam: string, daySequenceNumber: number): Promise<MatchupLineups> {
   // Try MLB API
     // Find gamePk given info
@@ -36,8 +47,8 @@ async function getLineupsMLB(date: string, awayTeam: string, homeTeam: string, d
     const homeRosterInfo: MlbRosterApiResponse = await getMlbRosterApiRoster(homeTeamId, date, 'active');
 
     // Extract lineups
-    const awayTeamLineup = extractCompleteTeamLineup(gameInfo, awayRosterInfo, 'away');
-    const homeTeamLineup = extractCompleteTeamLineup(gameInfo, homeRosterInfo, 'home');
+    const awayTeamLineup: TeamLineup = extractCompleteTeamLineup(gameInfo, awayRosterInfo, 'away');
+    const homeTeamLineup: TeamLineup = extractCompleteTeamLineup(gameInfo, homeRosterInfo, 'home');
 
     return {
       away: awayTeamLineup,
@@ -50,7 +61,7 @@ async function getLineupsMLB(date: string, awayTeam: string, homeTeam: string, d
       // Get Swish lineups
       // If that fails, use mock lineups
 
-    const mockLineups = makeMockLineups(date, awayTeam, homeTeam, daySequenceNumber);
+    const mockLineups: MatchupLineups = makeMockLineups(date, awayTeam, homeTeam, daySequenceNumber);
     console.log(`Lineups generated for ${awayTeam} @ ${homeTeam} on ${date} (Seq: ${daySequenceNumber ?? 'N/A'})`);
 
 
@@ -58,6 +69,17 @@ async function getLineupsMLB(date: string, awayTeam: string, homeTeam: string, d
   }
 }
 
+// ---------- Helper functions ----------
+/**
+ * Extracts the complete team lineup from the game info and roster info
+ * @param {MlbGameApiResponse} gameInfo - The game info
+ * @param {MlbRosterApiResponse} rosterInfo - The roster info
+ * @param {TeamType} teamType - The team type (away or home)
+ * @returns {TeamLineup} The complete team lineup
+ * @example
+ * extractCompleteTeamLineup(gameInfo, rosterInfo, 'away') // returns the away team lineup
+ * @throws {Error} If either parameter is not a number
+ */
 function extractCompleteTeamLineup(
   gameInfo: MlbGameApiResponse, 
   rosterInfo: MlbRosterApiResponse,
@@ -79,6 +101,16 @@ function extractCompleteTeamLineup(
   };
 }
 
+/**
+ * Generates mock lineups for a given matchup
+ * @param {string} date - The date of the game
+ * @param {string} awayTeam - The full name of the away team
+ * @param {string} homeTeam - The full name of the home team
+ * @param {number} daySequenceNumber - The day sequence number
+ * @returns {MatchupLineups} The mock lineups for the matchup
+ * @example
+ * makeMockLineups('2025-05-05', 'Los Angeles Dodgers', 'Miami Marlins', 1)
+ */
 function makeMockLineups(date: string, awayTeam: string, homeTeam: string, daySequenceNumber: number) {
     console.log(`Mocking MLB Lineups for: ${awayTeam} @ ${homeTeam} on ${date} (Seq: ${daySequenceNumber ?? 'N/A'})`);
     
