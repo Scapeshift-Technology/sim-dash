@@ -12,7 +12,6 @@ const BASE_MLB_API_URL = 'https://statsapi.mlb.com/api/v1';
 
 async function getMlbScheduleApiGame(date: string, awayTeam: string, homeTeam: string, daySequenceNumber: number): Promise<MlbScheduleApiGame> {
   try {
-    console.log(`GETTING SCHEDULE FOR ${awayTeam} @ ${homeTeam} ON ${date} (Seq: ${daySequenceNumber})`);
     // Find gamePk given info
     const formattedDate = formatDateMlbApi(date);
     const scheduleUrl = `${BASE_MLB_API_URL}/schedule?startDate=${formattedDate}&endDate=${formattedDate}&sportId=1&hydrate=team,game(seriesStatus)`;
@@ -114,7 +113,6 @@ async function getMlbRosterApiRoster(teamId: number, date: string, rosterType: s
     const url = `${BASE_MLB_API_URL}/teams/${teamId}/roster?date=${date}&rosterType=${rosterType}`;
     const response = await fetch(url);
     const data = await response.json();
-    console.log(`Got roster for team ${teamId} with ${data.roster ? data.roster.length : 0} players`);
     if (!data.roster) {
       throw new Error('No roster found');
     }
@@ -127,11 +125,46 @@ async function getMlbRosterApiRoster(teamId: number, date: string, rosterType: s
 
 export { getMlbRosterApiRoster };
 
+// ---------- Teams endpoint ----------
+
+async function getMlbTeamId(teamName: string, season: number) {
+  try {
+    const response = await fetch(`${BASE_MLB_API_URL}/teams?sportId=1&season=${season}`);
+    const data = await response.json();
+    
+    // Clean up the input team name to handle variations
+    const cleanTeamName = teamName.toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    // Search through teams to find a match
+    const team = data.teams.find((team: any) => {
+      const teamNameVariations = [
+        team.name.toLowerCase(),                    // Full name (e.g., "St. Louis Cardinals")
+        team.teamName.toLowerCase(),                // Team name (e.g., "Cardinals")
+        `${team.locationName} ${team.teamName}`.toLowerCase() // Full name constructed
+      ];
+      return teamNameVariations.some(variation => cleanTeamName.includes(variation));
+    });
+    
+    return team ? team.id : null;
+  } catch (error) {
+    console.error(`Error getting MLB team ID for ${teamName}: ${error}`);
+    return null;
+  }
+}
+
+export { getMlbTeamId };
+
 // ---------- Cross-endpoint functions ----------
 
 function extractBullpenFromMlbRosterAndGame(gameInfo: MlbGameApiResponse, roster: MlbRosterApiResponse, teamType: TeamType): Player[] {
   const startingPitcher = extractStartingPitcherFromMlbGameApiGame(gameInfo, teamType);
-  const bullpen = roster.roster.filter((player: any) => player.position.abbreviation === 'P' && player.person.id !== startingPitcher.id);
+  return extractBullPenFromMlbRoster(roster, startingPitcher.id);
+}
+
+function extractBullPenFromMlbRoster(roster: MlbRosterApiResponse, startingPitcherId: number): Player[] {
+  const bullpen = roster.roster.filter((player: any) => player.position.abbreviation === 'P' && player.person.id !== startingPitcherId);
 
   return bullpen.map((player: any) => ({
     id: player.person.id,
@@ -140,9 +173,28 @@ function extractBullpenFromMlbRosterAndGame(gameInfo: MlbGameApiResponse, roster
   }));
 }
 
-export { extractBullpenFromMlbRosterAndGame }
+export { extractBullpenFromMlbRosterAndGame, extractBullPenFromMlbRoster }
 
 // ---------- Util type functions used with MLB API ----------
+
+function findPlayerId(playerName: string, roster: MlbRosterApiResponse): number | null {
+  // Clean up the name for comparison
+  const cleanName = playerName.toLowerCase().trim();
+  
+  // Try to find the player in the roster
+  const player = roster.roster.find((p: any) => {
+    const rosterName = p.person.fullName.toLowerCase();
+    return cleanName === rosterName;
+  });
+  
+  if (player) {
+    return player.person.id;
+  }
+  
+  // Log if player not found
+  console.log(`Could not find ID for player: ${playerName}`);
+  return null;
+}
 
 function formatDateMlbApi(date: string | Date): string {
   let dateTime;
@@ -173,4 +225,4 @@ function addNoonTime(dateStr: string): string {
   return `${dateStr}T12:00:00`;
 }
 
-export { formatDateMlbApi };
+export { formatDateMlbApi, findPlayerId };

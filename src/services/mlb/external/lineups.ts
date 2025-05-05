@@ -14,9 +14,12 @@ import {
   extractStartingLineupFromMlbGameApiGame, 
   extractStartingPitcherFromMlbGameApiGame,
   extractTeamIds,
-  extractBullpenFromMlbRosterAndGame,
-  getMlbRosterApiRoster
+  extractBullPenFromMlbRoster,
+  getMlbRosterApiRoster,
+  formatDateMlbApi
 } from './mlbApi';
+
+import { getSwishLineups } from './swish';
 
 // ---------- Main function ----------
 /**
@@ -30,21 +33,18 @@ import {
  * getLineupsMLB('2025-05-05', 'Los Angeles Dodgers', 'Miami Marlins', 1)
  */
 async function getLineupsMLB(date: string, awayTeam: string, homeTeam: string, daySequenceNumber: number): Promise<MatchupLineups> {
-  // Try MLB API
-    // Find gamePk given info
-    // Use gamePk and get game info
-    // Use game info to generate lineups
+  // Put date in YYYY-MM-DD format
+  const formattedDate = formatDateMlbApi(date);
   try {
     // Get MLB API response for a given game
-    const game: MlbScheduleApiGame = await getMlbScheduleApiGame(date, awayTeam, homeTeam, daySequenceNumber);
+    const game: MlbScheduleApiGame = await getMlbScheduleApiGame(formattedDate, awayTeam, homeTeam, daySequenceNumber);
     const gamePk = game.gamePk;
-    console.log(`GAME PK: ${gamePk}`);
     const gameInfo: MlbGameApiResponse = await getMlbGameApiGame(gamePk);
 
     // Find roster data for both teams
     const { awayTeamId, homeTeamId } = extractTeamIds(gameInfo);
-    const awayRosterInfo: MlbRosterApiResponse = await getMlbRosterApiRoster(awayTeamId, date, 'active');
-    const homeRosterInfo: MlbRosterApiResponse = await getMlbRosterApiRoster(homeTeamId, date, 'active');
+    const awayRosterInfo: MlbRosterApiResponse = await getMlbRosterApiRoster(awayTeamId, formattedDate, 'active');
+    const homeRosterInfo: MlbRosterApiResponse = await getMlbRosterApiRoster(homeTeamId, formattedDate, 'active');
 
     // Extract lineups
     const awayTeamLineup: TeamLineup = extractCompleteTeamLineup(gameInfo, awayRosterInfo, 'away');
@@ -56,20 +56,35 @@ async function getLineupsMLB(date: string, awayTeam: string, homeTeam: string, d
     };
   } catch (error) {
     console.error('Error getting lineups from MLB API:', error);
-
     // If MLB API fails, use backup function
-      // Get Swish lineups
-      // If that fails, use mock lineups
-
-    const mockLineups: MatchupLineups = makeMockLineups(date, awayTeam, homeTeam, daySequenceNumber);
-    console.log(`Lineups generated for ${awayTeam} @ ${homeTeam} on ${date} (Seq: ${daySequenceNumber ?? 'N/A'})`);
-
-
-    return mockLineups; // Fallback to mock data on error
+    const backupLineups: MatchupLineups = await getBackupLineups(formattedDate, awayTeam, homeTeam, daySequenceNumber);
+    return backupLineups;
   }
 }
 
 // ---------- Helper functions ----------
+/**
+ * Gets the lineups for a given matchup from a backup source(Swish analytics first, then mock lineups)
+ * @param {string} date - The date of the game in YYYY-MM-DD format
+ * @param {string} awayTeam - The away team
+ * @param {string} homeTeam - The home team
+ * @param {number} daySequenceNumber - The day sequence number
+ * @returns {MatchupLineups} The lineups for the matchup
+ * @example
+ * getBackupLineups('2025-05-05', 'Los Angeles Dodgers', 'Miami Marlins', 1)
+ */
+async function getBackupLineups(date: string, awayTeam: string, homeTeam: string, daySequenceNumber: number): Promise<MatchupLineups> {
+  // Get Swish lineups. If that fails, use mock lineups
+  try {
+    const swishLineups: MatchupLineups = await getSwishLineups(date, awayTeam, homeTeam, daySequenceNumber);
+    return swishLineups;
+  } catch(error) {
+    console.error('Error getting lineups from Swish analytics:', error);
+    const mockLineups: MatchupLineups = makeMockLineups(date, awayTeam, homeTeam, daySequenceNumber);
+    return mockLineups;
+  }
+}
+
 /**
  * Extracts the complete team lineup from the game info and roster info
  * @param {MlbGameApiResponse} gameInfo - The game info
@@ -92,7 +107,7 @@ function extractCompleteTeamLineup(
   const startingPitcher = extractStartingPitcherFromMlbGameApiGame(gameInfo, teamType);
 
   // Get bullpen
-  const bullpen = extractBullpenFromMlbRosterAndGame(gameInfo, rosterInfo, teamType);
+  const bullpen = extractBullPenFromMlbRoster(rosterInfo, startingPitcher.id);
 
   return {
     lineup: startingLineup,
@@ -111,7 +126,7 @@ function extractCompleteTeamLineup(
  * @example
  * makeMockLineups('2025-05-05', 'Los Angeles Dodgers', 'Miami Marlins', 1)
  */
-function makeMockLineups(date: string, awayTeam: string, homeTeam: string, daySequenceNumber: number) {
+export function makeMockLineups(date: string, awayTeam: string, homeTeam: string, daySequenceNumber: number) {
     console.log(`Mocking MLB Lineups for: ${awayTeam} @ ${homeTeam} on ${date} (Seq: ${daySequenceNumber ?? 'N/A'})`);
     
     // Simple mock data structure
