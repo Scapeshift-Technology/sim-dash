@@ -16,6 +16,12 @@ import {
 // Import the lineup types
 import type { MatchupLineups, TeamLineup, Player, MLBMatchupViewProps } from '@/types/mlb';
 
+function renderPlayerEntry(player: Player) {
+  return (
+    <ListItemText primary={`${player.battingOrder ? player.battingOrder + '. ' : ''}${player.name} | Pos: ${player.position ?? 'N/A'}`} />
+  )
+  {/* TODO: Display relevant player stats */}
+}
 
 const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({ 
     league,
@@ -60,39 +66,33 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         if (!teamData) return <Typography>Lineup data unavailable.</Typography>;
 
         const renderPlayerList = (players: Player[], subheader: string) => (
-            <List dense subheader={<ListSubheader>{subheader}</ListSubheader>}>
+          <List 
+            dense 
+            subheader={
+              <ListSubheader sx={{ lineHeight: '30px', pb: 0 }}>
+                {subheader}
+              </ListSubheader>
+            }
+            sx={{ pt: 0 }}
+          >
                 {players.map((player) => (
-                    <ListItem key={player.id}>
-                        <ListItemText 
-                            primary={`${player.battingOrder ? player.battingOrder + '. ' : ''}${player.name}`}
-                            secondary={`ID: ${player.id} | Pos: ${player.position ?? 'N/A'}`} 
-                        />
-                         {/* TODO: Display relevant player stats */}
+                    <ListItem key={player.id} sx={{ py: 0 }}>
+                        {renderPlayerEntry(player)}
                     </ListItem>
                 ))}
             </List>
         );
 
         return (
-            <Paper elevation={3} sx={{ p: 2, height: '100%' }}>
-                <Typography variant="h6" gutterBottom>{teamName} Details</Typography>
-                <Divider sx={{ mb: 1 }}/>
-                
-                <Typography variant="subtitle1">Starting Pitcher:</Typography>
-                <List dense>
-                    <ListItem>
-                       <ListItemText 
-                            primary={teamData.startingPitcher.name}
-                            secondary={`ID: ${teamData.startingPitcher.id} | Pos: P`} 
-                        />
-                         {/* TODO: Display relevant pitcher stats */}
-                    </ListItem>
-                </List>
-                
-                {renderPlayerList(teamData.lineup, 'Batting Order')}
-                {renderPlayerList(teamData.bullpen, 'Bullpen')}
-                 {/* Add Bench here later */}
-            </Paper>
+          <Paper elevation={3} sx={{ p: 2, height: '100%' }}>
+            <Typography variant="h6" gutterBottom>{teamName} Details</Typography>
+            <Divider sx={{ mb: 1 }}/>
+            
+            {renderPlayerList([teamData.startingPitcher], 'Starting Pitcher')}
+            {renderPlayerList(teamData.lineup, 'Batting Order')}
+            {renderPlayerList(teamData.bullpen, 'Bullpen')}
+            {/* Add Bench here later */}
+          </Paper>
         );
     };
 
