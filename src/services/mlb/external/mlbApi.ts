@@ -14,8 +14,7 @@ async function getMlbScheduleApiGame(date: string, awayTeam: string, homeTeam: s
   try {
     console.log(`GETTING SCHEDULE FOR ${awayTeam} @ ${homeTeam} ON ${date} (Seq: ${daySequenceNumber})`);
     // Find gamePk given info
-    const dateStr = addNoonTime(date);
-    const formattedDate = formatDateMlbApi(dateStr);
+    const formattedDate = formatDateMlbApi(date);
     const scheduleUrl = `${BASE_MLB_API_URL}/schedule?startDate=${formattedDate}&endDate=${formattedDate}&sportId=1&hydrate=team,game(seriesStatus)`;
     const scheduleResponse = await fetch(scheduleUrl);
     const scheduleData = await scheduleResponse.json();
@@ -113,9 +112,7 @@ export { getMlbGameApiGame, extractStartingLineupFromMlbGameApiGame, extractStar
 async function getMlbRosterApiRoster(teamId: number, date: string, rosterType: string | null = '40Man'): Promise<MlbRosterApiResponse> {
   try {
     const url = `${BASE_MLB_API_URL}/teams/${teamId}/roster?date=${date}&rosterType=${rosterType}`;
-    console.log(`GETTING ROSTER FROM URL: ${url}`);
     const response = await fetch(url);
-    console.log(`ROSTER RESPONSE STATUS: ${response.status}`);
     const data = await response.json();
     console.log(`Got roster for team ${teamId} with ${data.roster ? data.roster.length : 0} players`);
     if (!data.roster) {
@@ -148,6 +145,17 @@ export { extractBullpenFromMlbRosterAndGame }
 // ---------- Util type functions used with MLB API ----------
 
 function formatDateMlbApi(date: string | Date): string {
+  let dateTime;
+  if (typeof date === 'string') {
+    dateTime = addNoonTime(date);
+  } else {
+    dateTime = date;
+  }
+
+  return formatDateYYYY_MM_DD(dateTime);
+}
+
+function formatDateYYYY_MM_DD(date: string | Date): string {
   // Format date like YYYY-MM-DD
   let dateObj;
   if (typeof date === 'string') {
@@ -165,3 +173,4 @@ function addNoonTime(dateStr: string): string {
   return `${dateStr}T12:00:00`;
 }
 
+export { formatDateMlbApi };
