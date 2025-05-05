@@ -10,8 +10,10 @@ import {
     ListItem, 
     ListItemText,
     ListSubheader,
-    Divider
+    Divider,
+    Button
 } from '@mui/material';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 
 // Import the lineup types
 import type { MatchupLineups, TeamLineup, Player, MLBMatchupViewProps } from '@/types/mlb';
@@ -30,10 +32,12 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     participant2,
     daySequence 
 }) => {
+    // ---------- State ----------
     const [lineupData, setLineupData] = useState<MatchupLineups | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
+    // ---------- Effect ----------
     useEffect(() => {
         const fetchLineup = async () => {
             setLoading(true);
@@ -61,7 +65,18 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         fetchLineup();
     }, [league, date, participant1, participant2, daySequence]); // Refetch if props change
 
-    // Helper function to render a team's lineup details
+    // ---------- Handlers ----------
+    const handleRunSimulation = async () => {
+        // Placeholder for simulation functionality
+        console.log('Running simulation for:', { participant1, participant2, date });
+
+        const results = await window.electronAPI.simulateMatchupMLB({
+          numGames: 100
+        });
+        console.log('Simulation results:', results);
+    };
+
+    // ---------- Render functions ----------
     const renderTeamLineup = (teamName: string, teamData: TeamLineup | undefined) => {
         if (!teamData) return <Typography>Lineup data unavailable.</Typography>;
 
@@ -96,6 +111,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         );
     };
 
+    // ---------- Render ----------
     if (loading) return <CircularProgress />;
     if (error) return <Alert severity="error">{error}</Alert>;
     if (!lineupData) return <Alert severity="info">No lineup data found.</Alert>;
@@ -105,6 +121,17 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             <Typography variant="h5" gutterBottom>
                 Matchup: {participant1} @ {participant2} ({date})
             </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 3 }}>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    size="large"
+                    startIcon={<PlayArrowIcon />}
+                    onClick={handleRunSimulation}
+                >
+                    Run Simulation
+                </Button>
+            </Box>
             <Grid container spacing={2}>
                 <Grid item xs={12} md={6}>
                     {renderTeamLineup(`${participant1} (Away)`, lineupData.away)}

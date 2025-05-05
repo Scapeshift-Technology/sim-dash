@@ -4,6 +4,7 @@ const fs = require('fs'); // Import fs module
 const dbHelper = require('./db'); // Local SQLite helper
 const sql = require('mssql'); // SQL Server driver
 const { getLineupsMLB } = require('./services/mlb/external/lineups');
+const { simulateMatchupMLB } = require('./services/mlb/sim/engine');
 
 // Force the app name at the system level for macOS menu
 app.name = 'SimDash'; // Directly set app.name property
@@ -377,6 +378,18 @@ ipcMain.handle('fetch-mlb-lineup', async (event, { league, date, participant1, p
 });
 // --- End Fetch MLB Lineup Handler ---
 
+//  --- Add Simulate Matchup Handler ---
+ipcMain.handle('simulate-matchup-mlb', async (event, { numGames}) => {
+  console.log(`IPC received: simulate-matchup for ${numGames} games`);
+  try {
+    const simResults = simulateMatchupMLB(numGames);
+    return simResults;
+  } catch (err) {
+    console.error(`Error simulating matchup:`, err);
+    throw err;
+  }
+})
+//  --- End Simulate Matchup Handler ---
 
 // --- App Lifecycle & Menu ---
 

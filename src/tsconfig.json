@@ -18,7 +18,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./renderer/*"],
-      "@/types/*": ["./types/*"]
+      "@/types/*": ["./types/*"],
+      "@/mlb/*": ["./services/mlb/*"]
     }
   },
   "include": ["./renderer/**/*", "types", "./**/*.ts", "./**/*.js"],

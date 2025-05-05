@@ -15,6 +15,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     fetchSchedule: (args) => ipcRenderer.invoke('fetch-schedule', args),
     fetchMlbLineup: (args) => ipcRenderer.invoke('fetch-mlb-lineup', args),
 
+    // Simulations
+    simulateMatchupMLB: (args) => ipcRenderer.invoke('simulate-matchup-mlb', args),
+
     // --- Added for About Window ---
     // Listener for receiving the app version from main process
     onVersion: (callback) => ipcRenderer.on('set-version', callback)
