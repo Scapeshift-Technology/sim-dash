@@ -67,11 +67,10 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
 
     // ---------- Handlers ----------
     const handleRunSimulation = async () => {
-        // Placeholder for simulation functionality
         console.log('Running simulation for:', { participant1, participant2, date });
 
         const results = await window.electronAPI.simulateMatchupMLB({
-          numGames: 100
+          numGames: 50000
         });
         console.log('Simulation results:', results);
     };

@@ -40,7 +40,6 @@ async function simulateMatchupMLB(
 
 function simulateGames(matchup: MatchupLineups, leagueAvgStats: LeagueAvgStats, num_games: number): PlayResult[][] {
   const matchupProbabilities: GameMatchupProbabilities = getMatchupProbabilities(matchup, leagueAvgStats);
-
   const allPlays: PlayResult[][] = [];
 
   for (let i = 0; i < num_games; i++) {
@@ -77,13 +76,15 @@ function simulateGame(matchup: MatchupLineups, matchupProbabilities: GameMatchup
 
     // Handle inning end
     if (gameState.outs >= 3) {
-      if (gameState.inning >= 9) {
+      if (gameState.inning > 9) {
         gameState.bases = [false, true, false];
       } else {
         gameState.bases = [false, false, false];
       }
+      if (!gameState.topInning) {
+        gameState.inning += 1;
+      }
       gameState.outs = 0;
-      gameState.inning += 1;
       gameState.topInning = !gameState.topInning;
     }
   }
@@ -156,19 +157,17 @@ function processEvent(event: EventType, gameState: GameStateMLB): {
       // Walk - advance runners only if forced
       if (gameState.bases[0] && gameState.bases[1] && gameState.bases[2]) {  // Bases loaded
         runsOnPlay += 1;
-        // Everyone moves up, with batter going to first
-        newBases[0] = true;  // Batter goes to first
       } else if (gameState.bases[0] && gameState.bases[1]) {  // First and second
         newBases[2] = gameState.bases[1];  // Runner on second to third
         newBases[1] = gameState.bases[0];  // Runner on first to second
         newBases[0] = true;               // Batter to first
-      } else if (gameState.bases[0]) {  // Just first
-        newBases[2] = false;            // Third stays empty
-        newBases[1] = gameState.bases[0];  // Runner on first to second
+      } else if (gameState.bases[0]) {  // Just first or first and third
+        newBases[2] = gameState.bases[1] || gameState.bases[2];
+        newBases[1] = gameState.bases[0];  // First to second
         newBases[0] = true;               // Batter to first
       } else {  // Empty or other combinations
-        newBases[2] = gameState.bases[1];  // Second to third
-        newBases[1] = gameState.bases[0];  // First to second
+        newBases[2] = gameState.bases[2];  // Third stays
+        newBases[1] = gameState.bases[1];  // Second stays
         newBases[0] = true;               // Batter to first
       }
     } else if (event === '1B') {
@@ -177,8 +176,8 @@ function processEvent(event: EventType, gameState: GameStateMLB): {
         runsOnPlay += 1;  // Third scores
       }
       
-      // 45% chance second scores
-      if (gameState.bases[1] && Math.random() < 0.45) {
+      // 65% chance second scores
+      if (gameState.bases[1] && Math.random() < 0.65) {
         runsOnPlay += 1;
         newBases[2] = false;  // Second scored
       } else {
@@ -197,8 +196,8 @@ function processEvent(event: EventType, gameState: GameStateMLB): {
         runsOnPlay += 1;  // Second scores
       }
       
-      // 40% chance first scores
-      if (gameState.bases[0] && Math.random() < 0.40) {
+      // 50% chance first scores
+      if (gameState.bases[0] && Math.random() < 0.50) {
         runsOnPlay += 1;
         newBases[2] = false;  // First scored
       } else {
@@ -237,13 +236,12 @@ function processEvent(event: EventType, gameState: GameStateMLB): {
       outsOnPlay += 1;
     }
     
-    
     return {
       runsOnPlay: runsOnPlay,
       outsOnPlay: outsOnPlay,
       newBases: newBases
     };
-  }
+}
 
 function simulatePlayResult(atBatMatchupProbabilities: Stats): EventType {
   const random = Math.random();
