@@ -132,12 +132,12 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 </Button>
             </Box>
             <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
+                <Box sx={{ width: { xs: '12', md: '6' }, p: 1 }}>
                     {renderTeamLineup(`${participant1} (Away)`, lineupData.away)}
-                </Grid>
-                <Grid item xs={12} md={6}>
+                </Box>
+                <Box sx={{ width: { xs: '12', md: '6' }, p: 1 }}>
                     {renderTeamLineup(`${participant2} (Home)`, lineupData.home)}
-                </Grid>
+                </Box>
             </Grid>
         </Box>
     );
