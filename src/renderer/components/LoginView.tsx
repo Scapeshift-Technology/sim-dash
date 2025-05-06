@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
+import { Theme } from '@mui/material/styles';
 
 import type { AppDispatch, RootState } from '@/store/store';
 import { loginUser, selectAuthState, clearAuthError } from '@/store/slices/authSlice';
@@ -31,6 +32,11 @@ import {
     clearProfileError
 } from '@/store/slices/profilesSlice';
 import { Profile } from '@/types/profiles';
+
+const compactFormStyle = {
+    mb: 1,
+    height: '30px'
+};
 
 const LoginView: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -159,6 +165,40 @@ const LoginView: React.FC = () => {
         }
     }, [profilesError, dispatch]);
 
+    // ---------- Render functions ----------
+
+    function renderTextField(
+        label: string, 
+        onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, 
+        value: string, 
+        disabled: boolean,
+        options?: {
+            helperText?: string;
+            required?: boolean;
+            type?: string;
+        }
+    ) {
+      return (
+        <TextField
+          margin="normal"
+          size="small"
+          required={options?.required ?? true}
+          fullWidth
+          id={label.toLowerCase().replace(/\s+/g, '-')}
+          label={label}
+          name={label.toLowerCase()}
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          variant="outlined"
+          type={options?.type}
+          helperText={options?.helperText}
+          sx={compactFormStyle}
+        />
+      )
+    }
+
+    // ---------- Render content ----------
 
     return (
         <Box
@@ -177,14 +217,21 @@ const LoginView: React.FC = () => {
                 </Typography>
 
                 {/* Profile Selection */}
-                <FormControl fullWidth margin="normal" disabled={isProfilesLoading || isAuthLoading}>
+                <FormControl 
+                    fullWidth 
+                    margin="normal" 
+                    size="small"
+                    disabled={isProfilesLoading || isAuthLoading}
+                    sx={compactFormStyle}
+                >
                     <InputLabel id="profile-select-label">Load Existing Profile</InputLabel>
                     <Select
                         labelId="profile-select-label"
                         id="profile-select"
-                        value={selectedProfileName || ''} // Use empty string for "New Connection"
+                        value={selectedProfileName || ''}
                         label="Load Existing Profile"
                         onChange={handleProfileChange}
+                        size="small"
                     >
                         <MenuItem value=""><em>-- New Connection --</em></MenuItem>
                         {profiles.map((p: Profile) => (
@@ -196,72 +243,11 @@ const LoginView: React.FC = () => {
 
                 {/* Login Form */}
                 <Box component="form" onSubmit={handleLoginSubmit} noValidate sx={{ mt: 1 }}>
-                    <TextField
-                        margin="normal"
-                        required
-                        fullWidth
-                        id="host"
-                        label="Host"
-                        name="host"
-                        value={host}
-                        onChange={(e) => setHost(e.target.value)}
-                        disabled={isAuthLoading}
-                        variant="outlined"
-                        sx={{ mb: 2 }}
-                    />
-                    <TextField
-                        margin="normal"
-                        required
-                        fullWidth
-                        id="port"
-                        label="Port"
-                        name="port"
-                        type="number"
-                        value={port}
-                        onChange={(e) => setPort(e.target.value)}
-                        disabled={isAuthLoading}
-                        variant="outlined"
-                        sx={{ mb: 2 }}
-                    />
-                    <TextField
-                        margin="normal"
-                        required
-                        fullWidth
-                        id="database"
-                        label="Database"
-                        name="database"
-                        value={database}
-                        onChange={(e) => setDatabase(e.target.value)}
-                        disabled={isAuthLoading}
-                        variant="outlined"
-                        sx={{ mb: 2 }}
-                    />
-                    <TextField
-                        margin="normal"
-                        required
-                        fullWidth
-                        id="user"
-                        label="User"
-                        name="user"
-                        value={user}
-                        onChange={(e) => setUser(e.target.value)}
-                        disabled={isAuthLoading}
-                        variant="outlined"
-                        sx={{ mb: 2 }}
-                    />
-                    <TextField
-                        margin="normal"
-                        fullWidth
-                        name="password"
-                        label="Password"
-                        type="password"
-                        id="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        disabled={isAuthLoading}
-                        variant="outlined"
-                        sx={{ mb: 2 }}
-                    />
+                    {renderTextField('Host', (e) => setHost(e.target.value), host, isAuthLoading)}
+                    {renderTextField('Port', (e) => setPort(e.target.value), port, isAuthLoading, { type: 'number' })}
+                    {renderTextField('Database', (e) => setDatabase(e.target.value), database, isAuthLoading)}
+                    {renderTextField('User', (e) => setUser(e.target.value), user, isAuthLoading)}
+                    {renderTextField('Password', (e) => setPassword(e.target.value), password, isAuthLoading, { type: 'password', required: false })}
 
                     {/* Login Button & Progress */}
                     <Box sx={{ mt: 2, position: 'relative' }}>
@@ -300,22 +286,20 @@ const LoginView: React.FC = () => {
                     <Typography variant="h6" gutterBottom>
                         Manage Profile
                     </Typography>
-                    <Grid container spacing={2} alignItems="flex-end">
-                        <Grid item xs>
-                             <TextField
-                                margin="normal"
-                                fullWidth
-                                id="profile-name-save"
-                                label="Save/Update Profile As"
-                                value={profileNameToSave}
-                                onChange={(e) => setProfileNameToSave(e.target.value)}
-                                disabled={isAuthLoading || isProfilesLoading}
-                                helperText={selectedProfileName ? `Editing '${selectedProfileName}'` : 'Enter a new name'}
-                                variant="outlined"
-                                sx={{ mb: 2 }}
-                            />
-                        </Grid>
-                        <Grid item>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 2 }}>
+                        <Box sx={{ flexGrow: 1, mt: '-15px' }}>
+                            {renderTextField(
+                                'Save/Update Profile As',
+                                (e) => setProfileNameToSave(e.target.value),
+                                profileNameToSave,
+                                isAuthLoading || isProfilesLoading,
+                                {
+                                    helperText: selectedProfileName ? `Editing '${selectedProfileName}'` : 'Enter a new name',
+                                    required: false
+                                }
+                            )}
+                        </Box>
+                        <Box>
                             <IconButton
                                 aria-label="save profile"
                                 color="primary"
@@ -324,8 +308,8 @@ const LoginView: React.FC = () => {
                             >
                                 <SaveIcon />
                             </IconButton>
-                        </Grid>
-                         <Grid item>
+                        </Box>
+                        <Box>
                             <IconButton
                                 aria-label="delete profile"
                                 color="error"
@@ -335,8 +319,8 @@ const LoginView: React.FC = () => {
                             >
                                 <DeleteIcon />
                             </IconButton>
-                        </Grid>
-                    </Grid>
+                        </Box>
+                    </Box>
                      {/* Profile Status/Error Messages */}
                     {profilesStatus && (
                          <Alert severity={profilesError ? "warning" : "success"} sx={{ mt: 2 }}>
