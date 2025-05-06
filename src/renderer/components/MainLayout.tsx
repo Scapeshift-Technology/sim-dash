@@ -147,7 +147,12 @@ const MainLayout: React.FC = () => {
                 )}
 
                 <Container 
-                    sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }} 
+                    sx={{ 
+                        flexGrow: 1, 
+                        display: 'flex', 
+                        flexDirection: 'column',
+                        mb: '64px'
+                    }} 
                     maxWidth={false}
                 >
                     <Box 
