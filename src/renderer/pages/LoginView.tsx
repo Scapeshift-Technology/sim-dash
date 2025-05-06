@@ -17,9 +17,7 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
-import { Theme } from '@mui/material/styles';
-
-import type { AppDispatch, RootState } from '@/store/store';
+import type { AppDispatch } from '@/store/store';
 import { loginUser, selectAuthState, clearAuthError } from '@/store/slices/authSlice';
 import {
     fetchProfiles,

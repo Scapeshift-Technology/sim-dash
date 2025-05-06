@@ -14,8 +14,6 @@ import {
     Button
 } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-
-// Import the lineup types
 import type { MatchupLineups, TeamLineup, Player, MLBMatchupViewProps } from '@/types/mlb';
 
 function renderPlayerEntry(player: Player) {

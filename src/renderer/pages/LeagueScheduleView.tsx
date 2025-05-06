@@ -7,7 +7,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs, { Dayjs } from 'dayjs';
 
 // Import the configurable table component and its column definition type
-import GenericScheduleTable, { ColumnDefinition } from './GenericScheduleTable';
+import GenericScheduleTable, { ColumnDefinition } from '@/components/GenericScheduleTable';
 // MLBScheduleTable is no longer needed
 // import MLBScheduleTable from './MLBScheduleTable';
 

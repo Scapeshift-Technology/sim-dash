@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import LoginView from '@/components/LoginView';
-import MainLayout from '@/components/MainLayout';
+import LoginView from '@/pages/LoginView';
+import MainLayout from '@/layouts/MainLayout';
 import { selectIsAuthenticated } from '@/store/slices/authSlice';
 
 function App() {

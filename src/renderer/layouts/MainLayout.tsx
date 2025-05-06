@@ -13,19 +13,19 @@ import {
     IconButton
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import type { AppDispatch } from '../store/store';
-import { logoutUser, selectUsername } from '../store/slices/authSlice';
+import type { AppDispatch } from '@/store/store';
+import { logoutUser, selectUsername } from '@/store/slices/authSlice';
 import { 
     selectOpenTabs, 
     selectActiveTabId, 
     setActiveTab, 
     closeTab, 
     selectActiveTabData 
-} from '../store/slices/leagueSlice';
+} from '@/store/slices/leagueSlice';
 import type { Tab } from '@/types/league';
-import Sidebar from './Sidebar';
-import LeagueScheduleView from './LeagueScheduleView';
-import MLBMatchupView from './MLBMatchupView';
+import Sidebar from '@/components/Sidebar';
+import LeagueScheduleView from '@/pages/LeagueScheduleView';
+import MLBMatchupView from '@/pages/MLBMatchupView';
 
 const MainLayout: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
