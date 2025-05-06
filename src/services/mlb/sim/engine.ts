@@ -14,6 +14,7 @@ import { getMatchupProbabilities } from "./probabilities";
 import { initializeHomeFieldMultipliers } from "./homeFieldAdvantage";
 import { calculateSimCounts } from "./analyzeResults";
 import { SimResultsMLB } from "@/types/bettingResults";
+import { evaluatePitchingSubstitution } from "./pitcherSubstitution";
 
 // ---------- MLB sim engine ----------
 /**
@@ -66,41 +67,60 @@ function simulateGame(matchup: MatchupLineups, matchupProbabilities: GameMatchup
 
     updateGameState(gameState, playResult);
 
-    // Handle game end
-    const endInning = 9;
-    if (((gameState.inning === endInning && !gameState.topInning) || (gameState.inning > endInning)) && (gameState.homeScore > gameState.awayScore)) {
-      break;
-    } else if ((gameState.inning >= endInning && !gameState.topInning && gameState.outs >= 3) && (gameState.awayScore !== gameState.homeScore)) {
+    // Check if game should end
+    if (checkGameEnd(gameState)) {
       break;
     }
 
+    // Potentially substitute pitcher
+    evaluatePitchingSubstitution(gameState);
+
     // Handle inning end
-    if (gameState.outs >= 3) {
-      if (gameState.inning > 9) {
-        gameState.bases = [false, true, false];
-      } else {
-        gameState.bases = [false, false, false];
-      }
-      if (!gameState.topInning) {
-        gameState.inning += 1;
-      }
-      gameState.outs = 0;
-      gameState.topInning = !gameState.topInning;
-    }
+    handleInningEnd(gameState);
   }
 
   return plays;
+}
+
+function handleInningEnd(gameState: GameStateMLB) {
+  if (gameState.outs >= 3) {
+    // In extra innings, runner starts on second base
+    if (gameState.inning > 9) {
+      gameState.bases = [false, true, false];
+    } else {
+      gameState.bases = [false, false, false];
+    }
+    // If bottom of inning, increment inning counter
+    if (!gameState.topInning) {
+      gameState.inning += 1;
+    }
+    gameState.outs = 0;
+    gameState.topInning = !gameState.topInning;
+  }
+}
+
+function checkGameEnd(gameState: GameStateMLB): boolean {
+  const endInning = 9;
+  // Home team takes lead in 9th or later
+  if (((gameState.inning === endInning && !gameState.topInning) || (gameState.inning > endInning)) && (gameState.homeScore > gameState.awayScore)) {
+    return true;
+  }
+  // Game complete with different scores
+  if ((gameState.inning >= endInning && !gameState.topInning && gameState.outs >= 3) && (gameState.awayScore !== gameState.homeScore)) {
+    return true;
+  }
+  return false;
 }
 
 function updateGameState(gameState: GameStateMLB, playResult: PlayResult) {
   if (playResult.topInning) {
     gameState.awayScore += playResult.runsOnPlay;
     gameState.awayLineupPos = (gameState.awayLineupPos + 1) % 9;
-    gameState.awayPitcher.battersFaced += 1;
+    gameState.homePitcher.battersFaced += 1;
   } else {
     gameState.homeScore += playResult.runsOnPlay;
     gameState.homeLineupPos = (gameState.homeLineupPos + 1) % 9;
-    gameState.homePitcher.battersFaced += 1;
+    gameState.awayPitcher.battersFaced += 1;
   }
 
   gameState.bases = playResult.basesAfter;

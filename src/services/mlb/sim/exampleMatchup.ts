@@ -327,11 +327,295 @@ const giantsLineup: Player[] = [
   christianKoss
 ];
 
+// ----- Bullpen -----
+const camiloDoval: Player = {
+  id: 666808,
+  name: "Camilo Doval",
+  position: "RP",
+  pitchingSide: "R",
+  stats: {
+    pitchVsL: {
+      adj_perc_K: 0.274,
+      adj_perc_BB: 0.143,
+      adj_perc_1B: 0.133,
+      adj_perc_2B: 0.037,
+      adj_perc_3B: 0.004,
+      adj_perc_HR: 0.021,
+      adj_perc_OUT: 0.388
+    },
+    pitchVsR: {
+      adj_perc_K: 0.280,
+      adj_perc_BB: 0.113,
+      adj_perc_1B: 0.142,
+      adj_perc_2B: 0.035,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.019,
+      adj_perc_OUT: 0.408
+    }
+  }
+};
+
+const erikMiller: Player = {
+  id: 669062,
+  name: "Erik Miller",
+  position: "RP",
+  pitchingSide: "L",
+  stats: {
+    pitchVsL: {
+      adj_perc_K: 0.308,
+      adj_perc_BB: 0.125,
+      adj_perc_1B: 0.126,
+      adj_perc_2B: 0.030,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.018,
+      adj_perc_OUT: 0.390
+    },
+    pitchVsR: {
+      adj_perc_K: 0.275,
+      adj_perc_BB: 0.151,
+      adj_perc_1B: 0.125,
+      adj_perc_2B: 0.039,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.026,
+      adj_perc_OUT: 0.382
+    }
+  }
+};
+
+const haydenBirdsong: Player = {
+  id: 806185,
+  name: "Hayden Birdsong",
+  position: "RP",
+  pitchingSide: "R",
+  stats: {
+    pitchVsL: {
+      adj_perc_K: 0.279,
+      adj_perc_BB: 0.132,
+      adj_perc_1B: 0.125,
+      adj_perc_2B: 0.039,
+      adj_perc_3B: 0.004,
+      adj_perc_HR: 0.028,
+      adj_perc_OUT: 0.392
+    },
+    pitchVsR: {
+      adj_perc_K: 0.286,
+      adj_perc_BB: 0.109,
+      adj_perc_1B: 0.133,
+      adj_perc_2B: 0.038,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.025,
+      adj_perc_OUT: 0.407
+    }
+  }
+};
+
+const jordanHicks: Player = {
+  id: 663855,
+  name: "Jordan Hicks",
+  position: "RP",
+  pitchingSide: "R",
+  stats: {
+    pitchVsL: {
+      adj_perc_K: 0.244,
+      adj_perc_BB: 0.120,
+      adj_perc_1B: 0.147,
+      adj_perc_2B: 0.039,
+      adj_perc_3B: 0.004,
+      adj_perc_HR: 0.023,
+      adj_perc_OUT: 0.423
+    },
+    pitchVsR: {
+      adj_perc_K: 0.250,
+      adj_perc_BB: 0.100,
+      adj_perc_1B: 0.155,
+      adj_perc_2B: 0.038,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.020,
+      adj_perc_OUT: 0.435
+    }
+  }
+};
+
+const kyleHarrison: Player = {
+  id: 690986,
+  name: "Kyle Harrison",
+  position: "RP",
+  pitchingSide: "L",
+  stats: {
+    pitchVsL: {
+      adj_perc_K: 0.309,
+      adj_perc_BB: 0.085,
+      adj_perc_1B: 0.131,
+      adj_perc_2B: 0.034,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.023,
+      adj_perc_OUT: 0.415
+    },
+    pitchVsR: {
+      adj_perc_K: 0.276,
+      adj_perc_BB: 0.103,
+      adj_perc_1B: 0.131,
+      adj_perc_2B: 0.044,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.032,
+      adj_perc_OUT: 0.411
+    }
+  }
+};
+
+const loganWebb: Player = {
+  id: 657277,
+  name: "Logan Webb",
+  position: "RP",
+  pitchingSide: "R",
+  stats: {
+    pitchVsL: {
+      adj_perc_K: 0.255,
+      adj_perc_BB: 0.082,
+      adj_perc_1B: 0.160,
+      adj_perc_2B: 0.040,
+      adj_perc_3B: 0.004,
+      adj_perc_HR: 0.019,
+      adj_perc_OUT: 0.440
+    },
+    pitchVsR: {
+      adj_perc_K: 0.261,
+      adj_perc_BB: 0.054,
+      adj_perc_1B: 0.169,
+      adj_perc_2B: 0.038,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.016,
+      adj_perc_OUT: 0.458
+    }
+  }
+};
+
+const randyRodriguez: Player = {
+  id: 678495,
+  name: "Randy Rodriguez",
+  position: "RP",
+  pitchingSide: "R",
+  stats: {
+    pitchVsL: {
+      adj_perc_K: 0.246,
+      adj_perc_BB: 0.135,
+      adj_perc_1B: 0.130,
+      adj_perc_2B: 0.041,
+      adj_perc_3B: 0.004,
+      adj_perc_HR: 0.029,
+      adj_perc_OUT: 0.414
+    },
+    pitchVsR: {
+      adj_perc_K: 0.252,
+      adj_perc_BB: 0.111,
+      adj_perc_1B: 0.138,
+      adj_perc_2B: 0.039,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.026,
+      adj_perc_OUT: 0.430
+    }
+  }
+};
+
+const ryanWalker: Player = {
+  id: 676254,
+  name: "Ryan Walker",
+  position: "RP",
+  pitchingSide: "R",
+  stats: {
+    pitchVsL: {
+      adj_perc_K: 0.285,
+      adj_perc_BB: 0.112,
+      adj_perc_1B: 0.132,
+      adj_perc_2B: 0.039,
+      adj_perc_3B: 0.004,
+      adj_perc_HR: 0.025,
+      adj_perc_OUT: 0.403
+    },
+    pitchVsR: {
+      adj_perc_K: 0.292,
+      adj_perc_BB: 0.090,
+      adj_perc_1B: 0.140,
+      adj_perc_2B: 0.037,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.022,
+      adj_perc_OUT: 0.417
+    }
+  }
+};
+
+const spencerBivens: Player = {
+  id: 702352,
+  name: "Spencer Bivens",
+  position: "RP",
+  pitchingSide: "R",
+  stats: {
+    pitchVsL: {
+      adj_perc_K: 0.177,
+      adj_perc_BB: 0.111,
+      adj_perc_1B: 0.160,
+      adj_perc_2B: 0.044,
+      adj_perc_3B: 0.004,
+      adj_perc_HR: 0.030,
+      adj_perc_OUT: 0.473
+    },
+    pitchVsR: {
+      adj_perc_K: 0.182,
+      adj_perc_BB: 0.086,
+      adj_perc_1B: 0.169,
+      adj_perc_2B: 0.043,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.026,
+      adj_perc_OUT: 0.490
+    }
+  }
+};
+
+const tylerRogers: Player = {
+  id: 643511,
+  name: "Tyler Rogers",
+  position: "RP",
+  pitchingSide: "R",
+  stats: {
+    pitchVsL: {
+      adj_perc_K: 0.178,
+      adj_perc_BB: 0.068,
+      adj_perc_1B: 0.177,
+      adj_perc_2B: 0.044,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.024,
+      adj_perc_OUT: 0.505
+    },
+    pitchVsR: {
+      adj_perc_K: 0.178,
+      adj_perc_BB: 0.068,
+      adj_perc_1B: 0.177,
+      adj_perc_2B: 0.044,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.024,
+      adj_perc_OUT: 0.505
+    }
+  }
+};
+
+const giantsBullpen: Player[] = [
+  camiloDoval,
+  erikMiller,
+  haydenBirdsong,
+  jordanHicks,
+  kyleHarrison,
+  loganWebb,
+  randyRodriguez,
+  ryanWalker,
+  spencerBivens,
+  tylerRogers
+];
+
 // ----- Full team -----
 const sanFranciscoGiants: TeamLineup = {
   lineup: giantsLineup,
   startingPitcher: giantsStartingPitcher,
-  bullpen: [],
+  bullpen: giantsBullpen,
 };
 
 // ---------- Chicago Cubs ----------
@@ -621,11 +905,293 @@ const cubsLineup: Player[] = [
 
 // ----- Bullpen -----
 
+const bradKeller: Player = {
+  id: 641745,
+  position: "RP",
+  pitchingSide: "R",
+  stats: {
+    pitchVsL: {
+      adj_perc_K: 0.190,
+      adj_perc_BB: 0.124,
+      adj_perc_1B: 0.158,
+      adj_perc_2B: 0.043,
+      adj_perc_3B: 0.004,
+      adj_perc_HR: 0.027,
+      adj_perc_OUT: 0.453
+    },
+    pitchVsR: {
+      adj_perc_K: 0.195,
+      adj_perc_BB: 0.098,
+      adj_perc_1B: 0.168,
+      adj_perc_2B: 0.042,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.023,
+      adj_perc_OUT: 0.471
+    }
+  }
+}
+
+const calebThielbar: Player = {
+  id: 573204,
+  name: "Caleb Thielbar",
+  position: "RP",
+  pitchingSide: "L",
+  stats: {
+    pitchVsL: {
+      adj_perc_K: 0.272,
+      adj_perc_BB: 0.097,
+      adj_perc_1B: 0.134,
+      adj_perc_2B: 0.035,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.024,
+      adj_perc_OUT: 0.434
+    },
+    pitchVsR: {
+      adj_perc_K: 0.242,
+      adj_perc_BB: 0.120,
+      adj_perc_1B: 0.132,
+      adj_perc_2B: 0.045,
+      adj_perc_3B: 0.004,
+      adj_perc_HR: 0.034,
+      adj_perc_OUT: 0.424
+    }
+  }
+}
+
+const chrisFlexen: Player = {
+  id: 623167,
+  name: "Chris Flexen",
+  position: "RP",
+  pitchingSide: "R",
+  stats: {
+    pitchVsL: {
+      adj_perc_K: 0.194,
+      adj_perc_BB: 0.104,
+      adj_perc_1B: 0.149,
+      adj_perc_2B: 0.048,
+      adj_perc_3B: 0.005,
+      adj_perc_HR: 0.035,
+      adj_perc_OUT: 0.465
+    },
+    pitchVsR: {
+      adj_perc_K: 0.199,
+      adj_perc_BB: 0.075,
+      adj_perc_1B: 0.159,
+      adj_perc_2B: 0.046,
+      adj_perc_3B: 0.004,
+      adj_perc_HR: 0.031,
+      adj_perc_OUT: 0.486
+    }
+  }
+}
+
+const danielPalencia: Player = {
+  id: 694037,
+  name: "Daniel Palencia",
+  position: "RP",
+  pitchingSide: "R",
+  stats: {
+    pitchVsL: {
+      adj_perc_K: 0.259,
+      adj_perc_BB: 0.145,
+      adj_perc_1B: 0.128,
+      adj_perc_2B: 0.039,
+      adj_perc_3B: 0.004,
+      adj_perc_HR: 0.027,
+      adj_perc_OUT: 0.398
+    },
+    pitchVsR: {
+      adj_perc_K: 0.265,
+      adj_perc_BB: 0.121,
+      adj_perc_1B: 0.136,
+      adj_perc_2B: 0.037,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.023,
+      adj_perc_OUT: 0.414
+    }
+  }
+}
+
+const drewPomeranz: Player = {
+  id: 519141,
+  name: "Drew Pomeranz",
+  position: "RP",
+  pitchingSide: "L",
+  stats: {
+    pitchVsL: {
+      adj_perc_K: 0.256,
+      adj_perc_BB: 0.105,
+      adj_perc_1B: 0.141,
+      adj_perc_2B: 0.035,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.022,
+      adj_perc_OUT: 0.438
+    },
+    pitchVsR: {
+      adj_perc_K: 0.227,
+      adj_perc_BB: 0.128,
+      adj_perc_1B: 0.139,
+      adj_perc_2B: 0.044,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.031,
+      adj_perc_OUT: 0.427
+    }
+  }
+}
+
+const gavinHollowell: Player = {
+  id: 668970,
+  name: "Gavin Hollowell",
+  position: "RP",
+  pitchingSide: "R",
+  stats: {
+    pitchVsL: {
+      adj_perc_K: 0.223,
+      adj_perc_BB: 0.135,
+      adj_perc_1B: 0.135,
+      adj_perc_2B: 0.043,
+      adj_perc_3B: 0.004,
+      adj_perc_HR: 0.032,
+      adj_perc_OUT: 0.428
+    },
+    pitchVsR: {
+      adj_perc_K: 0.229,
+      adj_perc_BB: 0.110,
+      adj_perc_1B: 0.144,
+      adj_perc_2B: 0.041,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.029,
+      adj_perc_OUT: 0.445
+    }
+  }
+}
+
+const jamesonTaillon: Player = {
+  id: 592791,
+  name: "Jameson Taillon",
+  position: "RP",
+  pitchingSide: "R",
+  stats: {
+    pitchVsL: {
+      adj_perc_K: 0.225,
+      adj_perc_BB: 0.064,
+      adj_perc_1B: 0.150,
+      adj_perc_2B: 0.048,
+      adj_perc_3B: 0.005,
+      adj_perc_HR: 0.035,
+      adj_perc_OUT: 0.474
+    },
+    pitchVsR: {
+      adj_perc_K: 0.230,
+      adj_perc_BB: 0.047,
+      adj_perc_1B: 0.158,
+      adj_perc_2B: 0.046,
+      adj_perc_3B: 0.004,
+      adj_perc_HR: 0.031,
+      adj_perc_OUT: 0.485
+    }
+  }
+}
+
+const julianMerryweather: Player = {
+  id: 657240,
+  name: "Julian Merryweather",
+  position: "RP",
+  pitchingSide: "R",
+  stats: {
+    pitchVsL: {
+      adj_perc_K: 0.245,
+      adj_perc_BB: 0.132,
+      adj_perc_1B: 0.135,
+      adj_perc_2B: 0.041,
+      adj_perc_3B: 0.004,
+      adj_perc_HR: 0.028,
+      adj_perc_OUT: 0.415
+    },
+    pitchVsR: {
+      adj_perc_K: 0.251,
+      adj_perc_BB: 0.108,
+      adj_perc_1B: 0.144,
+      adj_perc_2B: 0.039,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.025,
+      adj_perc_OUT: 0.431
+    }
+  }
+}
+
+const porterHodge: Player = {
+  id: 687863,
+  name: "Porter Hodge",
+  position: "RP",
+  pitchingSide: "R",
+  stats: {
+    pitchVsL: {
+      adj_perc_K: 0.245,
+      adj_perc_BB: 0.147,
+      adj_perc_1B: 0.132,
+      adj_perc_2B: 0.039,
+      adj_perc_3B: 0.004,
+      adj_perc_HR: 0.026,
+      adj_perc_OUT: 0.406
+    },
+    pitchVsR: {
+      adj_perc_K: 0.251,
+      adj_perc_BB: 0.122,
+      adj_perc_1B: 0.140,
+      adj_perc_2B: 0.038,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.023,
+      adj_perc_OUT: 0.423
+    }
+  }
+}
+
+const ryanPressly: Player = {
+  id: 519151,
+  name: "Ryan Pressly",
+  position: "RP",
+  pitchingSide: "R",
+  stats: {
+    pitchVsL: {
+      adj_perc_K: 0.229,
+      adj_perc_BB: 0.106,
+      adj_perc_1B: 0.151,
+      adj_perc_2B: 0.042,
+      adj_perc_3B: 0.004,
+      adj_perc_HR: 0.025,
+      adj_perc_OUT: 0.442
+    },
+    pitchVsR: {
+      adj_perc_K: 0.235,
+      adj_perc_BB: 0.085,
+      adj_perc_1B: 0.160,
+      adj_perc_2B: 0.040,
+      adj_perc_3B: 0.003,
+      adj_perc_HR: 0.022,
+      adj_perc_OUT: 0.455
+    }
+  }
+}
+
+const chicagoCubsBullpen: Player[] = [
+  bradKeller,
+  calebThielbar,
+  chrisFlexen,
+  danielPalencia,
+  drewPomeranz,
+  gavinHollowell,
+  jamesonTaillon,
+  julianMerryweather,
+  porterHodge,
+  ryanPressly
+]
+
 // ----- Full team -----
 const chicagoCubs: TeamLineup = {
   lineup: cubsLineup,
   startingPitcher: chicagoCubsStartingPitcher,
-  bullpen: [],
+  bullpen: chicagoCubsBullpen,
 };
 
 // ---------- Matchup ----------
