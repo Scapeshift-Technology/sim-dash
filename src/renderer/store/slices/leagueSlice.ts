@@ -7,7 +7,7 @@ import {
   Tab,
   LeagueState
 } from '@/types/league';
-
+import { teamNameToAbbreviationMLB } from '@/utils/displayMLB';
 const initialState: LeagueState = {
     leagues: [],
     loading: 'idle',
@@ -68,11 +68,18 @@ const leagueSlice = createSlice({
             const existingTab = state.openTabs.find(tab => tab.id === tabId);
 
             if (!existingTab) {
+                let label;
+                if (details.league === 'MLB') {
+                    label = `${teamNameToAbbreviationMLB(details.participant1)} @ ${teamNameToAbbreviationMLB(details.participant2)}${details.daySequence ? ` (Gm. ${details.daySequence})` : ''}`;
+                } else {
+                    label = `${details.participant1} @ ${details.participant2}${details.daySequence ? ` (Gm. ${details.daySequence})` : ''}`;
+                }
+
                 const newTab: MatchupTab = {
                     ...details,
                     id: tabId,
                     type: 'matchup',
-                    label: `${details.participant1} @ ${details.participant2}`, // Generate a concise label
+                    label: label, // Generate a concise label
                 };
                 state.openTabs.push(newTab);
             }

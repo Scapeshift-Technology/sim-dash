@@ -1,4 +1,4 @@
-function teamNameToAbbreviation(teamName: string): string {
+function teamNameToAbbreviationMLB(teamName: string): string {
   const team_abbrevs: Record<string, string> = {
     "Arizona Diamondbacks": "AZ",
     "Atlanta Braves": "ATL",
@@ -35,5 +35,5 @@ function teamNameToAbbreviation(teamName: string): string {
   return team_abbrevs[teamName.trim()] || teamName;
 }
 
-export { teamNameToAbbreviation };
+export { teamNameToAbbreviationMLB };
 
