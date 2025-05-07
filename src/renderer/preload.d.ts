@@ -74,10 +74,19 @@ declare global {
       simulateMatchupMLB: (args: { numGames: number }) => Promise<SimResults>;
       
       // Simulation Windows
-      createSimWindow: (args: { league: string; simData: SimResultsMLB }) => Promise<{ success: boolean }>;
+      createSimWindow: (args: { 
+        league: string; 
+        simData: SimResultsMLB;
+        awayTeamName: string;
+        homeTeamName: string;
+      }) => Promise<{ success: boolean }>;
       
       // Simulation Results Window Communication
-      getSimData: (args: { windowId: string }) => Promise<SimResultsMLB>;
+      getSimData: (args: { windowId: string }) => Promise<{
+        simData: SimResultsMLB;
+        awayTeamName: string;
+        homeTeamName: string;
+      }>;
 
       // About Window Communication (Keep if needed, or remove if about window is refactored/removed)
       onVersion: (callback: (event: any, version: string) => void) => void;

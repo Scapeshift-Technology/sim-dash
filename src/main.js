@@ -394,7 +394,7 @@ ipcMain.handle('simulate-matchup-mlb', async (event, { numGames}) => {
 // --- Create Simulation Window ---
 const simResultsDataStore = new Map();
 
-ipcMain.handle('create-sim-window', async (event, { league, simData }) => {
+ipcMain.handle('create-sim-window', async (event, { league, simData, awayTeamName, homeTeamName }) => {
   console.log('IPC received: create-sim-window');
   try {
     if (league === 'MLB') {
@@ -405,7 +405,11 @@ ipcMain.handle('create-sim-window', async (event, { league, simData }) => {
       });
       
       // Store the data with windowId
-      simResultsDataStore.set(window.windowId, simData);
+      simResultsDataStore.set(window.windowId, {
+        simData,
+        awayTeamName,
+        homeTeamName
+      });
 
       // Clean up when window closes
       window.on('closed', () => {

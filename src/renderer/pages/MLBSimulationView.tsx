@@ -3,12 +3,14 @@ import { useLocation } from 'react-router-dom';
 import type { SimResultsMLB } from '@/types/bettingResults';
 
 const MLBSimulationView: React.FC = () => {
+    // ---------- State ----------
   const [simData, setSimData] = useState<SimResultsMLB | null>(null);
+  const [awayTeamName, setAwayTeamName] = useState<string | null>(null);
+  const [homeTeamName, setHomeTeamName] = useState<string | null>(null);
   const location = useLocation();
-  
-  // Get windowId from the location search params
   const windowId = new URLSearchParams(location.search).get('windowId');
 
+  // ---------- Effects ----------
   useEffect(() => {
     const fetchSimData = async () => {
       console.log('Location:', location);
@@ -22,7 +24,9 @@ const MLBSimulationView: React.FC = () => {
       try {
         const data = await window.electronAPI.getSimData({ windowId });
         console.log('Fetched sim data:', data);
-        setSimData(data);
+        setSimData(data.simData);
+        setAwayTeamName(data.awayTeamName);
+        setHomeTeamName(data.homeTeamName);
       } catch (error) {
         console.error('Error fetching sim data:', error);
       }
@@ -36,8 +40,8 @@ const MLBSimulationView: React.FC = () => {
   }
 
   return (
-    <div>
-      Home ML Success Count: {simData.sides.home.fullGame.ML.success}
+    <div style={{ padding: '20px' }}>
+      <h3>{awayTeamName} vs {homeTeamName}</h3>
     </div>
   );
 };

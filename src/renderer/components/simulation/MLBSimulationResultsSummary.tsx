@@ -56,7 +56,7 @@ const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = 
   const handleClick = async () => {
     if (simResults) {
       try {
-        await window.electronAPI.createSimWindow({ league: 'MLB', simData: simResults });
+        await window.electronAPI.createSimWindow({ league: 'MLB', simData: simResults, awayTeamName, homeTeamName });
       } catch (error) {
         console.error('Failed to create simulation window:', error);
       }
