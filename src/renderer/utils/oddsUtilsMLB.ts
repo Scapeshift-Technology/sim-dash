@@ -1,6 +1,8 @@
 import { SimResultsMLB, TotalsLinesMLB } from "@/types/bettingResults";
 import { countsToAmericanOdds, proportionToAmericanOdds, countsToProbability } from "./oddsCalculations";
 import { teamNameToAbbreviationMLB } from "./displayMLB";
+import { displayAmericanOdds } from "./display";
+
 // ---------- Summary display ----------
 // ----- Main function -----
 
@@ -9,14 +11,14 @@ function calculateResultsSummaryDisplayMLB(simResults: SimResultsMLB, awayTeamNa
   bottomLine: string;
 } {
   const { home, away } = simResults.sides;
-  const homeWinCt = home.fullGame.ML.success;
-  const awayWinCt = away.fullGame.ML.success;
+  const homeWinCt = home.fullGame['0'].success;
+  const awayWinCt = away.fullGame['0'].success;
   const totalsLine = findBreakevenTotalsLineMLB(simResults.totals.combined.fullGame);
 
   if (homeWinCt >= awayWinCt) {
     const homeOdds = countsToAmericanOdds(homeWinCt, awayWinCt);
     const shortenedOdds = Math.round(homeOdds);
-    const displayTeamOdds = shortenedOdds > 0 ? `+${shortenedOdds}` : shortenedOdds;
+    const displayTeamOdds = displayAmericanOdds(shortenedOdds);
     const teamAbbreviation = teamNameToAbbreviationMLB(homeTeamName);
     return {
       topLine: displayTotalsLine(totalsLine),
@@ -25,7 +27,7 @@ function calculateResultsSummaryDisplayMLB(simResults: SimResultsMLB, awayTeamNa
   } else {
     const awayOdds = countsToAmericanOdds(awayWinCt, homeWinCt);
     const shortenedOdds = Math.round(awayOdds);
-    const displayTeamOdds = shortenedOdds > 0 ? `+${shortenedOdds}` : shortenedOdds;
+    const displayTeamOdds = displayAmericanOdds(shortenedOdds);
     const teamAbbreviation = teamNameToAbbreviationMLB(awayTeamName);
     return {
       topLine: `${teamAbbreviation}: ${displayTeamOdds}`,

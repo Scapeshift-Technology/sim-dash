@@ -7,6 +7,18 @@ export interface OutcomeCounts {
   total: number;
 }
 
+// ----- Table display types ----------
+
+export interface SidesData {
+  team: string;
+  period: string;
+  line: number;
+  coverPercent: number;
+  marginOfError: number;
+  usaFair: number;
+  varianceOdds: number;
+}
+
 // ---------- MLB ----------
 
 export interface SimResultsMLB {
@@ -17,17 +29,13 @@ export interface SimResultsMLB {
 
 // ----- Sides -----
 
+export interface SidesPeriodCountsMLB {
+  [key: string]: OutcomeCounts;
+}
+
 export interface TeamSidesCountsMLB {
-  fullGame: {
-    RunLinePlus1_5: OutcomeCounts;
-    RunLineMinus1_5: OutcomeCounts;
-    ML: OutcomeCounts;
-  };
-  firstFive: {
-    RunLinePlus1_5: OutcomeCounts;
-    RunLineMinus1_5: OutcomeCounts;
-    ML: OutcomeCounts;
-  };
+  fullGame: SidesPeriodCountsMLB;
+  firstFive: SidesPeriodCountsMLB;
 }
   
 export interface SidesCountsMLB {

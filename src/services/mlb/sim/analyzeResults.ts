@@ -53,9 +53,9 @@ function calculateTimeframeCounts(
   timeframe: GameTimeframe
 ) {
   return {
-    ML: calculateSideProbability(simPlays, side, 0, timeframe),
-    RunLineMinus1_5: calculateSideProbability(simPlays, side, -1.5, timeframe),
-    RunLinePlus1_5: calculateSideProbability(simPlays, side, 1.5, timeframe)
+    '0': calculateSideProbability(simPlays, side, 0, timeframe),
+    '-1.5': calculateSideProbability(simPlays, side, -1.5, timeframe),
+    '1.5': calculateSideProbability(simPlays, side, 1.5, timeframe)
   };
 }
 

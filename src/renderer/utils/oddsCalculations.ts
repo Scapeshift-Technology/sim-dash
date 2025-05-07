@@ -102,5 +102,20 @@ function countsToProbability(successCounts: number, failureCounts: number, pushC
   }
 }
 
-export { proportionToAmericanOdds, proportionsToAmericanOddsWithPush, countsToAmericanOdds, devigAmericanOdds, americanOddsToProbability, countsToProbability };
+function marginOfError(total: number, proportion: number, confidenceLevel: number = 0.95): number {
+  const z = 1.96;
+  const p = proportion;
+  const n = total;
 
+  return z * Math.sqrt((p * (1 - p)) / n);
+}
+
+export { 
+  proportionToAmericanOdds, 
+  proportionsToAmericanOddsWithPush, 
+  countsToAmericanOdds, 
+  devigAmericanOdds, 
+  americanOddsToProbability, 
+  countsToProbability,
+  marginOfError
+};
