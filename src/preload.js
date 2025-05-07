@@ -17,6 +17,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     // Simulations
     simulateMatchupMLB: (args) => ipcRenderer.invoke('simulate-matchup-mlb', args),
+    
+    // Simulation Windows
+    createSimWindow: (args) => ipcRenderer.invoke('create-sim-window', args),
+
+    // Simulation Results Window Communication
+    getSimData: (args) => ipcRenderer.invoke('get-sim-data', args),
 
     // --- Added for About Window ---
     // Listener for receiving the app version from main process

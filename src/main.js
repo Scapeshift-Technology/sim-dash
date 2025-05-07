@@ -5,6 +5,7 @@ const dbHelper = require('./db'); // Local SQLite helper
 const sql = require('mssql'); // SQL Server driver
 const { getLineupsMLB } = require('./services/mlb/external/lineups');
 const { simulateMatchupMLB } = require('./services/mlb/sim/engine');
+const { createMLBSimResultsWindow2 } = require('./services/mlb/electron/createSimResultsWindows');
 
 // Force the app name at the system level for macOS menu
 app.name = 'SimDash'; // Directly set app.name property
@@ -388,8 +389,45 @@ ipcMain.handle('simulate-matchup-mlb', async (event, { numGames}) => {
     console.error(`Error simulating matchup:`, err);
     throw err;
   }
-})
-//  --- End Simulate Matchup Handler ---
+});
+
+// --- Create Simulation Window ---
+const simResultsDataStore = new Map();
+
+ipcMain.handle('create-sim-window', async (event, { league, simData }) => {
+  console.log('IPC received: create-sim-window');
+  try {
+    if (league === 'MLB') {
+      const window = createMLBSimResultsWindow2({
+        simData,
+        viteDevServerUrl,
+        isDevelopment: process.env.NODE_ENV === 'development'
+      });
+      
+      // Store the data with windowId
+      simResultsDataStore.set(window.windowId, simData);
+
+      // Clean up when window closes
+      window.on('closed', () => {
+        simResultsDataStore.delete(window.windowId);
+      });
+
+      return { success: true };
+    } else {
+      console.error('create-sim-window: Invalid league:', league);
+      throw new Error('Invalid league for simulation window creation.');
+    }
+  } catch (err) {
+    console.error('Error creating simulation window:', err);
+    throw err;
+  }
+});
+
+// --- Access Simulation Data ---
+ipcMain.handle('get-sim-data', async (event, { windowId }) => {
+  console.log('IPC received: get-sim-data');
+  return simResultsDataStore.get(windowId);
+});
 
 // --- App Lifecycle & Menu ---
 

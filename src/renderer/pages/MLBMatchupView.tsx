@@ -15,6 +15,8 @@ import {
 } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import type { MatchupLineups, TeamLineup, Player, MLBMatchupViewProps } from '@/types/mlb';
+import type { SimResultsMLB } from '@/types/bettingResults';
+import MLBSimulationResultsSummary from '@/components/simulation/MLBSimulationResultsSummary';
 
 function renderPlayerEntry(player: Player) {
   return (
@@ -34,7 +36,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const [lineupData, setLineupData] = useState<MatchupLineups | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-
+    const [simulationResults, setSimulationResults] = useState<SimResultsMLB | null>(null);
+    
     // ---------- Effect ----------
     useEffect(() => {
         const fetchLineup = async () => {
@@ -67,10 +70,12 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const handleRunSimulation = async () => {
         console.log('Running simulation for:', { participant1, participant2, date });
 
-        const results = await window.electronAPI.simulateMatchupMLB({
+        const results: SimResultsMLB = await window.electronAPI.simulateMatchupMLB({
           numGames: 50000
         });
         console.log('Simulation results:', results);
+
+        setSimulationResults(results);
     };
 
     // ---------- Render functions ----------
@@ -97,7 +102,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
 
         return (
           <Paper elevation={3} sx={{ p: 2, height: '100%' }}>
-            <Typography variant="h6" gutterBottom>{teamName} Details</Typography>
+            <Typography variant="h6" gutterBottom>{teamName}</Typography>
             <Divider sx={{ mb: 1 }}/>
             
             {renderPlayerList([teamData.startingPitcher], 'Starting Pitcher')}
@@ -116,18 +121,49 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     return (
         <Box sx={{ flexGrow: 1, p: 2 }}>
             <Typography variant="h5" gutterBottom>
-                Matchup: {participant1} @ {participant2} ({date})
+                {participant1} @ {participant2}
             </Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 3 }}>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    size="large"
-                    startIcon={<PlayArrowIcon />}
-                    onClick={handleRunSimulation}
-                >
-                    Run Simulation
-                </Button>
+            <Typography variant="h6" gutterBottom sx={{ color: 'text.secondary' }}>
+                {date}
+            </Typography>
+            <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'row', 
+                flexWrap: 'wrap',
+                gap: 2, 
+                mb: 3,
+                alignItems: 'stretch'
+            }}>
+                <Box sx={{ 
+                    flex: '0 0 200px',  // grow shrink basis
+                    maxWidth: '200px'
+                }}>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        size="large"
+                        startIcon={<PlayArrowIcon />}
+                        onClick={handleRunSimulation}
+                        sx={{ 
+                            height: '100%', 
+                            width: '100%',
+                            py: '8px',
+                            px: '16px'
+                        }}
+                    >
+                        Run Simulation
+                    </Button>
+                </Box>
+                <Box sx={{ 
+                    flex: '0 0 200px',
+                    maxWidth: '200px'
+                }}>
+                    <MLBSimulationResultsSummary
+                        simResults={simulationResults}
+                        awayTeamName={participant1}
+                        homeTeamName={participant2}
+                    />
+                </Box>
             </Box>
             <Grid container spacing={2}>
                 <Box sx={{ width: { xs: '12', md: '6' }, p: 1 }}>
