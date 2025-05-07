@@ -60,7 +60,7 @@ export interface GamePeriodTotalsMLB {
   firstFive: TotalsLinesMLB
 }
 
-interface TotalsLinesMLB {
+export interface TotalsLinesMLB {
   over: {
     [key: number]: OutcomeCounts;
   };

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Typography, SxProps, Theme, TypographyVariant } from '@mui/material';
 import type { SimResultsMLB } from '@/types/bettingResults';
+import { calculateResultsSummaryDisplayMLB } from '@/utils/oddsUtilsMLB';
 
 interface MLBSimulationResultsSummaryProps {
   simResults: SimResultsMLB | null;
@@ -19,6 +20,19 @@ const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = 
   className,
   size = 'medium'
 }) => {
+  // ---------- State ----------
+  const [display, setDisplay] = useState<{
+    topLine: string;
+    bottomLine: string;
+  } | null>(null);
+
+  // ---------- Effect ----------
+  useEffect(() => {
+    if (simResults) {
+      setDisplay(calculateResultsSummaryDisplayMLB(simResults, awayTeamName, homeTeamName));
+    }
+  }, [simResults]);
+
   // ---------- Styles ----------
   const sizeStyles: Record<string, { py: number | string; px: number | string; typography: TypographyVariant }> = {
     small: {
@@ -49,6 +63,7 @@ const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = 
     }
   };
 
+  // ---------- Render ----------
   return (
     <Box
       className={className}
@@ -75,10 +90,10 @@ const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = 
       }}
     >
       <Typography variant={sizeStyles[size].typography} sx={{ textAlign: 'center' }}>
-        Team: -110
+        {display?.topLine}
       </Typography>
       <Typography variant={sizeStyles[size].typography} sx={{ textAlign: 'center' }}>
-        o9 -110/u9 -110
+        {display?.bottomLine}
       </Typography>
     </Box>
   );
