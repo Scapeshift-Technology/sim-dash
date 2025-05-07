@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, SxProps, Theme, TypographyVariant } from '@mui/material';
+import { Box, Typography, SxProps, Theme, TypographyVariant, Paper } from '@mui/material';
 import type { SimResultsMLB } from '@/types/bettingResults';
 import { calculateResultsSummaryDisplayMLB } from '@/utils/oddsUtilsMLB';
 
@@ -41,8 +41,8 @@ const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = 
       typography: 'body2'
     },
     medium: {
-      py: '8px',
-      px: '16px',
+      py: '12px',
+      px: '20px',
       typography: 'body1'
     },
     large: {
@@ -65,37 +65,77 @@ const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = 
 
   // ---------- Render ----------
   return (
-    <Box
+    <Paper
       className={className}
       onClick={handleClick}
+      elevation={1}
       sx={{
+        position: 'relative',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
         width: '100%',
         height: '100%',
-        border: '1px solid transparent',
-        borderRadius: '4px',
-        backgroundColor: 'primary.main',
-        color: 'primary.contrastText',
+        borderRadius: '8px',
+        backgroundColor: 'background.paper',
+        color: 'text.primary',
         cursor: simResults ? 'pointer' : 'default',
         opacity: simResults ? 1 : 0,
-        transition: 'all 0.2s ease-in-out',
+        transition: 'all 0.3s ease-in-out',
+        border: '1px solid',
+        borderColor: 'divider',
+        overflow: 'hidden',
         '&:hover': simResults ? {
-          backgroundColor: 'primary.dark',
-          boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.25)',
+          elevation: 4,
+          transform: 'translateY(-2px)',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+          '& .view-icon': {
+            opacity: 1,
+            transform: 'translateY(0)',
+          },
+          '&::after': {
+            opacity: 0.1,
+          }
         } : {},
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'linear-gradient(45deg, primary.main 0%, transparent 100%)',
+          opacity: 0,
+          transition: 'opacity 0.3s ease-in-out',
+          pointerEvents: 'none',
+        },
         ...sizeStyles[size],
         ...sx
       }}
     >
-      <Typography variant={sizeStyles[size].typography} sx={{ textAlign: 'center' }}>
-        {display?.topLine}
-      </Typography>
-      <Typography variant={sizeStyles[size].typography} sx={{ textAlign: 'center' }}>
-        {display?.bottomLine}
-      </Typography>
-    </Box>
+      <Box sx={{ position: 'relative', zIndex: 1 }}>
+        <Typography 
+          variant={sizeStyles[size].typography} 
+          sx={{ 
+            textAlign: 'center',
+            fontWeight: 'medium',
+            color: 'text.primary',
+            mb: 0.5
+          }}
+        >
+          {display?.topLine}
+        </Typography>
+        <Typography 
+          variant={sizeStyles[size].typography} 
+          sx={{ 
+            textAlign: 'center',
+            color: 'text.secondary'
+          }}
+        >
+          {display?.bottomLine}
+        </Typography>
+      </Box>
+    </Paper>
   );
 };
 
