@@ -4,7 +4,8 @@ import {
     Drawer, List, ListItemButton, ListItemText, CircularProgress, Typography, Box, Toolbar
 } from '@mui/material';
 import { AppDispatch } from '@/store/store'; // Adjust path if needed
-import { fetchLeagues, selectAllLeagues, selectLeaguesLoading, selectLeaguesError, openLeagueTab } from '@/store/slices/leagueSlice'; // Adjust path if needed and added openLeagueTab
+import { fetchLeagues, selectAllLeagues, selectLeaguesLoading, selectLeaguesError } from '@/store/slices/leagueSlice'; // Adjust path if needed and added openLeagueTab
+import { openLeagueTab } from '@/store/slices/tabSlice';
 
 // Define props for Sidebar, including width and resize handler
 interface SidebarProps {

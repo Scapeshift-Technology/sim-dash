@@ -21,7 +21,7 @@ import {
     setActiveTab, 
     closeTab, 
     selectActiveTabData 
-} from '@/store/slices/leagueSlice';
+} from '@/store/slices/tabSlice';
 import type { Tab } from '@/types/league';
 import Sidebar from '@/components/Sidebar';
 import LeagueScheduleView from '@/pages/LeagueScheduleView';

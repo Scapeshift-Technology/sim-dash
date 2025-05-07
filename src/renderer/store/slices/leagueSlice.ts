@@ -1,40 +1,30 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
-import {
-  League,
-  LeagueTab,
-  MatchupTab,
-  Tab,
-  LeagueState
-} from '@/types/league';
-import { teamNameToAbbreviationMLB } from '@/utils/displayMLB';
+import { League } from '@/types/league';
+
+interface LeagueState {
+    leagues: League[];
+    loading: 'idle' | 'pending' | 'succeeded' | 'failed';
+    error: string | null;
+}
+
 const initialState: LeagueState = {
     leagues: [],
     loading: 'idle',
     error: null,
-    // selectedLeague: null,
-    openTabs: [], // Start with no tabs open
-    activeTabId: null,
-};
-
-// Helper function to generate a unique ID for matchup tabs
-const generateMatchupTabId = (details: Omit<MatchupTab, 'id' | 'type' | 'label'>): string => {
-    return `${details.league}_${details.date}_${details.participant1}@${details.participant2}` + (details.daySequence ? `_${details.daySequence}` : '');
 };
 
 // Async thunk to fetch leagues using the exposed API
 export const fetchLeagues = createAsyncThunk<
-    League[], // Return type of the payload creator (matches the new interface)
-    void, // First argument to the payload creator (not needed here)
-    { rejectValue: string } // Types for thunkAPI
+    League[],
+    void,
+    { rejectValue: string }
 >('leagues/fetchLeagues', async (_, { rejectWithValue }) => {
     try {
         console.log('Dispatching fetchLeagues...');
         const leaguesData = await window.electronAPI.fetchLeagues();
-         console.log('Leagues received in thunk:', leaguesData);
-        // Ensure the main process returns the correct type (or cast)
-        // The fetched data seems to be { League: string }[]
-        return leaguesData as League[]; // Return type now matches the expected data
+        console.log('Leagues received in thunk:', leaguesData);
+        return leaguesData as League[];
     } catch (error: any) {
         console.error('Error fetching leagues in thunk:', error);
         return rejectWithValue(error.message || 'Failed to fetch leagues');
@@ -42,85 +32,9 @@ export const fetchLeagues = createAsyncThunk<
 });
 
 const leagueSlice = createSlice({
-    name: 'tabs', // Renaming slice to 'tabs' for clarity
+    name: 'leagues',
     initialState,
-    reducers: {
-        // Action to open a league tab (or focus if exists)
-        openLeagueTab(state, action: PayloadAction<string>) { // Payload is league name
-            const leagueName = action.payload.trim();
-            const existingTab = state.openTabs.find(tab => tab.type === 'league' && tab.id === leagueName);
-
-            if (!existingTab) {
-                const newTab: LeagueTab = {
-                    id: leagueName,
-                    type: 'league',
-                    league: leagueName,
-                };
-                state.openTabs.push(newTab);
-            }
-            state.activeTabId = leagueName; // Activate the league tab
-        },
-
-        // Action to open a matchup tab (or focus if exists)
-        openMatchupTab(state, action: PayloadAction<Omit<MatchupTab, 'id' | 'type' | 'label'>>) {
-            const details = action.payload;
-            const tabId = generateMatchupTabId(details);
-            const existingTab = state.openTabs.find(tab => tab.id === tabId);
-
-            if (!existingTab) {
-                let label;
-                if (details.league === 'MLB') {
-                    label = `${teamNameToAbbreviationMLB(details.participant1)} @ ${teamNameToAbbreviationMLB(details.participant2)}${details.daySequence ? ` (Gm. ${details.daySequence})` : ''}`;
-                } else {
-                    label = `${details.participant1} @ ${details.participant2}${details.daySequence ? ` (Gm. ${details.daySequence})` : ''}`;
-                }
-
-                const newTab: MatchupTab = {
-                    ...details,
-                    id: tabId,
-                    type: 'matchup',
-                    label: label, // Generate a concise label
-                };
-                state.openTabs.push(newTab);
-            }
-            state.activeTabId = tabId; // Activate the new or existing matchup tab
-        },
-
-        // Action to close any tab by its ID
-        closeTab(state, action: PayloadAction<string>) {
-            const tabIdToClose = action.payload;
-            const tabIndex = state.openTabs.findIndex(tab => tab.id === tabIdToClose);
-
-            if (tabIndex > -1) {
-                const wasActive = state.activeTabId === tabIdToClose;
-
-                // Remove the tab
-                state.openTabs.splice(tabIndex, 1);
-
-                // If the closed tab was active, determine the next active tab
-                if (wasActive) {
-                    if (state.openTabs.length === 0) {
-                        state.activeTabId = null; // No tabs left
-                    } else {
-                        // Try activating the previous tab, fallback to the next, then the first
-                         const newActiveIndex = Math.max(0, tabIndex - 1); // Prefer tab to the left
-                         state.activeTabId = state.openTabs[newActiveIndex].id;
-
-                         // Simple logic: activate the last tab if the closed one was active
-                         // state.activeTabId = state.openTabs[state.openTabs.length - 1]?.id ?? null;
-                    }
-                }
-                 // Optional: Add logic here if closing a matchup tab should potentially reactivate its parent league tab
-            }
-        },
-
-        // Action to set the active tab by ID
-        setActiveTab(state, action: PayloadAction<string | null>) {
-            if (action.payload === null || state.openTabs.some(tab => tab.id === action.payload)) {
-                state.activeTabId = action.payload;
-            }
-        },
-    },
+    reducers: {},
     extraReducers: (builder) => {
         builder
             .addCase(fetchLeagues.pending, (state) => {
@@ -130,7 +44,6 @@ const leagueSlice = createSlice({
             .addCase(fetchLeagues.fulfilled, (state, action: PayloadAction<League[]>) => {
                 state.loading = 'succeeded';
                 state.leagues = action.payload;
-                // Keep existing tabs open when leagues are refetched
             })
             .addCase(fetchLeagues.rejected, (state, action) => {
                 state.loading = 'failed';
@@ -139,19 +52,10 @@ const leagueSlice = createSlice({
     },
 });
 
-// Export actions and selectors
-export const { openLeagueTab, openMatchupTab, closeTab, setActiveTab } = leagueSlice.actions;
-
-export const selectAllLeagues = (state: RootState) => state.tabs.leagues;
-export const selectLeaguesLoading = (state: RootState) => state.tabs.loading;
-export const selectLeaguesError = (state: RootState) => state.tabs.error;
-
-// Selectors for tabs
-export const selectOpenTabs = (state: RootState) => state.tabs.openTabs;
-export const selectActiveTabId = (state: RootState) => state.tabs.activeTabId;
-export const selectActiveTabData = (state: RootState): Tab | undefined => {
-    return state.tabs.openTabs.find((tab: Tab) => tab.id === state.tabs.activeTabId);
-};
+// Export selectors
+export const selectAllLeagues = (state: RootState) => state.leagues.leagues;
+export const selectLeaguesLoading = (state: RootState) => state.leagues.loading;
+export const selectLeaguesError = (state: RootState) => state.leagues.error;
 
 // Export the reducer
 export default leagueSlice.reducer; 

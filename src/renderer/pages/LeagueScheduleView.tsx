@@ -15,7 +15,7 @@ import GenericScheduleTable, { ColumnDefinition } from '@/components/GenericSche
 import type { ScheduleItem } from '../preload.d.ts';
 
 // Import Redux action and types
-import { openMatchupTab } from '@/store/slices/leagueSlice';
+import { openMatchupTab } from '@/store/slices/tabSlice';
 import type { AppDispatch } from '@/store/store';
 
 interface LeagueScheduleViewProps {
