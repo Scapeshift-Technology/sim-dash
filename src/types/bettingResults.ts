@@ -19,6 +19,28 @@ export interface SidesData {
   varianceOdds: number;
 }
 
+export interface TotalsData {
+  team: string;
+  period: string;
+  line: number;
+  overPercent: number;
+  underPercent: number;
+  pushPercent: number;
+  marginOfError: number;
+  usaFairOver: number;
+  usaFairUnder: number;
+  varianceOddsOver: number;
+  varianceOddsUnder: number;
+}
+
+export interface FirstInningPropsData {
+  team: string;
+  scorePercent: number;
+  marginOfError: number;
+  usaFair: number;
+  varianceOdds: number;
+}
+
 // ---------- MLB ----------
 
 export interface SimResultsMLB {
