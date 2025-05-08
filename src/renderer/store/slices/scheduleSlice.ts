@@ -1,4 +1,4 @@
-import { ScheduleItem } from '@/preload';
+import { ScheduleItem } from '@/types/sqlite';
 import { createSlice, createAsyncThunk, PayloadAction, createAction } from '@reduxjs/toolkit';
 import dayjs, { Dayjs } from 'dayjs';
 import type { RootState } from '../store';

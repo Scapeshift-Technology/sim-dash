@@ -3,55 +3,18 @@
 import type { Profile } from './store/slices/profilesSlice'; // Assuming Profile type is exported
 import type { SimResults, SimResultsMLB } from '@/types/mlb';
 import type { SimHistoryEntry } from '@/types/simHistory';
-
-interface LoginConfig {
-  host: string;
-  port: string;
-  database: string;
-  user: string;
-  password?: string;
-}
-
-interface LoginResult {
-  success: boolean;
-  username?: string;
-  error?: string;
-}
-
-interface LogoutResult {
-    success: boolean;
-    error?: string;
-}
-
-// Define the League type based on slice (or import if defined centrally)
-// This should match the structure returned by main process
-interface FetchedLeague {
-    League: string;
-}
-
-// Define the structure of the data returned by fetchSchedule
-export interface ScheduleItem {
-    Match: number;
-    PostDtmUTC: string;
-    Participant1: string;
-    Participant2: string;
-    DaySequence?: number; // Optional for MLB
-    // Add other potential fields returned by the query
-}
+import type { 
+  LoginConfig, 
+  LoginResult, 
+  LogoutResult, 
+  ScheduleItem, 
+  FetchedLeague,
+  FetchMlbLineupArgs
+} from '@/types/sqlite';
 
 // --- Add types for MLB Lineups (Imported where needed) ---
 // Re-exporting from here for simplicity in preload, adjust if needed
-export type { MatchupLineups, TeamLineup, Player, PlayerStats, Stats } from '../types/mlb';
-
-
-// Arguments for fetching MLB Lineup
-interface FetchMlbLineupArgs {
-    league: string; // Should always be 'MLB' here
-    date: string; // YYYY-MM-DD
-    participant1: string; // Away Team
-    participant2: string; // Home Team
-    daySequence?: number;
-}
+export type { MatchupLineups, TeamLineup, Player, PlayerStats, Stats } from '@/types/mlb';
 
 // Declare the electronAPI methods on the Window interface
 declare global {

@@ -10,7 +10,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import GenericScheduleTable, { ColumnDefinition } from '@/components/GenericScheduleTable';
 
 // Import the shared ScheduleItem type
-import type { ScheduleItem } from '@/preload.d.ts';
+import type { ScheduleItem } from '@/types/sqlite';
 
 // Import Redux action and types
 import { openMatchupTab } from '@/store/slices/tabSlice';
