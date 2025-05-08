@@ -171,10 +171,12 @@ const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = 
             open={Boolean(anchorEl)}
             onClose={handleHistoryClose}
             onClick={(e) => e.stopPropagation()}
-            PaperProps={{
-              sx: {
-                maxHeight: 300,
-                width: 250,
+            slotProps={{
+              paper: {
+                sx: {
+                  maxHeight: 300,
+                  width: 250,
+                },
               },
             }}
           >
