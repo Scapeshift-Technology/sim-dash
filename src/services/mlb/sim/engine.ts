@@ -12,7 +12,7 @@ import {
 import { matchup, leagueAvgStats } from "./exampleMatchup";
 import { getMatchupProbabilities } from "./probabilities";
 import { initializeHomeFieldMultipliers } from "./homeFieldAdvantage";
-import { calculateSimCounts } from "./analyzeResults";
+import { calculateSimCounts } from "./analysis/analyzeResults";
 import { SimResultsMLB } from "@/types/bettingResults";
 import { evaluatePitchingSubstitution } from "./pitcherSubstitution";
 
