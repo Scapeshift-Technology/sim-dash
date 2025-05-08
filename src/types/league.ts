@@ -11,7 +11,8 @@ export interface LeagueTab {
 }
 
 export interface MatchupTab {
-    id: string; // Unique identifier for the matchup, e.g., "MLB_2024-07-19_NYY@BOS_1"
+    id: string; // Unique identifier for the matchup, e.g., "MLB_2024-07-19_NYY@BOS_1". Here for backwards compatibility.
+    matchId: number; // Unique identifier for the matchup from dev_satya
     type: 'matchup';
     league: string;
     date: string; // YYYY-MM-DD

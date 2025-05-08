@@ -109,6 +109,7 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
         console.log(`Clicked ${league} Match:`, item);
         if (league === 'MLB' && selectedDate) {
             dispatch(openMatchupTab({
+                matchId: item.Match,
                 league: league,
                 date: selectedDate.format('YYYY-MM-DD'),
                 participant1: item.Participant1,

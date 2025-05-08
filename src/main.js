@@ -206,6 +206,30 @@ ipcMain.handle('delete-profile', async (event, profileName) => {
     }
 });
 
+// --- SQLite sim history ---
+// Save a sim history entry
+ipcMain.handle('save-sim-history', async (event, simHistory) => {
+    if (!db) return false;
+    try {
+        await dbHelper.saveSimHistory(db, simHistory);
+        return true;
+    } catch (err) {
+        console.error('Error saving sim history:', err);
+        return false;
+    }
+});
+
+// Get a match's sim history
+ipcMain.handle('get-sim-history', async (event, matchId) => {
+    if (!db) return [];
+    try {
+        const simHistory = await dbHelper.getSimHistory(db, matchId);
+        return simHistory;
+    } catch (err) {
+        console.error('Error getting sim history:', err);
+        return [];
+    }
+});
 
 // --- SQL Server Connection Handling ---
 
@@ -326,7 +350,7 @@ ipcMain.handle('fetch-schedule', async (event, { league, date }) => {
 
     try {
         // Basic columns common to all leagues
-        let columns = 'PostDtmUTC, Participant1, Participant2';
+        let columns = 'Match,PostDtmUTC, Participant1, Participant2';
         // Add MLB-specific columns
         if (league === 'MLB') {
             columns += ', DaySequence';

@@ -68,7 +68,8 @@ const MainLayout: React.FC = () => {
                 return <LeagueScheduleView key={tab.id} league={tab.league} />;
             case 'matchup':
                 return <MLBMatchupView 
-                            key={tab.id} 
+                            key={tab.matchId} 
+                            matchId={tab.matchId}
                             league={tab.league} 
                             date={tab.date} 
                             participant1={tab.participant1} 

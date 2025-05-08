@@ -4,6 +4,10 @@ export type TeamType = 'away' | 'home';
 
 // ---------- MLB sim types ----------
 
+export interface SimInputDataMLB {
+  testField: string;
+}
+
 export interface GameStatePitcher {
   id: number;
   battersFaced: number;
@@ -109,14 +113,6 @@ export interface TeamBatterMatchupProbabilities {
 export interface GameMatchupProbabilities {
   home: TeamBatterMatchupProbabilities;
   away: TeamBatterMatchupProbabilities;
-}
-
-export interface MLBMatchupViewProps {
-    league: string;
-    date: string;
-    participant1: string; // Away Team
-    participant2: string; // Home Team
-    daySequence?: number;
 }
 
 // 

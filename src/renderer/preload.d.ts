@@ -2,6 +2,7 @@
 // For example, if login takes specific args and returns a specific shape:
 import type { Profile } from './store/slices/profilesSlice'; // Assuming Profile type is exported
 import type { SimResults, SimResultsMLB } from '@/types/mlb';
+import type { SimHistoryEntry } from '@/types/simHistory';
 
 interface LoginConfig {
   host: string;
@@ -30,6 +31,7 @@ interface FetchedLeague {
 
 // Define the structure of the data returned by fetchSchedule
 export interface ScheduleItem {
+    Match: number;
     PostDtmUTC: string;
     Participant1: string;
     Participant2: string;
@@ -87,6 +89,10 @@ declare global {
         awayTeamName: string;
         homeTeamName: string;
       }>;
+
+      // Sim history
+      saveSimHistory: (args: SimHistoryEntry) => Promise<boolean>;
+      getSimHistory: (args: { matchId: string }) => Promise<SimHistoryEntry[]>;
 
       // About Window Communication (Keep if needed, or remove if about window is refactored/removed)
       onVersion: (callback: (event: any, version: string) => void) => void;

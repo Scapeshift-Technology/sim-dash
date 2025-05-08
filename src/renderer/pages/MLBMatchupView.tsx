@@ -14,9 +14,10 @@ import {
     Button
 } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import type { MatchupLineups, TeamLineup, Player, MLBMatchupViewProps } from '@/types/mlb';
+import type { MatchupLineups, TeamLineup, Player } from '@/types/mlb';
 import type { SimResultsMLB } from '@/types/bettingResults';
 import MLBSimulationResultsSummary from '@/components/simulation/MLBSimulationResultsSummary';
+import { SimHistoryEntry } from '@/types/simHistory';
 
 function renderPlayerEntry(player: Player) {
   return (
@@ -25,7 +26,17 @@ function renderPlayerEntry(player: Player) {
   {/* TODO: Display relevant player stats */}
 }
 
-const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({ 
+interface MLBMatchupViewProps {
+    matchId: number;
+    league: string;
+    date: string;
+    participant1: string; // Away Team
+    participant2: string; // Home Team
+    daySequence?: number;
+}
+
+const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
+    matchId,
     league,
     date,
     participant1,
@@ -68,14 +79,29 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
 
     // ---------- Handlers ----------
     const handleRunSimulation = async () => {
-        console.log('Running simulation for:', { participant1, participant2, date });
+        // Get timestamp for later 
+        const timestamp = new Date().toISOString();
 
-        const results: SimResultsMLB = await window.electronAPI.simulateMatchupMLB({
+        // Run simulation
+        const simResults: SimResultsMLB = await window.electronAPI.simulateMatchupMLB({
           numGames: 50000
         });
-        console.log('Simulation results:', results);
+        setSimulationResults(simResults);
 
-        setSimulationResults(results);
+        // Save sim history
+        console.log(`MLBMatchupView: Saving sim history for matchId: ${matchId}`);
+        const simHistoryEntry: SimHistoryEntry = {
+          matchId: matchId,
+          timestamp: timestamp,
+          simResults: simResults,
+          inputData: { testField: 'test' }
+        };
+        console.log(`MLBMatchupView: Sim history entry: ${JSON.stringify(simHistoryEntry, null, 2)}`);
+        const saveSuccess = await window.electronAPI.saveSimHistory(simHistoryEntry);
+        console.log(`MLBMatchupView: Save success: ${saveSuccess}`);
+        if (!saveSuccess) {
+            console.error('Error saving sim history');
+        }
     };
 
     // ---------- Render functions ----------

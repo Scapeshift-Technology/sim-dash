@@ -24,6 +24,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Simulation Results Window Communication
     getSimData: (args) => ipcRenderer.invoke('get-sim-data', args),
 
+    // Sim history
+    saveSimHistory: (args) => ipcRenderer.invoke('save-sim-history', args),
+    getSimHistory: (args) => ipcRenderer.invoke('get-sim-history', args),
+
     // --- Added for About Window ---
     // Listener for receiving the app version from main process
     onVersion: (callback) => ipcRenderer.on('set-version', callback)
