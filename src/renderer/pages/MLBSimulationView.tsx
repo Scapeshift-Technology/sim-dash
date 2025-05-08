@@ -5,6 +5,7 @@ import {
   teamNameToAbbreviationMLB, 
   transformSidesCountsMLB, 
   transformTotalsCountsMLB,
+  transformFirstInningCountsMLB,
   transformPropsCountsMLB
 } from '@/utils/displayMLB';
 import SidesTable from '@/components/SidesTable';
@@ -12,6 +13,7 @@ import { Box, Typography, IconButton } from '@mui/material';
 import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material';
 import TotalsTable from '@/components/TotalsTable';
 import FirstInningTable from '@/components/FirstInningTable';
+import PlayerPropsTable from '@/components/PlayerPropsTable';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -55,7 +57,8 @@ const MLBSimulationView: React.FC = () => {
   const [sectionVisibility, setSectionVisibility] = useState({
     sides: true,
     totals: true,
-    props: true
+    firstInningProps: true,
+    playerProps: true
   });
   const location = useLocation();
   const windowId = new URLSearchParams(location.search).get('windowId');
@@ -96,11 +99,12 @@ const MLBSimulationView: React.FC = () => {
     return <div>No simulation data provided</div>;
   }
 
-  // Mock data for SidesTable
+  // Data for betting tables
   const sidesData = transformSidesCountsMLB(simData.sides, awayTeamAbbreviation, homeTeamAbbreviation);
   const totalsData = transformTotalsCountsMLB(simData.totals, awayTeamAbbreviation, homeTeamAbbreviation);
-  const firstInningPropsData = transformPropsCountsMLB(simData.props, awayTeamAbbreviation, homeTeamAbbreviation);
-  console.log('firstInningPropsData', firstInningPropsData);
+  const propsData = transformPropsCountsMLB(simData.props, awayTeamAbbreviation, homeTeamAbbreviation);
+  console.log('simData.props', simData.props);
+  console.log('propsData', propsData);
 
   return (
     <div style={{ padding: '20px' }}>
@@ -124,10 +128,18 @@ const MLBSimulationView: React.FC = () => {
 
       <CollapsibleSection
         title="Simulated First Inning Scoring Props Results"
-        isOpen={sectionVisibility.props}
-        onToggle={() => toggleSection('props')}
+        isOpen={sectionVisibility.firstInningProps}
+        onToggle={() => toggleSection('firstInningProps')}
       >
-        <FirstInningTable data={firstInningPropsData} />
+        <FirstInningTable data={propsData.firstInning} />
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        title="Simulated Player Props Results"
+        isOpen={sectionVisibility.playerProps}
+        onToggle={() => toggleSection('playerProps')}
+      >
+        <PlayerPropsTable data={propsData.player} />
       </CollapsibleSection>
     </div>
   );

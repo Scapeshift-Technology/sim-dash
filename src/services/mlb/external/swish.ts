@@ -72,7 +72,8 @@ async function extractTeamLineupFromSwishLineupCard(lineupCard: string, date: st
   return {
     lineup: lineup,
     startingPitcher: startingPitcher,
-    bullpen: bullpen
+    bullpen: bullpen,
+    teamName: teamName
   };
 }
 

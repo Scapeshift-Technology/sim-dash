@@ -33,9 +33,25 @@ export interface TotalsData {
   varianceOddsUnder: number;
 }
 
+export interface PropsData {
+  firstInning: FirstInningPropsData[];
+  player: PlayerPropsData[];
+}
+
 export interface FirstInningPropsData {
   team: string;
   scorePercent: number;
+  marginOfError: number;
+  usaFair: number;
+  varianceOdds: number;
+}
+
+export interface PlayerPropsData {
+  playerName: string;
+  teamName: string;
+  statName: string;
+  line: number;
+  overPercent: number;
   marginOfError: number;
   usaFair: number;
   varianceOdds: number;
@@ -69,12 +85,31 @@ export interface SidesCountsMLB {
 
 export interface PropsCountsMLB {
   firstInning: FirstInningScoreCountsMLB;
+  player: AllPlayersPropsCountsMLB;
 }
 
 export interface FirstInningScoreCountsMLB {
   away: OutcomeCounts;
   home: OutcomeCounts;
   overall: OutcomeCounts;
+}
+
+export interface AllPlayersPropsCountsMLB {
+    // Each key is a player id
+  [key: number]: PlayerPropsCountsMLB;
+}
+
+export interface PlayerPropsCountsMLB {
+  playerName: string;
+  teamName: string;
+  stats: {
+    [key: string]: PlayerStatPropsCountsMLB;
+  };
+}
+
+export interface PlayerStatPropsCountsMLB {
+  // Each key is a line
+  [key: number]: OutcomeCounts;
 }
 
 // ----- Totals -----

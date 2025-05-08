@@ -34,7 +34,8 @@ export interface GameStateMLB {
 
 export interface PlayResult {
   batterID: number;
-  eventType: string;
+  pitcherID: number;
+  eventType: EventType;
   runsOnPlay: number;
   inning: number;
   topInning: boolean;
@@ -89,6 +90,7 @@ export interface TeamLineup {
     startingPitcher: Player;
     bullpen: Player[]; // Relief pitchers available
     // bench?: Player[]; // Future: players on the bench
+    teamName: string;
 }
 
 export interface MatchupLineups {

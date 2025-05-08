@@ -616,6 +616,7 @@ const sanFranciscoGiants: TeamLineup = {
   lineup: giantsLineup,
   startingPitcher: giantsStartingPitcher,
   bullpen: giantsBullpen,
+  teamName: "San Francisco Giants"
 };
 
 // ---------- Chicago Cubs ----------
@@ -907,6 +908,7 @@ const cubsLineup: Player[] = [
 
 const bradKeller: Player = {
   id: 641745,
+  name: "Brad Keller",
   position: "RP",
   pitchingSide: "R",
   stats: {
@@ -1192,6 +1194,7 @@ const chicagoCubs: TeamLineup = {
   lineup: cubsLineup,
   startingPitcher: chicagoCubsStartingPitcher,
   bullpen: chicagoCubsBullpen,
+  teamName: "Chicago Cubs"
 };
 
 // ---------- Matchup ----------

@@ -34,7 +34,7 @@ async function simulateMatchupMLB(
   const simPlays = simulateGames(matchup, leagueAvgStats, num_games);
 
   // Get results
-  const outputResults: SimResultsMLB = calculateSimCounts(simPlays);
+  const outputResults: SimResultsMLB = calculateSimCounts(simPlays, matchup);
 
   return outputResults;
 }
@@ -131,21 +131,23 @@ function simulatePlay(gameState: GameStateMLB, matchupProbabilities: GameMatchup
   const { topInning } = gameState;
   let atBatMatchupProbabilities: Stats;
   let currentBatter: Player;
+  let currentPitcherID: number;
 
   if (topInning) {
     currentBatter = gameState.awayLineup[gameState.awayLineupPos];
-    const currentPitcher: GameStatePitcher = gameState.homePitcher;
-    atBatMatchupProbabilities = matchupProbabilities.away.batter[currentBatter.id][currentPitcher.id];
+    currentPitcherID = gameState.homePitcher.id;
+    atBatMatchupProbabilities = matchupProbabilities.away.batter[currentBatter.id][currentPitcherID];
   } else {
     currentBatter = gameState.homeLineup[gameState.homeLineupPos];
-    const currentPitcher: GameStatePitcher = gameState.awayPitcher;
-    atBatMatchupProbabilities = matchupProbabilities.home.batter[currentBatter.id][currentPitcher.id];
+    currentPitcherID = gameState.awayPitcher.id;
+    atBatMatchupProbabilities = matchupProbabilities.home.batter[currentBatter.id][currentPitcherID];
   }
 
   const playEvent = simulatePlayResult(atBatMatchupProbabilities);
   const result = processEvent(playEvent, gameState);
   const playResult: PlayResult = {
     batterID: currentBatter.id,
+    pitcherID: currentPitcherID,
     eventType: playEvent,
     runsOnPlay: result.runsOnPlay,
     inning: gameState.inning,

@@ -9,7 +9,11 @@ import {
   GamePeriodTotalsMLB, 
   TotalsLinesMLB,
   PropsCountsMLB,
-  FirstInningPropsData
+  FirstInningPropsData,
+  FirstInningScoreCountsMLB,
+  PropsData,
+  PlayerPropsData,
+  AllPlayersPropsCountsMLB
 } from "@/types/bettingResults";
 import { countsToAmericanOdds, countsToProbability, marginOfError, proportionToAmericanOdds } from "./oddsCalculations";
 
@@ -189,12 +193,67 @@ function transformTotalsOutcomeCountsMLB(
 export { transformTotalsCountsMLB };
 
 // ----- Props -----
+// -- Player props --
 
-function transformPropsCountsMLB(propsCounts: PropsCountsMLB, awayTeamName: string, homeTeamName: string): FirstInningPropsData[] {
-  const { firstInning } = propsCounts;
-  const awayData = transformFirstInningScoreCountsMLB(firstInning.away, awayTeamName);
-  const homeData = transformFirstInningScoreCountsMLB(firstInning.home, homeTeamName);
-  const overallData = transformFirstInningScoreCountsMLB(firstInning.overall, 'Overall');
+function transformPropsCountsMLB(propsCounts: PropsCountsMLB, awayTeamName: string, homeTeamName: string): PropsData {
+  const firstInningPropData = transformFirstInningCountsMLB(propsCounts.firstInning, awayTeamName, homeTeamName);
+  const playerPropData = transformAllPlayerCountsMLB(propsCounts.player, awayTeamName, homeTeamName);
+
+  return {
+    firstInning: firstInningPropData,
+    player: playerPropData
+  }
+}
+
+function transformAllPlayerCountsMLB(propsCounts: AllPlayersPropsCountsMLB, awayTeamName: string, homeTeamName: string): PlayerPropsData[] {
+  const data: PlayerPropsData[] = [];
+
+  // Loop through all of the players
+  for (const playerID of Object.keys(propsCounts)) {
+    const playerData = propsCounts[Number(playerID)];
+    const playerName = playerData.playerName;
+    const teamName = playerData.teamName;
+    // Loop through the player's stats
+    for (const stat of Object.keys(playerData.stats)) {
+      // Loop through the stat's lines
+      for (const line of Object.keys(playerData.stats[stat])) {
+        const lineNumber = parseFloat(line);
+        const lineData = transformPlayerStatLinesPropsCountsMLB(playerName, stat, lineNumber, playerData.stats[stat][lineNumber], teamName);
+        data.push(lineData);
+      }
+    }
+  }
+
+  return data;
+}
+
+function transformPlayerStatLinesPropsCountsMLB(playerName: string, statName: string, lineNumber: number, statData: OutcomeCounts, teamName: string): PlayerPropsData {
+  // Return values for the given line
+  const { success, failure, push, total } = statData;
+  const pushCt = push || 0;
+  const overPercent = countsToProbability(success, failure, pushCt);
+  const moe = marginOfError(total - pushCt, overPercent);
+  const usaOdds = countsToAmericanOdds(success, failure, pushCt);
+  const varianceProportion = Math.min(Math.max(overPercent + moe, 0), 1);
+  const varianceOdds = proportionToAmericanOdds(varianceProportion);
+
+  return {
+    playerName: playerName,
+    teamName: teamName,
+    statName: statName,
+    line: lineNumber,
+    overPercent: overPercent,
+    marginOfError: moe,
+    usaFair: usaOdds,
+    varianceOdds: varianceOdds
+  };
+}
+
+// -- First inning props --
+function transformFirstInningCountsMLB(propsCounts: FirstInningScoreCountsMLB, awayTeamName: string, homeTeamName: string): FirstInningPropsData[] {
+  const awayData = transformFirstInningScoreCountsMLB(propsCounts.away, awayTeamName);
+  const homeData = transformFirstInningScoreCountsMLB(propsCounts.home, homeTeamName);
+  const overallData = transformFirstInningScoreCountsMLB(propsCounts.overall, 'Overall');
 
   return [awayData, homeData, overallData];
 }
@@ -218,4 +277,4 @@ function transformFirstInningScoreCountsMLB(outcomeCounts: OutcomeCounts, teamNa
   };
 }
 
-export { transformPropsCountsMLB };
+export { transformPropsCountsMLB, transformFirstInningCountsMLB };

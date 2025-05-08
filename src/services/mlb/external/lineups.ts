@@ -112,7 +112,8 @@ function extractCompleteTeamLineup(
   return {
     lineup: startingLineup,
     startingPitcher: startingPitcher,
-    bullpen: bullpen
+    bullpen: bullpen,
+    teamName: teamType === 'away' ? gameInfo.gameData.teams.away.name : gameInfo.gameData.teams.home.name
   };
 }
 
@@ -171,11 +172,13 @@ export function makeMockLineups(date: string, awayTeam: string, homeTeam: string
             lineup: awayLineup,
             startingPitcher: awaySP,
             bullpen: awayBullpen,
+            teamName: awayTeam
         },
         home: {
             lineup: homeLineup,
             startingPitcher: homeSP,
             bullpen: homeBullpen,
+            teamName: homeTeam
         }
     };
 }
