@@ -142,7 +142,7 @@ async function saveSimHistory(db, simHistory) {
 // Get a match's sim history
 async function getSimHistory(db, matchId) {
   return new Promise((resolve, reject) => {
-    const query = "SELECT * FROM sim_history WHERE match_id = ? ORDER BY timestamp";
+    const query = "SELECT * FROM sim_history WHERE match_id = ? ORDER BY timestamp DESC";
     
     db.all(query, [matchId], (err, rows) => {
       if (err) {

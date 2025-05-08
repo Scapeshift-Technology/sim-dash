@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Box, Typography, SxProps, Theme, TypographyVariant, Paper, IconButton, Menu, MenuItem, ListItemText, ListItemIcon } from '@mui/material';
 import HistoryIcon from '@mui/icons-material/History';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import type { SimResultsMLB } from '@/types/bettingResults';
 import type { SimHistoryEntry } from '@/types/simHistory';
 import { calculateResultsSummaryDisplayMLB } from '@/utils/oddsUtilsMLB';
 
