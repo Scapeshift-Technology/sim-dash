@@ -1,6 +1,8 @@
 import { Player, PlayResult, EventType, MatchupLineups } from "@/types/mlb";
 import { PlayerPropsCountsMLB, PlayerStatPropsCountsMLB, AllPlayersPropsCountsMLB } from "@/types/bettingResults";
 
+// ---------- Types ----------
+
 interface StatConfig {
   events: EventType[];
   lines: number[];
@@ -9,6 +11,8 @@ interface StatConfig {
 interface PlayerWithTeam extends Player {
   teamName: string;
 }
+
+// ---------- Functions ----------
 
 export function findPlayerStats(simPlays: PlayResult[][], player: PlayerWithTeam): PlayerPropsCountsMLB {
   const playerStats: PlayerPropsCountsMLB = {
