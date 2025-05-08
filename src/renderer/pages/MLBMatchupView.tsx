@@ -48,14 +48,15 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [simulationResults, setSimulationResults] = useState<SimResultsMLB | null>(null);
+    const [simHistory, setSimHistory] = useState<SimHistoryEntry[]>([]);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
     
     // ---------- Effect ----------
-    useEffect(() => {
+    useEffect(() => { // Fetch lineup data
         const fetchLineup = async () => {
             setLoading(true);
             setError(null);
             setLineupData(null);
-            console.log(`MLBMatchupView: Fetching lineup for ${participant1} @ ${participant2} on ${date}`);
             try {
                 const data = await window.electronAPI.fetchMlbLineup({
                     league,
@@ -64,7 +65,6 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                     participant2,
                     daySequence
                 });
-                console.log("MLBMatchupView: Received lineup data:", data);
                 setLineupData(data);
             } catch (err: any) {
                 console.error('Error fetching MLB lineup:', err);
@@ -76,6 +76,25 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
 
         fetchLineup();
     }, [league, date, participant1, participant2, daySequence]); // Refetch if props change
+
+    useEffect(() => { // Fetch sim history
+        const fetchSimHistory = async () => {
+            if (!matchId) return;
+            console.log('Fetching sim history for matchId:', matchId);
+            
+            setIsLoadingHistory(true);
+            try {
+                const history = await window.electronAPI.getSimHistory(matchId);
+                setSimHistory(history);
+            } catch (error) {
+                console.error('Failed to fetch sim history:', error);
+            } finally {
+                setIsLoadingHistory(false);
+            }
+        };
+
+        fetchSimHistory();
+    }, [matchId]);
 
     // ---------- Handlers ----------
     const handleRunSimulation = async () => {
@@ -89,19 +108,20 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         setSimulationResults(simResults);
 
         // Save sim history
-        console.log(`MLBMatchupView: Saving sim history for matchId: ${matchId}`);
         const simHistoryEntry: SimHistoryEntry = {
           matchId: matchId,
           timestamp: timestamp,
           simResults: simResults,
           inputData: { testField: 'test' }
         };
-        console.log(`MLBMatchupView: Sim history entry: ${JSON.stringify(simHistoryEntry, null, 2)}`);
         const saveSuccess = await window.electronAPI.saveSimHistory(simHistoryEntry);
-        console.log(`MLBMatchupView: Save success: ${saveSuccess}`);
         if (!saveSuccess) {
             console.error('Error saving sim history');
         }
+
+        // Add new sim history entry to top of list
+        const updatedHistory = [simHistoryEntry, ...simHistory];
+        setSimHistory(updatedHistory);
     };
 
     // ---------- Render functions ----------
@@ -185,9 +205,11 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                     maxWidth: '200px'
                 }}>
                     <MLBSimulationResultsSummary
-                        simResults={simulationResults}
                         awayTeamName={participant1}
                         homeTeamName={participant2}
+                        displayHistory={true}
+                        simHistory={simHistory}
+                        isLoading={isLoadingHistory}
                     />
                 </Box>
             </Box>

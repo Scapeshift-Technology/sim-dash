@@ -92,7 +92,7 @@ declare global {
 
       // Sim history
       saveSimHistory: (args: SimHistoryEntry) => Promise<boolean>;
-      getSimHistory: (args: { matchId: string }) => Promise<SimHistoryEntry[]>;
+      getSimHistory: (matchId: number) => Promise<SimHistoryEntry[]>;
 
       // About Window Communication (Keep if needed, or remove if about window is refactored/removed)
       onVersion: (callback: (event: any, version: string) => void) => void;

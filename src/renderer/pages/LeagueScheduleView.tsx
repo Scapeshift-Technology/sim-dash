@@ -81,7 +81,6 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
                     Participant1: item.Participant1.trim(),
                     Participant2: item.Participant2.trim()
                 }));
-                console.log(`SCHEDULE DATA: ${JSON.stringify(cleanedData, null, 2)}`);
                 setScheduleData(cleanedData);
             } catch (err: any) {
                 console.error('Error fetching schedule:', err);
@@ -106,7 +105,6 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
 
     // Updated Row Click Handler
     const handleRowClick = (item: ScheduleItem) => {
-        console.log(`Clicked ${league} Match:`, item);
         if (league === 'MLB' && selectedDate) {
             dispatch(openMatchupTab({
                 matchId: item.Match,

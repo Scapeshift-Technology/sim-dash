@@ -1,37 +1,53 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, SxProps, Theme, TypographyVariant, Paper } from '@mui/material';
+import { Box, Typography, SxProps, Theme, TypographyVariant, Paper, IconButton, Menu, MenuItem, ListItemText, ListItemIcon } from '@mui/material';
+import HistoryIcon from '@mui/icons-material/History';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import type { SimResultsMLB } from '@/types/bettingResults';
+import type { SimHistoryEntry } from '@/types/simHistory';
 import { calculateResultsSummaryDisplayMLB } from '@/utils/oddsUtilsMLB';
 
 interface MLBSimulationResultsSummaryProps {
-  simResults: SimResultsMLB | null;
+  simHistory: SimHistoryEntry[];
+  isLoading?: boolean;
   awayTeamName: string;
   homeTeamName: string;
   sx?: SxProps<Theme>;
   className?: string;
   size?: 'small' | 'medium' | 'large';
+  displayHistory?: boolean;
 }
 
 const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = ({
-  simResults,
+  simHistory,
+  isLoading = false,
   awayTeamName,
   homeTeamName,
   sx = {},
   className,
-  size = 'medium'
+  size = 'medium',
+  displayHistory = false
 }) => {
   // ---------- State ----------
   const [display, setDisplay] = useState<{
     topLine: string;
     bottomLine: string;
   } | null>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedSim, setSelectedSim] = useState<SimHistoryEntry | null>(null);
 
   // ---------- Effect ----------
   useEffect(() => {
-    if (simResults) {
-      setDisplay(calculateResultsSummaryDisplayMLB(simResults, awayTeamName, homeTeamName));
+    // Set the most recent simulation as selected by default when history changes
+    if (simHistory.length > 0 && !selectedSim) {
+      setSelectedSim(simHistory[0]);
     }
-  }, [simResults]);
+  }, [simHistory]);
+
+  useEffect(() => {
+    if (selectedSim) {
+      setDisplay(calculateResultsSummaryDisplayMLB(selectedSim.simResults, awayTeamName, homeTeamName));
+    }
+  }, [selectedSim, awayTeamName, homeTeamName]);
 
   // ---------- Styles ----------
   const sizeStyles: Record<string, { py: number | string; px: number | string; typography: TypographyVariant }> = {
@@ -52,15 +68,34 @@ const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = 
     }
   };
 
-  // ---------- Handler ----------
+  // ---------- Handlers ----------
   const handleClick = async () => {
-    if (simResults) {
+    if (selectedSim) {
       try {
-        await window.electronAPI.createSimWindow({ league: 'MLB', simData: simResults, awayTeamName, homeTeamName });
+        await window.electronAPI.createSimWindow({ 
+          league: 'MLB', 
+          simData: selectedSim.simResults, 
+          awayTeamName, 
+          homeTeamName 
+        });
       } catch (error) {
         console.error('Failed to create simulation window:', error);
       }
     }
+  };
+
+  const handleHistoryClick = (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleHistoryClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleHistoryItemClick = (historyEntry: SimHistoryEntry) => {
+    setSelectedSim(historyEntry);
+    handleHistoryClose();
   };
 
   // ---------- Render ----------
@@ -79,13 +114,13 @@ const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = 
         borderRadius: '8px',
         backgroundColor: 'background.paper',
         color: 'text.primary',
-        cursor: simResults ? 'pointer' : 'default',
-        opacity: simResults ? 1 : 0,
+        cursor: selectedSim ? 'pointer' : 'default',
+        opacity: 1,
         transition: 'all 0.3s ease-in-out',
         border: '1px solid',
         borderColor: 'divider',
         overflow: 'hidden',
-        '&:hover': simResults ? {
+        '&:hover': selectedSim ? {
           elevation: 4,
           transform: 'translateY(-2px)',
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
@@ -113,30 +148,115 @@ const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = 
         ...sx
       }}
     >
+      {displayHistory && (
+        <>
+          <IconButton
+            size="small"
+            onClick={handleHistoryClick}
+            sx={{
+              position: 'absolute',
+              top: 4,
+              right: 4,
+              zIndex: 2,
+              color: 'text.secondary',
+              '&:hover': {
+                color: 'primary.main',
+              },
+            }}
+          >
+            <HistoryIcon fontSize="small" />
+          </IconButton>
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleHistoryClose}
+            onClick={(e) => e.stopPropagation()}
+            PaperProps={{
+              sx: {
+                maxHeight: 300,
+                width: 250,
+              },
+            }}
+          >
+            {isLoading ? (
+              <MenuItem disabled>
+                <ListItemText primary="Loading history..." />
+              </MenuItem>
+            ) : simHistory.length === 0 ? (
+              <MenuItem disabled>
+                <ListItemText primary="No history available" />
+              </MenuItem>
+            ) : (
+              simHistory.map((entry) => {
+                const displayInfo = calculateResultsSummaryDisplayMLB(entry.simResults, awayTeamName, homeTeamName);
+                return (
+                  <MenuItem 
+                    key={entry.timestamp} 
+                    onClick={() => handleHistoryItemClick(entry)}
+                    sx={{ py: 1 }}
+                  >
+                    <ListItemIcon>
+                      <AccessTimeIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText 
+                      primary={new Date(entry.timestamp).toLocaleString()}
+                      secondary={`${displayInfo.topLine} / ${displayInfo.bottomLine}`}
+                    />
+                  </MenuItem>
+                );
+              })
+            )}
+          </Menu>
+        </>
+      )}
       <Box sx={{ position: 'relative', zIndex: 1 }}>
-        <Typography 
-          variant={sizeStyles[size].typography} 
-          sx={{ 
-            textAlign: 'center',
-            fontWeight: 'medium',
-            color: 'text.primary',
-            mb: 0.5
-          }}
-        >
-          {display?.topLine}
-        </Typography>
-        <Typography 
-          variant={sizeStyles[size].typography} 
-          sx={{ 
-            textAlign: 'center',
-            color: 'text.secondary'
-          }}
-        >
-          {display?.bottomLine}
-        </Typography>
+        {isLoading ? (
+          <Typography 
+            variant={sizeStyles[size].typography} 
+            sx={{ 
+              textAlign: 'center',
+              color: 'text.secondary'
+            }}
+          >
+            Loading...
+          </Typography>
+        ) : !selectedSim ? (
+          <Typography 
+            variant={sizeStyles[size].typography} 
+            sx={{ 
+              textAlign: 'center',
+              color: 'text.secondary'
+            }}
+          >
+            No simulations available
+          </Typography>
+        ) : (
+          <>
+            <Typography 
+              variant={sizeStyles[size].typography} 
+              sx={{ 
+                textAlign: 'center',
+                fontWeight: 'medium',
+                color: 'text.primary',
+                mb: 0.5
+              }}
+            >
+              {display?.topLine}
+            </Typography>
+            <Typography 
+              variant={sizeStyles[size].typography} 
+              sx={{ 
+                textAlign: 'center',
+                color: 'text.secondary'
+              }}
+            >
+              {display?.bottomLine}
+            </Typography>
+          </>
+        )}
       </Box>
     </Paper>
   );
 };
 
-export default MLBSimulationResultsSummary;
+export default MLBSimulationResultsSummary; 

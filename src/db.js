@@ -142,12 +142,20 @@ async function saveSimHistory(db, simHistory) {
 // Get a match's sim history
 async function getSimHistory(db, matchId) {
   return new Promise((resolve, reject) => {
-    db.all("SELECT * FROM sim_history WHERE match_id = ? ORDER BY timestamp", [matchId], (err, rows) => {
+    const query = "SELECT * FROM sim_history WHERE match_id = ? ORDER BY timestamp";
+    
+    db.all(query, [matchId], (err, rows) => {
       if (err) {
-        console.error('Error fetching sim history from SQLite:', err.message);
+        console.error('[db.js] Error fetching sim history from SQLite:', err.message);
         reject(err);
       } else {
-        resolve(rows);
+        // Parse the JSON data from the database
+        const parsedRows = rows.map(row => ({
+          ...row,
+          simResults: JSON.parse(row.sim_results),
+          inputData: JSON.parse(row.input_data)
+        }));
+        resolve(parsedRows);
       }
     });
   });
