@@ -4,7 +4,7 @@ import authReducer from './slices/authSlice';
 import profilesReducer from './slices/profilesSlice';
 import leagueReducer from './slices/leagueSlice';
 import tabReducer from './slices/tabSlice';
-// import leagueReducer from './slices/leagueSlice'; // Keep for future use
+import scheduleReducer from './slices/scheduleSlice';
 
 export const store = configureStore({
   reducer: {
@@ -13,9 +13,7 @@ export const store = configureStore({
     profiles: profilesReducer,
     leagues: leagueReducer,
     tabs: tabReducer,
-    // leagues: leagueReducer,
-    // Remove placeholder now that we have real reducers
-    // placeholder: (state = {}) => state,
+    schedule: scheduleReducer,
   },
   // Optional: Add middleware here if needed (e.g., for logging)
   // middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),

@@ -80,8 +80,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     useEffect(() => { // Fetch sim history
         const fetchSimHistory = async () => {
             if (!matchId) return;
-            console.log('Fetching sim history for matchId:', matchId);
-            
+                        
             setIsLoadingHistory(true);
             try {
                 const history = await window.electronAPI.getSimHistory(matchId);

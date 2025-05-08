@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import React, { useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Box, CircularProgress, Alert, Paper } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -8,15 +8,21 @@ import dayjs, { Dayjs } from 'dayjs';
 
 // Import the configurable table component and its column definition type
 import GenericScheduleTable, { ColumnDefinition } from '@/components/GenericScheduleTable';
-// MLBScheduleTable is no longer needed
-// import MLBScheduleTable from './MLBScheduleTable';
 
 // Import the shared ScheduleItem type
-import type { ScheduleItem } from '../preload.d.ts';
+import type { ScheduleItem } from '@/preload.d.ts';
 
 // Import Redux action and types
 import { openMatchupTab } from '@/store/slices/tabSlice';
-import type { AppDispatch } from '@/store/store';
+import type { AppDispatch, RootState } from '@/store/store';
+import { 
+    selectLeagueScheduleData, 
+    selectLeagueScheduleDate, 
+    selectLeagueScheduleStatus,
+    selectLeagueScheduleError,
+    updateLeagueDate,
+    fetchSchedule 
+} from '@/store/slices/scheduleSlice';
 
 interface LeagueScheduleViewProps {
     league: string;
@@ -30,8 +36,8 @@ const commonColumns: ColumnDefinition[] = [
         label: 'Date/Time (Local)',
         render: (item) => dayjs(item.PostDtmUTC).format('YYYY-MM-DD HH:mm')
     },
-    { key: 'Participant1', label: 'Participant 1' },
-    { key: 'Participant2', label: 'Participant 2' },
+    { key: 'Participant1', label: 'Away' },
+    { key: 'Participant2', label: 'Home' },
 ];
 
 const mlbColumns: ColumnDefinition[] = [
@@ -62,38 +68,28 @@ const genericSortFunction = (a: ScheduleItem, b: ScheduleItem): number => {
 
 const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
     const dispatch = useDispatch<AppDispatch>();
-    const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());
-    const [scheduleData, setScheduleData] = useState<ScheduleItem[]>([]);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
+    const dateString = useSelector((state: RootState) => selectLeagueScheduleDate(state, league));
+    const selectedDate = useMemo(() => dayjs(dateString), [dateString]);
+    const scheduleData = useSelector((state: RootState) => selectLeagueScheduleData(state, league));
+    const leagueScheduleStatus = useSelector((state: RootState) => selectLeagueScheduleStatus(state, league));
+    const error = useSelector((state: RootState) => selectLeagueScheduleError(state, league));
 
     useEffect(() => {
-        const fetchSchedule = async () => {
-            if (!selectedDate) return;
-            setLoading(true);
-            setError(null);
-            setScheduleData([]);
-            try {
-                const dateString = selectedDate.format('YYYY-MM-DD');
-                const data: ScheduleItem[] = await window.electronAPI.fetchSchedule({ league, date: dateString });
-                const cleanedData = data.map(item => ({
-                    ...item,
-                    Participant1: item.Participant1.trim(),
-                    Participant2: item.Participant2.trim()
-                }));
-                setScheduleData(cleanedData);
-            } catch (err: any) {
-                console.error('Error fetching schedule:', err);
-                setError(err.message || 'Failed to fetch schedule');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchSchedule();
-    }, [league, selectedDate]);
+        if (selectedDate) {
+          dispatch(fetchSchedule({ 
+            league, 
+            date: selectedDate.format('YYYY-MM-DD')
+          }));
+        }
+    }, [dispatch, league, selectedDate]);
 
     const handleDateChange = (newValue: Dayjs | null) => {
-        setSelectedDate(newValue);
+        if (newValue) {
+          dispatch(updateLeagueDate({ 
+            league, 
+            date: newValue.format('YYYY-MM-DD')
+          }));
+        }
     };
 
     // Determine configuration based on league
@@ -120,7 +116,7 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
     };
 
     const renderScheduleTable = () => {
-        if (loading) return <CircularProgress />;
+        if (leagueScheduleStatus === 'loading') return <CircularProgress />;
         if (error) return <Alert severity="error">{error}</Alert>;
 
         return (

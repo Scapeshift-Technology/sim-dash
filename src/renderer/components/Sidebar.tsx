@@ -6,6 +6,7 @@ import {
 import { AppDispatch } from '@/store/store'; // Adjust path if needed
 import { fetchLeagues, selectAllLeagues, selectLeaguesLoading, selectLeaguesError } from '@/store/slices/leagueSlice'; // Adjust path if needed and added openLeagueTab
 import { openLeagueTab } from '@/store/slices/tabSlice';
+import { initializeLeague } from '@/store/slices/scheduleSlice';
 
 // Define props for Sidebar, including width and resize handler
 interface SidebarProps {
@@ -28,6 +29,16 @@ const Sidebar: React.FC<SidebarProps> = ({ currentWidth, onResize }) => {
             dispatch(fetchLeagues());
         }
     }, [dispatch, loading]); // Dependency array includes dispatch and loading status
+
+    useEffect(() => { // Effect to initialize schedule state for leagues
+        if (loading === 'succeeded' && leagues.length > 0) {
+            console.log("Initializing schedule state for leagues:", leagues);
+            leagues.forEach(league => {
+                dispatch(initializeLeague(league.League.trim()));
+                console.log("Initialized schedule state for league:", league.League.trim());
+            });
+        }
+    }, [dispatch, loading, leagues]);
 
     // Click handler for league items
     const handleLeagueClick = (leagueName: string) => {
