@@ -27,14 +27,20 @@ import {
     verticalListSortingStrategy
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import type { TeamLineup, Player } from '@/types/mlb';
+import type { TeamLineup, Player, Position } from '@/types/mlb';
+import PositionSelector from './lineup/PositionSelector';
 
 interface SortablePlayerItemProps {
     player: Player;
     isDraggable?: boolean;
+    onPositionChange?: (playerId: number, position: Position) => void;
 }
 
-const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({ player, isDraggable }) => {
+const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({ 
+    player, 
+    isDraggable,
+    onPositionChange 
+}) => {
     const {
         attributes,
         listeners,
@@ -75,9 +81,22 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({ player, isDragg
                     <DragIndicatorIcon fontSize="small" color="action" />
                 </Box>
             )}
-            <ListItemText
-                primary={`${player.name} | Pos: ${player.position ?? 'N/A'}`}
-            />
+            <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                <ListItemText
+                    primary={player.name}
+                    sx={{ flex: '1 1 auto' }}
+                />
+                <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
+                    <Typography variant="body2" sx={{ mr: 1, color: 'text.secondary' }}>
+                        Pos:
+                    </Typography>
+                    <PositionSelector
+                        value={player.position || ''}
+                        onChange={(position) => onPositionChange?.(player.id, position)}
+                        disabled={!isDraggable}
+                    />
+                </Box>
+            </Box>
         </ListItem>
     );
 };
@@ -87,13 +106,15 @@ interface DraggableLineupProps {
     teamData: TeamLineup;
     team: 'home' | 'away';
     onLineupReorder: (team: 'home' | 'away', newOrder: Player[]) => void;
+    onPositionChange?: (team: 'home' | 'away', playerId: number, position: Position) => void;
 }
 
 const DraggableLineup: React.FC<DraggableLineupProps> = ({
     teamName,
     teamData,
     team,
-    onLineupReorder
+    onLineupReorder,
+    onPositionChange
 }) => {
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -112,6 +133,10 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
             const newOrder = arrayMove(teamData.lineup, oldIndex, newIndex);
             onLineupReorder(team, newOrder);
         }
+    };
+
+    const handlePositionChange = (playerId: number, position: Position) => {
+        onPositionChange?.(team, playerId, position);
     };
 
     const renderPlayerList = (players: Player[], subheader: string, isDraggable: boolean = false) => (
@@ -139,6 +164,7 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                                 key={player.id}
                                 player={player}
                                 isDraggable={true}
+                                onPositionChange={handlePositionChange}
                             />
                         ))}
                     </SortableContext>

@@ -4,6 +4,8 @@ export type TeamType = 'away' | 'home';
 
 // ---------- MLB sim types ----------
 
+export type Position = 'C' | '1B' | '2B' | '3B' | 'SS' | 'LF' | 'CF' | 'RF' | 'DH' | 'SP' | 'RP';
+
 export interface SimInputDataMLB {
   testField: string;
 }
@@ -12,7 +14,7 @@ export interface GameStatePitcher {
   id: number;
   battersFaced: number;
   recentResults: number[];
-  position: string;
+  position: Position;
   // avgBF: number;
 }
 

@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import type { MatchupLineups, TeamLineup, Player } from '@/types/mlb';
+import type { MatchupLineups, TeamLineup, Player, Position } from '@/types/mlb';
 import type { SimResultsMLB } from '@/types/bettingResults';
 import MLBSimulationResultsSummary from '@/components/simulation/MLBSimulationResultsSummary';
 import DraggableLineup from '@/components/DraggableLineup';
@@ -27,7 +27,8 @@ import {
     selectGamePlayerStatsStatus,
     selectGamePlayerStatsError,
     clearGameData,
-    reorderLineup
+    reorderLineup,
+    updatePlayerPosition
 } from '@/store/slices/simInputsSlice';
 
 interface MLBMatchupViewProps {
@@ -57,6 +58,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const lineupError = useSelector((state: RootState) => selectGameLineupsError(state, matchId));
     const playerStatsStatus = useSelector((state: RootState) => selectGamePlayerStatsStatus(state, matchId));
     const playerStatsError = useSelector((state: RootState) => selectGamePlayerStatsError(state, matchId));
+
+    console.log(lineupData);
 
     // ---------- Effect ----------
     useEffect(() => { // Fetch lineup data
@@ -136,6 +139,10 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         dispatch(reorderLineup({ matchId, team, newOrder }));
     };
 
+    const handlePositionChange = (team: 'home' | 'away', playerId: number, position: Position) => {
+        dispatch(updatePlayerPosition({ matchId, team, playerId, position }));
+    };
+
     // ---------- Render ----------
     if (lineupStatus === 'loading') return <CircularProgress />;
     if (lineupError) return <Alert severity="error">{lineupError}</Alert>;
@@ -207,6 +214,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                         teamData={lineupData.away}
                         team="away"
                         onLineupReorder={handleLineupReorder}
+                        onPositionChange={handlePositionChange}
                     />
                 </Box>
                 <Box sx={{ width: { xs: '12', md: '6' }, p: 1 }}>
@@ -215,6 +223,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                         teamData={lineupData.home}
                         team="home"
                         onLineupReorder={handleLineupReorder}
+                        onPositionChange={handlePositionChange}
                     />
                 </Box>
             </Grid>

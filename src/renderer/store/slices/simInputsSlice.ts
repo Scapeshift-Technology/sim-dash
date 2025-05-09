@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { MatchupLineups, Player } from '@/types/mlb';
+import type { MatchupLineups, Player, Position } from '@/types/mlb';
 
 // ---------- Types ----------
 interface GameInputs {
@@ -90,6 +90,22 @@ const simInputsSlice = createSlice({
       if (state.games[matchId]?.lineups.data) {
         state.games[matchId].lineups.data[team].lineup = newOrder;
       }
+    },
+    updatePlayerPosition: (state, action: {
+      payload: {
+        matchId: number;
+        team: 'home' | 'away';
+        playerId: number;
+        position: Position;
+      }
+    }) => {
+      const { matchId, team, playerId, position } = action.payload;
+      if (state.games[matchId]?.lineups.data) {
+        const player = state.games[matchId].lineups.data[team].lineup.find(p => p.id === playerId);
+        if (player) {
+          player.position = position;
+        }
+      }
     }
   },
   extraReducers: (builder) => {
@@ -147,7 +163,7 @@ const simInputsSlice = createSlice({
 
 // ---------- Actions ----------
 
-export const { clearGameData, reorderLineup } = simInputsSlice.actions;
+export const { clearGameData, reorderLineup, updatePlayerPosition } = simInputsSlice.actions;
 
 // ---------- Selectors ----------
 
