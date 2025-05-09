@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Box, CircularProgress, Alert, Paper } from '@mui/material';
+import { Box, CircularProgress, Alert, Paper, Typography } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -22,14 +22,88 @@ import {
     selectLeagueScheduleError,
     updateLeagueDate,
     fetchSchedule,
-    fetchSimResults
+    fetchSimResults,
+    selectMatchSimResults,
+    selectMatchSimStatus
 } from '@/store/slices/scheduleSlice';
+import { calculateResultsSummaryDisplayMLB } from '@/utils/oddsUtilsMLB';
 
 interface LeagueScheduleViewProps {
     league: string;
 }
 
 // --- Column and Sort Definitions ---
+
+const createSimResultsColumn = (league: string): ColumnDefinition => ({
+    key: 'simResults',
+    label: 'Sim Results',
+    align: 'center',
+    render: (item: ScheduleItem) => {
+        const simResults = useSelector((state: RootState) => 
+            selectMatchSimResults(state, league, item.Match)
+        );
+        const simStatus = useSelector((state: RootState) => 
+            selectMatchSimStatus(state, league, item.Match)
+        );
+
+        if (simStatus === 'loading') {
+            return <Typography variant="body2" color="text.secondary">Loading...</Typography>;
+        }
+
+        if (!simResults || simResults.length === 0) {
+            return <Typography variant="body2" color="text.secondary">No sim data</Typography>;
+        }
+
+        // Get the appropriate display function based on league
+        let display;
+        switch (league) {
+            case 'MLB':
+                display = calculateResultsSummaryDisplayMLB(
+                    simResults[0].simResults,
+                    item.Participant1,
+                    item.Participant2
+                );
+                break;
+            // Add other leagues here as they are implemented
+            default:
+                return <Typography variant="body2" color="text.secondary">Not implemented</Typography>;
+        }
+
+        return (
+            <Box 
+                sx={{ 
+                    cursor: 'pointer',
+                    '&:hover': {
+                        backgroundColor: 'action.hover',
+                    },
+                    p: 1,
+                    borderRadius: 1
+                }}
+                onClick={async (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    try {
+                        await window.electronAPI.createSimWindow({ 
+                            league, 
+                            simData: simResults[0].simResults, 
+                            awayTeamName: item.Participant1, 
+                            homeTeamName: item.Participant2 
+                        });
+                    } catch (error) {
+                        console.error('Failed to create simulation window:', error);
+                    }
+                }}
+            >
+                <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                    {display.topLine}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                    {display.bottomLine}
+                </Typography>
+            </Box>
+        );
+    }
+});
 
 const commonColumns: ColumnDefinition[] = [
     {
@@ -49,6 +123,7 @@ const mlbColumns: ColumnDefinition[] = [
         align: 'right',
         render: (item) => item.DaySequence ?? 'N/A'
     },
+    createSimResultsColumn('MLB')
 ];
 
 const mlbSortFunction = (a: ScheduleItem, b: ScheduleItem): number => {
@@ -111,7 +186,7 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
 
     // Determine configuration based on league
     const isMLB = league === 'MLB';
-    const columns = isMLB ? mlbColumns : commonColumns;
+    const columns = isMLB ? [...mlbColumns] : [...commonColumns];
     const sortFunction = isMLB ? mlbSortFunction : genericSortFunction;
     const emptyMessage = `No ${league} schedule data available for this date.`;
     const ariaLabel = `${league.toLowerCase()} schedule table`;

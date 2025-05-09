@@ -12,7 +12,7 @@ import {
 import dayjs from 'dayjs';
 
 // Assuming ScheduleItem might be moved later
-import type { ScheduleItem } from '../preload.d.ts';
+import type { ScheduleItem } from '@/types/sqlite';
 
 // Define the structure for a column definition
 export interface ColumnDefinition {
