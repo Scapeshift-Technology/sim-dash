@@ -4,6 +4,7 @@ const fs = require('fs'); // Import fs module
 const dbHelper = require('./db'); // Local SQLite helper
 const sql = require('mssql'); // SQL Server driver
 const { getLineupsMLB } = require('./services/mlb/external/lineups');
+const { getPlayerStatsMLB } = require('./services/mlb/db/playerStats');
 const { simulateMatchupMLB } = require('./services/mlb/sim/engine');
 const { createMLBSimResultsWindow2 } = require('./services/mlb/electron/createSimResultsWindows');
 
@@ -401,7 +402,20 @@ ipcMain.handle('fetch-mlb-lineup', async (event, { league, date, participant1, p
         throw err; // Rethrow the error to be handled by the renderer
     }
 });
-// --- End Fetch MLB Lineup Handler ---
+
+ipcMain.handle('fetch-mlb-game-player-stats', async (event, matchupLineups) => {
+  try {
+    console.log('IPC received: fetch-mlb-game-player-stats');
+    if (!currentPool) {
+      throw new Error('Not connected to database.');
+    }
+    const refinedMatchupLineups = await getPlayerStatsMLB(matchupLineups, currentPool);
+    return refinedMatchupLineups;
+  } catch (err) {
+    console.error(`Error fetching/generating MLB game player stats for matchupLineups:`, err);
+    throw err;
+  }
+});
 
 //  --- Add Simulate Matchup Handler ---
 ipcMain.handle('simulate-matchup-mlb', async (event, { numGames}) => {
@@ -455,6 +469,22 @@ ipcMain.handle('create-sim-window', async (event, { league, simData, awayTeamNam
 ipcMain.handle('get-sim-data', async (event, { windowId }) => {
   console.log('IPC received: get-sim-data');
   return simResultsDataStore.get(windowId);
+});
+
+// --- Execute SQL Query Handler ---
+ipcMain.handle('execute-sql-query', async (event, query) => {
+    console.log('IPC received: execute-sql-query');
+    if (!currentPool) {
+        console.error('execute-sql-query: No active SQL Server connection.');
+        throw new Error('Not connected to database.');
+    }
+    try {
+        const result = await currentPool.request().query(query);
+        return result;
+    } catch (err) {
+        console.error('Error executing SQL query:', err);
+        throw err;
+    }
 });
 
 // --- App Lifecycle & Menu ---

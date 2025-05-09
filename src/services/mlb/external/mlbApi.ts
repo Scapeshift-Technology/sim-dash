@@ -164,7 +164,7 @@ function extractBullpenFromMlbRosterAndGame(gameInfo: MlbGameApiResponse, roster
 }
 
 function extractBullPenFromMlbRoster(roster: MlbRosterApiResponse, startingPitcherId: number): Player[] {
-  const bullpen = roster.roster.filter((player: any) => player.position.abbreviation === 'P' && player.person.id !== startingPitcherId);
+  const bullpen = roster.roster.filter((player: any) => (player.position.abbreviation === 'P' || player.position.abbreviation === 'TWP') && player.person.id !== startingPitcherId);
 
   return bullpen.map((player: any) => ({
     id: player.person.id,

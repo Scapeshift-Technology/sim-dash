@@ -5,6 +5,7 @@ import profilesReducer from './slices/profilesSlice';
 import leagueReducer from './slices/leagueSlice';
 import tabReducer from './slices/tabSlice';
 import scheduleReducer from './slices/scheduleSlice';
+import simInputsReducer from './slices/simInputsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     leagues: leagueReducer,
     tabs: tabReducer,
     schedule: scheduleReducer,
+    simInputs: simInputsReducer,
   },
   // Optional: Add middleware here if needed (e.g., for logging)
   // middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),

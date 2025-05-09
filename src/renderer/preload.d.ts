@@ -32,13 +32,16 @@ declare global {
       // League data
       fetchLeagues: () => Promise<FetchedLeague[]>;
       fetchSchedule: (args: { league: string; date: string }) => Promise<ScheduleItem[]>;
-      // NEW: Fetch MLB Lineup
+
+      // ---------- MLB-specific functions ----------
+      // Fetching data
       fetchMlbLineup: (args: FetchMlbLineupArgs) => Promise<MatchupLineups>;
+      fetchMlbGamePlayerStats: (args: MatchupLineups) => Promise<MatchupLineups>;
 
       // Simulations
       simulateMatchupMLB: (args: { numGames: number }) => Promise<SimResults>;
       
-      // Simulation Windows
+      // ---------- Simulation Windows ----------
       createSimWindow: (args: { 
         league: string; 
         simData: SimResultsMLB;
@@ -57,6 +60,7 @@ declare global {
       saveSimHistory: (args: SimHistoryEntry) => Promise<boolean>;
       getSimHistory: (matchId: number) => Promise<SimHistoryEntry[]>;
 
+      // ---------- About Window Communication ----------
       // About Window Communication (Keep if needed, or remove if about window is refactored/removed)
       onVersion: (callback: (event: any, version: string) => void) => void;
       // Add other exposed functions here...

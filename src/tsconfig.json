@@ -18,6 +18,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./renderer/*"],
+      "@@/*": ["./*"],
       "@/types/*": ["./types/*"],
       "@/mlb/*": ["./services/mlb/*"]
     }

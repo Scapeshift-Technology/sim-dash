@@ -156,6 +156,7 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
         if (selectedDate) {
             // Only fetch if we don't have data or if the status is 'idle'(should be the same situation)
             if (leagueScheduleStatus === 'idle' || scheduleData.length === 0) {
+                console.log('LeagueScheduleView: Fetching schedule data');
                 dispatch(fetchSchedule({ 
                     league, 
                     date: selectedDate.format('YYYY-MM-DD')

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
     Box, 
@@ -21,6 +21,15 @@ import MLBSimulationResultsSummary from '@/components/simulation/MLBSimulationRe
 import { SimHistoryEntry } from '@/types/simHistory';
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchSimResults, selectMatchSimResults, selectMatchSimStatus } from '@/store/slices/scheduleSlice';
+import { 
+    fetchMlbLineup, 
+    fetchMlbGamePlayerStats,
+    selectGameLineupsData, 
+    selectGameLineupsStatus, 
+    selectGameLineupsError,
+    selectGamePlayerStatsStatus,
+    selectGamePlayerStatsError
+} from '@/store/slices/simInputsSlice';
 
 function renderPlayerEntry(player: Player) {
   return (
@@ -47,39 +56,42 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     daySequence 
 }) => {
     const dispatch = useDispatch<AppDispatch>();
+    
     // ---------- State ----------
-    const [lineupData, setLineupData] = useState<MatchupLineups | null>(null);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [error, setError] = useState<string | null>(null);
     const simResults = useSelector((state: RootState) => selectMatchSimResults(state, league, matchId));
     const simStatus = useSelector((state: RootState) => selectMatchSimStatus(state, league, matchId));
+    const lineupData = useSelector((state: RootState) => selectGameLineupsData(state, matchId));
+    const lineupStatus = useSelector((state: RootState) => selectGameLineupsStatus(state, matchId));
+    const lineupError = useSelector((state: RootState) => selectGameLineupsError(state, matchId));
+    const playerStatsStatus = useSelector((state: RootState) => selectGamePlayerStatsStatus(state, matchId));
+    const playerStatsError = useSelector((state: RootState) => selectGamePlayerStatsError(state, matchId));
+    console.log('lineupData', lineupData);
     
     // ---------- Effect ----------
-
+    
     useEffect(() => { // Fetch lineup data
-        const fetchLineup = async () => {
-            setLoading(true);
-            setError(null);
-            setLineupData(null);
-            try {
-                const data = await window.electronAPI.fetchMlbLineup({
-                    league,
-                    date,
-                    participant1,
-                    participant2,
-                    daySequence
-                });
-                setLineupData(data);
-            } catch (err: any) {
-                console.error('Error fetching MLB lineup:', err);
-                setError(err.message || 'Failed to fetch lineup data');
-            } finally {
-                setLoading(false);
-            }
-        };
+        if (lineupStatus === 'idle') {
+            console.log('Fetching lineup data');
+            dispatch(fetchMlbLineup({
+                league,
+                date,
+                participant1,
+                participant2,
+                daySequence,
+                matchId
+            }));
+        }
+    }, [dispatch, league, date, participant1, participant2, daySequence, matchId]);
 
-        fetchLineup();
-    }, [league, date, participant1, participant2, daySequence]);
+    useEffect(() => { // Fetch player stats
+      if (lineupStatus === 'succeeded' && playerStatsStatus === 'idle' && lineupData) {
+        console.log('Fetching player stats with lineup data:', lineupData);
+        dispatch(fetchMlbGamePlayerStats({
+          matchupLineups: (lineupData),
+          matchId: matchId
+        }));
+      }
+    }, [dispatch, lineupStatus, playerStatsStatus, lineupData, matchId]);
 
     useEffect(() => { // Fetch sim history
         if (!matchId) return;
@@ -96,6 +108,9 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
 
         // Run simulation
         const simResults: SimResultsMLB = await window.electronAPI.simulateMatchupMLB({
+          // TO ADD:
+            // League avg stats
+            // Player stats
           numGames: 50000
         });
 
@@ -151,8 +166,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     };
 
     // ---------- Render ----------
-    if (loading) return <CircularProgress />;
-    if (error) return <Alert severity="error">{error}</Alert>;
+    if (lineupStatus === 'loading') return <CircularProgress />;
+    if (lineupError) return <Alert severity="error">{lineupError}</Alert>;
     if (!lineupData) return <Alert severity="info">No lineup data found.</Alert>;
 
     return (
