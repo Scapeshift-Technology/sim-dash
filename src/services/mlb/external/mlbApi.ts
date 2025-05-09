@@ -17,10 +17,11 @@ async function getMlbScheduleApiGame(date: string, awayTeam: string, homeTeam: s
     const scheduleUrl = `${BASE_MLB_API_URL}/schedule?startDate=${formattedDate}&endDate=${formattedDate}&sportId=1&hydrate=team,game(seriesStatus)`;
     const scheduleResponse = await fetch(scheduleUrl);
     const scheduleData = await scheduleResponse.json();
+    
     // Find game
     const relevantGame = scheduleData.dates[0].games.find((game: MlbScheduleApiGame) => {
-      return game.teams.away.team.name === awayTeam && 
-             game.teams.home.team.name === homeTeam && 
+      return game.teams.away.team.name === awayTeam.trim() && 
+             game.teams.home.team.name === homeTeam.trim() && 
              game.gameNumber === daySequenceNumber
     });
     
