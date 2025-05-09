@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
     Box, 
     Typography, 
@@ -18,6 +19,8 @@ import type { MatchupLineups, TeamLineup, Player } from '@/types/mlb';
 import type { SimResultsMLB } from '@/types/bettingResults';
 import MLBSimulationResultsSummary from '@/components/simulation/MLBSimulationResultsSummary';
 import { SimHistoryEntry } from '@/types/simHistory';
+import { RootState, AppDispatch } from '@/store/store';
+import { fetchSimResults, selectMatchSimResults, selectMatchSimStatus } from '@/store/slices/scheduleSlice';
 
 function renderPlayerEntry(player: Player) {
   return (
@@ -43,15 +46,16 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     participant2,
     daySequence 
 }) => {
+    const dispatch = useDispatch<AppDispatch>();
     // ---------- State ----------
     const [lineupData, setLineupData] = useState<MatchupLineups | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const [simulationResults, setSimulationResults] = useState<SimResultsMLB | null>(null);
-    const [simHistory, setSimHistory] = useState<SimHistoryEntry[]>([]);
-    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+    const simResults = useSelector((state: RootState) => selectMatchSimResults(state, league, matchId));
+    const simStatus = useSelector((state: RootState) => selectMatchSimStatus(state, league, matchId));
     
     // ---------- Effect ----------
+
     useEffect(() => { // Fetch lineup data
         const fetchLineup = async () => {
             setLoading(true);
@@ -75,27 +79,17 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         };
 
         fetchLineup();
-    }, [league, date, participant1, participant2, daySequence]); // Refetch if props change
+    }, [league, date, participant1, participant2, daySequence]);
 
     useEffect(() => { // Fetch sim history
-        const fetchSimHistory = async () => {
-            if (!matchId) return;
-                        
-            setIsLoadingHistory(true);
-            try {
-                const history = await window.electronAPI.getSimHistory(matchId);
-                setSimHistory(history);
-            } catch (error) {
-                console.error('Failed to fetch sim history:', error);
-            } finally {
-                setIsLoadingHistory(false);
-            }
-        };
-
-        fetchSimHistory();
-    }, [matchId]);
+        if (!matchId) return;
+        if (simStatus === 'idle') {
+          dispatch(fetchSimResults({ league, matchId }));
+        }
+    }, [dispatch, matchId, league, simStatus]);
 
     // ---------- Handlers ----------
+
     const handleRunSimulation = async () => {
         // Get timestamp for later 
         const timestamp = new Date().toISOString();
@@ -104,7 +98,6 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         const simResults: SimResultsMLB = await window.electronAPI.simulateMatchupMLB({
           numGames: 50000
         });
-        setSimulationResults(simResults);
 
         // Save sim history
         const simHistoryEntry: SimHistoryEntry = {
@@ -118,9 +111,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             console.error('Error saving sim history');
         }
 
-        // Add new sim history entry to top of list
-        const updatedHistory = [simHistoryEntry, ...simHistory];
-        setSimHistory(updatedHistory);
+        // Fetch updated sim history
+        dispatch(fetchSimResults({ league, matchId }));
     };
 
     // ---------- Render functions ----------
@@ -207,8 +199,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                         awayTeamName={participant1}
                         homeTeamName={participant2}
                         displayHistory={true}
-                        simHistory={simHistory}
-                        isLoading={isLoadingHistory}
+                        simHistory={simResults || []}
+                        isLoading={simStatus === 'loading'}
                     />
                 </Box>
             </Box>

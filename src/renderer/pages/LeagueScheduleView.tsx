@@ -21,7 +21,8 @@ import {
     selectLeagueScheduleStatus,
     selectLeagueScheduleError,
     updateLeagueDate,
-    fetchSchedule 
+    fetchSchedule,
+    fetchSimResults
 } from '@/store/slices/scheduleSlice';
 
 interface LeagueScheduleViewProps {
@@ -74,6 +75,8 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
     const leagueScheduleStatus = useSelector((state: RootState) => selectLeagueScheduleStatus(state, league));
     const error = useSelector((state: RootState) => selectLeagueScheduleError(state, league));
 
+    // ---------- UseEffects ----------
+
     useEffect(() => {
         if (selectedDate) {
             // Only fetch if we don't have data or if the status is 'idle'(should be the same situation)
@@ -85,6 +88,17 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
             }
         }
     }, [dispatch, league, selectedDate]);
+
+    useEffect(() => {
+      if (leagueScheduleStatus === 'succeeded') {
+        console.log('LeagueScheduleView: Schedule data fetched successfully');
+        for (const match of scheduleData) {
+          dispatch(fetchSimResults({ league, matchId: match.Match }));
+        }
+      }
+    }, [leagueScheduleStatus]);
+
+    // ---------- Handlers ----------
 
     const handleDateChange = (newValue: Dayjs | null) => {
         if (newValue) {
@@ -118,6 +132,8 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
         }
     };
 
+    // ---------- Render Functions ----------
+
     const renderScheduleTable = () => {
         if (leagueScheduleStatus === 'loading') return <CircularProgress />;
         if (error) return <Alert severity="error">{error}</Alert>;
@@ -133,6 +149,8 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
             />
         );
     };
+
+    // ---------- Render ----------
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>

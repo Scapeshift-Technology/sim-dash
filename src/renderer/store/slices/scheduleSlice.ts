@@ -1,9 +1,16 @@
 import { ScheduleItem } from '@/types/sqlite';
-import { createSlice, createAsyncThunk, PayloadAction, createAction } from '@reduxjs/toolkit';
-import dayjs, { Dayjs } from 'dayjs';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import dayjs from 'dayjs';
 import type { RootState } from '../store';
+import { SimHistoryEntry } from '@/types/simHistory';
 
 // ---------- Types ----------
+
+interface ScheduleItemWithDisplayedSimOdds extends ScheduleItem {
+  simResults?: SimHistoryEntry[];
+  status?: 'idle' | 'loading' | 'succeeded' | 'failed';
+  error?: string | null;
+}
 
 interface ScheduleState {
   // Every league gets their state
@@ -11,11 +18,11 @@ interface ScheduleState {
 };
 
 interface LeagueScheduleState { 
-    date: string;
-    schedule: ScheduleItem[];
-    status: 'idle' | 'loading' | 'succeeded' | 'failed';
-    error: string | null;
-  };
+  date: string;
+  schedule: ScheduleItemWithDisplayedSimOdds[];
+  status: 'idle' | 'loading' | 'succeeded' | 'failed';
+  error: string | null;
+};
 
 const initialState: ScheduleState = {};
 const initialLeagueState: LeagueScheduleState = {
@@ -39,6 +46,14 @@ export const fetchSchedule = createAsyncThunk<ScheduleItem[], { league: string; 
   }
 );
 
+export const fetchSimResults = createAsyncThunk<SimHistoryEntry[], { league: string; matchId: number }>(
+  'schedule/fetchSimResults',
+  async ({ league, matchId }) => {
+    const response: SimHistoryEntry[] = await window.electronAPI.getSimHistory(matchId);
+    return response;
+  }
+)
+
 // ---------- Slice ----------
 const scheduleSlice = createSlice({
   name: 'schedule',
@@ -59,6 +74,7 @@ const scheduleSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // Fetch schedule
       .addCase(fetchSchedule.pending, (state, action) => {
         const league = action.meta.arg.league;
         if (!state[league]) {
@@ -76,7 +92,32 @@ const scheduleSlice = createSlice({
         const league = action.meta.arg.league;
         state[league].status = 'failed';
         state[league].error = action.error.message ?? 'Unknown error fetching schedule';
-      });
+      })
+      // Fetch sim history
+      .addCase(fetchSimResults.pending, (state, action) => {
+        const league = action.meta.arg.league;
+        const match = state[league].schedule.find((match: ScheduleItemWithDisplayedSimOdds) => match.Match === action.meta.arg.matchId);
+        if (match) {
+          match.status = 'loading';
+        }
+      })
+      .addCase(fetchSimResults.fulfilled, (state, action) => {
+        const league = action.meta.arg.league;
+        // Set match history data
+        const match = state[league].schedule.find((match: ScheduleItemWithDisplayedSimOdds) => match.Match === action.meta.arg.matchId);
+        if (match) {
+          match.status = 'succeeded';
+          match.simResults = action.payload;
+        }
+      })
+      .addCase(fetchSimResults.rejected, (state, action) => {
+        const league = action.meta.arg.league;
+        const match = state[league].schedule.find((match: ScheduleItemWithDisplayedSimOdds) => match.Match === action.meta.arg.matchId);
+        if (match) {
+          match.status = 'failed';
+          match.error = action.error.message ?? 'Error fetching sim history';
+        }
+      })
   },
 });
 
@@ -88,12 +129,26 @@ export const {
 } = scheduleSlice.actions;
 
 // ---------- Selectors ----------
-
+// ----- League Schedule -----
 export const selectLeagueSchedule = (state: RootState, league: string) => state.schedule[league];
 export const selectLeagueScheduleStatus = (state: RootState, league: string) => state.schedule[league]?.status ?? 'idle';
 export const selectLeagueScheduleError = (state: RootState, league: string) => state.schedule[league]?.error ?? null;
 export const selectLeagueScheduleData = (state: RootState, league: string) => state.schedule[league]?.schedule ?? [];
 export const selectLeagueScheduleDate = (state: RootState, league: string) => state.schedule[league]?.date ?? dayjs().format('YYYY-MM-DD');
+
+// ----- Sim Results -----
+export const selectMatchSimResults = (state: RootState, league: string, matchId: number) => {
+    const match = state.schedule[league]?.schedule.find(m => m.Match === matchId);
+    return match?.simResults;
+};
+export const selectMatchSimStatus = (state: RootState, league: string, matchId: number) => {
+    const match = state.schedule[league]?.schedule.find(m => m.Match === matchId);
+    return match?.status ?? 'idle';
+};
+export const selectMatchSimError = (state: RootState, league: string, matchId: number) => {
+    const match = state.schedule[league]?.schedule.find(m => m.Match === matchId);
+    return match?.error ?? null;
+};
 
 // Export the reducer
 export default scheduleSlice.reducer;
