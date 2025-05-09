@@ -12,9 +12,11 @@ import {
     ListItemText,
     ListSubheader,
     Divider,
-    Button
+    Button,
+    IconButton
 } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import type { MatchupLineups, TeamLineup, Player } from '@/types/mlb';
 import type { SimResultsMLB } from '@/types/bettingResults';
 import MLBSimulationResultsSummary from '@/components/simulation/MLBSimulationResultsSummary';
@@ -28,7 +30,8 @@ import {
     selectGameLineupsStatus, 
     selectGameLineupsError,
     selectGamePlayerStatsStatus,
-    selectGamePlayerStatsError
+    selectGamePlayerStatsError,
+    clearGameData
 } from '@/store/slices/simInputsSlice';
 
 function renderPlayerEntry(player: Player) {
@@ -65,13 +68,11 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const lineupError = useSelector((state: RootState) => selectGameLineupsError(state, matchId));
     const playerStatsStatus = useSelector((state: RootState) => selectGamePlayerStatsStatus(state, matchId));
     const playerStatsError = useSelector((state: RootState) => selectGamePlayerStatsError(state, matchId));
-    console.log('lineupData', lineupData);
     
     // ---------- Effect ----------
     
     useEffect(() => { // Fetch lineup data
         if (lineupStatus === 'idle') {
-            console.log('Fetching lineup data');
             dispatch(fetchMlbLineup({
                 league,
                 date,
@@ -85,7 +86,6 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
 
     useEffect(() => { // Fetch player stats
       if (lineupStatus === 'succeeded' && playerStatsStatus === 'idle' && lineupData) {
-        console.log('Fetching player stats with lineup data:', lineupData);
         dispatch(fetchMlbGamePlayerStats({
           matchupLineups: (lineupData),
           matchId: matchId
@@ -130,6 +130,21 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         dispatch(fetchSimResults({ league, matchId }));
     };
 
+    const handleRefresh = () => {
+      // Clear the game data
+      dispatch(clearGameData(matchId));
+      
+      // Fetch new lineup data(this will trigger the useEffect to fetch player stats)
+      dispatch(fetchMlbLineup({
+        league,
+        date,
+        participant1,
+        participant2,
+        daySequence,
+        matchId
+      }));
+    };
+
     // ---------- Render functions ----------
     const renderTeamLineup = (teamName: string, teamData: TeamLineup | undefined) => {
         if (!teamData) return <Typography>Lineup data unavailable.</Typography>;
@@ -172,9 +187,19 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
 
     return (
         <Box sx={{ flexGrow: 1, p: 2 }}>
-            <Typography variant="h5" gutterBottom>
-                {participant1} @ {participant2}
-            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h5">
+                    {participant1} @ {participant2}
+                </Typography>
+                <IconButton 
+                    onClick={handleRefresh}
+                    size="small"
+                    sx={{ ml: 2 }}
+                    disabled={!lineupData}
+                >
+                    <RefreshIcon />
+                </IconButton>
+            </Box>
             <Typography variant="h6" gutterBottom sx={{ color: 'text.secondary' }}>
                 {date}
             </Typography>

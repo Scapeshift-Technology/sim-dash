@@ -63,7 +63,23 @@ const initialState: SimInputsState = {
 const simInputsSlice = createSlice({
   name: 'simInputs',
   initialState,
-  reducers: {},
+  reducers: {
+    clearGameData: (state, action: { payload: number }) => {
+      const matchId = action.payload;
+      if (state.games[matchId]) {
+        state.games[matchId] = {
+          lineups: {
+            data: null,
+            lineupsStatus: 'idle',
+            lineupsError: null,
+            statsStatus: 'idle',
+            statsError: null
+          },
+          inputs: {}
+        };
+      }
+    }
+  },
   extraReducers: (builder) => {
     builder
       // ---------- Fetch MLB Lineup ----------
@@ -119,7 +135,7 @@ const simInputsSlice = createSlice({
 
 // ---------- Actions ----------
 
-export const { } = simInputsSlice.actions;
+export const { clearGameData } = simInputsSlice.actions;
 
 // ---------- Selectors ----------
 
