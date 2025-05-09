@@ -76,10 +76,13 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
 
     useEffect(() => {
         if (selectedDate) {
-          dispatch(fetchSchedule({ 
-            league, 
-            date: selectedDate.format('YYYY-MM-DD')
-          }));
+            // Only fetch if we don't have data or if the status is 'idle'(should be the same situation)
+            if (leagueScheduleStatus === 'idle' || scheduleData.length === 0) {
+                dispatch(fetchSchedule({ 
+                    league, 
+                    date: selectedDate.format('YYYY-MM-DD')
+                }));
+            }
         }
     }, [dispatch, league, selectedDate]);
 
