@@ -6,12 +6,6 @@ import {
     CircularProgress, 
     Alert, 
     Grid, 
-    Paper, 
-    List, 
-    ListItem, 
-    ListItemText,
-    ListSubheader,
-    Divider,
     Button,
     IconButton
 } from '@mui/material';
@@ -20,6 +14,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import type { MatchupLineups, TeamLineup, Player } from '@/types/mlb';
 import type { SimResultsMLB } from '@/types/bettingResults';
 import MLBSimulationResultsSummary from '@/components/simulation/MLBSimulationResultsSummary';
+import DraggableLineup from '@/components/DraggableLineup';
 import { SimHistoryEntry } from '@/types/simHistory';
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchSimResults, selectMatchSimResults, selectMatchSimStatus } from '@/store/slices/scheduleSlice';
@@ -31,15 +26,9 @@ import {
     selectGameLineupsError,
     selectGamePlayerStatsStatus,
     selectGamePlayerStatsError,
-    clearGameData
+    clearGameData,
+    reorderLineup
 } from '@/store/slices/simInputsSlice';
-
-function renderPlayerEntry(player: Player) {
-  return (
-    <ListItemText primary={`${player.battingOrder ? player.battingOrder + '. ' : ''}${player.name} | Pos: ${player.position ?? 'N/A'}`} />
-  )
-  {/* TODO: Display relevant player stats */}
-}
 
 interface MLBMatchupViewProps {
     matchId: number;
@@ -68,9 +57,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const lineupError = useSelector((state: RootState) => selectGameLineupsError(state, matchId));
     const playerStatsStatus = useSelector((state: RootState) => selectGamePlayerStatsStatus(state, matchId));
     const playerStatsError = useSelector((state: RootState) => selectGamePlayerStatsError(state, matchId));
-    
+
     // ---------- Effect ----------
-    
     useEffect(() => { // Fetch lineup data
         if (lineupStatus === 'idle') {
             dispatch(fetchMlbLineup({
@@ -85,41 +73,40 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     }, [dispatch, league, date, participant1, participant2, daySequence, matchId]);
 
     useEffect(() => { // Fetch player stats
-      if (lineupStatus === 'succeeded' && playerStatsStatus === 'idle' && lineupData) {
-        dispatch(fetchMlbGamePlayerStats({
-          matchupLineups: (lineupData),
-          matchId: matchId
-        }));
-      }
+        if (lineupStatus === 'succeeded' && playerStatsStatus === 'idle' && lineupData) {
+            dispatch(fetchMlbGamePlayerStats({
+                matchupLineups: (lineupData),
+                matchId: matchId
+            }));
+        }
     }, [dispatch, lineupStatus, playerStatsStatus, lineupData, matchId]);
 
     useEffect(() => { // Fetch sim history
         if (!matchId) return;
         if (simStatus === 'idle') {
-          dispatch(fetchSimResults({ league, matchId }));
+            dispatch(fetchSimResults({ league, matchId }));
         }
     }, [dispatch, matchId, league, simStatus]);
 
     // ---------- Handlers ----------
-
     const handleRunSimulation = async () => {
         // Get timestamp for later 
         const timestamp = new Date().toISOString();
 
         // Run simulation
         const simResults: SimResultsMLB = await window.electronAPI.simulateMatchupMLB({
-          // TO ADD:
+            // TO ADD:
             // League avg stats
             // Player stats
-          numGames: 50000
+            numGames: 50000
         });
 
         // Save sim history
         const simHistoryEntry: SimHistoryEntry = {
-          matchId: matchId,
-          timestamp: timestamp,
-          simResults: simResults,
-          inputData: { testField: 'test' }
+            matchId: matchId,
+            timestamp: timestamp,
+            simResults: simResults,
+            inputData: { testField: 'test' }
         };
         const saveSuccess = await window.electronAPI.saveSimHistory(simHistoryEntry);
         if (!saveSuccess) {
@@ -131,53 +118,22 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     };
 
     const handleRefresh = () => {
-      // Clear the game data
-      dispatch(clearGameData(matchId));
-      
-      // Fetch new lineup data(this will trigger the useEffect to fetch player stats)
-      dispatch(fetchMlbLineup({
-        league,
-        date,
-        participant1,
-        participant2,
-        daySequence,
-        matchId
-      }));
+        // Clear the game data
+        dispatch(clearGameData(matchId));
+        
+        // Fetch new lineup data(this will trigger the useEffect to fetch player stats)
+        dispatch(fetchMlbLineup({
+            league,
+            date,
+            participant1,
+            participant2,
+            daySequence,
+            matchId
+        }));
     };
 
-    // ---------- Render functions ----------
-    const renderTeamLineup = (teamName: string, teamData: TeamLineup | undefined) => {
-        if (!teamData) return <Typography>Lineup data unavailable.</Typography>;
-
-        const renderPlayerList = (players: Player[], subheader: string) => (
-          <List 
-            dense 
-            subheader={
-              <ListSubheader sx={{ lineHeight: '30px', pb: 0 }}>
-                {subheader}
-              </ListSubheader>
-            }
-            sx={{ pt: 0 }}
-          >
-                {players.map((player) => (
-                    <ListItem key={player.id} sx={{ py: 0 }}>
-                        {renderPlayerEntry(player)}
-                    </ListItem>
-                ))}
-            </List>
-        );
-
-        return (
-          <Paper elevation={3} sx={{ p: 2, height: '100%' }}>
-            <Typography variant="h6" gutterBottom>{teamName}</Typography>
-            <Divider sx={{ mb: 1 }}/>
-            
-            {renderPlayerList([teamData.startingPitcher], 'Starting Pitcher')}
-            {renderPlayerList(teamData.lineup, 'Batting Order')}
-            {renderPlayerList(teamData.bullpen, 'Bullpen')}
-            {/* Add Bench here later */}
-          </Paper>
-        );
+    const handleLineupReorder = (team: 'home' | 'away', newOrder: Player[]) => {
+        dispatch(reorderLineup({ matchId, team, newOrder }));
     };
 
     // ---------- Render ----------
@@ -246,10 +202,20 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             </Box>
             <Grid container spacing={2}>
                 <Box sx={{ width: { xs: '12', md: '6' }, p: 1 }}>
-                    {renderTeamLineup(`${participant1} (Away)`, lineupData.away)}
+                    <DraggableLineup
+                        teamName={`${participant1} (Away)`}
+                        teamData={lineupData.away}
+                        team="away"
+                        onLineupReorder={handleLineupReorder}
+                    />
                 </Box>
                 <Box sx={{ width: { xs: '12', md: '6' }, p: 1 }}>
-                    {renderTeamLineup(`${participant2} (Home)`, lineupData.home)}
+                    <DraggableLineup
+                        teamName={`${participant2} (Home)`}
+                        teamData={lineupData.home}
+                        team="home"
+                        onLineupReorder={handleLineupReorder}
+                    />
                 </Box>
             </Grid>
         </Box>

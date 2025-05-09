@@ -182,7 +182,7 @@ function extractStartingPitcherFromSwishLineupCard(lineupCard: string, rosterInf
   const player: Player = {
     id: pitcherId,
     name: pitcherName,
-    position: 'P'
+    position: 'SP'
   };
 
   return player;
