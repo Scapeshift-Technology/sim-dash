@@ -71,6 +71,7 @@
       "buildResources": "assets",
       "output": "dist"
     },
+    "afterSign": "scripts/notarize.js",
     "win": {
       "target": "nsis"
     },
@@ -89,8 +90,7 @@
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.inherit.plist",
       "identity": null,
-      "notarize": false,
-      "afterSign": "scripts/notarize.js"
+      "notarize": false
     },
     "linux": {
       "target": "AppImage"
