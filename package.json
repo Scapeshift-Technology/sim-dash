@@ -87,8 +87,8 @@
       },
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
-      "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.inherit.plist",
+      "entitlements": ".github/workflows/entitlements.mac.plist",
+      "entitlementsInherit": ".github/workflows/entitlements.mac.inherit.plist",
       "identity": "Scapeshift Technology LLC (K45XMA76R6)",
       "notarize": false,
       "forceCodeSigning": true
