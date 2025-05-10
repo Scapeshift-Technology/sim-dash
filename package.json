@@ -21,6 +21,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@electron/notarize": "^2.3.0",
     "@playwright/test": "^1.52.0",
     "@swc/core": "^1.11.24",
     "@swc/register": "^0.1.10",
@@ -31,6 +32,7 @@
     "cross-env": "^7.0.3",
     "electron": "^28.0.0",
     "electron-builder": "^26.0.12",
+    "electron-notarize": "^1.2.2",
     "electron-reload": "^2.0.0-alpha.1",
     "playwright": "^1.52.0",
     "ts-node": "^10.9.2",
@@ -57,7 +59,7 @@
     "sqlite3": "^5.1.7"
   },
   "build": {
-    "appId": "com.scapeshift.simdash",
+    "appId": "tech.scapeshift.simdash",
     "productName": "SimDash",
     "files": [
       "src/**/*",
@@ -81,7 +83,14 @@
       "extendInfo": {
         "CFBundleName": "SimDash",
         "CFBundleDisplayName": "SimDash"
-      }
+      },
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.inherit.plist",
+      "identity": null,
+      "notarize": false,
+      "afterSign": "scripts/notarize.js"
     },
     "linux": {
       "target": "AppImage"
