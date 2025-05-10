@@ -18,6 +18,7 @@ const teamAbbrevsObj: Record<string, string> = {
   "Minnesota Twins": "MIN",
   "New York Mets": "NYM",
   "New York Yankees": "NYY",
+  "Oakland Athletics": "ATH",
   "Athletics": "ATH",
   "Philadelphia Phillies": "PHI",
   "Pittsburgh Pirates": "PIT",
