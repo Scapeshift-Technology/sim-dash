@@ -89,7 +89,7 @@
       "gatekeeperAssess": false,
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.inherit.plist",
-      "identity": "Developer ID Application: Scapeshift Technology LLC (K45XMA76R6)",
+      "identity": "Scapeshift Technology LLC (K45XMA76R6)",
       "notarize": false,
       "forceCodeSigning": true
     },
