@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs'); // Import fs module
+const log = require('electron-log/main'); // <-- Import electron-log
 const dbHelper = require('./db'); // Local SQLite helper
 const sql = require('mssql'); // SQL Server driver
 const { getLineupsMLB } = require('./services/mlb/external/lineups');
@@ -21,6 +22,34 @@ if (process.platform === 'darwin') {
   }
 }
 
+// --- Electron-log Configuration ---
+log.initialize(); // Optional: Initialize for renderer processes (if needed later)
+
+// Set log level (optional, default is 'silly')
+// log.transports.file.level = 'info';
+
+// Set file format
+log.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] {processType} - {text}';
+
+// Set file size limit (optional)
+// log.transports.file.maxSize = 5 * 1024 * 1024; // 5MB
+
+// Set the log file path explicitly
+// Uses standard paths by default: ~/.config/{appName}/logs/main.log (Linux), ~/Library/Logs/{appName}/main.log (macOS), %USERPROFILE%\\AppData\\Roaming\\{appName}\\logs\\main.log (Win)
+// const logPath = path.join(app.getPath('userData'), 'logs', 'main.log');
+// log.transports.file.resolvePathFn = () => logPath;
+// console.log(`Configured electron-log file path: ${logPath}`);
+
+// Catch and log unhandled errors and rejections
+log.errorHandler.startCatching({
+    showDialog: true // Optional: Prevent dialog box on uncaught exception
+});
+
+console.log = log.log; // Optional: Redirect console.log to electron-log
+Object.assign(console, log.functions); // Optional: Redirect console.error, .warn, etc.
+
+log.info('Main process started.'); // Add an initial log message
+
 // --- Build Info Handling ---
 let buildInfo = { buildTimeISO: 'N/A' };
 // Only try to read build info if not in explicit development mode
@@ -37,6 +66,7 @@ if (process.env.NODE_ENV !== 'development') {
         }
     } catch (err) {
         console.error('Error reading or parsing build info file:', err);
+        log.error('Error reading or parsing build info file:', err); // <-- Log error
         // Keep default 'N/A' on error
     }
 }
@@ -94,8 +124,12 @@ async function createMainWindow() {
         // Production: Load the built HTML file
         // Adjust the path to point to the built output in dist/renderer
         const indexPath = path.join(__dirname, '..', 'dist', 'renderer', 'index.html');
+        log.info(`Production mode: Attempting to load file: ${indexPath}`); // <-- Log before loading
         console.log(`Loading production build from: ${indexPath}`);
-        mainWindow.loadFile(indexPath).catch(err => {
+        mainWindow.loadFile(indexPath).then(() => {
+            log.info(`Successfully loaded production file: ${indexPath}`); // <-- Log success
+        }).catch(err => {
+            log.error(`Failed to load production build from ${indexPath}:`, err); // <-- Log error
             console.error('Failed to load production build:', err);
         });
     }
@@ -116,6 +150,7 @@ async function createMainWindow() {
 
 // --- Function to create the About Window ---
 function createAboutWindow() {
+    log.info('Creating About window...'); // <-- Log window creation
     // If window already exists, focus it
     if (aboutWindow) {
         aboutWindow.focus();
@@ -140,7 +175,9 @@ function createAboutWindow() {
         show: false // Don't show until ready
     });
 
-    aboutWindow.loadFile(path.join(__dirname, 'renderer', 'about.html'));
+    aboutWindow.loadFile(path.join(__dirname, 'renderer', 'about.html'))
+        .then(() => log.info('About window loaded successfully.')) // <-- Log success
+        .catch(err => log.error('Failed to load about.html:', err)); // <-- Log error
     // aboutWindow.setMenu(null); // Optional: remove menu bar from about window
 
     aboutWindow.once('ready-to-show', () => {
@@ -581,6 +618,7 @@ const menuTemplate = [
 
 
 app.whenReady().then(async () => {
+    log.info('App is ready, initializing DB and creating main window...'); // <-- Log app ready
     await initializeDb(); // Initialize SQLite before creating the window
 
     // Build and set the application menu
@@ -604,15 +642,19 @@ app.on('window-all-closed', () => {
     if (db) { // Ensure SQLite DB is closed on quit
        db.close((err) => {
            if (err) {
+               log.error('Error closing SQLite DB:', err.message); // <-- Log error
                console.error('Error closing SQLite DB:', err.message);
            } else {
+               log.info('SQLite DB closed.'); // <-- Log success
                console.log('SQLite DB closed.');
            }
            // Quit after closing DB, regardless of platform
+            log.info('Quitting application after closing DB.'); // <-- Log quit
            app.quit();
        });
     } else {
        // If DB wasn't even initialized, just quit
+        log.warn('DB not initialized, quitting application directly.'); // <-- Log quit
        app.quit();
     }
     // Original logic moved into db.close callback to ensure quit happens after close
