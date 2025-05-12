@@ -176,7 +176,7 @@ function log5(batterProb: number, pitcherProb: number, leagueProb: number): numb
  * @param stats - The stats to normalize
  * @returns The normalized stats
  */
-function normalizeStats(stats: Stats): Stats {
+export function normalizeStats(stats: Stats): Stats {
   const sum = Object.values(stats).reduce((acc, curr) => acc + curr, 0);
   return Object.fromEntries(
     Object.entries(stats).map(([key, value]) => [key, value / sum])

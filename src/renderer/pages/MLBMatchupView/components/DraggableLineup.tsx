@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import {
     Box,
     Typography,
@@ -7,7 +8,8 @@ import {
     ListItem,
     ListItemText,
     ListSubheader,
-    Divider
+    Divider,
+    TextField
 } from '@mui/material';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import {
@@ -27,8 +29,10 @@ import {
     verticalListSortingStrategy
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import type { TeamLineup, Player, Position } from '@/types/mlb';
-import PositionSelector from './lineup/PositionSelector';
+import type { TeamLineup, Player, Position, TeamType } from '@/types/mlb';
+import PositionSelector from './PositionSelector';
+import { updateTeamLean } from '@/store/slices/simInputsSlice';
+import type { LeagueName } from '@@/types/league';
 
 interface SortablePlayerItemProps {
     player: Player;
@@ -114,27 +118,113 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
     );
 };
 
+interface TeamSectionCardProps {
+    title: string;
+    adjustmentValue: number;
+    onAdjustmentChange: (value: number) => void;
+    children: React.ReactNode;
+}
+
+const TeamSectionCard: React.FC<TeamSectionCardProps> = ({
+    title,
+    adjustmentValue,
+    onAdjustmentChange,
+    children
+}) => {
+    const getAdjustmentColor = (value: number) => {
+        if (value > 0) return 'success.main';
+        if (value < 0) return 'error.main';
+        return 'text.primary';
+    };
+
+    const renderAdjustmentInput = (label: string, value: number, onChange: (value: number) => void) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+            <Typography variant="body2" sx={{ mr: 1, minWidth: '100px' }}>
+                {label}:
+            </Typography>
+            <TextField
+                type="number"
+                size="small"
+                value={value}
+                onChange={(e) => onChange(Number(e.target.value))}
+                InputProps={{
+                    inputProps: { 
+                        min: -100, 
+                        max: 100,
+                        step: 1
+                    },
+                    endAdornment: <Typography variant="body2" sx={{ ml: 0.5 }}>%</Typography>
+                }}
+                sx={{ 
+                    flex: 1,
+                    '& .MuiInputBase-root': {
+                        height: '28px'
+                    },
+                    '& .MuiInputLabel-root': {
+                        color: getAdjustmentColor(value)
+                    },
+                    '& .MuiOutlinedInput-root': {
+                        '& fieldset': {
+                            borderColor: getAdjustmentColor(value)
+                        },
+                        '&:hover fieldset': {
+                            borderColor: getAdjustmentColor(value)
+                        },
+                        '&.Mui-focused fieldset': {
+                            borderColor: getAdjustmentColor(value)
+                        }
+                    }
+                }}
+            />
+        </Box>
+    );
+
+    return (
+        <Paper 
+            elevation={1} 
+            sx={{ 
+                p: 2,
+                backgroundColor: 'background.default'
+            }}
+        >
+            {renderAdjustmentInput(`${title} Adjustment %`, adjustmentValue, onAdjustmentChange)}
+            <Divider sx={{ my: 2 }} />
+            {children}
+        </Paper>
+    );
+};
+
 interface DraggableLineupProps {
     teamName: string;
     teamData: TeamLineup;
-    team: 'home' | 'away';
-    onLineupReorder: (team: 'home' | 'away', newOrder: Player[]) => void;
-    onPositionChange?: (team: 'home' | 'away', playerId: number, position: Position) => void;
+    teamType: TeamType;
+    matchId: number;
+    league: LeagueName;
+    onLineupReorder: (teamType: TeamType, newOrder: Player[]) => void;
+    onPositionChange?: (teamType: TeamType, playerId: number, position: Position) => void;
 }
 
 const DraggableLineup: React.FC<DraggableLineupProps> = ({
     teamName,
     teamData,
-    team,
+    teamType,
+    matchId,
+    league,
     onLineupReorder,
     onPositionChange
 }) => {
+    const dispatch = useDispatch();
+    const [hitterAdjustment, setHitterAdjustment] = useState(0);
+    const [pitcherAdjustment, setPitcherAdjustment] = useState(0);
+
     const sensors = useSensors(
         useSensor(PointerSensor),
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
         })
     );
+
+    // ---------- Handlers ----------
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
@@ -144,13 +234,37 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
             const newIndex = teamData.lineup.findIndex((player) => player.id === over.id);
 
             const newOrder = arrayMove(teamData.lineup, oldIndex, newIndex);
-            onLineupReorder(team, newOrder);
+            onLineupReorder(teamType, newOrder);
         }
     };
 
     const handlePositionChange = (playerId: number, position: Position) => {
-        onPositionChange?.(team, playerId, position);
+        onPositionChange?.(teamType, playerId, position);
     };
+
+    const handleHitterAdjustmentChange = (value: number) => {
+        setHitterAdjustment(value);
+        dispatch(updateTeamLean({
+            league,
+            matchId,
+            teamType,
+            leanType: 'offense',
+            value
+        }));
+    };
+
+    const handlePitcherAdjustmentChange = (value: number) => {
+        setPitcherAdjustment(value);
+        dispatch(updateTeamLean({
+            league,
+            matchId,
+            teamType,
+            leanType: 'defense',
+            value
+        }));
+    };
+
+    // ---------- Render functions ----------
 
     const renderPlayerList = (players: Player[], subheader: string, isDraggable: boolean = false) => (
         <List
@@ -160,7 +274,7 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                     {subheader}
                 </ListSubheader>
             }
-            sx={{ pt: 0 }}
+            sx={{ pt: 0, pb: 0 }}
         >
             {isDraggable ? (
                 <DndContext
@@ -196,14 +310,51 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
     );
 
     return (
-        <Paper elevation={3} sx={{ p: 2, height: '100%' }}>
+        <Paper 
+            elevation={3} 
+            sx={{ 
+                p: 2, 
+                height: '100%',
+                minWidth: '400px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2
+            }}
+        >
             <Typography variant="h6" gutterBottom>{teamName}</Typography>
             <Divider sx={{ mb: 1 }}/>
 
-            {renderPlayerList(teamData.lineup, 'Batting Order', true)}
-            {renderPlayerList([teamData.startingPitcher], 'Starting Pitcher')}
-            {renderPlayerList(teamData.bullpen, 'Bullpen')}
+            {/* Hitters Section */}
+            <TeamSectionCard
+                title="Hitter"
+                adjustmentValue={hitterAdjustment}
+                onAdjustmentChange={handleHitterAdjustmentChange}
+            >
+                {renderPlayerList(teamData.lineup, 'Batting Order', true)}
+            </TeamSectionCard>
 
+            {/* Pitchers Section */}
+            <TeamSectionCard
+                title="Pitcher"
+                adjustmentValue={pitcherAdjustment}
+                onAdjustmentChange={handlePitcherAdjustmentChange}
+            >
+                {/* Starting Pitcher */}
+                <Box sx={{ mb: 1 }}>
+                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                        Starting Pitcher
+                    </Typography>
+                    {renderPlayerList([teamData.startingPitcher], '', false)}
+                </Box>
+
+                {/* Bullpen */}
+                <Box>
+                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                        Bullpen
+                    </Typography>
+                    {renderPlayerList(teamData.bullpen, '', false)}
+                </Box>
+            </TeamSectionCard>
         </Paper>
     );
 };

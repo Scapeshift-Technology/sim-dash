@@ -6,10 +6,6 @@ export type TeamType = 'away' | 'home';
 
 export type Position = 'C' | '1B' | '2B' | '3B' | 'SS' | 'LF' | 'CF' | 'RF' | 'DH' | 'SP' | 'RP' | 'TBD';
 
-export interface SimInputDataMLB {
-  testField: string;
-}
-
 export interface GameStatePitcher {
   id: number;
   battersFaced: number;

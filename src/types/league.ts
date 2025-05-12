@@ -1,3 +1,5 @@
+export type LeagueName = 'MLB' | 'NBA' | 'NFL' | 'NHL'; // Add other leagues here as needed
+
 // Define the shape of a league object based on the ACTUAL query result
 export interface League {
     League: string;
