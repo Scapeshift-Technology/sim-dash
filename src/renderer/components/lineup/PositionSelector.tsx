@@ -13,7 +13,7 @@ interface PositionSelectorProps {
     disabled?: boolean;
 }
 
-const BATTER_POSITIONS: Position[] = ['C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'DH'];
+const BATTER_POSITIONS: Position[] = ['C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'DH', 'TBD'];
 const PITCHER_POSITIONS: Position[] = ['SP', 'RP'];
 
 const PositionSelector: React.FC<PositionSelectorProps> = ({
