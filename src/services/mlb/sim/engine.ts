@@ -6,10 +6,9 @@ import {
   GameStateMLB, 
   Player, 
   Stats, 
-  EventType,
-  GameStatePitcher
+  EventType
 } from "@/types/mlb";
-import { matchup, leagueAvgStats } from "./exampleMatchup";
+import { leagueAvgStats } from "./exampleMatchup";
 import { getMatchupProbabilities } from "./probabilities";
 import { initializeHomeFieldMultipliers } from "./homeFieldAdvantage";
 import { calculateSimCounts } from "./analysis/analyzeResults";
@@ -23,14 +22,13 @@ import { evaluatePitchingSubstitution } from "./pitcherSubstitution";
  * @returns The results of the matchup
  */
 async function simulateMatchupMLB(
-//   matchup: MatchupLineups,
+  matchup: MatchupLineups,
 //   leagueAvgStats: LeagueAvgStats,
   num_games: number = 50000
 ) {
   // Matchup probabilities
   await initializeHomeFieldMultipliers();
 
-  // Run simulation
   const simPlays = simulateGames(matchup, leagueAvgStats, num_games);
 
   // Get results

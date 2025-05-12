@@ -69,16 +69,23 @@ function getBatterPitcherMatchupProbabilities(batter: Player, pitcher: Player, l
   // Get corresponding stats
   const leagueAvgMatchupString = handednessToLeagueAvgString(matchupHandedness.battingSide, matchupHandedness.pitchingSide);
   const leagueAvgProbability = leagueAvgStats[leagueAvgMatchupString];
-  const batterStatsKey = handednessToPlayerStatsString(matchupHandedness.battingSide, 'hit')
+  const batterStatsKey = handednessToPlayerStatsString(matchupHandedness.pitchingSide, 'hit')
   const batterStats = batter.stats?.[batterStatsKey];
-  const pitcherStatsKey = handednessToPlayerStatsString(matchupHandedness.pitchingSide, 'pitch')
+  const pitcherStatsKey = handednessToPlayerStatsString(matchupHandedness.battingSide, 'pitch')
   const pitcherStats = pitcher.stats?.[pitcherStatsKey];
 
   // console.log(`Batter stats: ${JSON.stringify(batterStats, null, 2)}`);
   // console.log(`Pitcher stats: ${JSON.stringify(pitcherStats, null, 2)}`);
   // console.log(`League avg probability: ${JSON.stringify(leagueAvgProbability, null, 2)}`);
 
-  if (!batterStats || !pitcherStats) {
+  if (!batterStats || !pitcherStats || !leagueAvgProbability) {
+    console.log('LEAGUE AVG STATS:', leagueAvgStats);
+    console.log('LEAGUE AVG MATCHUP STRING:', leagueAvgMatchupString);
+    console.log('LEAGUE AVG MATCHUP STATS:', leagueAvgProbability);
+    console.log('BATTER STATS KEY:', batterStatsKey);
+    console.log('PITCHER STATS KEY:', pitcherStatsKey);
+    console.log('BATTER:', batter);
+    console.log('PITCHER:', pitcher);
     throw new Error('Missing required stats for matchup calculation');
   }
   
@@ -111,19 +118,19 @@ function determineMatchupHandedness(batter: Player, pitcher: Player): {
 } {
   let battingSide: Handedness | undefined, pitchingSide: Handedness | undefined;
     
-  // Handle both switch (B)
-  if (batter.battingSide === 'B' && pitcher.pitchingSide === 'B') {
+  // Handle both switch (S)
+  if (batter.battingSide === 'S' && pitcher.pitchingSide === 'S') {
       battingSide = 'L';
       pitchingSide = 'R';
   }
   
   // Handle switch pitcher
-  if (pitcher.pitchingSide === 'B') {
+  if (pitcher.pitchingSide === 'S') {
       battingSide = batter.battingSide;
       pitchingSide = battingSide;  // Takes same side as batter
   }
   // Handle switch hitter
-  else if (batter.battingSide === 'B') {
+  else if (batter.battingSide === 'S') {
       pitchingSide = pitcher.pitchingSide;
       battingSide = pitchingSide === 'R' ? 'L' : 'R';  // Takes opposite of pitcher
   }
@@ -134,7 +141,7 @@ function determineMatchupHandedness(batter: Player, pitcher: Player): {
   }
 
   if (!battingSide || !pitchingSide) {
-    throw new Error('Invalid matchup handedness');
+    throw new Error(`Invalid matchup handedness - Batter: ${batter.battingSide}, Pitcher: ${pitcher.pitchingSide}`);
   }
   
   return {

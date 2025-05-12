@@ -67,7 +67,7 @@ async function extractTeamLineupFromSwishLineupCard(lineupCard: string, date: st
   const lineup = getLineupFromSwishLineupCard(lineupCard, rosterInfo, teamType);
 
   // Get the bullpen
-  const bullpen = extractBullPenFromMlbRoster(rosterInfo, startingPitcher.id);
+  const bullpen = extractBullPenFromMlbRoster(rosterInfo, teamType, startingPitcher.id);
 
   return {
     lineup: lineup,
@@ -235,6 +235,7 @@ function getSwishLineupsLineupCard(html: string, awayTeam: string, homeTeam: str
   let relevantCard = null;
   let matchupCt = 0;
   const targetMatchup = createTargetMatchup(awayTeam, homeTeam);
+  console.log('TARGETMATCHUP', targetMatchup);
   
   for (const card of lineupCards) {
     const h4Regex = /<h4[\s\S]*?>([\s\S]*?)<\/h4>/;

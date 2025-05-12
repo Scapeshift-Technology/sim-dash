@@ -99,8 +99,9 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         // Run simulation
         const simResults: SimResultsMLB = await window.electronAPI.simulateMatchupMLB({
             // TO ADD:
-            // League avg stats
+              // League avg stats
             // Player stats
+            matchupLineups: lineupData,
             numGames: 50000
         });
 

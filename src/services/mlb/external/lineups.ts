@@ -5,7 +5,8 @@ import type {
   MlbScheduleApiGame,
   MlbRosterApiResponse,
   MatchupLineups,
-  TeamType
+  TeamType,
+  Player
 } from '@/types/mlb';
 
 import { 
@@ -16,7 +17,8 @@ import {
   extractTeamIds,
   extractBullPenFromMlbRoster,
   getMlbRosterApiRoster,
-  formatDateMlbApi
+  formatDateMlbApi,
+  enrichPlayerWithHandedness
 } from './mlbApi';
 
 import { getSwishLineups } from './swish';
@@ -46,14 +48,23 @@ async function getLineupsMLB(date: string, awayTeam: string, homeTeam: string, d
     const awayRosterInfo: MlbRosterApiResponse = await getMlbRosterApiRoster(awayTeamId, formattedDate, 'active');
     const homeRosterInfo: MlbRosterApiResponse = await getMlbRosterApiRoster(homeTeamId, formattedDate, 'active');
 
+
+    // console.log('GAME INFO:', gameInfo);  // Game info: Has player handedness. Hitting is batSide.code, pitching is pitchHand.code
+    // console.log('AWAY ROSTER INFO:', awayRosterInfo);
+
     // Extract lineups
     const awayTeamLineup: TeamLineup = extractCompleteTeamLineup(gameInfo, awayRosterInfo, 'away');
     const homeTeamLineup: TeamLineup = extractCompleteTeamLineup(gameInfo, homeRosterInfo, 'home');
 
-    return {
+    const matchupLineups: MatchupLineups = {
       away: awayTeamLineup,
       home: homeTeamLineup
-    };
+    }
+
+    // Enrich matchup lineups with handedness
+    const enrichedMatchupLineups: MatchupLineups = await enrichMatchupLineupsWithHandedness(matchupLineups);
+
+    return enrichedMatchupLineups;
   } catch (error) {
     console.error('Error getting lineups from MLB API:', error);
     // If MLB API fails, use backup function
@@ -77,7 +88,9 @@ async function getBackupLineups(date: string, awayTeam: string, homeTeam: string
   // Get Swish lineups. If that fails, use mock lineups
   try {
     const swishLineups: MatchupLineups = await getSwishLineups(date, awayTeam, homeTeam, daySequenceNumber);
-    return swishLineups;
+    // Enrich matchup lineups with handedness
+    const enrichedSwishLineups: MatchupLineups = await enrichMatchupLineupsWithHandedness(swishLineups);
+    return enrichedSwishLineups;
   } catch(error) {
     console.error('Error getting lineups from Swish analytics:', error);
     const mockLineups: MatchupLineups = makeMockLineups(date, awayTeam, homeTeam, daySequenceNumber);
@@ -107,7 +120,7 @@ function extractCompleteTeamLineup(
   const startingPitcher = extractStartingPitcherFromMlbGameApiGame(gameInfo, teamType);
 
   // Get bullpen
-  const bullpen = extractBullPenFromMlbRoster(rosterInfo, startingPitcher.id);
+  const bullpen = extractBullPenFromMlbRoster(rosterInfo, teamType, startingPitcher.id);
 
   return {
     lineup: startingLineup,
@@ -181,6 +194,41 @@ export function makeMockLineups(date: string, awayTeam: string, homeTeam: string
             teamName: homeTeam
         }
     };
+}
+
+async function enrichMatchupLineupsWithHandedness(matchupLineups: MatchupLineups): Promise<MatchupLineups> {
+  const enrichPlayer = async (player: Player): Promise<Player> => {
+    if (!player.battingSide || !player.pitchingSide) {
+      return await enrichPlayerWithHandedness(player);
+    }
+    return player;
+  };
+
+  // Enrich all players in parallel
+  const [enrichedHomeLineup, enrichedHomeSP, enrichedHomeBullpen, 
+         enrichedAwayLineup, enrichedAwaySP, enrichedAwayBullpen] = await Promise.all([
+    Promise.all(matchupLineups.home.lineup.map(enrichPlayer)),
+    enrichPlayer(matchupLineups.home.startingPitcher),
+    Promise.all(matchupLineups.home.bullpen.map(enrichPlayer)),
+    Promise.all(matchupLineups.away.lineup.map(enrichPlayer)),
+    enrichPlayer(matchupLineups.away.startingPitcher),
+    Promise.all(matchupLineups.away.bullpen.map(enrichPlayer))
+  ]);
+
+  return {
+    home: {
+      ...matchupLineups.home,
+      lineup: enrichedHomeLineup,
+      startingPitcher: enrichedHomeSP,
+      bullpen: enrichedHomeBullpen
+    },
+    away: {
+      ...matchupLineups.away,
+      lineup: enrichedAwayLineup,
+      startingPitcher: enrichedAwaySP,
+      bullpen: enrichedAwayBullpen
+    }
+  };
 }
 
 // Export functions to be used in main.js

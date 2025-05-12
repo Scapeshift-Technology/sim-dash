@@ -39,7 +39,7 @@ declare global {
       fetchMlbGamePlayerStats: (args: MatchupLineups) => Promise<MatchupLineups>;
 
       // Simulations
-      simulateMatchupMLB: (args: { numGames: number }) => Promise<SimResults>;
+      simulateMatchupMLB: (args: { matchupLineups: MatchupLineups, numGames: number }) => Promise<SimResults>;
       
       // ---------- Simulation Windows ----------
       createSimWindow: (args: { 

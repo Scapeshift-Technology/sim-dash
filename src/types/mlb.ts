@@ -79,7 +79,7 @@ export interface PlayerStats {
   pitchVsR?: Stats; // Optional: A batter won't have pitching stats
 }
 
-export type Handedness = 'L' | 'R' | 'B';
+export type Handedness = 'L' | 'R' | 'S';
 
 export interface Player {
     id: number; // Unique player identifier (e.g., MLBAM ID)
@@ -142,12 +142,27 @@ export interface MlbGameApiPosition {
 export interface MlbGameApiPerson {
   id: number;
   fullName: string;
+  batSide: {
+    code: Handedness;
+  };
+  pitchHand: {
+    code: Handedness;
+  };
 }
 
+export interface MlbGameApiBatSide {
+  code: Handedness;
+}
+
+export interface MlbGameApiPitchHand {
+  code: Handedness;
+}
 export interface MlbGameApiPlayer {
   person: MlbGameApiPerson;
   position: MlbGameApiPosition;
   battingOrder?: number;
+  batSide: MlbGameApiBatSide;
+  pitchHand: MlbGameApiPitchHand;
 }
 
 export interface MlbGameApiTeamData {
@@ -203,11 +218,31 @@ export interface MlbScheduleApiGame {
 
 // ----- Roster endpoint -----
 
-export interface MlbRosterApiResponse {
-  roster: MlbGameApiPlayer[];
+export interface MlbRosterApiPlayer {
+  person: MlbGameApiPerson;
+  position: MlbGameApiPosition;
 }
 
-// ----- FanGraphs API types -----
+export interface MlbRosterApiResponse {
+  roster: MlbRosterApiPlayer[];
+}
+
+// ----- People endpoint -----
+
+export interface MlbPeopleApiResponse {
+  people: Array<{
+    id: number;
+    fullName: string;
+    batSide: {
+      code: Handedness;
+    };
+    pitchHand: {
+      code: Handedness;
+    };
+  }>;
+}
+
+// ---------- FanGraphs API types ----------
 
 export interface FgLeagueData {
   totalsHome: FgLeagueDataTotals;
@@ -232,3 +267,4 @@ export interface FgLeagueDataTotals {
 export interface Percentages {
   [key: string]: number;
 }
+
