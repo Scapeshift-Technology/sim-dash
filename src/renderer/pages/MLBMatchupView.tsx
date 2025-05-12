@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
     Box, 
@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import type { MatchupLineups, TeamLineup, Player, Position } from '@/types/mlb';
+import type { Player, Position } from '@/types/mlb';
 import type { SimResultsMLB } from '@/types/bettingResults';
 import MLBSimulationResultsSummary from '@/components/simulation/MLBSimulationResultsSummary';
 import DraggableLineup from '@/components/DraggableLineup';
@@ -51,6 +51,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const dispatch = useDispatch<AppDispatch>();
     
     // ---------- State ----------
+    const [isSimulating, setIsSimulating] = useState(false);
+    const [simError, setSimError] = useState<string | null>(null);
     const simResults = useSelector((state: RootState) => selectMatchSimResults(state, league, matchId));
     const simStatus = useSelector((state: RootState) => selectMatchSimStatus(state, league, matchId));
     const lineupData = useSelector((state: RootState) => selectGameLineupsData(state, matchId));
@@ -93,32 +95,52 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
 
     // ---------- Handlers ----------
     const handleRunSimulation = async () => {
-        // Get timestamp for later 
-        const timestamp = new Date().toISOString();
+        try {
+            setIsSimulating(true);
+            setSimError(null);
+            
+            // Get timestamp for later 
+            const timestamp = new Date().toISOString();
 
-        // Run simulation
-        const simResults: SimResultsMLB = await window.electronAPI.simulateMatchupMLB({
-            // TO ADD:
-              // League avg stats
-            // Player stats
-            matchupLineups: lineupData,
-            numGames: 50000
-        });
+            // Run simulation
+            let simResults: SimResultsMLB;
+            try {
+                simResults = await window.electronAPI.simulateMatchupMLB({
+                    // TO ADD:
+                    // League avg stats
+                    // Player stats
+                    matchupLineups: lineupData,
+                    numGames: 50000
+                });
+            } catch (error) {
+                throw new Error(`Error while running simulation`);
+            }
 
-        // Save sim history
-        const simHistoryEntry: SimHistoryEntry = {
-            matchId: matchId,
-            timestamp: timestamp,
-            simResults: simResults,
-            inputData: { testField: 'test' }
-        };
-        const saveSuccess = await window.electronAPI.saveSimHistory(simHistoryEntry);
-        if (!saveSuccess) {
-            console.error('Error saving sim history');
+            // Save sim history
+            const simHistoryEntry: SimHistoryEntry = {
+                matchId: matchId,
+                timestamp: timestamp,
+                simResults: simResults,
+                inputData: { testField: 'test' }
+            };
+            
+            try {
+                const saveSuccess = await window.electronAPI.saveSimHistory(simHistoryEntry);
+                if (!saveSuccess) {
+                    throw new Error('Unknown error');
+                }
+            } catch (error) {
+                throw new Error(`Error while saving simulation results`);
+            }
+
+            // Fetch updated sim history
+            dispatch(fetchSimResults({ league, matchId }));
+        } catch (error) {
+            setSimError(error instanceof Error ? error.message : 'An unexpected error occurred');
+            console.error('Simulation error:', error);
+        } finally {
+            setIsSimulating(false);
         }
-
-        // Fetch updated sim history
-        dispatch(fetchSimResults({ league, matchId }));
     };
 
     const handleRefresh = () => {
@@ -167,6 +189,11 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             <Typography variant="h6" gutterBottom sx={{ color: 'text.secondary' }}>
                 {date}
             </Typography>
+            {simError && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    {simError}
+                </Alert>
+            )}
             <Box sx={{ 
                 display: 'flex', 
                 flexDirection: 'row', 
@@ -176,15 +203,16 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 alignItems: 'stretch'
             }}>
                 <Box sx={{ 
-                    flex: '0 0 200px',  // grow shrink basis
+                    flex: '0 0 200px',
                     maxWidth: '200px'
                 }}>
                     <Button
                         variant="contained"
                         color="primary"
                         size="large"
-                        startIcon={<PlayArrowIcon />}
+                        startIcon={isSimulating ? <CircularProgress size={20} color="inherit" /> : <PlayArrowIcon />}
                         onClick={handleRunSimulation}
+                        disabled={isSimulating || !lineupData}
                         sx={{ 
                             height: '100%', 
                             width: '100%',
@@ -192,7 +220,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                             px: '16px'
                         }}
                     >
-                        Run Simulation
+                        {isSimulating ? 'Running...' : 'Run Simulation'}
                     </Button>
                 </Box>
                 <Box sx={{ 

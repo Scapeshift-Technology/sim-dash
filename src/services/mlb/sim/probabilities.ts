@@ -79,13 +79,6 @@ function getBatterPitcherMatchupProbabilities(batter: Player, pitcher: Player, l
   // console.log(`League avg probability: ${JSON.stringify(leagueAvgProbability, null, 2)}`);
 
   if (!batterStats || !pitcherStats || !leagueAvgProbability) {
-    console.log('LEAGUE AVG STATS:', leagueAvgStats);
-    console.log('LEAGUE AVG MATCHUP STRING:', leagueAvgMatchupString);
-    console.log('LEAGUE AVG MATCHUP STATS:', leagueAvgProbability);
-    console.log('BATTER STATS KEY:', batterStatsKey);
-    console.log('PITCHER STATS KEY:', pitcherStatsKey);
-    console.log('BATTER:', batter);
-    console.log('PITCHER:', pitcher);
     throw new Error('Missing required stats for matchup calculation');
   }
   

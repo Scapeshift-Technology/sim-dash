@@ -37,7 +37,7 @@ const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = 
   // ---------- Effect ----------
   useEffect(() => {
     // Set the most recent simulation as selected by default when history changes
-    if (simHistory.length > 0 && !selectedSim) {
+    if (simHistory.length > 0) {
       setSelectedSim(simHistory[0]);
     }
   }, [simHistory]);
