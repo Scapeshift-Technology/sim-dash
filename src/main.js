@@ -418,10 +418,10 @@ ipcMain.handle('fetch-mlb-game-player-stats', async (event, matchupLineups) => {
 });
 
 //  --- Add Simulate Matchup Handler ---
-ipcMain.handle('simulate-matchup-mlb', async (event, { numGames}) => {
+ipcMain.handle('simulate-matchup-mlb', async (event, { numGames, matchupLineups }) => {
   console.log(`IPC received: simulate-matchup for ${numGames} games`);
   try {
-    const simResults = simulateMatchupMLB(numGames);
+    const simResults = simulateMatchupMLB(matchupLineups, numGames);
     return simResults;
   } catch (err) {
     console.error(`Error simulating matchup:`, err);

@@ -3,7 +3,8 @@ import {
   MlbScheduleApiGame, 
   MlbGameApiResponse, 
   MlbRosterApiResponse,
-  Player
+  Player,
+  MlbPeopleApiResponse
 } from '@/types/mlb';
 
 const BASE_MLB_API_URL = 'https://statsapi.mlb.com/api/v1';
@@ -73,11 +74,14 @@ function extractStartingLineupFromMlbGameApiGame(gameData: MlbGameApiResponse, t
     }
 
     // Convert battingOrder to 1-based index (100->1, 200->2, etc)
+    console.log('STARTING LINEUP:', JSON.stringify(startingLineup, null, 2));
     return startingLineup.map(player => ({
       id: player.person.id,
       name: player.person.fullName,
       position: player.position.abbreviation,
-      battingOrder: (player.battingOrder || 0) / 100 // Convert from MLB's format (100, 200, etc) to 1-9
+      battingOrder: (player.battingOrder || 0) / 100, // Convert from MLB's format (100, 200, etc) to 1-9
+      battingSide: player.batSide.code,
+      pitchingSide: player.pitchHand.code
     }));
   } catch (error) {
     console.error('Error extracting starting lineup from MLB API game:', error);
@@ -91,10 +95,14 @@ function extractStartingPitcherFromMlbGameApiGame(gameData: MlbGameApiResponse, 
     throw new Error('No probable pitcher found');
   }
 
+  const pitcher = gameData.liveData.boxscore.teams[teamType].players[probablePitchers.id];
+
   return {
     id: probablePitchers.id,
     name: probablePitchers.fullName,
-    position: 'SP'
+    position: 'SP',
+    pitchingSide: pitcher.pitchHand.code,
+    battingSide: pitcher.batSide.code
   };
 }
 
@@ -157,21 +165,49 @@ async function getMlbTeamId(teamName: string, season: number) {
 
 export { getMlbTeamId };
 
+// ---------- People endpoint ----------
+
+async function enrichPlayerWithHandedness(player: Player): Promise<Player> {
+  try {
+    const url = `${BASE_MLB_API_URL}/people/${player.id}`;
+    const response = await fetch(url);
+    const data: MlbPeopleApiResponse = await response.json();
+    
+    if (!data.people || data.people.length !== 1) {
+      throw new Error(`Unexpected number of people returned for player ${player.id}(not == 1): ${data.people.length}`);
+    }
+
+    const playerData = data.people[0];
+    return {
+      ...player,
+      battingSide: playerData.batSide.code,
+      pitchingSide: playerData.pitchHand.code
+    };
+  } catch (error) {
+    console.error(`Error enriching player ${player.id} with handedness:`, error);
+    throw error;
+  }
+}
+
+export { enrichPlayerWithHandedness };
+
 // ---------- Cross-endpoint functions ----------
 
 function extractBullpenFromMlbRosterAndGame(gameInfo: MlbGameApiResponse, roster: MlbRosterApiResponse, teamType: TeamType): Player[] {
   const startingPitcher = extractStartingPitcherFromMlbGameApiGame(gameInfo, teamType);
-  return extractBullPenFromMlbRoster(roster, startingPitcher.id);
+  return extractBullPenFromMlbRoster(roster, teamType, startingPitcher.id);
 }
 
-function extractBullPenFromMlbRoster(roster: MlbRosterApiResponse, startingPitcherId: number): Player[] {
+function extractBullPenFromMlbRoster(roster: MlbRosterApiResponse, teamType: TeamType, startingPitcherId: number): Player[] {
   const bullpen = roster.roster.filter((player: any) => (player.position.abbreviation === 'P' || player.position.abbreviation === 'TWP') && player.person.id !== startingPitcherId);
-
-  return bullpen.map((player: any) => ({
-    id: player.person.id,
-    name: player.person.fullName,
-    position: 'RP'
-  }));
+  
+  return bullpen.map((player: any) => {
+    return {
+      id: player.person.id,
+      name: player.person.fullName,
+      position: 'RP'
+    };
+  });
 }
 
 export { extractBullpenFromMlbRosterAndGame, extractBullPenFromMlbRoster }
@@ -227,3 +263,4 @@ function addNoonTime(dateStr: string): string {
 }
 
 export { formatDateMlbApi, findPlayerId };
+

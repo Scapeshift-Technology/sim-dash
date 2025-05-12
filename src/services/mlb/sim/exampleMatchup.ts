@@ -265,7 +265,7 @@ const patrickBailey: Player = {
   id: 672275,
   name: "Patrick Bailey",
   position: "C",
-  battingSide: "B",
+  battingSide: "S",
   stats: {
     hitVsL: {
       adj_perc_K: 0.264,
@@ -653,7 +653,7 @@ const ianHapp: Player = {
   id: 664023,
   name: "Ian Happ",
   position: "2B",
-  battingSide: "B",
+  battingSide: "S",
   stats: {
     hitVsL: {
       adj_perc_K: 0.230,
