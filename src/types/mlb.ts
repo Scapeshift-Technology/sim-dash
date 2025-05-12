@@ -221,6 +221,11 @@ export interface MlbScheduleApiGame {
 export interface MlbRosterApiPlayer {
   person: MlbGameApiPerson;
   position: MlbGameApiPosition;
+  status: MlbRosterApiStatus;
+}
+
+export interface MlbRosterApiStatus {
+  code: 'D60' | 'D15' | 'A' | 'RM';
 }
 
 export interface MlbRosterApiResponse {

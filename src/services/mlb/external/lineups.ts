@@ -45,8 +45,8 @@ async function getLineupsMLB(date: string, awayTeam: string, homeTeam: string, d
 
     // Find roster data for both teams
     const { awayTeamId, homeTeamId } = extractTeamIds(gameInfo);
-    const awayRosterInfo: MlbRosterApiResponse = await getMlbRosterApiRoster(awayTeamId, formattedDate, 'active');
-    const homeRosterInfo: MlbRosterApiResponse = await getMlbRosterApiRoster(homeTeamId, formattedDate, 'active');
+    const awayRosterInfo: MlbRosterApiResponse = await getMlbRosterApiRoster(awayTeamId, formattedDate, '40Man');
+    const homeRosterInfo: MlbRosterApiResponse = await getMlbRosterApiRoster(homeTeamId, formattedDate, '40Man');
 
 
     // console.log('GAME INFO:', gameInfo);  // Game info: Has player handedness. Hitting is batSide.code, pitching is pitchHand.code
