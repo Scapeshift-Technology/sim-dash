@@ -16,6 +16,8 @@ export type SimInputsState = {
 export interface MLBSimInputsTeam {
   teamHitterLean: number // -0.1 to 0.1
   teamPitcherLean: number // -0.1 to 0.1
+  individualHitterLeans: Record<number, number> // playerId to lean
+  individualPitcherLeans: Record<number, number> // playerId to lean
 }
 
 export interface MLBSimInputs {

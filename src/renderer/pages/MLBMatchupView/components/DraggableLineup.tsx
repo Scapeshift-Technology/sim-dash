@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
     Box,
     Typography,
@@ -30,22 +30,26 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { TeamLineup, Player, Position, TeamType } from '@/types/mlb';
-import PositionSelector from './PositionSelector';
-import { updateTeamLean } from '@/store/slices/simInputsSlice';
+import { updateTeamLean, updatePlayerLean, selectTeamInputs } from '@/store/slices/simInputsSlice';
 import type { LeagueName } from '@@/types/league';
+import type { RootState } from '@/store/store';
 
 interface SortablePlayerItemProps {
     player: Player;
     isDraggable?: boolean;
     onPositionChange?: (playerId: number, position: Position) => void;
     lineupPosition?: number;
+    onLeanChange?: (playerId: number, value: number) => void;
+    leanValue?: number;
 }
 
 const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({ 
     player, 
     isDraggable,
     onPositionChange,
-    lineupPosition
+    lineupPosition,
+    onLeanChange,
+    leanValue = 0
 }) => {
     const {
         attributes,
@@ -64,6 +68,12 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
         display: 'flex',
         alignItems: 'center',
         width: '100%'
+    };
+
+    const getLeanColor = (value: number) => {
+        if (value > 0) return 'success.main';
+        if (value < 0) return 'error.main';
+        return 'text.primary';
     };
 
     return (
@@ -98,6 +108,52 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
                         disabled={!isDraggable}
                     />
                 </Box> */}
+                <TextField
+                    type="number"
+                    size="small"
+                    value={leanValue}
+                    onChange={(e) => onLeanChange?.(player.id, Number(e.target.value))}
+                    slotProps={{
+                      input: {
+                        inputProps: { 
+                          min: -10, 
+                          max: 10,
+                          step: .5,
+                          style: {
+                            padding: '0 4px',
+                            textAlign: 'right',
+                            MozAppearance: 'textfield'
+                          }
+                        },
+                        endAdornment: <Typography variant="body2" sx={{ ml: 0.0, pr: 0.0 }}>%</Typography>
+                      },
+                    }}
+                    sx={{ 
+                        width: '55px',
+                        '& .MuiInputBase-root': {
+                            height: '28px',
+                            padding: '0 4px'
+                        },
+                        '& .MuiInputLabel-root': {
+                            color: getLeanColor(leanValue)
+                        },
+                        '& .MuiOutlinedInput-root': {
+                            '& fieldset': {
+                                borderColor: getLeanColor(leanValue)
+                            },
+                            '&:hover fieldset': {
+                                borderColor: getLeanColor(leanValue)
+                            },
+                            '&.Mui-focused fieldset': {
+                                borderColor: getLeanColor(leanValue)
+                            }
+                        },
+                        '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button': {
+                            WebkitAppearance: 'none',
+                            margin: 0
+                        }
+                    }}
+                />
             </Box>
             {isDraggable && (
                 <Box
@@ -147,13 +203,15 @@ const TeamSectionCard: React.FC<TeamSectionCardProps> = ({
                 size="small"
                 value={value}
                 onChange={(e) => onChange(Number(e.target.value))}
-                InputProps={{
+                slotProps={{
+                  input: {
                     inputProps: { 
-                        min: -100, 
-                        max: 100,
-                        step: 1
+                      min: -10, 
+                      max: 10,
+                      step: .5
                     },
                     endAdornment: <Typography variant="body2" sx={{ ml: 0.5 }}>%</Typography>
+                  }
                 }}
                 sx={{ 
                     flex: 1,
@@ -214,6 +272,7 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
     onPositionChange
 }) => {
     const dispatch = useDispatch();
+    const teamInputs = useSelector((state: RootState) => selectTeamInputs(state, league, matchId))?.[teamType];
     const [hitterAdjustment, setHitterAdjustment] = useState(0);
     const [pitcherAdjustment, setPitcherAdjustment] = useState(0);
 
@@ -264,9 +323,31 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
         }));
     };
 
+    const handleHitterLeanChange = (playerId: number, value: number) => {
+        dispatch(updatePlayerLean({
+            league,
+            matchId,
+            teamType,
+            playerType: 'hitter',
+            playerId,
+            value
+        }));
+    };
+
+    const handlePitcherLeanChange = (playerId: number, value: number) => {
+        dispatch(updatePlayerLean({
+            league,
+            matchId,
+            teamType,
+            playerType: 'pitcher',
+            playerId,
+            value
+        }));
+    };
+
     // ---------- Render functions ----------
 
-    const renderPlayerList = (players: Player[], subheader: string, isDraggable: boolean = false) => (
+    const renderPlayerList = (players: Player[], subheader: string, isDraggable: boolean = false, isPitcher: boolean = false) => (
         <List
             dense
             subheader={
@@ -293,6 +374,11 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                                 isDraggable={true}
                                 onPositionChange={handlePositionChange}
                                 lineupPosition={index + 1}
+                                onLeanChange={isPitcher ? handlePitcherLeanChange : handleHitterLeanChange}
+                                leanValue={isPitcher ? 
+                                    teamInputs?.individualPitcherLeans?.[player.id] || 0 :
+                                    teamInputs?.individualHitterLeans?.[player.id] || 0
+                                }
                             />
                         ))}
                     </SortableContext>
@@ -303,6 +389,11 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                         key={player.id}
                         player={player}
                         isDraggable={false}
+                        onLeanChange={isPitcher ? handlePitcherLeanChange : handleHitterLeanChange}
+                        leanValue={isPitcher ? 
+                            teamInputs?.individualPitcherLeans?.[player.id] || 0 :
+                            teamInputs?.individualHitterLeans?.[player.id] || 0
+                        }
                     />
                 ))
             )}
@@ -330,7 +421,7 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                 adjustmentValue={hitterAdjustment}
                 onAdjustmentChange={handleHitterAdjustmentChange}
             >
-                {renderPlayerList(teamData.lineup, 'Batting Order', true)}
+                {renderPlayerList(teamData.lineup, 'Batting Order', true, false)}
             </TeamSectionCard>
 
             {/* Pitchers Section */}
@@ -344,7 +435,7 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                     <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                         Starting Pitcher
                     </Typography>
-                    {renderPlayerList([teamData.startingPitcher], '', false)}
+                    {renderPlayerList([teamData.startingPitcher], '', false, true)}
                 </Box>
 
                 {/* Bullpen */}
@@ -352,7 +443,7 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                     <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                         Bullpen
                     </Typography>
-                    {renderPlayerList(teamData.bullpen, '', false)}
+                    {renderPlayerList(teamData.bullpen, '', false, true)}
                 </Box>
             </TeamSectionCard>
         </Paper>

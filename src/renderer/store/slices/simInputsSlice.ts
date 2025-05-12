@@ -8,7 +8,9 @@ import { LeagueName } from '@@/types/league';
 
 const initialMLBTeamInputs: MLBSimInputsTeam = {
   teamHitterLean: 0,
-  teamPitcherLean: 0
+  teamPitcherLean: 0,
+  individualHitterLeans: {},
+  individualPitcherLeans: {}
 }
 
 const initialMLBInputs: MLBSimInputs = {
@@ -133,6 +135,27 @@ const simInputsSlice = createSlice({
           state[league][matchId].inputs[teamType].teamPitcherLean = value;
         }
       }
+    },
+    updatePlayerLean: (state, action: {
+      payload: {
+        league: LeagueName;
+        matchId: number;
+        teamType: 'home' | 'away';
+        playerType: 'hitter' | 'pitcher';
+        playerId: number;
+        value: number;
+      }
+    }) => {
+      const { league, matchId, teamType, playerType, playerId, value } = action.payload;
+      
+      // Only handle MLB for now
+      if (league === 'MLB' && state[league]?.[matchId]) {
+        if (playerType === 'hitter') {
+          state[league][matchId].inputs[teamType].individualHitterLeans[playerId] = value;
+        } else {
+          state[league][matchId].inputs[teamType].individualPitcherLeans[playerId] = value;
+        }
+      }
     }
   },
   extraReducers: (builder) => {
@@ -200,7 +223,8 @@ export const {
   reorderMLBLineup, 
   updateMLBPlayerPosition, 
   initializeLeagueSimInputs,
-  updateTeamLean
+  updateTeamLean,
+  updatePlayerLean
 } = simInputsSlice.actions;
 
 // ---------- Selectors ----------

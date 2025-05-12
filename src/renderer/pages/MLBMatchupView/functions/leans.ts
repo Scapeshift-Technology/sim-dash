@@ -129,17 +129,25 @@ function calculateTeamLeans(teamLineup: MatchupLineups['home' | 'away'], teamInp
 
   // Map hitters
   teamLineup.lineup.forEach(player => {
-    hitters[player.id] = teamInputs.teamHitterLean;
+    if (teamInputs.individualHitterLeans[player.id]) {
+      hitters[player.id] = teamInputs.individualHitterLeans[player.id];
+    } else {
+      hitters[player.id] = teamInputs.teamHitterLean;
+    }
   });
 
   // Map starting pitcher
   const startingPitcher: TeamLeanMap = {
-    [teamLineup.startingPitcher.id]: teamInputs.teamPitcherLean
+    [teamLineup.startingPitcher.id]: teamInputs.individualPitcherLeans[teamLineup.startingPitcher.id] || teamInputs.teamPitcherLean
   };
 
   // Map bullpen
   teamLineup.bullpen.forEach(player => {
-    bullpen[player.id] = teamInputs.teamPitcherLean;
+    if (teamInputs.individualPitcherLeans[player.id]) {
+      bullpen[player.id] = teamInputs.individualPitcherLeans[player.id];
+    } else {
+      bullpen[player.id] = teamInputs.teamPitcherLean;
+    }
   });
 
   return {
