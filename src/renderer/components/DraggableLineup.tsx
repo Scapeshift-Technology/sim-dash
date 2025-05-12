@@ -34,12 +34,14 @@ interface SortablePlayerItemProps {
     player: Player;
     isDraggable?: boolean;
     onPositionChange?: (playerId: number, position: Position) => void;
+    lineupPosition?: number;
 }
 
 const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({ 
     player, 
     isDraggable,
-    onPositionChange 
+    onPositionChange,
+    lineupPosition
 }) => {
     const {
         attributes,
@@ -64,29 +66,25 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
         <ListItem
             ref={setNodeRef}
             style={style}
-            sx={{ py: 0 }}
+            sx={{ py: 0, px: .5 }}
         >
-            {isDraggable && (
-                <Box
-                    {...attributes}
-                    {...listeners}
-                    sx={{
-                        cursor: 'grab',
-                        display: 'flex',
-                        alignItems: 'center',
-                        mr: 1,
-                        '&:active': { cursor: 'grabbing' }
+            {lineupPosition && (
+                <Typography 
+                    variant="body2" 
+                    sx={{ 
+                        color: 'text.secondary',
+                        mr: 0.5
                     }}
                 >
-                    <DragIndicatorIcon fontSize="small" color="action" />
-                </Box>
+                    {lineupPosition}.
+                </Typography>
             )}
             <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
                 <ListItemText
                     primary={player.name}
                     sx={{ flex: '1 1 auto' }}
                 />
-                <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
+                {/* <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
                     <Typography variant="body2" sx={{ mr: 1, color: 'text.secondary' }}>
                         Pos:
                     </Typography>
@@ -95,8 +93,23 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
                         onChange={(position) => onPositionChange?.(player.id, position)}
                         disabled={!isDraggable}
                     />
-                </Box>
+                </Box> */}
             </Box>
+            {isDraggable && (
+                <Box
+                    {...attributes}
+                    {...listeners}
+                    sx={{
+                        cursor: 'grab',
+                        display: 'flex',
+                        alignItems: 'center',
+                        ml: 1,
+                        '&:active': { cursor: 'grabbing' }
+                    }}
+                >
+                    <DragIndicatorIcon fontSize="small" color="action" />
+                </Box>
+            )}
         </ListItem>
     );
 };
@@ -159,12 +172,13 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                         items={players.map(p => p.id)}
                         strategy={verticalListSortingStrategy}
                     >
-                        {players.map((player) => (
+                        {players.map((player, index) => (
                             <SortablePlayerItem
                                 key={player.id}
                                 player={player}
                                 isDraggable={true}
                                 onPositionChange={handlePositionChange}
+                                lineupPosition={index + 1}
                             />
                         ))}
                     </SortableContext>
@@ -186,9 +200,10 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
             <Typography variant="h6" gutterBottom>{teamName}</Typography>
             <Divider sx={{ mb: 1 }}/>
 
-            {renderPlayerList([teamData.startingPitcher], 'Starting Pitcher')}
             {renderPlayerList(teamData.lineup, 'Batting Order', true)}
+            {renderPlayerList([teamData.startingPitcher], 'Starting Pitcher')}
             {renderPlayerList(teamData.bullpen, 'Bullpen')}
+
         </Paper>
     );
 };
