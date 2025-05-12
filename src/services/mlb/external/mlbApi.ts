@@ -74,15 +74,19 @@ function extractStartingLineupFromMlbGameApiGame(gameData: MlbGameApiResponse, t
     }
 
     // Convert battingOrder to 1-based index (100->1, 200->2, etc)
-    console.log('STARTING LINEUP:', JSON.stringify(startingLineup, null, 2));
-    return startingLineup.map(player => ({
-      id: player.person.id,
-      name: player.person.fullName,
-      position: player.position.abbreviation,
-      battingOrder: (player.battingOrder || 0) / 100, // Convert from MLB's format (100, 200, etc) to 1-9
-      battingSide: player.batSide.code,
-      pitchingSide: player.pitchHand.code
-    }));
+    return startingLineup.map(player => {
+      const gameDataPlayer = gameData.gameData.players[`ID${player.person.id}`];
+      const batSide = gameDataPlayer.batSide.code;
+      const pitchSide = gameDataPlayer.pitchHand.code;
+      return {
+        id: player.person.id,
+        name: player.person.fullName,
+        position: player.position.abbreviation,
+        battingOrder: (player.battingOrder || 0) / 100, // Convert from MLB's format (100, 200, etc) to 1-9
+        battingSide: batSide,
+        pitchingSide: pitchSide
+      }
+    });
   } catch (error) {
     console.error('Error extracting starting lineup from MLB API game:', error);
     throw error;
@@ -95,14 +99,14 @@ function extractStartingPitcherFromMlbGameApiGame(gameData: MlbGameApiResponse, 
     throw new Error('No probable pitcher found');
   }
 
-  const pitcher = gameData.liveData.boxscore.teams[teamType].players[probablePitchers.id];
+  const pitcher = gameData.gameData.players[`ID${probablePitchers.id}`];
 
   return {
     id: probablePitchers.id,
     name: probablePitchers.fullName,
     position: 'SP',
-    pitchingSide: pitcher.pitchHand.code,
-    battingSide: pitcher.batSide.code
+    battingSide: pitcher.batSide.code,
+    pitchingSide: pitcher.pitchHand.code
   };
 }
 

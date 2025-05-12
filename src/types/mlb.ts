@@ -177,6 +177,13 @@ export interface MlbGameApiTeam {
   name: string;
 }
 
+export interface MlbGameApiGameDataPlayer {
+  id: number;
+  fullName: string;
+  batSide: MlbGameApiBatSide;
+  pitchHand: MlbGameApiPitchHand;
+}
+
 export interface MlbGameApiGameData {
   teams: {
     away: MlbGameApiTeam;
@@ -186,6 +193,9 @@ export interface MlbGameApiGameData {
     away: MlbGameApiPerson;
     home: MlbGameApiPerson;
   };
+  players: {
+    [key: string]: MlbGameApiGameDataPlayer;
+  }
 }
 
 export interface MlbGameApiResponse {
