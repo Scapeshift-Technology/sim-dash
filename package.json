@@ -1,5 +1,5 @@
 {
-  "name": "sim-dash",
+  "name": "SimDash",
   "version": "1.0.0",
   "description": "Electron app template for connecting to SQL Server with profile management.",
   "main": "src/main-entry.js",
@@ -51,6 +51,7 @@
     "@swc/register": "^0.1.10",
     "@tanstack/react-table": "^8.21.3",
     "dayjs": "^1.11.13",
+    "electron-log": "^5.4.0",
     "mssql": "^11.0.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

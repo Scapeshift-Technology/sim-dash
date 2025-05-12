@@ -1,5 +1,24 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+// Attempt to import electron-log for the renderer. 
+// This is one way to expose it; another is via ipcRenderer.invoke/on for specific log messages.
+let logFunctions = {};
+try {
+  const rendererLog = require('electron-log/renderer');
+  logFunctions = {
+    log: rendererLog.log,
+    info: rendererLog.info,
+    warn: rendererLog.warn,
+    error: rendererLog.error,
+    debug: rendererLog.debug,
+    verbose: rendererLog.verbose,
+    silly: rendererLog.silly,
+  };
+} catch (e) {
+  console.error('Failed to load electron-log/renderer in preload:', e);
+  // Fallback or leave empty if direct renderer logging isn't critical from preload initially
+}
+
 contextBridge.exposeInMainWorld('electronAPI', {
     // Profile management
     getProfiles: () => ipcRenderer.invoke('get-profiles'),
@@ -31,5 +50,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     // --- Added for About Window ---
     // Listener for receiving the app version from main process
-    onVersion: (callback) => ipcRenderer.on('set-version', callback)
+    onVersion: (callback) => ipcRenderer.on('set-version', callback),
+
+    // Expose logger functions
+    ...logFunctions
 }); 

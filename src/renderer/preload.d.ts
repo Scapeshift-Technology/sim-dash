@@ -64,6 +64,15 @@ declare global {
       // About Window Communication (Keep if needed, or remove if about window is refactored/removed)
       onVersion: (callback: (event: any, version: string) => void) => void;
       // Add other exposed functions here...
+
+      // Logger functions (optional, if directly exposing electron-log functions)
+      log?: (...args: any[]) => void;
+      info?: (...args: any[]) => void;
+      warn?: (...args: any[]) => void;
+      error?: (...args: any[]) => void;
+      debug?: (...args: any[]) => void;
+      verbose?: (...args: any[]) => void;
+      silly?: (...args: any[]) => void;
     };
   }
 }
