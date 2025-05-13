@@ -71,6 +71,9 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
         if (isNaN(numericValue)) {
             setErrors(prev => ({ ...prev, [fieldName]: 'Invalid number format' }));
             return null;
+        } else if (numericValue < 100 && numericValue > -100 && fieldName !== 'totalLine') {
+            setErrors(prev => ({ ...prev, [fieldName]: 'Odds must be between -100 and 100' }));
+            return null;
         }
 
         // Clear error if validation passes
