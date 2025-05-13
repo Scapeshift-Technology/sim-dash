@@ -71,10 +71,13 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
     };
 
     const getLeanColor = (value: number) => {
+        if (value > 10 || value < -10) return 'error.main';
         if (value > 0) return 'success.main';
         if (value < 0) return 'error.main';
         return 'text.primary';
     };
+
+    const isLeanValid = (value: number) => value >= -10 && value <= 10;
 
     return (
         <ListItem
@@ -113,6 +116,7 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
                     size="small"
                     value={leanValue}
                     onChange={(e) => onLeanChange?.(player.id, Number(e.target.value))}
+                    error={!isLeanValid(leanValue)}
                     slotProps={{
                       input: {
                         inputProps: { 
@@ -188,10 +192,13 @@ const TeamSectionCard: React.FC<TeamSectionCardProps> = ({
     children
 }) => {
     const getAdjustmentColor = (value: number) => {
+        if (value > 10 || value < -10) return 'error.main';
         if (value > 0) return 'success.main';
         if (value < 0) return 'error.main';
         return 'text.primary';
     };
+
+    const isAdjustmentValid = (value: number) => value >= -10 && value <= 10;
 
     const renderAdjustmentInput = (label: string, value: number, onChange: (value: number) => void) => (
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -203,6 +210,7 @@ const TeamSectionCard: React.FC<TeamSectionCardProps> = ({
                 size="small"
                 value={value}
                 onChange={(e) => onChange(Number(e.target.value))}
+                error={!isAdjustmentValid(value)}
                 slotProps={{
                   input: {
                     inputProps: { 

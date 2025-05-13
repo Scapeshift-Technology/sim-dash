@@ -7,7 +7,8 @@ import {
     Alert, 
     Grid, 
     Button,
-    IconButton
+    IconButton,
+    Snackbar
 } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -37,6 +38,8 @@ import { applyMatchupLeansMLB } from './functions/leans';
 
 // ---------- Functions ----------
 
+const isLeanValid = (value: number) => value >= -10 && value <= 10;
+
 // ---------- Main component ----------
 
 interface MLBMatchupViewProps {
@@ -61,6 +64,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     // ---------- State ----------
     const [isSimulating, setIsSimulating] = useState(false);
     const [simError, setSimError] = useState<string | null>(null);
+    const [showInvalidLeansSnackbar, setShowInvalidLeansSnackbar] = useState(false);
     const simResults = useSelector((state: RootState) => selectMatchSimResults(state, league, matchId));
     const simStatus = useSelector((state: RootState) => selectMatchSimStatus(state, league, matchId));
     const gameLineups = useSelector((state: RootState) => selectGameLineups(state, league, matchId));
@@ -70,6 +74,60 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const playerStatsStatus = useSelector((state: RootState) => selectGamePlayerStatsStatus(state, league, matchId));
     const playerStatsError = useSelector((state: RootState) => selectGamePlayerStatsError(state, league, matchId));
     const teamInputs = useSelector((state: RootState) => selectTeamInputs(state, league, matchId));
+
+    const hasInvalidLeans = () => {
+        if (!teamInputs) return false;
+
+        // Check team-wide leans
+        if (!isLeanValid(teamInputs.home.teamHitterLean) || 
+            !isLeanValid(teamInputs.home.teamPitcherLean) ||
+            !isLeanValid(teamInputs.away.teamHitterLean) || 
+            !isLeanValid(teamInputs.away.teamPitcherLean)) {
+            return true;
+        }
+
+        // Check individual leans
+        const hasInvalidHitterLeans = (team: 'home' | 'away') => {
+            return Object.values(teamInputs[team].individualHitterLeans).some(lean => !isLeanValid(lean));
+        };
+        const hasInvalidPitcherLeans = (team: 'home' | 'away') => {
+            return Object.values(teamInputs[team].individualPitcherLeans).some(lean => !isLeanValid(lean));
+        };
+
+        return hasInvalidHitterLeans('home') || 
+               hasInvalidHitterLeans('away') || 
+               hasInvalidPitcherLeans('home') || 
+               hasInvalidPitcherLeans('away');
+    };
+
+    const getInvalidLeansCount = () => {
+        if (!teamInputs) return 0;
+        let count = 0;
+
+        // Count team-wide leans
+        if (!isLeanValid(teamInputs.home.teamHitterLean)) count++;
+        if (!isLeanValid(teamInputs.home.teamPitcherLean)) count++;
+        if (!isLeanValid(teamInputs.away.teamHitterLean)) count++;
+        if (!isLeanValid(teamInputs.away.teamPitcherLean)) count++;
+
+        // Count individual hitter leans
+        Object.values(teamInputs.home.individualHitterLeans).forEach(lean => {
+            if (!isLeanValid(lean)) count++;
+        });
+        Object.values(teamInputs.away.individualHitterLeans).forEach(lean => {
+            if (!isLeanValid(lean)) count++;
+        });
+
+        // Count individual pitcher leans
+        Object.values(teamInputs.home.individualPitcherLeans).forEach(lean => {
+            if (!isLeanValid(lean)) count++;
+        });
+        Object.values(teamInputs.away.individualPitcherLeans).forEach(lean => {
+            if (!isLeanValid(lean)) count++;
+        });
+
+        return count;
+    };
 
     console.log(lineupData);
 
@@ -102,6 +160,12 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             dispatch(fetchSimResults({ league, matchId }));
         }
     }, [dispatch, matchId, league, simStatus]);
+
+    useEffect(() => {
+        if (hasInvalidLeans()) { // Show snackbar when leans become invalid
+            setShowInvalidLeansSnackbar(true);
+        }
+    }, [teamInputs]);
 
     // ---------- Handlers ----------
     const handleRunSimulation = async () => {
@@ -229,7 +293,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                         size="large"
                         startIcon={isSimulating ? <CircularProgress size={20} color="inherit" /> : <PlayArrowIcon />}
                         onClick={handleRunSimulation}
-                        disabled={isSimulating || !lineupData}
+                        disabled={isSimulating || !lineupData || hasInvalidLeans()}
                         sx={{ 
                             height: '100%', 
                             width: '100%',
@@ -277,6 +341,20 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                     />
                 </Box>
             </Grid>
+            <Snackbar
+                open={showInvalidLeansSnackbar}
+                autoHideDuration={15000}
+                onClose={() => setShowInvalidLeansSnackbar(false)}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert 
+                    onClose={() => setShowInvalidLeansSnackbar(false)} 
+                    severity="error" 
+                    sx={{ width: '100%' }}
+                >
+                    {getInvalidLeansCount()} lean{getInvalidLeansCount() !== 1 ? 's' : ''} {getInvalidLeansCount() !== 1 ? 'are' : 'is'} outside the valid range (-10% to 10%)
+                </Alert>
+            </Snackbar>
         </Box>
     );
 };

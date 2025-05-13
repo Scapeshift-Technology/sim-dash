@@ -130,23 +130,25 @@ function calculateTeamLeans(teamLineup: MatchupLineups['home' | 'away'], teamInp
   // Map hitters
   teamLineup.lineup.forEach(player => {
     if (teamInputs.individualHitterLeans[player.id]) {
-      hitters[player.id] = teamInputs.individualHitterLeans[player.id];
+      hitters[player.id] = clampLean(teamInputs.individualHitterLeans[player.id]);
     } else {
-      hitters[player.id] = teamInputs.teamHitterLean;
+      hitters[player.id] = clampLean(teamInputs.teamHitterLean);
     }
   });
 
   // Map starting pitcher
   const startingPitcher: TeamLeanMap = {
-    [teamLineup.startingPitcher.id]: teamInputs.individualPitcherLeans[teamLineup.startingPitcher.id] || teamInputs.teamPitcherLean
+    [teamLineup.startingPitcher.id]: clampLean(
+      teamInputs.individualPitcherLeans[teamLineup.startingPitcher.id] || teamInputs.teamPitcherLean
+    )
   };
 
   // Map bullpen
   teamLineup.bullpen.forEach(player => {
     if (teamInputs.individualPitcherLeans[player.id]) {
-      bullpen[player.id] = teamInputs.individualPitcherLeans[player.id];
+      bullpen[player.id] = clampLean(teamInputs.individualPitcherLeans[player.id]);
     } else {
-      bullpen[player.id] = teamInputs.teamPitcherLean;
+      bullpen[player.id] = clampLean(teamInputs.teamPitcherLean);
     }
   });
 
@@ -221,4 +223,8 @@ function applyPitcherLean(pitcher: Player, lean: number): Player {
 
   return newPitcher;
 }
+
+const clampLean = (value: number): number => {
+  return Math.max(-10, Math.min(10, value));
+};
 
