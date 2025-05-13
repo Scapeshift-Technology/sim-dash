@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
     Box,
@@ -7,7 +7,6 @@ import {
     List,
     ListItem,
     ListItemText,
-    ListSubheader,
     Divider,
     TextField
 } from '@mui/material';
@@ -281,8 +280,8 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
 }) => {
     const dispatch = useDispatch();
     const teamInputs = useSelector((state: RootState) => selectTeamInputs(state, league, matchId))?.[teamType];
-    const [hitterAdjustment, setHitterAdjustment] = useState(0);
-    const [pitcherAdjustment, setPitcherAdjustment] = useState(0);
+    const hitterAdjustment = useSelector((state: RootState) => selectTeamInputs(state, league, matchId))?.[teamType].teamHitterLean || 0;
+    const pitcherAdjustment = useSelector((state: RootState) => selectTeamInputs(state, league, matchId))?.[teamType].teamPitcherLean || 0;
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -310,7 +309,6 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
     };
 
     const handleHitterAdjustmentChange = (value: number) => {
-        setHitterAdjustment(value);
         dispatch(updateTeamLean({
             league,
             matchId,
@@ -321,7 +319,6 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
     };
 
     const handlePitcherAdjustmentChange = (value: number) => {
-        setPitcherAdjustment(value);
         dispatch(updateTeamLean({
             league,
             matchId,

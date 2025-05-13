@@ -2,19 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
     Box, 
-    Typography, 
     CircularProgress, 
     Alert, 
-    Grid, 
-    Button,
-    IconButton,
-    Snackbar,
-    Paper
+    Grid,
+    Snackbar
 } from '@mui/material';
 import type { Player, Position } from '@/types/mlb';
 import type { SimResultsMLB } from '@/types/bettingResults';
-import DraggableLineup from '@/pages/MLBMatchupView/components/DraggableLineup';
-import MLBMatchupHeader from '@/pages/MLBMatchupView/components/MLBMatchupHeader';
+import DraggableLineup from './components/DraggableLineup';
+import MLBMatchupHeader from './components/MLBMatchupHeader';
+import BettingBoundsSection from './components/BettingBoundsSection';
 import { SimHistoryEntry } from '@/types/simHistory';
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchSimResults, selectMatchSimResults, selectMatchSimStatus } from '@/store/slices/scheduleSlice';
@@ -29,16 +26,14 @@ import {
     clearGameData,
     reorderMLBLineup,
     updateMLBPlayerPosition,
+    updateTeamLean,
+    updatePlayerLean,
     selectTeamInputs,
     selectGameLineups
 } from '@/store/slices/simInputsSlice';
 import { LeagueName } from '@@/types/league';
 import { applyMatchupLeansMLB } from './functions/leans';
 import { useLeanValidation } from './hooks/leanValidation';
-
-// ---------- Functions ----------
-
-const isLeanValid = (value: number) => value >= -10 && value <= 10;
 
 // ---------- Sub-components ----------
 
@@ -87,7 +82,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const lineupStatus = useSelector((state: RootState) => selectGameLineupsStatus(state, league, matchId));
     const lineupError = useSelector((state: RootState) => selectGameLineupsError(state, league, matchId));
     const playerStatsStatus = useSelector((state: RootState) => selectGamePlayerStatsStatus(state, league, matchId));
-    const playerStatsError = useSelector((state: RootState) => selectGamePlayerStatsError(state, league, matchId));
+    // const playerStatsError = useSelector((state: RootState) => selectGamePlayerStatsError(state, league, matchId));
     const teamInputs = useSelector((state: RootState) => selectTeamInputs(state, league, matchId));
 
     const {
@@ -96,8 +91,6 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         showInvalidLeansSnackbar,
         setShowInvalidLeansSnackbar
     } = useLeanValidation({ league, matchId });
-
-    console.log(lineupData);
 
     // ---------- Effect ----------
     useEffect(() => { // Fetch lineup data
@@ -229,6 +222,33 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 onRefresh={handleRefresh}
                 onRunSimulation={handleRunSimulation}
             />
+            <BettingBoundsSection
+                awayTeamName={participant1}
+                homeTeamName={participant2}
+                gameLineups={gameLineups}
+                onUpdateTeamLean={(teamType, leanType, value) => {
+                    console.log('TEAMTYPE', teamType);
+                    console.log('LEANTYPE', leanType);
+                    console.log('VALUE', value);
+                    dispatch(updateTeamLean({
+                        league,
+                        matchId,
+                        teamType,
+                        leanType,
+                        value
+                    }));
+                }}
+                onUpdatePlayerLean={(teamType, playerType, playerId, value) => {
+                    dispatch(updatePlayerLean({
+                        league,
+                        matchId,
+                        teamType,
+                        playerType,
+                        playerId,
+                        value
+                    }));
+                }}
+            />
             <Grid container spacing={2} sx={{ display: 'flex', flexWrap: 'wrap' }}>
                 <TeamCard>
                     <DraggableLineup
@@ -253,6 +273,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                     />
                 </TeamCard>
             </Grid>
+
             <Snackbar
                 open={showInvalidLeansSnackbar}
                 autoHideDuration={15000}

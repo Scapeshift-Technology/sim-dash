@@ -113,19 +113,49 @@ export interface GameMatchupProbabilities {
   away: TeamBatterMatchupProbabilities;
 }
 
-// 
-// export interface MLBGameScheduleInfo {
-//   gameId: number;
-//   gameDt: string;
-//   homeTeam: string;
-//   awayTeam: string;
-//   seriesGameNumber: number;
-//   gameNumber: number;
-// }
+// ----- MLB Leans Finder Types -----
+// -- Market lines types --
 
+export interface MarketLineDifferenceMLB {
+  mlAway: {
+    simValue: number;
+    upperBound: number;
+    lowerBound: number;
+  };
+  total: {
+    simValue: number;
+    upperBound: number;
+    lowerBound: number;
+  };
+}
 
-// Wait until making the DB structure to implement this.
+interface TotalLinesMLB {
+  line: number;
+  odds: number;
+}
 
+export interface MarketLinesMLB {
+  awayML: number;
+  homeML: number;
+  over: TotalLinesMLB;
+  under: TotalLinesMLB;
+}
+
+// -- Leans types --
+
+export interface IndividualTeamLeansMLB {
+  hitter: number;
+  pitcher: number;
+}
+
+interface AllTeamLeansMLB {
+  away: IndividualTeamLeansMLB;
+  home: IndividualTeamLeansMLB;
+}
+
+export interface OptimalLeansMLB {
+  teams: AllTeamLeansMLB;
+}
 
 // ---------- MLB API types ----------
 // Follow this naming convention: Mlb{Endpoint}Api{Thing it describes}
