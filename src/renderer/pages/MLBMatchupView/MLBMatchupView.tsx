@@ -8,14 +8,13 @@ import {
     Grid, 
     Button,
     IconButton,
-    Snackbar
+    Snackbar,
+    Paper
 } from '@mui/material';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import type { Player, Position } from '@/types/mlb';
 import type { SimResultsMLB } from '@/types/bettingResults';
-import MLBSimulationResultsSummary from '@/components/simulation/MLBSimulationResultsSummary';
 import DraggableLineup from '@/pages/MLBMatchupView/components/DraggableLineup';
+import MLBMatchupHeader from '@/pages/MLBMatchupView/components/MLBMatchupHeader';
 import { SimHistoryEntry } from '@/types/simHistory';
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchSimResults, selectMatchSimResults, selectMatchSimStatus } from '@/store/slices/scheduleSlice';
@@ -35,10 +34,27 @@ import {
 } from '@/store/slices/simInputsSlice';
 import { LeagueName } from '@@/types/league';
 import { applyMatchupLeansMLB } from './functions/leans';
+import { useLeanValidation } from './hooks/leanValidation';
 
 // ---------- Functions ----------
 
 const isLeanValid = (value: number) => value >= -10 && value <= 10;
+
+// ---------- Sub-components ----------
+
+const TeamCard: React.FC<{ children: React.ReactNode }> = ({
+  children
+}) => {
+  return (
+    <Box sx={{ 
+        width: { xs: '100%', md: 'calc(50% - 8px)' }, 
+        minWidth: { md: '400px' },
+        p: 1
+    }}>
+        {children}
+    </Box>
+  )
+}
 
 // ---------- Main component ----------
 
@@ -64,7 +80,6 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     // ---------- State ----------
     const [isSimulating, setIsSimulating] = useState(false);
     const [simError, setSimError] = useState<string | null>(null);
-    const [showInvalidLeansSnackbar, setShowInvalidLeansSnackbar] = useState(false);
     const simResults = useSelector((state: RootState) => selectMatchSimResults(state, league, matchId));
     const simStatus = useSelector((state: RootState) => selectMatchSimStatus(state, league, matchId));
     const gameLineups = useSelector((state: RootState) => selectGameLineups(state, league, matchId));
@@ -75,59 +90,12 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const playerStatsError = useSelector((state: RootState) => selectGamePlayerStatsError(state, league, matchId));
     const teamInputs = useSelector((state: RootState) => selectTeamInputs(state, league, matchId));
 
-    const hasInvalidLeans = () => {
-        if (!teamInputs) return false;
-
-        // Check team-wide leans
-        if (!isLeanValid(teamInputs.home.teamHitterLean) || 
-            !isLeanValid(teamInputs.home.teamPitcherLean) ||
-            !isLeanValid(teamInputs.away.teamHitterLean) || 
-            !isLeanValid(teamInputs.away.teamPitcherLean)) {
-            return true;
-        }
-
-        // Check individual leans
-        const hasInvalidHitterLeans = (team: 'home' | 'away') => {
-            return Object.values(teamInputs[team].individualHitterLeans).some(lean => !isLeanValid(lean));
-        };
-        const hasInvalidPitcherLeans = (team: 'home' | 'away') => {
-            return Object.values(teamInputs[team].individualPitcherLeans).some(lean => !isLeanValid(lean));
-        };
-
-        return hasInvalidHitterLeans('home') || 
-               hasInvalidHitterLeans('away') || 
-               hasInvalidPitcherLeans('home') || 
-               hasInvalidPitcherLeans('away');
-    };
-
-    const getInvalidLeansCount = () => {
-        if (!teamInputs) return 0;
-        let count = 0;
-
-        // Count team-wide leans
-        if (!isLeanValid(teamInputs.home.teamHitterLean)) count++;
-        if (!isLeanValid(teamInputs.home.teamPitcherLean)) count++;
-        if (!isLeanValid(teamInputs.away.teamHitterLean)) count++;
-        if (!isLeanValid(teamInputs.away.teamPitcherLean)) count++;
-
-        // Count individual hitter leans
-        Object.values(teamInputs.home.individualHitterLeans).forEach(lean => {
-            if (!isLeanValid(lean)) count++;
-        });
-        Object.values(teamInputs.away.individualHitterLeans).forEach(lean => {
-            if (!isLeanValid(lean)) count++;
-        });
-
-        // Count individual pitcher leans
-        Object.values(teamInputs.home.individualPitcherLeans).forEach(lean => {
-            if (!isLeanValid(lean)) count++;
-        });
-        Object.values(teamInputs.away.individualPitcherLeans).forEach(lean => {
-            if (!isLeanValid(lean)) count++;
-        });
-
-        return count;
-    };
+    const {
+        hasInvalidLeans,
+        invalidLeansCount,
+        showInvalidLeansSnackbar,
+        setShowInvalidLeansSnackbar
+    } = useLeanValidation({ league, matchId });
 
     console.log(lineupData);
 
@@ -160,12 +128,6 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             dispatch(fetchSimResults({ league, matchId }));
         }
     }, [dispatch, matchId, league, simStatus]);
-
-    useEffect(() => {
-        if (hasInvalidLeans()) { // Show snackbar when leans become invalid
-            setShowInvalidLeansSnackbar(true);
-        }
-    }, [teamInputs]);
 
     // ---------- Handlers ----------
     const handleRunSimulation = async () => {
@@ -254,71 +216,21 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
 
     return (
         <Box sx={{ flexGrow: 1, p: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h5">
-                    {participant1} @ {participant2}
-                </Typography>
-                <IconButton 
-                    onClick={handleRefresh}
-                    size="small"
-                    sx={{ ml: 2 }}
-                    disabled={!lineupData}
-                >
-                    <RefreshIcon />
-                </IconButton>
-            </Box>
-            <Typography variant="h6" gutterBottom sx={{ color: 'text.secondary' }}>
-                {date}
-            </Typography>
-            {simError && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                    {simError}
-                </Alert>
-            )}
-            <Box sx={{ 
-                display: 'flex', 
-                flexDirection: 'row', 
-                flexWrap: 'wrap',
-                gap: 2, 
-                mb: 3,
-                alignItems: 'stretch'
-            }}>
-                <Box sx={{ 
-                    flex: '0 0 200px',
-                    maxWidth: '200px'
-                }}>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        size="large"
-                        startIcon={isSimulating ? <CircularProgress size={20} color="inherit" /> : <PlayArrowIcon />}
-                        onClick={handleRunSimulation}
-                        disabled={isSimulating || !lineupData || hasInvalidLeans()}
-                        sx={{ 
-                            height: '100%', 
-                            width: '100%',
-                            py: '8px',
-                            px: '16px'
-                        }}
-                    >
-                        {isSimulating ? 'Running...' : 'Run Simulation'}
-                    </Button>
-                </Box>
-                <Box sx={{ 
-                    flex: '0 0 200px',
-                    maxWidth: '200px'
-                }}>
-                    <MLBSimulationResultsSummary
-                        awayTeamName={participant1}
-                        homeTeamName={participant2}
-                        displayHistory={true}
-                        simHistory={simResults || []}
-                        isLoading={simStatus === 'loading'}
-                    />
-                </Box>
-            </Box>
-            <Grid container spacing={2}>
-                <Box sx={{ width: { xs: '12', md: '6' }, p: 1 }}>
+            <MLBMatchupHeader
+                participant1={participant1}
+                participant2={participant2}
+                date={date}
+                isSimulating={isSimulating}
+                simError={simError}
+                simResults={simResults}
+                simStatus={simStatus}
+                lineupData={lineupData}
+                hasInvalidLeans={hasInvalidLeans}
+                onRefresh={handleRefresh}
+                onRunSimulation={handleRunSimulation}
+            />
+            <Grid container spacing={2} sx={{ display: 'flex', flexWrap: 'wrap' }}>
+                <TeamCard>
                     <DraggableLineup
                         teamName={`${participant1} (Away)`}
                         teamData={lineupData.away}
@@ -328,8 +240,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                         onLineupReorder={handleLineupReorder}
                         onPositionChange={handlePositionChange}
                     />
-                </Box>
-                <Box sx={{ width: { xs: '12', md: '6' }, p: 1 }}>
+                </TeamCard>
+                <TeamCard>
                     <DraggableLineup
                         teamName={`${participant2} (Home)`}
                         teamData={lineupData.home}
@@ -339,7 +251,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                         onLineupReorder={handleLineupReorder}
                         onPositionChange={handlePositionChange}
                     />
-                </Box>
+                </TeamCard>
             </Grid>
             <Snackbar
                 open={showInvalidLeansSnackbar}
@@ -352,7 +264,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                     severity="error" 
                     sx={{ width: '100%' }}
                 >
-                    {getInvalidLeansCount()} lean{getInvalidLeansCount() !== 1 ? 's' : ''} {getInvalidLeansCount() !== 1 ? 'are' : 'is'} outside the valid range (-10% to 10%)
+                    {invalidLeansCount} lean{invalidLeansCount !== 1 ? 's' : ''} {invalidLeansCount !== 1 ? 'are' : 'is'} outside the valid range (-10% to 10%)
                 </Alert>
             </Snackbar>
         </Box>

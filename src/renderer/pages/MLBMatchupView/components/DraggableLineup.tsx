@@ -355,14 +355,9 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
 
     // ---------- Render functions ----------
 
-    const renderPlayerList = (players: Player[], subheader: string, isDraggable: boolean = false, isPitcher: boolean = false) => (
+    const renderPlayerList = (players: Player[], isDraggable: boolean = false, isPitcher: boolean = false) => (
         <List
             dense
-            subheader={
-                <ListSubheader sx={{ lineHeight: '30px', pb: 0 }}>
-                    {subheader}
-                </ListSubheader>
-            }
             sx={{ pt: 0, pb: 0 }}
         >
             {isDraggable ? (
@@ -429,7 +424,10 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                 adjustmentValue={hitterAdjustment}
                 onAdjustmentChange={handleHitterAdjustmentChange}
             >
-                {renderPlayerList(teamData.lineup, 'Batting Order', true, false)}
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    Batting Order
+                </Typography>
+                {renderPlayerList(teamData.lineup, true, false)}
             </TeamSectionCard>
 
             {/* Pitchers Section */}
@@ -443,7 +441,7 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                     <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                         Starting Pitcher
                     </Typography>
-                    {renderPlayerList([teamData.startingPitcher], '', false, true)}
+                    {renderPlayerList([teamData.startingPitcher], false, true)}
                 </Box>
 
                 {/* Bullpen */}
@@ -451,7 +449,7 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                     <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                         Bullpen
                     </Typography>
-                    {renderPlayerList(teamData.bullpen, '', false, true)}
+                    {renderPlayerList(teamData.bullpen, false, true)}
                 </Box>
             </TeamSectionCard>
         </Paper>

@@ -169,8 +169,15 @@ const simInputsSlice = createSlice({
         if (!state['MLB']?.[matchId]) {
           state['MLB'][matchId] = initialGameInputsMLB;
         }
-        state['MLB'][matchId].lineups.lineupsError = null;
-        state['MLB'][matchId].lineups.lineupsStatus = 'loading';
+        
+        // Create a copy of the current state to allow for direct assignment
+        const newState = { ...state['MLB'][matchId] };
+        newState.lineups = { ...newState.lineups };
+        
+        newState.lineups.lineupsError = null;
+        newState.lineups.lineupsStatus = 'loading';
+        
+        state['MLB'][matchId] = newState;
       })
       .addCase(fetchMlbLineup.fulfilled, (state, action) => {
         const { matchId, lineups } = action.payload;
