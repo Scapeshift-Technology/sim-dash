@@ -227,9 +227,6 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 homeTeamName={participant2}
                 gameLineups={gameLineups}
                 onUpdateTeamLean={(teamType, leanType, value) => {
-                    console.log('TEAMTYPE', teamType);
-                    console.log('LEANTYPE', leanType);
-                    console.log('VALUE', value);
                     dispatch(updateTeamLean({
                         league,
                         matchId,
