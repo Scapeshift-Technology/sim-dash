@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Box, CircularProgress, Alert, Paper, Typography } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -149,19 +149,18 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
     const scheduleData = useSelector((state: RootState) => selectLeagueScheduleData(state, league));
     const leagueScheduleStatus = useSelector((state: RootState) => selectLeagueScheduleStatus(state, league));
     const error = useSelector((state: RootState) => selectLeagueScheduleError(state, league));
+    const [currentDate, setCurrentDate] = useState<Dayjs | null>(null);
 
     // ---------- UseEffects ----------
 
     useEffect(() => {
-        if (selectedDate) {
-            // Only fetch if we don't have data or if the status is 'idle'(should be the same situation)
-            if (leagueScheduleStatus === 'idle' || scheduleData.length === 0) {
-                console.log('LeagueScheduleView: Fetching schedule data');
-                dispatch(fetchSchedule({ 
-                    league, 
-                    date: selectedDate.format('YYYY-MM-DD')
-                }));
-            }
+        if (selectedDate && currentDate !== selectedDate) {
+            console.log('LeagueScheduleView: Fetching schedule data');
+            dispatch(fetchSchedule({ 
+                league, 
+                date: selectedDate.format('YYYY-MM-DD')
+            }));
+            setCurrentDate(selectedDate);
         }
     }, [dispatch, league, selectedDate]);
 
