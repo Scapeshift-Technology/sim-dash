@@ -97,18 +97,19 @@ function transformGamePeriodTotalsMLB(gamePeriodTotals: GamePeriodTotalsMLB, tea
 }
 
 function transformTotalsLinesMLB(totalsLines: TotalsLinesMLB, teamName: string, period: string): TotalsData[] {
-  const lines = Object.keys(totalsLines.over);
+  // Convert keys to numbers and sort them numerically
+  const lines = Object.keys(totalsLines.over)
+    .map(Number)
+    .sort((a, b) => a - b);
   const data: TotalsData[] = [];
 
-  for (const line of lines) {
-    const lineNumber = parseFloat(line);
-
+  for (const lineNumber of lines) {
     const lineData = transformTotalsOutcomeCountsMLB(
       totalsLines.over[lineNumber],
       totalsLines.under[lineNumber],
       teamName,
       period,
-      line
+      lineNumber.toString()
     );
     data.push(lineData);
   }
