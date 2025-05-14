@@ -104,7 +104,7 @@ import type {
     // Determine the direction and magnitude of the adjustments
     const mlAdjustmentSize = Math.abs(mlAwayDiff) / 8; // Adjustment size is 1/2 of the diff split between hitters and pitchers of both teams
     const totalAdjustmentSize = Math.abs(totalDiff) / 8;
-    const adjustmentThreshold = .5; // Only adjust if more than .5% off
+    const adjustmentThreshold = .25; // Only adjust if more than .25% off
   
     // Handle moneyline adjustments
     if (Math.abs(mlAwayDiff) > adjustmentThreshold || !mlInBounds) {
@@ -160,10 +160,10 @@ import type {
   }
   
   function shouldBreak(diffs: MarketLineDifferenceMLB): boolean {
-    const lowerMidwayPointML = diffs.mlAway.lowerBound + (diffs.mlAway.upperBound - diffs.mlAway.lowerBound) / 4;
-    const upperMidwayPointML = diffs.mlAway.lowerBound + (diffs.mlAway.upperBound - diffs.mlAway.lowerBound) * 3 / 4;
-    const lowerMidwayPointTotal = diffs.total.lowerBound + (diffs.total.upperBound - diffs.total.lowerBound) / 4;
-    const upperMidwayPointTotal = diffs.total.lowerBound + (diffs.total.upperBound - diffs.total.lowerBound) * 3 / 4;
+    const lowerMidwayPointML = diffs.mlAway.lowerBound + (diffs.mlAway.upperBound - diffs.mlAway.lowerBound) * 3 / 8;
+    const upperMidwayPointML = diffs.mlAway.lowerBound + (diffs.mlAway.upperBound - diffs.mlAway.lowerBound) * 6 / 8;
+    const lowerMidwayPointTotal = diffs.total.lowerBound + (diffs.total.upperBound - diffs.total.lowerBound) * 3 / 8;
+    const upperMidwayPointTotal = diffs.total.lowerBound + (diffs.total.upperBound - diffs.total.lowerBound) * 6 / 8;
 
     return (
       diffs.mlAway.simValue < upperMidwayPointML &&
