@@ -5,7 +5,7 @@ import SimulationRoutes from './SimulationRoutes';
 
 const AppRouter: React.FC = () => {
   // Check hash for windowId instead of search params
-  const isSimulationWindow = window.location.hash.includes('windowId=');
+  const isSimulationWindow = window.location.hash.includes('sim-results');
 
   return (
     <HashRouter>

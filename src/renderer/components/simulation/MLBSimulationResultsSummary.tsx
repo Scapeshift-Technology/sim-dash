@@ -72,8 +72,9 @@ const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = 
     if (selectedSim) {
       try {
         await window.electronAPI.createSimWindow({ 
-          league: 'MLB', 
-          simData: selectedSim.simResults, 
+          league: 'MLB',
+          matchupId: selectedSim.matchId,
+          timestamp: selectedSim.timestamp,
           awayTeamName, 
           homeTeamName 
         });

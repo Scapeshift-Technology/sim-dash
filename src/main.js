@@ -6,7 +6,6 @@ const dbHelper = require('./db'); // Local SQLite helper
 const sql = require('mssql'); // SQL Server driver
 const { getLineupsMLB } = require('./services/mlb/external/lineups');
 const { getPlayerStatsMLB } = require('./services/mlb/db/playerStats');
-const { simulateMatchupMLB } = require('./services/mlb/sim/engine');
 const { createMLBSimResultsWindow2 } = require('./services/mlb/electron/createSimResultsWindows');
 const { Worker } = require('worker_threads');
 
@@ -263,6 +262,7 @@ ipcMain.handle('get-sim-history', async (event, matchId) => {
     if (!db) return [];
     try {
         const simHistory = await dbHelper.getSimHistory(db, matchId);
+        console.log('SIMHISTORY', simHistory);
         return simHistory;
     } catch (err) {
         console.error('Error getting sim history:', err);
@@ -488,28 +488,17 @@ ipcMain.handle('simulate-matchup-mlb', async (event, { numGames, matchupLineups 
 });
 
 // --- Create Simulation Window ---
-const simResultsDataStore = new Map();
-
-ipcMain.handle('create-sim-window', async (event, { league, simData, awayTeamName, homeTeamName }) => {
+ipcMain.handle('create-sim-window', async (event, { league, matchupId, timestamp, awayTeamName, homeTeamName }) => {
   console.log('IPC received: create-sim-window');
   try {
     if (league === 'MLB') {
       const window = createMLBSimResultsWindow2({
-        simData,
+        matchupId,
+        timestamp,
+        awayTeamName,
+        homeTeamName,
         viteDevServerUrl,
         isDevelopment: process.env.NODE_ENV === 'development'
-      });
-      
-      // Store the data with windowId
-      simResultsDataStore.set(window.windowId, {
-        simData,
-        awayTeamName,
-        homeTeamName
-      });
-
-      // Clean up when window closes
-      window.on('closed', () => {
-        simResultsDataStore.delete(window.windowId);
       });
 
       return { success: true };
@@ -524,9 +513,37 @@ ipcMain.handle('create-sim-window', async (event, { league, simData, awayTeamNam
 });
 
 // --- Access Simulation Data ---
-ipcMain.handle('get-sim-data', async (event, { windowId }) => {
+ipcMain.handle('get-sim-data', async (event) => {
   console.log('IPC received: get-sim-data');
-  return simResultsDataStore.get(windowId);
+  
+  // Get the BrowserWindow instance that sent the request
+  const window = BrowserWindow.fromWebContents(event.sender);
+  
+  if (!window) {
+    console.error('Could not find window that sent the request');
+    throw new Error('Window not found');
+  }
+
+  const properties = window.simProperties;
+  const matchupId = properties.simMatchupId;
+  const timestamp = properties.simTimestamp;
+  const awayTeamName = properties.simAwayTeamName;
+  const homeTeamName = properties.simHomeTeamName;
+
+  if (!db) return [];
+  try {
+    const simData = await dbHelper.getSimData(db, matchupId, timestamp);
+    return {
+      simData,
+      matchId: matchupId,
+      timestamp,
+      awayTeamName,
+      homeTeamName
+    };
+  } catch (err) {
+    console.error('Error getting sim data:', err);
+    throw err;
+  }
 });
 
 // --- Execute SQL Query Handler ---

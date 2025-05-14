@@ -1,7 +1,8 @@
 // Import the types for your exposed API functions if they are complex
 // For example, if login takes specific args and returns a specific shape:
 import type { Profile } from './store/slices/profilesSlice'; // Assuming Profile type is exported
-import type { SimResults, SimResultsMLB } from '@/types/mlb';
+import type { SimResultsMLB } from '@/types/bettingResults';
+import type { SimResults } from '@/types/mlb';
 import type { SimHistoryEntry } from '@/types/simHistory';
 import type { 
   LoginConfig, 
@@ -43,15 +44,17 @@ declare global {
       
       // ---------- Simulation Windows ----------
       createSimWindow: (args: { 
-        league: string; 
-        simData: SimResultsMLB;
+        league: string;
+        matchupId: number;
+        timestamp: string;
         awayTeamName: string;
         homeTeamName: string;
       }) => Promise<{ success: boolean }>;
       
       // Simulation Results Window Communication
-      getSimData: (args: { windowId: string }) => Promise<{
+      getSimData: () => Promise<{
         simData: SimResultsMLB;
+        timestamp: string;
         awayTeamName: string;
         homeTeamName: string;
       }>;

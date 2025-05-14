@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import type { SimResultsMLB } from '@/types/bettingResults';
 import { 
   teamNameToAbbreviationMLB, 
   transformSidesCountsMLB, 
   transformTotalsCountsMLB,
-  transformFirstInningCountsMLB,
   transformPropsCountsMLB
 } from '@/utils/displayMLB';
 import SidesTable from '@/components/SidesTable';
@@ -60,8 +58,7 @@ const MLBSimulationView: React.FC = () => {
     firstInningProps: true,
     playerProps: true
   });
-  const location = useLocation();
-  const windowId = new URLSearchParams(location.search).get('windowId');
+  const [timestamp, setTimestamp] = useState<string | null>(null);
   const [awayTeamName, setAwayTeamName] = useState<string | null>(null);
   const [homeTeamName, setHomeTeamName] = useState<string | null>(null);
   const awayTeamAbbreviation = awayTeamName ? teamNameToAbbreviationMLB(awayTeamName) : '';
@@ -70,23 +67,22 @@ const MLBSimulationView: React.FC = () => {
   // ---------- Effects ----------
   useEffect(() => {
     const fetchSimData = async () => {
-      if (!windowId) {
-        console.error('No windowId provided');
-        return;
-      }
-      
       try {
-        const data = await window.electronAPI.getSimData({ windowId });
-        setSimData(data.simData);
-        setAwayTeamName(data.awayTeamName);
-        setHomeTeamName(data.homeTeamName);
+        const data = await window.electronAPI.getSimData();
+        console.log('Sim data received:', data);
+        if (data) {
+          setSimData(data.simData);
+          setTimestamp(data.timestamp);
+          setAwayTeamName(data.awayTeamName);
+          setHomeTeamName(data.homeTeamName);
+        }
       } catch (error) {
         console.error('Error fetching sim data:', error);
       }
     };
 
     fetchSimData();
-  }, [windowId, location]);
+  }, []);
 
   const toggleSection = (section: keyof typeof sectionVisibility) => {
     setSectionVisibility(prev => ({
@@ -108,7 +104,8 @@ const MLBSimulationView: React.FC = () => {
 
   return (
     <div style={{ padding: '20px' }}>
-      <h3>{awayTeamName} @ {homeTeamName}</h3>
+      <h3 style={{ marginBottom: '0px', paddingBottom: '0px' }}>{awayTeamName} @ {homeTeamName}</h3>
+      <h6 style={{ marginTop: '0px', paddingTop: '0px' }}>Simulated at {timestamp}</h6>
       
       <CollapsibleSection
         title="Simulated Sides Results"
