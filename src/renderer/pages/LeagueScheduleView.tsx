@@ -84,10 +84,11 @@ const createSimResultsColumn = (league: string): ColumnDefinition => ({
                     event.stopPropagation();
                     try {
                         await window.electronAPI.createSimWindow({ 
-                            league, 
-                            simData: simResults[0].simResults, 
-                            awayTeamName: item.Participant1, 
-                            homeTeamName: item.Participant2 
+                            league,
+                            matchupId: item.Match,
+                            timestamp: simResults[0].timestamp,
+                            awayTeamName: item.Participant1,
+                            homeTeamName: item.Participant2
                         });
                     } catch (error) {
                         console.error('Failed to create simulation window:', error);
