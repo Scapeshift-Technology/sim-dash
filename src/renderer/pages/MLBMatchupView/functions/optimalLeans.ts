@@ -33,7 +33,7 @@ import type {
     
     // Iteratively find leans that work
     let iterations = 0;
-    const maxIterations = 10;
+    const maxIterations = 13;
     
     while (iterations < maxIterations) {
       const gameInputs: MLBGameInputs = {
@@ -60,6 +60,10 @@ import type {
       leans = addMLBSimInputsObjects(leans, adjustments);
   
       iterations++;
+    }
+
+    if (iterations === maxIterations) {
+      throw new Error('Max iterations reached without finding optimal leans. Please try again.');
     }
   
     const updatedLeans = addMLBSimInputsObjects(leans, adjustments);
