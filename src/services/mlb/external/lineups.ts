@@ -22,6 +22,7 @@ import {
 } from './mlbApi';
 
 import { getSwishLineups } from './swish';
+import { teamNameToMLBApiTeamName } from '../utils/teamName';
 
 // ---------- Main function ----------
 /**
@@ -37,9 +38,12 @@ import { getSwishLineups } from './swish';
 async function getLineupsMLB(date: string, awayTeam: string, homeTeam: string, daySequenceNumber: number): Promise<MatchupLineups> {
   // Put date in YYYY-MM-DD format
   const formattedDate = formatDateMlbApi(date);
+  const awayTeamNameMLB = teamNameToMLBApiTeamName(awayTeam.trim());
+  const homeTeamNameMLB = teamNameToMLBApiTeamName(homeTeam.trim());
+
   try {
     // Get MLB API response for a given game
-    const game: MlbScheduleApiGame = await getMlbScheduleApiGame(formattedDate, awayTeam, homeTeam, daySequenceNumber);
+    const game: MlbScheduleApiGame = await getMlbScheduleApiGame(formattedDate, awayTeamNameMLB, homeTeamNameMLB, daySequenceNumber);
     const gamePk = game.gamePk;
     const gameInfo: MlbGameApiResponse = await getMlbGameApiGame(gamePk);
 

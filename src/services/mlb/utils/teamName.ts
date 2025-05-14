@@ -58,4 +58,13 @@ function createTargetMatchup(awayTeam: string, homeTeam: string) {
   return `${awayAbbrev} @ ${homeAbbrev}`;
 }
 
-export { teamNameToAbbreviationMLB, createTargetMatchup };
+function teamNameToMLBApiTeamName(teamName: string) {
+  console.log('TEAMNAME', teamName);
+  if (teamName === "Saint Louis Cardinals") {
+    return "St. Louis Cardinals";
+  }
+
+  return teamName
+}
+
+export { teamNameToAbbreviationMLB, createTargetMatchup, teamNameToMLBApiTeamName };
