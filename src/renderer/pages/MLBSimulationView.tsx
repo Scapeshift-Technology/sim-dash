@@ -7,7 +7,7 @@ import {
   transformPropsCountsMLB
 } from '@/utils/displayMLB';
 import SidesTable from '@/components/SidesTable';
-import { Box, Typography, IconButton } from '@mui/material';
+import { Box, Typography, IconButton, CircularProgress } from '@mui/material';
 import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material';
 import TotalsTable from '@/components/TotalsTable';
 import FirstInningTable from '@/components/FirstInningTable';
@@ -52,6 +52,7 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
 const MLBSimulationView: React.FC = () => {
   // ---------- State ----------
   const [simData, setSimData] = useState<SimResultsMLB | null>(null);
+  const [loading, setLoading] = useState(true);
   const [sectionVisibility, setSectionVisibility] = useState({
     sides: true,
     totals: true,
@@ -68,6 +69,7 @@ const MLBSimulationView: React.FC = () => {
   useEffect(() => {
     const fetchSimData = async () => {
       try {
+        setLoading(true);
         const data = await window.electronAPI.getSimData();
         console.log('Sim data received:', data);
         if (data) {
@@ -78,6 +80,8 @@ const MLBSimulationView: React.FC = () => {
         }
       } catch (error) {
         console.error('Error fetching sim data:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -91,21 +95,54 @@ const MLBSimulationView: React.FC = () => {
     }));
   };
 
+  // ---------- Render ----------
+
+  if (loading) {
+    return (
+      <Box 
+        display="flex" 
+        justifyContent="center" 
+        alignItems="center" 
+        height="100vh"
+        flexDirection="column"
+        gap={2}
+      >
+        <CircularProgress size={40} />
+        <Typography variant="body1" color="text.secondary">
+          Loading simulation data...
+        </Typography>
+      </Box>
+    );
+  }
+
   if (!simData) {
-    return <div>No simulation data provided</div>;
+    return (
+      <Box 
+        display="flex" 
+        justifyContent="center" 
+        alignItems="center" 
+        height="100vh"
+        flexDirection="column"
+        gap={2}
+      >
+        <Typography variant="h6" color="text.secondary">
+          No simulation data available
+        </Typography>
+      </Box>
+    );
   }
 
   // Data for betting tables
   const sidesData = transformSidesCountsMLB(simData.sides, awayTeamAbbreviation, homeTeamAbbreviation);
   const totalsData = transformTotalsCountsMLB(simData.totals, awayTeamAbbreviation, homeTeamAbbreviation);
   const propsData = transformPropsCountsMLB(simData.props, awayTeamAbbreviation, homeTeamAbbreviation);
-  console.log('simData.props', simData.props);
-  console.log('propsData', propsData);
 
   return (
     <div style={{ padding: '20px' }}>
       <h3 style={{ marginBottom: '0px', paddingBottom: '0px' }}>{awayTeamName} @ {homeTeamName}</h3>
-      <h6 style={{ marginTop: '0px', paddingTop: '0px' }}>Simulated at {timestamp}</h6>
+      {timestamp && (
+        <h6 style={{ marginTop: '0px', paddingTop: '0px' }}>Simulated at {new Date(timestamp).toLocaleString()}</h6>
+      )}
       
       <CollapsibleSection
         title="Simulated Sides Results"
