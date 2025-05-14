@@ -238,8 +238,12 @@ export interface MlbGameApiResponse {
 // ----- Schedule endpoint -----
 export interface MlbScheduleApiTeam {
   team: {
+    id: number;
     name: string;
   };
+  probablePitcher: {
+    id: number;
+  }
 }
 
 export interface MlbScheduleApiGame {

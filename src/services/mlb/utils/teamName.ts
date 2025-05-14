@@ -59,7 +59,6 @@ function createTargetMatchup(awayTeam: string, homeTeam: string) {
 }
 
 function teamNameToMLBApiTeamName(teamName: string) {
-  console.log('TEAMNAME', teamName);
   if (teamName === "Saint Louis Cardinals") {
     return "St. Louis Cardinals";
   }

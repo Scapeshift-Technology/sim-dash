@@ -18,7 +18,8 @@ import {
   extractBullPenFromMlbRoster,
   getMlbRosterApiRoster,
   formatDateMlbApi,
-  enrichPlayerWithHandedness
+  enrichPlayerWithHandedness,
+  getProbablePitchers
 } from './mlbApi';
 
 import { getSwishLineups } from './swish';
@@ -52,13 +53,17 @@ async function getLineupsMLB(date: string, awayTeam: string, homeTeam: string, d
     const awayRosterInfo: MlbRosterApiResponse = await getMlbRosterApiRoster(awayTeamId, formattedDate, '40Man');
     const homeRosterInfo: MlbRosterApiResponse = await getMlbRosterApiRoster(homeTeamId, formattedDate, '40Man');
 
+    // Get past (and future) probable pitchers for both teams. This helps in the bullpen selection process.
+    const awayProbablePitchers = await getProbablePitchers(awayTeamId, formattedDate);
+    const homeProbablePitchers = await getProbablePitchers(homeTeamId, formattedDate);
+
 
     // console.log('GAME INFO:', gameInfo);  // Game info: Has player handedness. Hitting is batSide.code, pitching is pitchHand.code
     // console.log('AWAY ROSTER INFO:', awayRosterInfo);
 
     // Extract lineups
-    const awayTeamLineup: TeamLineup = extractCompleteTeamLineup(gameInfo, awayRosterInfo, 'away');
-    const homeTeamLineup: TeamLineup = extractCompleteTeamLineup(gameInfo, homeRosterInfo, 'home');
+    const awayTeamLineup: TeamLineup = extractCompleteTeamLineup(gameInfo, awayRosterInfo, 'away', awayProbablePitchers);
+    const homeTeamLineup: TeamLineup = extractCompleteTeamLineup(gameInfo, homeRosterInfo, 'home', homeProbablePitchers);
 
     const matchupLineups: MatchupLineups = {
       away: awayTeamLineup,
@@ -107,15 +112,17 @@ async function getBackupLineups(date: string, awayTeam: string, homeTeam: string
  * @param {MlbGameApiResponse} gameInfo - The game info
  * @param {MlbRosterApiResponse} rosterInfo - The roster info
  * @param {TeamType} teamType - The team type (away or home)
+ * @param {number[]} probablePitchers - A list of the ids of the probable pitchers for the team
  * @returns {TeamLineup} The complete team lineup
  * @example
- * extractCompleteTeamLineup(gameInfo, rosterInfo, 'away') // returns the away team lineup
+ * extractCompleteTeamLineup(gameInfo, rosterInfo, '2025-05-05', 'away') // returns the away team lineup
  * @throws {Error} If either parameter is not a number
  */
 function extractCompleteTeamLineup(
   gameInfo: MlbGameApiResponse, 
   rosterInfo: MlbRosterApiResponse,
-  teamType: TeamType
+  teamType: TeamType,
+  probablePitchers: number[]
 ): TeamLineup {
   // Get starting lineup
   const startingLineup = extractStartingLineupFromMlbGameApiGame(gameInfo, teamType);
@@ -124,7 +131,7 @@ function extractCompleteTeamLineup(
   const startingPitcher = extractStartingPitcherFromMlbGameApiGame(gameInfo, teamType);
 
   // Get bullpen
-  const bullpen = extractBullPenFromMlbRoster(rosterInfo, teamType, startingPitcher.id);
+  const bullpen = extractBullPenFromMlbRoster(rosterInfo, teamType, probablePitchers);
 
   return {
     lineup: startingLineup,

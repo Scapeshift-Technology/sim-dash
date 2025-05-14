@@ -11,6 +11,33 @@ const BASE_MLB_API_URL = 'https://statsapi.mlb.com/api/v1';
 
 // ---------- Schedule endpoint ----------
 
+async function getProbablePitchers(teamId: number, date: string, daysBefore: number = 6, daysAfter: number = 1): Promise<number[]> {
+  const startDate = new Date(`${date}T12:00:00`);  // Add noon time to ensure consistent date
+  startDate.setDate(startDate.getDate() - daysBefore);
+  const endDate = new Date(`${date}T12:00:00`);    // Add noon time to ensure consistent date
+  endDate.setDate(endDate.getDate() + daysAfter);
+
+  const startDateString = formatDateYYYY_MM_DD(startDate);
+  const endDateString = formatDateYYYY_MM_DD(endDate);
+  console.log('startDateString', startDateString);
+  console.log('endDateString', endDateString);
+
+  // Get the schedule for the team, but include probable pitchers
+  const url = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&hydrate=probablePitcher,hydrations&startDate=${startDateString}&endDate=${endDateString}&teamId=${teamId}`;
+  const response = await fetch(url);
+  const data = await response.json();
+
+  const probablePitchers = data.dates.flatMap((dateObj: { games: MlbScheduleApiGame[] }) => 
+    dateObj.games.map((game: MlbScheduleApiGame) => {
+      const isAwayTeam = game.teams.away.team.id === teamId;
+      const team = isAwayTeam ? game.teams.away : game.teams.home;
+      return team.probablePitcher?.id;
+    })
+  ).filter((id: number | undefined): id is number => id !== undefined); // Type guard to ensure we only return numbers
+
+  return probablePitchers;
+}
+
 async function getMlbScheduleApiGame(date: string, awayTeam: string, homeTeam: string, daySequenceNumber: number): Promise<MlbScheduleApiGame> {
   try {
     // Find gamePk given info
@@ -37,7 +64,7 @@ async function getMlbScheduleApiGame(date: string, awayTeam: string, homeTeam: s
   }
 }
 
-export { getMlbScheduleApiGame }
+export { getProbablePitchers, getMlbScheduleApiGame }
 
 // ---------- Game endpoint ----------
 // -- Functions to get info
@@ -199,13 +226,13 @@ export { enrichPlayerWithHandedness };
 
 function extractBullpenFromMlbRosterAndGame(gameInfo: MlbGameApiResponse, roster: MlbRosterApiResponse, teamType: TeamType): Player[] {
   const startingPitcher = extractStartingPitcherFromMlbGameApiGame(gameInfo, teamType);
-  return extractBullPenFromMlbRoster(roster, teamType, startingPitcher.id);
+  return extractBullPenFromMlbRoster(roster, teamType, [startingPitcher.id]);
 }
 
-function extractBullPenFromMlbRoster(roster: MlbRosterApiResponse, teamType: TeamType, startingPitcherId: number): Player[] {
+function extractBullPenFromMlbRoster(roster: MlbRosterApiResponse, teamType: TeamType, notBullpenIds: number[]): Player[] {
   const bullpen = roster.roster.filter((player: any) => 
     (player.position.abbreviation === 'P' || player.position.abbreviation === 'TWP') && 
-    player.person.id !== startingPitcherId && 
+    !notBullpenIds.includes(player.person.id) && 
     player.status.code === 'A');
   
   return bullpen.map((player: any) => {
