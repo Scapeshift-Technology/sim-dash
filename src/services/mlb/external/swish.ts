@@ -9,7 +9,8 @@ import {
   extractBullPenFromMlbRoster, 
   findPlayerId, 
   getMlbRosterApiRoster, 
-  getMlbTeamId 
+  getMlbTeamId,
+  getProbablePitchers
 } from "./mlbApi";
 import { createTargetMatchup } from "../utils/teamName";
 
@@ -59,6 +60,7 @@ async function extractTeamLineupFromSwishLineupCard(lineupCard: string, date: st
   const season = parseInt(date.split('-')[0]);
   const teamId = await getMlbTeamId(teamName, season);
   const rosterInfo = await getMlbRosterApiRoster(teamId, date, '40Man');
+  const probablePitchers = await getProbablePitchers(teamId, date);
   
   // Get the team's starting pitcher
   const startingPitcher = extractStartingPitcherFromSwishLineupCard(lineupCard, rosterInfo, teamType);
@@ -67,7 +69,7 @@ async function extractTeamLineupFromSwishLineupCard(lineupCard: string, date: st
   const lineup = getLineupFromSwishLineupCard(lineupCard, rosterInfo, teamType);
 
   // Get the bullpen
-  const bullpen = extractBullPenFromMlbRoster(rosterInfo, teamType, [startingPitcher.id]);
+  const bullpen = extractBullPenFromMlbRoster(rosterInfo, teamType, probablePitchers);
 
   return {
     lineup: lineup,
