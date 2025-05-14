@@ -103,12 +103,26 @@ function mapPlayersToMatchupLineups(matchupLineups: MatchupLineups, hitterPlayer
     const homePlayerIndex = updatedMatchupLineups.home.lineup.findIndex(p => p.id === player.id);
     if (homePlayerIndex !== -1) {
       updatedMatchupLineups.home.lineup[homePlayerIndex] = player;
+      return;
+    } else {
+      const homeBenchIndex = updatedMatchupLineups.home.bench.findIndex(p => p.id === player.id);
+      if (homeBenchIndex !== -1) {
+        updatedMatchupLineups.home.bench[homeBenchIndex] = player;
+        return;
+      }
     }
 
     // Find and update player in away lineup
     const awayPlayerIndex = updatedMatchupLineups.away.lineup.findIndex(p => p.id === player.id);
     if (awayPlayerIndex !== -1) {
       updatedMatchupLineups.away.lineup[awayPlayerIndex] = player;
+      return;
+    } else {
+      const awayBenchIndex = updatedMatchupLineups.away.bench.findIndex(p => p.id === player.id);
+      if (awayBenchIndex !== -1) {
+        updatedMatchupLineups.away.bench[awayBenchIndex] = player;
+        return;
+      }
     }
   });
 
@@ -143,9 +157,11 @@ function extractHittersFromMatchupLineups(matchupLineups: MatchupLineups): Playe
   const awayHitters = matchupLineups.away.lineup;
 
   // Bench in future
+  const homeBench = matchupLineups.home.bench;
+  const awayBench = matchupLineups.away.bench;
   
   // Combine and return all hitters
-  return [...homeHitters, ...awayHitters];
+  return [...homeHitters, ...awayHitters, ...homeBench, ...awayBench];
 }
 
 function extractPitchersFromMatchupLineups(matchupLineups: MatchupLineups): Player[] {

@@ -616,6 +616,7 @@ const sanFranciscoGiants: TeamLineup = {
   lineup: giantsLineup,
   startingPitcher: giantsStartingPitcher,
   bullpen: giantsBullpen,
+  bench: [],
   teamName: "San Francisco Giants"
 };
 
@@ -1194,13 +1195,14 @@ const chicagoCubs: TeamLineup = {
   lineup: cubsLineup,
   startingPitcher: chicagoCubsStartingPitcher,
   bullpen: chicagoCubsBullpen,
+  bench: [],
   teamName: "Chicago Cubs"
 };
 
 // ---------- Matchup ----------
 const matchup: MatchupLineups = {
   away: sanFranciscoGiants,
-  home: chicagoCubs,
+  home: chicagoCubs
 };
 
 export { matchup };

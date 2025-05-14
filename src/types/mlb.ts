@@ -91,7 +91,7 @@ export interface TeamLineup {
     lineup: Player[]; // Players in batting order
     startingPitcher: Player;
     bullpen: Player[]; // Relief pitchers available
-    // bench?: Player[]; // Future: players on the bench
+    bench: Player[]; // Position players sitting
     teamName: string;
 }
 

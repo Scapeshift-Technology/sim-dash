@@ -19,7 +19,8 @@ import {
   getMlbRosterApiRoster,
   formatDateMlbApi,
   enrichPlayerWithHandedness,
-  getProbablePitchers
+  getProbablePitchers,
+  extractBenchFromMlbRoster
 } from './mlbApi';
 
 import { getSwishLineups } from './swish';
@@ -127,6 +128,9 @@ function extractCompleteTeamLineup(
   // Get starting lineup
   const startingLineup = extractStartingLineupFromMlbGameApiGame(gameInfo, teamType);
 
+  // Get bench players
+  const bench = extractBenchFromMlbRoster(rosterInfo, teamType, startingLineup);
+
   // Get starting pitcher
   const startingPitcher = extractStartingPitcherFromMlbGameApiGame(gameInfo, teamType);
 
@@ -137,6 +141,7 @@ function extractCompleteTeamLineup(
     lineup: startingLineup,
     startingPitcher: startingPitcher,
     bullpen: bullpen,
+    bench: bench,
     teamName: teamType === 'away' ? gameInfo.gameData.teams.away.name : gameInfo.gameData.teams.home.name
   };
 }
@@ -191,17 +196,22 @@ export function makeMockLineups(date: string, awayTeam: string, homeTeam: string
     const awayBullpen = Array.from({ length: 5 }, (_, i) => mockPlayer(i + 1000, `${awayTeam} RP ${i+1}`, 'P', undefined));
     const homeBullpen = Array.from({ length: 5 }, (_, i) => mockPlayer(i + 2000, `${homeTeam} RP ${i+1}`, 'P', undefined));
 
+    const awayBench = Array.from({ length: 5 }, (_, i) => mockPlayer(i + 3000, `${awayTeam} Bench ${i+1}`, 'CF', undefined));
+    const homeBench = Array.from({ length: 5 }, (_, i) => mockPlayer(i + 4000, `${homeTeam} Bench ${i+1}`, 'CF', undefined));
+
     return {
         away: {
             lineup: awayLineup,
             startingPitcher: awaySP,
             bullpen: awayBullpen,
+            bench: awayBench,
             teamName: awayTeam
         },
         home: {
             lineup: homeLineup,
             startingPitcher: homeSP,
             bullpen: homeBullpen,
+            bench: homeBench,
             teamName: homeTeam
         }
     };
@@ -216,14 +226,16 @@ async function enrichMatchupLineupsWithHandedness(matchupLineups: MatchupLineups
   };
 
   // Enrich all players in parallel
-  const [enrichedHomeLineup, enrichedHomeSP, enrichedHomeBullpen, 
-         enrichedAwayLineup, enrichedAwaySP, enrichedAwayBullpen] = await Promise.all([
+  const [enrichedHomeLineup, enrichedHomeSP, enrichedHomeBullpen, enrichedHomeBench,
+         enrichedAwayLineup, enrichedAwaySP, enrichedAwayBullpen, enrichedAwayBench] = await Promise.all([
     Promise.all(matchupLineups.home.lineup.map(enrichPlayer)),
     enrichPlayer(matchupLineups.home.startingPitcher),
     Promise.all(matchupLineups.home.bullpen.map(enrichPlayer)),
+    Promise.all(matchupLineups.home.bench.map(enrichPlayer)),
     Promise.all(matchupLineups.away.lineup.map(enrichPlayer)),
     enrichPlayer(matchupLineups.away.startingPitcher),
-    Promise.all(matchupLineups.away.bullpen.map(enrichPlayer))
+    Promise.all(matchupLineups.away.bullpen.map(enrichPlayer)),
+    Promise.all(matchupLineups.away.bench.map(enrichPlayer))
   ]);
 
   return {
@@ -231,13 +243,15 @@ async function enrichMatchupLineupsWithHandedness(matchupLineups: MatchupLineups
       ...matchupLineups.home,
       lineup: enrichedHomeLineup,
       startingPitcher: enrichedHomeSP,
-      bullpen: enrichedHomeBullpen
+      bullpen: enrichedHomeBullpen,
+      bench: enrichedHomeBench
     },
     away: {
       ...matchupLineups.away,
       lineup: enrichedAwayLineup,
       startingPitcher: enrichedAwaySP,
-      bullpen: enrichedAwayBullpen
+      bullpen: enrichedAwayBullpen,
+      bench: enrichedAwayBench
     }
   };
 }

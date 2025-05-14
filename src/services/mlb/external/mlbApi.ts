@@ -19,8 +19,6 @@ async function getProbablePitchers(teamId: number, date: string, daysBefore: num
 
   const startDateString = formatDateYYYY_MM_DD(startDate);
   const endDateString = formatDateYYYY_MM_DD(endDate);
-  console.log('startDateString', startDateString);
-  console.log('endDateString', endDateString);
 
   // Get the schedule for the team, but include probable pitchers
   const url = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&hydrate=probablePitcher,hydrations&startDate=${startDateString}&endDate=${endDateString}&teamId=${teamId}`;
@@ -83,6 +81,29 @@ async function getMlbGameApiGame(gamePk: number): Promise<MlbGameApiResponse> {
 
 // -- Functions to reformat data
 
+/**
+ * Extracts the bench players from the MLB API game data
+ * @param {MlbRosterApiResponse} rosterInfo - The roster data from the MLB API
+ * @param {TeamType} teamType - The team type (away or home)
+ * @param {Player[]} startingLineup - The starting lineup for the team
+ * @returns {Player[]} The bench players for the team in a list of player types
+ */
+function extractBenchFromMlbRoster(rosterInfo: MlbRosterApiResponse, teamType: TeamType, startingLineup: Player[]): Player[] {
+  const bench = rosterInfo.roster.filter((player: any) => 
+    !startingLineup.some(startingPlayer => startingPlayer.id === player.person.id) && 
+    player.position.abbreviation !== 'P' && 
+    player.status.code === 'A'
+  );
+
+  const benchPlayers = bench.map((player: any) => ({
+    id: player.person.id,
+    name: player.person.fullName,
+    position: player.position.abbreviation
+  }));
+
+  return benchPlayers;
+}
+
 function extractStartingLineupFromMlbGameApiGame(gameData: MlbGameApiResponse, teamType: TeamType): Player[] {
   try {
     const boxscore = gameData.liveData.boxscore;
@@ -144,7 +165,13 @@ function extractTeamIds(gameInfo: MlbGameApiResponse): { awayTeamId: number, hom
   }
 }
 
-export { getMlbGameApiGame, extractStartingLineupFromMlbGameApiGame, extractStartingPitcherFromMlbGameApiGame, extractTeamIds };
+export { 
+  getMlbGameApiGame, 
+  extractStartingLineupFromMlbGameApiGame, 
+  extractStartingPitcherFromMlbGameApiGame, 
+  extractTeamIds, 
+  extractBenchFromMlbRoster 
+};
 
 // ---------- Roster endpoint ----------
 
