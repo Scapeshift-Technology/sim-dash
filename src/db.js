@@ -176,7 +176,10 @@ async function getSimData(db, matchupId, timestamp) {
       } else if (!row) {
         resolve(null);
       } else {
-        resolve(JSON.parse(row.sim_results));
+        resolve({
+          simData: JSON.parse(row.sim_results),
+          inputData: JSON.parse(row.input_data)
+        });
       }
     });
   });

@@ -7,11 +7,14 @@ import {
   transformPropsCountsMLB
 } from '@/utils/displayMLB';
 import SidesTable from '@/components/SidesTable';
-import { Box, Typography, IconButton, CircularProgress } from '@mui/material';
+import { Box, Typography, IconButton, CircularProgress, Divider } from '@mui/material';
 import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material';
 import TotalsTable from '@/components/TotalsTable';
 import FirstInningTable from '@/components/FirstInningTable';
 import PlayerPropsTable from '@/components/PlayerPropsTable';
+import { MLBSimInputs } from '@@/types/simInputs';
+
+// ---------- Collapsible Section ----------
 
 interface CollapsibleSectionProps {
   title: string;
@@ -49,11 +52,15 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
   </Box>
 );
 
+// ---------- MLB Simulation View ----------
+
 const MLBSimulationView: React.FC = () => {
   // ---------- State ----------
   const [simData, setSimData] = useState<SimResultsMLB | null>(null);
   const [loading, setLoading] = useState(true);
+  const [inputData, setInputData] = useState<MLBSimInputs | null>(null);
   const [sectionVisibility, setSectionVisibility] = useState({
+    inputs: true,
     sides: true,
     totals: true,
     firstInningProps: true,
@@ -74,6 +81,7 @@ const MLBSimulationView: React.FC = () => {
         console.log('Sim data received:', data);
         if (data) {
           setSimData(data.simData);
+          setInputData(data.inputData);
           setTimestamp(data.timestamp);
           setAwayTeamName(data.awayTeamName);
           setHomeTeamName(data.homeTeamName);
@@ -132,6 +140,50 @@ const MLBSimulationView: React.FC = () => {
     );
   }
 
+  const renderTeamLeans = (teamType: 'away' | 'home', teamName: string | null) => {
+    if (!inputData) return null;
+    const teamData = inputData[teamType];
+    function formatLean(lean: number) {
+      return lean.toFixed(2);
+    }
+    
+    return (
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="h6" sx={{ mb: 1 }}>{teamName}</Typography>
+        <Box sx={{ pl: 2 }}>
+          <Typography>
+            Team Hitting Lean: {formatLean(teamData.teamHitterLean)}%
+          </Typography>
+          <Typography>
+            Team Pitching Lean: {formatLean(teamData.teamPitcherLean)}%
+          </Typography>
+          
+          {Object.keys(teamData.individualHitterLeans).length > 0 && (
+            <Box sx={{ mt: 1 }}>
+              <Typography variant="subtitle2">Individual Hitter Leans:</Typography>
+              {Object.entries(teamData.individualHitterLeans).map(([playerId, lean]) => (
+                <Typography key={playerId} sx={{ pl: 2 }}>
+                  Player {playerId}: {formatLean(lean)}%
+                </Typography>
+              ))}
+            </Box>
+          )}
+          
+          {Object.keys(teamData.individualPitcherLeans).length > 0 && (
+            <Box sx={{ mt: 1 }}>
+              <Typography variant="subtitle2">Individual Pitcher Leans:</Typography>
+              {Object.entries(teamData.individualPitcherLeans).map(([playerId, lean]) => (
+                <Typography key={playerId} sx={{ pl: 2 }}>
+                  Player {playerId}: {formatLean(lean)}%
+                </Typography>
+              ))}
+            </Box>
+          )}
+        </Box>
+      </Box>
+    );
+  };
+
   // Data for betting tables
   const sidesData = transformSidesCountsMLB(simData.sides, awayTeamAbbreviation, homeTeamAbbreviation);
   const totalsData = transformTotalsCountsMLB(simData.totals, awayTeamAbbreviation, homeTeamAbbreviation);
@@ -139,10 +191,32 @@ const MLBSimulationView: React.FC = () => {
 
   return (
     <div style={{ padding: '20px' }}>
-      <h3 style={{ marginBottom: '0px', paddingBottom: '0px' }}>{awayTeamName} @ {homeTeamName}</h3>
+      <Typography variant="h5" component="h2"
+        style={{ marginBottom: '0px', paddingBottom: '0px' }}
+      >
+        {awayTeamName} @ {homeTeamName}
+      </Typography>
       {timestamp && (
-        <h6 style={{ marginTop: '0px', paddingTop: '0px' }}>Simulated at {new Date(timestamp).toLocaleString()}</h6>
+        <h5 style={{ marginTop: '0px', paddingTop: '0px' }}>Simulated at {new Date(timestamp).toLocaleString()}</h5>
       )}
+      
+      <CollapsibleSection
+        title="Simulation Inputs"
+        isOpen={sectionVisibility.inputs}
+        onToggle={() => toggleSection('inputs')}
+      >
+        <Box sx={{ 
+          p: 2, 
+          bgcolor: 'background.paper', 
+          borderRadius: 1,
+          border: 1,
+          borderColor: 'divider'
+        }}>
+          {renderTeamLeans('away', awayTeamName)}
+          <Divider sx={{ my: 2 }} />
+          {renderTeamLeans('home', homeTeamName)}
+        </Box>
+      </CollapsibleSection>
       
       <CollapsibleSection
         title="Simulated Sides Results"

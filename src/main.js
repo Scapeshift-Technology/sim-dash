@@ -534,7 +534,8 @@ ipcMain.handle('get-sim-data', async (event) => {
   try {
     const simData = await dbHelper.getSimData(db, matchupId, timestamp);
     return {
-      simData,
+      simData: simData.simData,
+      inputData: simData.inputData,
       matchId: matchupId,
       timestamp,
       awayTeamName,

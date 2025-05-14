@@ -4,6 +4,7 @@ import type { Profile } from './store/slices/profilesSlice'; // Assuming Profile
 import type { SimResultsMLB } from '@/types/bettingResults';
 import type { SimResults } from '@/types/mlb';
 import type { SimHistoryEntry } from '@/types/simHistory';
+import type { MLBSimInputs } from '@/types/simInputs';
 import type { 
   LoginConfig, 
   LoginResult, 
@@ -54,6 +55,7 @@ declare global {
       // Simulation Results Window Communication
       getSimData: () => Promise<{
         simData: SimResultsMLB;
+        inputData: MLBSimInputs;
         timestamp: string;
         awayTeamName: string;
         homeTeamName: string;
