@@ -109,8 +109,9 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     useEffect(() => { // Fetch player stats
         if (lineupStatus === 'succeeded' && playerStatsStatus === 'idle' && lineupData) {
             dispatch(fetchMlbGamePlayerStats({
+                matchId: matchId,
                 matchupLineups: (lineupData),
-                matchId: matchId
+                date: date
             }));
         }
     }, [dispatch, lineupStatus, playerStatsStatus, lineupData, matchId]);

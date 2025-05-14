@@ -59,11 +59,11 @@ export const fetchMlbLineup = createAsyncThunk<
 
 export const fetchMlbGamePlayerStats = createAsyncThunk<
   { matchId: number; playerStats: MatchupLineups },
-  { matchId: number; matchupLineups: MatchupLineups }
+  { matchId: number; matchupLineups: MatchupLineups, date: string }
 >(
   'simInputs/fetchMlbGamePlayerStats',
-  async ({ matchId, matchupLineups }) => {
-    const playerStats = await window.electronAPI.fetchMlbGamePlayerStats(matchupLineups);
+  async ({ matchId, matchupLineups, date }) => {
+    const playerStats = await window.electronAPI.fetchMlbGamePlayerStats({ matchupLineups, date });
     return { matchId, playerStats };
   }
 )

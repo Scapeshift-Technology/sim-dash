@@ -178,6 +178,7 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
 
     const handleDateChange = (newValue: Dayjs | null) => {
         if (newValue) {
+          console.log('handleDateChange', newValue.format('YYYY-MM-DD'));
           dispatch(updateLeagueDate({ 
             league, 
             date: newValue.format('YYYY-MM-DD')

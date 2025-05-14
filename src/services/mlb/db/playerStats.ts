@@ -3,12 +3,12 @@ import { ConnectionPool } from "@/types/sql";
 
 // ---------- Main function ----------
 
-async function getPlayerStatsMLB(matchupLineups: MatchupLineups, pool: ConnectionPool): Promise<MatchupLineups> {
+async function getPlayerStatsMLB(matchupLineups: MatchupLineups, date: string, pool: ConnectionPool): Promise<MatchupLineups> {
   // Get all hitter stats
-  const hitterPlayers = await fetchHitterStatsMLB(matchupLineups, pool);
+  const hitterPlayers = await fetchHitterStatsMLB(matchupLineups, pool, date);
 
   // Get all pitcher stats
-  const pitcherPlayers = await fetchPitcherStatsMLB(matchupLineups, pool);
+  const pitcherPlayers = await fetchPitcherStatsMLB(matchupLineups, pool, date);
   
   // Map them back to the MatchupLineups object
   const updatedMatchupLineups = mapPlayersToMatchupLineups(matchupLineups, hitterPlayers, pitcherPlayers);
@@ -23,6 +23,7 @@ export { getPlayerStatsMLB };
 async function fetchPlayerStatsMLB(
   players: Player[], 
   pool: ConnectionPool, 
+  date: string,
   tableName: 'BaseballHitterProjectionStatistic' | 'BaseballPitcherProjectionStatistic',
   errorMessage: string
 ): Promise<Player[]> {
@@ -38,33 +39,12 @@ async function fetchPlayerStatsMLB(
   // Execute batch queries
   const statsPromises = batches.map(async batch => {
     const playerIdsString = batch.join(',');
-    const groupingFields = tableName === 'BaseballPitcherProjectionStatistic' 
-      ? 'Player, Statistic, PitcherType, SplitType, ParkNeutralType'
-      : 'Player, Statistic, SplitType, ParkNeutralType';
-    
-    const joinConditions = tableName === 'BaseballPitcherProjectionStatistic'
-      ? 'AND s.PitcherType = ld.PitcherType'
-      : '';
 
     const query = `
-      WITH LatestDates AS (
-        SELECT 
-          ${groupingFields},
-          MAX(Date) as LatestDate
-        FROM ${tableName}
-        WHERE Player IN (${playerIdsString})
-        GROUP BY ${groupingFields}
-      )
       SELECT s.*
       FROM ${tableName} s
-      INNER JOIN LatestDates ld 
-        ON s.Player = ld.Player 
-        AND s.Statistic = ld.Statistic 
-        ${joinConditions}
-        AND s.SplitType = ld.SplitType
-        AND s.ParkNeutralType = ld.ParkNeutralType
-        AND s.Date = ld.LatestDate
       WHERE s.Player IN (${playerIdsString})
+      AND s.Date = '${date}'
     `;
     try {
       const result = await pool.request().query(query);
@@ -81,12 +61,13 @@ async function fetchPlayerStatsMLB(
   return allStats;
 }
 
-async function fetchHitterStatsMLB(matchupLineups: MatchupLineups, pool: ConnectionPool): Promise<Player[]> {
+async function fetchHitterStatsMLB(matchupLineups: MatchupLineups, pool: ConnectionPool, date: string): Promise<Player[]> {
   // Get all hitters
   const hitterPlayers = extractHittersFromMatchupLineups(matchupLineups);
   const allStats = await fetchPlayerStatsMLB(
     hitterPlayers, 
-    pool, 
+    pool,
+    date,
     'BaseballHitterProjectionStatistic',
     'hitter stats query'
   );
@@ -96,12 +77,13 @@ async function fetchHitterStatsMLB(matchupLineups: MatchupLineups, pool: Connect
   return playersWithStats;
 }
 
-async function fetchPitcherStatsMLB(matchupLineups: MatchupLineups, pool: ConnectionPool): Promise<Player[]> {
+async function fetchPitcherStatsMLB(matchupLineups: MatchupLineups, pool: ConnectionPool, date: string): Promise<Player[]> {
   // Get all pitchers
   const pitcherPlayers = extractPitchersFromMatchupLineups(matchupLineups);
   const allStats = await fetchPlayerStatsMLB(
     pitcherPlayers, 
-    pool, 
+    pool,
+    date,
     'BaseballPitcherProjectionStatistic',
     'pitcher stats query'
   );

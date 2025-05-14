@@ -262,7 +262,6 @@ ipcMain.handle('get-sim-history', async (event, matchId) => {
     if (!db) return [];
     try {
         const simHistory = await dbHelper.getSimHistory(db, matchId);
-        console.log('SIMHISTORY', simHistory);
         return simHistory;
     } catch (err) {
         console.error('Error getting sim history:', err);
@@ -441,13 +440,13 @@ ipcMain.handle('fetch-mlb-lineup', async (event, { league, date, participant1, p
     }
 });
 
-ipcMain.handle('fetch-mlb-game-player-stats', async (event, matchupLineups) => {
+ipcMain.handle('fetch-mlb-game-player-stats', async (event, { matchupLineups, date }) => {
   try {
     console.log('IPC received: fetch-mlb-game-player-stats');
     if (!currentPool) {
       throw new Error('Not connected to database.');
     }
-    const refinedMatchupLineups = await getPlayerStatsMLB(matchupLineups, currentPool);
+    const refinedMatchupLineups = await getPlayerStatsMLB(matchupLineups, date, currentPool);
     return refinedMatchupLineups;
   } catch (err) {
     console.error(`Error fetching/generating MLB game player stats for matchupLineups:`, err);

@@ -38,7 +38,7 @@ declare global {
       // ---------- MLB-specific functions ----------
       // Fetching data
       fetchMlbLineup: (args: FetchMlbLineupArgs) => Promise<MatchupLineups>;
-      fetchMlbGamePlayerStats: (args: MatchupLineups) => Promise<MatchupLineups>;
+      fetchMlbGamePlayerStats: (args: { matchupLineups: MatchupLineups, date: string }) => Promise<MatchupLineups>;
 
       // Simulations
       simulateMatchupMLB: (args: { matchupLineups: MatchupLineups, numGames: number }) => Promise<SimResults>;
