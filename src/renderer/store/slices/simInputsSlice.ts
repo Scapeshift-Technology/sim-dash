@@ -88,18 +88,56 @@ const simInputsSlice = createSlice({
         state[league][matchId] = initialGameInputsMLB;
       }
     },
-    reorderMLBLineup: (state, action: { 
+
+    editMLBLineup: (state, action: { 
       payload: { 
         matchId: number; 
         team: 'home' | 'away'; 
-        newOrder: Player[] 
+        newLineup: Player[] 
       } 
     }) => {
-      const { matchId, team, newOrder } = action.payload;
+      const { matchId, team, newLineup } = action.payload;
       if (state['MLB']?.[matchId]?.lineups.data) {
-        state['MLB'][matchId].lineups.data[team].lineup = newOrder;
+        state['MLB'][matchId].lineups.data[team].lineup = newLineup;
       }
     },
+    editMLBBench: (state, action: {
+      payload: {
+        matchId: number;
+        team: 'home' | 'away';
+        newBench: Player[];
+      }
+    }) => {
+      const { matchId, team, newBench } = action.payload;
+      if (state['MLB']?.[matchId]?.lineups.data) {
+        state['MLB'][matchId].lineups.data[team].bench = newBench;
+      }
+    },
+    editMLBStartingPitcher: (state, action: {
+      payload: {
+        matchId: number;
+        team: 'home' | 'away';
+        newStartingPitcher: Player;
+      }
+    }) => {
+      const { matchId, team, newStartingPitcher } = action.payload;
+      if (state['MLB']?.[matchId]?.lineups.data) {
+        state['MLB'][matchId].lineups.data[team].startingPitcher = newStartingPitcher;
+      }
+    },
+    editMLBBullpen: (state, action: {
+      payload: {
+        matchId: number;
+        team: 'home' | 'away';
+        newBullpen: Player[];
+      }
+    }) => {
+      const { matchId, team, newBullpen } = action.payload;
+      if (state['MLB']?.[matchId]?.lineups.data) {
+        state['MLB'][matchId].lineups.data[team].bullpen = newBullpen;
+      }
+    },
+
     updateMLBPlayerPosition: (state, action: {
       payload: {
         matchId: number;
@@ -227,11 +265,14 @@ const simInputsSlice = createSlice({
 
 export const { 
   clearGameData, 
-  reorderMLBLineup, 
+  editMLBLineup,
+  editMLBBench,
   updateMLBPlayerPosition, 
   initializeLeagueSimInputs,
   updateTeamLean,
-  updatePlayerLean
+  updatePlayerLean,
+  editMLBStartingPitcher,
+  editMLBBullpen
 } = simInputsSlice.actions;
 
 // ---------- Selectors ----------
