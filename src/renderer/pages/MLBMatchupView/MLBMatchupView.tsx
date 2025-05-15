@@ -31,7 +31,8 @@ import {
     selectGameLineups,
     editMLBBench,
     editMLBStartingPitcher,
-    editMLBBullpen
+    editMLBBullpen,
+    selectGamePlayerStatsError
 } from '@/store/slices/simInputsSlice';
 import { LeagueName } from '@@/types/league';
 import { applyMatchupLeansMLB } from './functions/leans';
@@ -84,7 +85,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const lineupStatus = useSelector((state: RootState) => selectGameLineupsStatus(state, league, matchId));
     const lineupError = useSelector((state: RootState) => selectGameLineupsError(state, league, matchId));
     const playerStatsStatus = useSelector((state: RootState) => selectGamePlayerStatsStatus(state, league, matchId));
-    // const playerStatsError = useSelector((state: RootState) => selectGamePlayerStatsError(state, league, matchId));
+    const playerStatsError = useSelector((state: RootState) => selectGamePlayerStatsError(state, league, matchId));
     const teamInputs = useSelector((state: RootState) => selectTeamInputs(state, league, matchId));
 
     const {
@@ -218,6 +219,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     // ---------- Render ----------
     if (lineupStatus === 'loading' || playerStatsStatus === 'loading' || (lineupStatus === 'succeeded' && playerStatsStatus === 'idle')) return <CircularProgress />;
     if (lineupError) return <Alert severity="error">{lineupError}</Alert>;
+    if (playerStatsError) return <Alert severity="error">{'Error fetching player stats. Please try again.'}</Alert>;
     if (!lineupData) return <Alert severity="info">No lineup data found.</Alert>;
 
     return (
