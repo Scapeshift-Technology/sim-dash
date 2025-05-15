@@ -22,14 +22,16 @@ import {
     selectGameLineupsStatus, 
     selectGameLineupsError,
     selectGamePlayerStatsStatus,
-    selectGamePlayerStatsError,
     clearGameData,
-    reorderMLBLineup,
+    editMLBLineup,
     updateMLBPlayerPosition,
     updateTeamLean,
     updatePlayerLean,
     selectTeamInputs,
-    selectGameLineups
+    selectGameLineups,
+    editMLBBench,
+    editMLBStartingPitcher,
+    editMLBBullpen
 } from '@/store/slices/simInputsSlice';
 import { LeagueName } from '@@/types/league';
 import { applyMatchupLeansMLB } from './functions/leans';
@@ -195,16 +197,26 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         }));
     };
 
-    const handleLineupReorder = (team: 'home' | 'away', newOrder: Player[]) => {
-        dispatch(reorderMLBLineup({ matchId, team, newOrder }));
+    const handleLineupReorder = (team: 'home' | 'away', newLineup: Player[], newBench: Player[] | null) => {
+        dispatch(editMLBLineup({ matchId, team, newLineup }));
+        if (newBench) {
+            dispatch(editMLBBench({ matchId, team, newBench }));
+        }
     };
+
+    const handlePitcherReorder = (team: 'home' | 'away', newStartingPitcher: Player | null, newBullpen: Player[]) => {
+        if (newStartingPitcher) {
+            dispatch(editMLBStartingPitcher({ matchId, team, newStartingPitcher }));
+        }
+        dispatch(editMLBBullpen({ matchId, team, newBullpen }));
+    }
 
     const handlePositionChange = (team: 'home' | 'away', playerId: number, position: Position) => {
         dispatch(updateMLBPlayerPosition({ matchId, team, playerId, position }));
     };
 
     // ---------- Render ----------
-    if (lineupStatus === 'loading') return <CircularProgress />;
+    if (lineupStatus === 'loading' || playerStatsStatus === 'loading' || (lineupStatus === 'succeeded' && playerStatsStatus === 'idle')) return <CircularProgress />;
     if (lineupError) return <Alert severity="error">{lineupError}</Alert>;
     if (!lineupData) return <Alert severity="info">No lineup data found.</Alert>;
 
@@ -256,6 +268,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                         matchId={matchId}
                         league={league}
                         onLineupReorder={handleLineupReorder}
+                        onPitcherReorder={handlePitcherReorder}
                         onPositionChange={handlePositionChange}
                     />
                 </TeamCard>
@@ -267,6 +280,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                         matchId={matchId}
                         league={league}
                         onLineupReorder={handleLineupReorder}
+                        onPitcherReorder={handlePitcherReorder}
                         onPositionChange={handlePositionChange}
                     />
                 </TeamCard>
