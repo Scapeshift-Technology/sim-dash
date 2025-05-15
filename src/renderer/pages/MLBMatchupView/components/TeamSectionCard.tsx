@@ -17,7 +17,6 @@ import {
 import {
     SortableContext,
     sortableKeyboardCoordinates,
-    verticalListSortingStrategy,
     rectSwappingStrategy
 } from '@dnd-kit/sortable';
 
