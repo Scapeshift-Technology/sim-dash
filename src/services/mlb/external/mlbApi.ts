@@ -11,6 +11,31 @@ const BASE_MLB_API_URL = 'https://statsapi.mlb.com/api/v1';
 
 // ---------- Schedule endpoint ----------
 
+async function getProbablePitchers(teamId: number, date: string, daysBefore: number = 6, daysAfter: number = 1): Promise<number[]> {
+  const startDate = new Date(`${date}T12:00:00`);  // Add noon time to ensure consistent date
+  startDate.setDate(startDate.getDate() - daysBefore);
+  const endDate = new Date(`${date}T12:00:00`);    // Add noon time to ensure consistent date
+  endDate.setDate(endDate.getDate() + daysAfter);
+
+  const startDateString = formatDateYYYY_MM_DD(startDate);
+  const endDateString = formatDateYYYY_MM_DD(endDate);
+
+  // Get the schedule for the team, but include probable pitchers
+  const url = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&hydrate=probablePitcher,hydrations&startDate=${startDateString}&endDate=${endDateString}&teamId=${teamId}`;
+  const response = await fetch(url);
+  const data = await response.json();
+
+  const probablePitchers = data.dates.flatMap((dateObj: { games: MlbScheduleApiGame[] }) => 
+    dateObj.games.map((game: MlbScheduleApiGame) => {
+      const isAwayTeam = game.teams.away.team.id === teamId;
+      const team = isAwayTeam ? game.teams.away : game.teams.home;
+      return team.probablePitcher?.id;
+    })
+  ).filter((id: number | undefined): id is number => id !== undefined); // Type guard to ensure we only return numbers
+
+  return probablePitchers;
+}
+
 async function getMlbScheduleApiGame(date: string, awayTeam: string, homeTeam: string, daySequenceNumber: number): Promise<MlbScheduleApiGame> {
   try {
     // Find gamePk given info
@@ -37,7 +62,7 @@ async function getMlbScheduleApiGame(date: string, awayTeam: string, homeTeam: s
   }
 }
 
-export { getMlbScheduleApiGame }
+export { getProbablePitchers, getMlbScheduleApiGame }
 
 // ---------- Game endpoint ----------
 // -- Functions to get info
@@ -55,6 +80,29 @@ async function getMlbGameApiGame(gamePk: number): Promise<MlbGameApiResponse> {
 }
 
 // -- Functions to reformat data
+
+/**
+ * Extracts the bench players from the MLB API game data
+ * @param {MlbRosterApiResponse} rosterInfo - The roster data from the MLB API
+ * @param {TeamType} teamType - The team type (away or home)
+ * @param {Player[]} startingLineup - The starting lineup for the team
+ * @returns {Player[]} The bench players for the team in a list of player types
+ */
+function extractBenchFromMlbRoster(rosterInfo: MlbRosterApiResponse, teamType: TeamType, startingLineup: Player[]): Player[] {
+  const bench = rosterInfo.roster.filter((player: any) => 
+    !startingLineup.some(startingPlayer => startingPlayer.id === player.person.id) && 
+    player.position.abbreviation !== 'P' && 
+    player.status.code === 'A'
+  );
+
+  const benchPlayers = bench.map((player: any) => ({
+    id: player.person.id,
+    name: player.person.fullName,
+    position: player.position.abbreviation
+  }));
+
+  return benchPlayers;
+}
 
 function extractStartingLineupFromMlbGameApiGame(gameData: MlbGameApiResponse, teamType: TeamType): Player[] {
   try {
@@ -74,15 +122,19 @@ function extractStartingLineupFromMlbGameApiGame(gameData: MlbGameApiResponse, t
     }
 
     // Convert battingOrder to 1-based index (100->1, 200->2, etc)
-    console.log('STARTING LINEUP:', JSON.stringify(startingLineup, null, 2));
-    return startingLineup.map(player => ({
-      id: player.person.id,
-      name: player.person.fullName,
-      position: player.position.abbreviation,
-      battingOrder: (player.battingOrder || 0) / 100, // Convert from MLB's format (100, 200, etc) to 1-9
-      battingSide: player.batSide.code,
-      pitchingSide: player.pitchHand.code
-    }));
+    return startingLineup.map(player => {
+      const gameDataPlayer = gameData.gameData.players[`ID${player.person.id}`];
+      const batSide = gameDataPlayer.batSide.code;
+      const pitchSide = gameDataPlayer.pitchHand.code;
+      return {
+        id: player.person.id,
+        name: player.person.fullName,
+        position: player.position.abbreviation,
+        battingOrder: (player.battingOrder || 0) / 100, // Convert from MLB's format (100, 200, etc) to 1-9
+        battingSide: batSide,
+        pitchingSide: pitchSide
+      }
+    });
   } catch (error) {
     console.error('Error extracting starting lineup from MLB API game:', error);
     throw error;
@@ -95,14 +147,14 @@ function extractStartingPitcherFromMlbGameApiGame(gameData: MlbGameApiResponse, 
     throw new Error('No probable pitcher found');
   }
 
-  const pitcher = gameData.liveData.boxscore.teams[teamType].players[probablePitchers.id];
+  const pitcher = gameData.gameData.players[`ID${probablePitchers.id}`];
 
   return {
     id: probablePitchers.id,
     name: probablePitchers.fullName,
     position: 'SP',
-    pitchingSide: pitcher.pitchHand.code,
-    battingSide: pitcher.batSide.code
+    battingSide: pitcher.batSide.code,
+    pitchingSide: pitcher.pitchHand.code
   };
 }
 
@@ -113,7 +165,13 @@ function extractTeamIds(gameInfo: MlbGameApiResponse): { awayTeamId: number, hom
   }
 }
 
-export { getMlbGameApiGame, extractStartingLineupFromMlbGameApiGame, extractStartingPitcherFromMlbGameApiGame, extractTeamIds };
+export { 
+  getMlbGameApiGame, 
+  extractStartingLineupFromMlbGameApiGame, 
+  extractStartingPitcherFromMlbGameApiGame, 
+  extractTeamIds, 
+  extractBenchFromMlbRoster 
+};
 
 // ---------- Roster endpoint ----------
 
@@ -195,11 +253,14 @@ export { enrichPlayerWithHandedness };
 
 function extractBullpenFromMlbRosterAndGame(gameInfo: MlbGameApiResponse, roster: MlbRosterApiResponse, teamType: TeamType): Player[] {
   const startingPitcher = extractStartingPitcherFromMlbGameApiGame(gameInfo, teamType);
-  return extractBullPenFromMlbRoster(roster, teamType, startingPitcher.id);
+  return extractBullPenFromMlbRoster(roster, teamType, [startingPitcher.id]);
 }
 
-function extractBullPenFromMlbRoster(roster: MlbRosterApiResponse, teamType: TeamType, startingPitcherId: number): Player[] {
-  const bullpen = roster.roster.filter((player: any) => (player.position.abbreviation === 'P' || player.position.abbreviation === 'TWP') && player.person.id !== startingPitcherId);
+function extractBullPenFromMlbRoster(roster: MlbRosterApiResponse, teamType: TeamType, notBullpenIds: number[]): Player[] {
+  const bullpen = roster.roster.filter((player: any) => 
+    (player.position.abbreviation === 'P' || player.position.abbreviation === 'TWP') && 
+    !notBullpenIds.includes(player.person.id) && 
+    player.status.code === 'A');
   
   return bullpen.map((player: any) => {
     return {

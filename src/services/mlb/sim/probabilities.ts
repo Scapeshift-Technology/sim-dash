@@ -79,13 +79,6 @@ function getBatterPitcherMatchupProbabilities(batter: Player, pitcher: Player, l
   // console.log(`League avg probability: ${JSON.stringify(leagueAvgProbability, null, 2)}`);
 
   if (!batterStats || !pitcherStats || !leagueAvgProbability) {
-    console.log('LEAGUE AVG STATS:', leagueAvgStats);
-    console.log('LEAGUE AVG MATCHUP STRING:', leagueAvgMatchupString);
-    console.log('LEAGUE AVG MATCHUP STATS:', leagueAvgProbability);
-    console.log('BATTER STATS KEY:', batterStatsKey);
-    console.log('PITCHER STATS KEY:', pitcherStatsKey);
-    console.log('BATTER:', batter);
-    console.log('PITCHER:', pitcher);
     throw new Error('Missing required stats for matchup calculation');
   }
   
@@ -183,7 +176,7 @@ function log5(batterProb: number, pitcherProb: number, leagueProb: number): numb
  * @param stats - The stats to normalize
  * @returns The normalized stats
  */
-function normalizeStats(stats: Stats): Stats {
+export function normalizeStats(stats: Stats): Stats {
   const sum = Object.values(stats).reduce((acc, curr) => acc + curr, 0);
   return Object.fromEntries(
     Object.entries(stats).map(([key, value]) => [key, value / sum])

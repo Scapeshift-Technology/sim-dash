@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Box, CircularProgress, Alert, Paper, Typography } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -84,10 +84,11 @@ const createSimResultsColumn = (league: string): ColumnDefinition => ({
                     event.stopPropagation();
                     try {
                         await window.electronAPI.createSimWindow({ 
-                            league, 
-                            simData: simResults[0].simResults, 
-                            awayTeamName: item.Participant1, 
-                            homeTeamName: item.Participant2 
+                            league,
+                            matchupId: item.Match,
+                            timestamp: simResults[0].timestamp,
+                            awayTeamName: item.Participant1,
+                            homeTeamName: item.Participant2
                         });
                     } catch (error) {
                         console.error('Failed to create simulation window:', error);
@@ -149,19 +150,18 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
     const scheduleData = useSelector((state: RootState) => selectLeagueScheduleData(state, league));
     const leagueScheduleStatus = useSelector((state: RootState) => selectLeagueScheduleStatus(state, league));
     const error = useSelector((state: RootState) => selectLeagueScheduleError(state, league));
+    const [currentDate, setCurrentDate] = useState<Dayjs | null>(null);
 
     // ---------- UseEffects ----------
 
     useEffect(() => {
-        if (selectedDate) {
-            // Only fetch if we don't have data or if the status is 'idle'(should be the same situation)
-            if (leagueScheduleStatus === 'idle' || scheduleData.length === 0) {
-                console.log('LeagueScheduleView: Fetching schedule data');
-                dispatch(fetchSchedule({ 
-                    league, 
-                    date: selectedDate.format('YYYY-MM-DD')
-                }));
-            }
+        if (selectedDate && currentDate !== selectedDate) {
+            console.log('LeagueScheduleView: Fetching schedule data');
+            dispatch(fetchSchedule({ 
+                league, 
+                date: selectedDate.format('YYYY-MM-DD')
+            }));
+            setCurrentDate(selectedDate);
         }
     }, [dispatch, league, selectedDate]);
 
@@ -178,6 +178,7 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
 
     const handleDateChange = (newValue: Dayjs | null) => {
         if (newValue) {
+          console.log('handleDateChange', newValue.format('YYYY-MM-DD'));
           dispatch(updateLeagueDate({ 
             league, 
             date: newValue.format('YYYY-MM-DD')

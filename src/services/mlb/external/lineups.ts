@@ -18,10 +18,13 @@ import {
   extractBullPenFromMlbRoster,
   getMlbRosterApiRoster,
   formatDateMlbApi,
-  enrichPlayerWithHandedness
+  enrichPlayerWithHandedness,
+  getProbablePitchers,
+  extractBenchFromMlbRoster
 } from './mlbApi';
 
 import { getSwishLineups } from './swish';
+import { teamNameToMLBApiTeamName } from '../utils/teamName';
 
 // ---------- Main function ----------
 /**
@@ -37,24 +40,31 @@ import { getSwishLineups } from './swish';
 async function getLineupsMLB(date: string, awayTeam: string, homeTeam: string, daySequenceNumber: number): Promise<MatchupLineups> {
   // Put date in YYYY-MM-DD format
   const formattedDate = formatDateMlbApi(date);
+  const awayTeamNameMLB = teamNameToMLBApiTeamName(awayTeam.trim());
+  const homeTeamNameMLB = teamNameToMLBApiTeamName(homeTeam.trim());
+
   try {
     // Get MLB API response for a given game
-    const game: MlbScheduleApiGame = await getMlbScheduleApiGame(formattedDate, awayTeam, homeTeam, daySequenceNumber);
+    const game: MlbScheduleApiGame = await getMlbScheduleApiGame(formattedDate, awayTeamNameMLB, homeTeamNameMLB, daySequenceNumber);
     const gamePk = game.gamePk;
     const gameInfo: MlbGameApiResponse = await getMlbGameApiGame(gamePk);
 
     // Find roster data for both teams
     const { awayTeamId, homeTeamId } = extractTeamIds(gameInfo);
-    const awayRosterInfo: MlbRosterApiResponse = await getMlbRosterApiRoster(awayTeamId, formattedDate, 'active');
-    const homeRosterInfo: MlbRosterApiResponse = await getMlbRosterApiRoster(homeTeamId, formattedDate, 'active');
+    const awayRosterInfo: MlbRosterApiResponse = await getMlbRosterApiRoster(awayTeamId, formattedDate, '40Man');
+    const homeRosterInfo: MlbRosterApiResponse = await getMlbRosterApiRoster(homeTeamId, formattedDate, '40Man');
+
+    // Get past (and future) probable pitchers for both teams. This helps in the bullpen selection process.
+    const awayProbablePitchers = await getProbablePitchers(awayTeamId, formattedDate);
+    const homeProbablePitchers = await getProbablePitchers(homeTeamId, formattedDate);
 
 
     // console.log('GAME INFO:', gameInfo);  // Game info: Has player handedness. Hitting is batSide.code, pitching is pitchHand.code
     // console.log('AWAY ROSTER INFO:', awayRosterInfo);
 
     // Extract lineups
-    const awayTeamLineup: TeamLineup = extractCompleteTeamLineup(gameInfo, awayRosterInfo, 'away');
-    const homeTeamLineup: TeamLineup = extractCompleteTeamLineup(gameInfo, homeRosterInfo, 'home');
+    const awayTeamLineup: TeamLineup = extractCompleteTeamLineup(gameInfo, awayRosterInfo, 'away', awayProbablePitchers);
+    const homeTeamLineup: TeamLineup = extractCompleteTeamLineup(gameInfo, homeRosterInfo, 'home', homeProbablePitchers);
 
     const matchupLineups: MatchupLineups = {
       away: awayTeamLineup,
@@ -103,29 +113,35 @@ async function getBackupLineups(date: string, awayTeam: string, homeTeam: string
  * @param {MlbGameApiResponse} gameInfo - The game info
  * @param {MlbRosterApiResponse} rosterInfo - The roster info
  * @param {TeamType} teamType - The team type (away or home)
+ * @param {number[]} probablePitchers - A list of the ids of the probable pitchers for the team
  * @returns {TeamLineup} The complete team lineup
  * @example
- * extractCompleteTeamLineup(gameInfo, rosterInfo, 'away') // returns the away team lineup
+ * extractCompleteTeamLineup(gameInfo, rosterInfo, '2025-05-05', 'away') // returns the away team lineup
  * @throws {Error} If either parameter is not a number
  */
 function extractCompleteTeamLineup(
   gameInfo: MlbGameApiResponse, 
   rosterInfo: MlbRosterApiResponse,
-  teamType: TeamType
+  teamType: TeamType,
+  probablePitchers: number[]
 ): TeamLineup {
   // Get starting lineup
   const startingLineup = extractStartingLineupFromMlbGameApiGame(gameInfo, teamType);
+
+  // Get bench players
+  const bench = extractBenchFromMlbRoster(rosterInfo, teamType, startingLineup);
 
   // Get starting pitcher
   const startingPitcher = extractStartingPitcherFromMlbGameApiGame(gameInfo, teamType);
 
   // Get bullpen
-  const bullpen = extractBullPenFromMlbRoster(rosterInfo, teamType, startingPitcher.id);
+  const bullpen = extractBullPenFromMlbRoster(rosterInfo, teamType, probablePitchers);
 
   return {
     lineup: startingLineup,
     startingPitcher: startingPitcher,
     bullpen: bullpen,
+    bench: bench,
     teamName: teamType === 'away' ? gameInfo.gameData.teams.away.name : gameInfo.gameData.teams.home.name
   };
 }
@@ -180,17 +196,22 @@ export function makeMockLineups(date: string, awayTeam: string, homeTeam: string
     const awayBullpen = Array.from({ length: 5 }, (_, i) => mockPlayer(i + 1000, `${awayTeam} RP ${i+1}`, 'P', undefined));
     const homeBullpen = Array.from({ length: 5 }, (_, i) => mockPlayer(i + 2000, `${homeTeam} RP ${i+1}`, 'P', undefined));
 
+    const awayBench = Array.from({ length: 5 }, (_, i) => mockPlayer(i + 3000, `${awayTeam} Bench ${i+1}`, 'CF', undefined));
+    const homeBench = Array.from({ length: 5 }, (_, i) => mockPlayer(i + 4000, `${homeTeam} Bench ${i+1}`, 'CF', undefined));
+
     return {
         away: {
             lineup: awayLineup,
             startingPitcher: awaySP,
             bullpen: awayBullpen,
+            bench: awayBench,
             teamName: awayTeam
         },
         home: {
             lineup: homeLineup,
             startingPitcher: homeSP,
             bullpen: homeBullpen,
+            bench: homeBench,
             teamName: homeTeam
         }
     };
@@ -205,14 +226,16 @@ async function enrichMatchupLineupsWithHandedness(matchupLineups: MatchupLineups
   };
 
   // Enrich all players in parallel
-  const [enrichedHomeLineup, enrichedHomeSP, enrichedHomeBullpen, 
-         enrichedAwayLineup, enrichedAwaySP, enrichedAwayBullpen] = await Promise.all([
+  const [enrichedHomeLineup, enrichedHomeSP, enrichedHomeBullpen, enrichedHomeBench,
+         enrichedAwayLineup, enrichedAwaySP, enrichedAwayBullpen, enrichedAwayBench] = await Promise.all([
     Promise.all(matchupLineups.home.lineup.map(enrichPlayer)),
     enrichPlayer(matchupLineups.home.startingPitcher),
     Promise.all(matchupLineups.home.bullpen.map(enrichPlayer)),
+    Promise.all(matchupLineups.home.bench.map(enrichPlayer)),
     Promise.all(matchupLineups.away.lineup.map(enrichPlayer)),
     enrichPlayer(matchupLineups.away.startingPitcher),
-    Promise.all(matchupLineups.away.bullpen.map(enrichPlayer))
+    Promise.all(matchupLineups.away.bullpen.map(enrichPlayer)),
+    Promise.all(matchupLineups.away.bench.map(enrichPlayer))
   ]);
 
   return {
@@ -220,13 +243,15 @@ async function enrichMatchupLineupsWithHandedness(matchupLineups: MatchupLineups
       ...matchupLineups.home,
       lineup: enrichedHomeLineup,
       startingPitcher: enrichedHomeSP,
-      bullpen: enrichedHomeBullpen
+      bullpen: enrichedHomeBullpen,
+      bench: enrichedHomeBench
     },
     away: {
       ...matchupLineups.away,
       lineup: enrichedAwayLineup,
       startingPitcher: enrichedAwaySP,
-      bullpen: enrichedAwayBullpen
+      bullpen: enrichedAwayBullpen,
+      bench: enrichedAwayBench
     }
   };
 }

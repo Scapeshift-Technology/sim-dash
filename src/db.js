@@ -142,7 +142,12 @@ async function saveSimHistory(db, simHistory) {
 // Get a match's sim history
 async function getSimHistory(db, matchId) {
   return new Promise((resolve, reject) => {
-    const query = "SELECT * FROM sim_history WHERE match_id = ? ORDER BY timestamp DESC";
+    const query = `
+      SELECT match_id AS matchId, timestamp, sim_results, input_data
+      FROM sim_history 
+      WHERE match_id = ? 
+      ORDER BY timestamp DESC
+    `;
     
     db.all(query, [matchId], (err, rows) => {
       if (err) {
@@ -161,6 +166,25 @@ async function getSimHistory(db, matchId) {
   });
 }
 
+// Get sim data
+async function getSimData(db, matchupId, timestamp) {
+  return new Promise((resolve, reject) => {
+    const query = "SELECT * FROM sim_history WHERE match_id = ? AND timestamp = ?";
+    db.get(query, [matchupId, timestamp], (err, row) => {
+      if (err) {
+        reject(err);
+      } else if (!row) {
+        resolve(null);
+      } else {
+        resolve({
+          simData: JSON.parse(row.sim_results),
+          inputData: JSON.parse(row.input_data)
+        });
+      }
+    });
+  });
+}
+
 // ---------- Export ----------
 
 module.exports = {
@@ -171,5 +195,6 @@ module.exports = {
     deleteProfile,
     // Sim history table
     saveSimHistory,
-    getSimHistory
+    getSimHistory,
+    getSimData
 }; 

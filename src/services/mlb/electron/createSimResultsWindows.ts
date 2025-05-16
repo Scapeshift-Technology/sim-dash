@@ -1,21 +1,23 @@
 import { BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
-import type { SimResultsMLB } from '@/types/bettingResults';
 
 interface CreateMLBSimResultsWindowOptions {
-    simData: SimResultsMLB;
+    matchupId: number;
+    timestamp: string;
+    awayTeamName: string;
+    homeTeamName: string;
     viteDevServerUrl?: string;
     isDevelopment?: boolean;
 }
 
 export function createMLBSimResultsWindow2({
-    simData,
+    matchupId,
+    timestamp,
+    awayTeamName,
+    homeTeamName,
     viteDevServerUrl = 'http://localhost:5173',
     isDevelopment = process.env.NODE_ENV === 'development'
 }: CreateMLBSimResultsWindowOptions): BrowserWindow {
-    // Create unique ID for this window instance
-    const windowId = Date.now().toString();
-
     // Create a new window instance
     const simWindow = new BrowserWindow({
         width: 600,
@@ -35,25 +37,15 @@ export function createMLBSimResultsWindow2({
         minimizable: true
     });
 
-    // Construct the URL with windowId parameter and hash route
-    const getWindowUrl = (baseUrl: string) => {
-        const url = new URL(baseUrl);
-        // Move windowId to be part of the hash route
-        url.hash = `#/sim-results?windowId=${windowId}`;
-        return url.toString();
-    };
-
-    // Load the appropriate content
+    // Load the appropriate content with simple route
     if (isDevelopment) {
-        simWindow.loadURL(getWindowUrl(viteDevServerUrl));
+        const url = new URL(viteDevServerUrl);
+        url.hash = '#/sim-results';
+        simWindow.loadURL(url.toString());
     } else {
-        // In production, load the built index.html and let React Router handle the route
         simWindow.loadFile(
             path.join(__dirname, '@@', 'dist', 'renderer', 'index.html'),
-            { 
-                // Remove search from here
-                hash: `/sim-results?windowId=${windowId}` // Put windowId in hash
-            }
+            { hash: '/sim-results' }
         );
     }
 
@@ -62,8 +54,13 @@ export function createMLBSimResultsWindow2({
         simWindow.show();
     });
 
-    // Add windowId to the window object so it can be accessed later
-    (simWindow as any).windowId = windowId;
+    // Add properties to BrowserWindow
+    (simWindow as any).simProperties = {
+        simMatchupId: matchupId,
+        simTimestamp: timestamp,
+        simAwayTeamName: awayTeamName,
+        simHomeTeamName: homeTeamName
+    };
 
     return simWindow;
 }

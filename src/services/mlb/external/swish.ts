@@ -9,7 +9,9 @@ import {
   extractBullPenFromMlbRoster, 
   findPlayerId, 
   getMlbRosterApiRoster, 
-  getMlbTeamId 
+  getMlbTeamId,
+  getProbablePitchers,
+  extractBenchFromMlbRoster
 } from "./mlbApi";
 import { createTargetMatchup } from "../utils/teamName";
 
@@ -58,7 +60,8 @@ async function extractTeamLineupFromSwishLineupCard(lineupCard: string, date: st
   // Get the team's roster info
   const season = parseInt(date.split('-')[0]);
   const teamId = await getMlbTeamId(teamName, season);
-  const rosterInfo = await getMlbRosterApiRoster(teamId, date, 'active');
+  const rosterInfo = await getMlbRosterApiRoster(teamId, date, '40Man');
+  const probablePitchers = await getProbablePitchers(teamId, date);
   
   // Get the team's starting pitcher
   const startingPitcher = extractStartingPitcherFromSwishLineupCard(lineupCard, rosterInfo, teamType);
@@ -66,13 +69,17 @@ async function extractTeamLineupFromSwishLineupCard(lineupCard: string, date: st
   // Get the lineup
   const lineup = getLineupFromSwishLineupCard(lineupCard, rosterInfo, teamType);
 
+  // Get the bench
+  const bench = extractBenchFromMlbRoster(rosterInfo, teamType, lineup);
+
   // Get the bullpen
-  const bullpen = extractBullPenFromMlbRoster(rosterInfo, teamType, startingPitcher.id);
+  const bullpen = extractBullPenFromMlbRoster(rosterInfo, teamType, probablePitchers);
 
   return {
     lineup: lineup,
     startingPitcher: startingPitcher,
     bullpen: bullpen,
+    bench: bench,
     teamName: teamName
   };
 }
@@ -235,7 +242,6 @@ function getSwishLineupsLineupCard(html: string, awayTeam: string, homeTeam: str
   let relevantCard = null;
   let matchupCt = 0;
   const targetMatchup = createTargetMatchup(awayTeam, homeTeam);
-  console.log('TARGETMATCHUP', targetMatchup);
   
   for (const card of lineupCards) {
     const h4Regex = /<h4[\s\S]*?>([\s\S]*?)<\/h4>/;

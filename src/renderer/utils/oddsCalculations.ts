@@ -96,9 +96,9 @@ function devigAmericanOdds(odds1: number, odds2: number): number {
  */
 function countsToProbability(successCounts: number, failureCounts: number, pushCounts: number = 0, pushesFail: boolean = false): number {
   if (pushesFail) {
-    return successCounts / (successCounts + failureCounts);
-  } else {
     return successCounts / (successCounts + failureCounts + pushCounts);
+  } else {
+    return successCounts / (successCounts + failureCounts);
   }
 }
 

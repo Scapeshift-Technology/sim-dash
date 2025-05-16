@@ -15,11 +15,11 @@ import {
   Paper,
   TableContainer,
   Box,
-  IconButton,
-  Divider,
+  IconButton
 } from '@mui/material';
 import { ArrowUpward, ArrowDownward } from '@mui/icons-material';
 import ExportButton from './ExportButton';
+import CopyTableButton from './CopyTableButton';
 
 export type SupportedTypes = 'string' | 'number' | 'boolean' | 'date' | 'time' | 'datetime';
 export type StyleType = 'cell' | 'text';
@@ -194,8 +194,10 @@ const Inline: React.FC<InlineProps> = ({ data, columns, onRowClick }) => {
         display: 'flex', 
         justifyContent: 'flex-end',
         mt: 1,
-        mb: 2
+        mb: 2,
+        gap: 1
       }}>
+        <CopyTableButton data={data} columns={columns} />
         <ExportButton data={data} columns={columns} />
       </Box>
     </Box>

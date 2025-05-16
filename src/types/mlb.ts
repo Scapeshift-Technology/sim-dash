@@ -4,11 +4,7 @@ export type TeamType = 'away' | 'home';
 
 // ---------- MLB sim types ----------
 
-export type Position = 'C' | '1B' | '2B' | '3B' | 'SS' | 'LF' | 'CF' | 'RF' | 'DH' | 'SP' | 'RP';
-
-export interface SimInputDataMLB {
-  testField: string;
-}
+export type Position = 'C' | '1B' | '2B' | '3B' | 'SS' | 'LF' | 'CF' | 'RF' | 'DH' | 'SP' | 'RP' | 'TBD';
 
 export interface GameStatePitcher {
   id: number;
@@ -95,7 +91,7 @@ export interface TeamLineup {
     lineup: Player[]; // Players in batting order
     startingPitcher: Player;
     bullpen: Player[]; // Relief pitchers available
-    // bench?: Player[]; // Future: players on the bench
+    bench: Player[]; // Position players sitting
     teamName: string;
 }
 
@@ -117,19 +113,49 @@ export interface GameMatchupProbabilities {
   away: TeamBatterMatchupProbabilities;
 }
 
-// 
-// export interface MLBGameScheduleInfo {
-//   gameId: number;
-//   gameDt: string;
-//   homeTeam: string;
-//   awayTeam: string;
-//   seriesGameNumber: number;
-//   gameNumber: number;
-// }
+// ----- MLB Leans Finder Types -----
+// -- Market lines types --
 
+export interface MarketLineDifferenceMLB {
+  mlAway: {
+    simValue: number;
+    upperBound: number;
+    lowerBound: number;
+  };
+  total: {
+    simValue: number;
+    upperBound: number;
+    lowerBound: number;
+  };
+}
 
-// Wait until making the DB structure to implement this.
+interface TotalLinesMLB {
+  line: number;
+  odds: number;
+}
 
+export interface MarketLinesMLB {
+  awayML: number;
+  homeML: number;
+  over: TotalLinesMLB;
+  under: TotalLinesMLB;
+}
+
+// -- Leans types --
+
+export interface IndividualTeamLeansMLB {
+  hitter: number;
+  pitcher: number;
+}
+
+interface AllTeamLeansMLB {
+  away: IndividualTeamLeansMLB;
+  home: IndividualTeamLeansMLB;
+}
+
+export interface OptimalLeansMLB {
+  teams: AllTeamLeansMLB;
+}
 
 // ---------- MLB API types ----------
 // Follow this naming convention: Mlb{Endpoint}Api{Thing it describes}
@@ -181,6 +207,13 @@ export interface MlbGameApiTeam {
   name: string;
 }
 
+export interface MlbGameApiGameDataPlayer {
+  id: number;
+  fullName: string;
+  batSide: MlbGameApiBatSide;
+  pitchHand: MlbGameApiPitchHand;
+}
+
 export interface MlbGameApiGameData {
   teams: {
     away: MlbGameApiTeam;
@@ -190,6 +223,9 @@ export interface MlbGameApiGameData {
     away: MlbGameApiPerson;
     home: MlbGameApiPerson;
   };
+  players: {
+    [key: string]: MlbGameApiGameDataPlayer;
+  }
 }
 
 export interface MlbGameApiResponse {
@@ -202,8 +238,12 @@ export interface MlbGameApiResponse {
 // ----- Schedule endpoint -----
 export interface MlbScheduleApiTeam {
   team: {
+    id: number;
     name: string;
   };
+  probablePitcher: {
+    id: number;
+  }
 }
 
 export interface MlbScheduleApiGame {
@@ -221,6 +261,11 @@ export interface MlbScheduleApiGame {
 export interface MlbRosterApiPlayer {
   person: MlbGameApiPerson;
   position: MlbGameApiPosition;
+  status: MlbRosterApiStatus;
+}
+
+export interface MlbRosterApiStatus {
+  code: 'D60' | 'D15' | 'A' | 'RM';
 }
 
 export interface MlbRosterApiResponse {

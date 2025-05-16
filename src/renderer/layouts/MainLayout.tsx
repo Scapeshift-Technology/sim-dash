@@ -25,7 +25,7 @@ import {
 import type { Tab } from '@/types/league';
 import Sidebar from '@/components/Sidebar';
 import LeagueScheduleView from '@/pages/LeagueScheduleView';
-import MLBMatchupView from '@/pages/MLBMatchupView';
+import MLBMatchupView from '@/pages/MLBMatchupView/MLBMatchupView';
 
 const MainLayout: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
