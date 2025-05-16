@@ -22,10 +22,13 @@ export async function runSeriesSimulation(
     gameInputs: SeriesGameInputs,
     numGames: number = 50000
 ): Promise<SimResultsMLB> {
-    console.log('Running series simulation');
     const simResults: {[key: number]: SimResultsMLB} = {};
-    for (const game of Object.values(gameInputs)) {
-        console.log('Running game simulation', game.gameInfo.seriesGameNumber);
+    
+    // Only process first 3 games
+    const seriesGames = Object.values(gameInputs)
+      .filter(game => game.gameInfo.seriesGameNumber <= 3);
+    
+    for (const game of seriesGames) {
       const gameSimResults = await runSimulation(game, numGames);
       simResults[game.gameInfo.seriesGameNumber] = gameSimResults;
     }

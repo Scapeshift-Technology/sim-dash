@@ -5,7 +5,10 @@ import {
     CircularProgress, 
     Alert, 
     Grid,
-    Snackbar
+    Snackbar,
+    Tabs,
+    Tab,
+    Paper
 } from '@mui/material';
 import type { Player, Position } from '@/types/mlb';
 import DraggableLineup from './components/DraggableLineup';
@@ -32,6 +35,7 @@ import {
     selectGamePlayerStatsError,
     selectGameSeriesGames,
     selectMLBGameContainer,
+    switchCurrentSeriesGame,
 } from '@/store/slices/simInputsSlice';
 import { LeagueName } from '@@/types/league';
 import { useLeanValidation } from './hooks/leanValidation';
@@ -76,7 +80,6 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     
     // ---------- State ----------
     const gameContainer = useSelector((state: RootState) => selectMLBGameContainer(state, league, matchId));
-    console.log('gameContainer', gameContainer);
     const simResults = useSelector((state: RootState) => selectMatchSimResults(state, league, matchId));
     const simStatus = useSelector((state: RootState) => selectMatchSimStatus(state, league, matchId));
     const gameLineups = useSelector((state: RootState) => selectGameLineups(state, league, matchId));
@@ -86,6 +89,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const playerStatsError = useSelector((state: RootState) => selectGamePlayerStatsError(state, league, matchId));
     const teamInputs = useSelector((state: RootState) => selectTeamInputs(state, league, matchId));
     const seriesGames = useSelector((state: RootState) => selectGameSeriesGames(state, league, matchId));
+
+    const [selectedGameTab, setSelectedGameTab] = useState(0);
 
     const {
         hasInvalidLeans,
@@ -102,19 +107,6 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     } = useSimulationRunner(matchId, league, gameContainer);
 
     // ---------- Effect ----------
-    // useEffect(() => { // Fetch lineup data
-    //     if (lineupStatus === 'idle') {
-    //         dispatch(fetchMlbLineup({
-    //             league,
-    //             date,
-    //             participant1,
-    //             participant2,
-    //             daySequence,
-    //             matchId
-    //         }));
-    //     }
-    // }, [dispatch, league, date, participant1, participant2, daySequence, matchId]);
-
     useEffect(() => { // Fetch game data
         if (dataStatus === 'idle') {
             dispatch(fetchMlbGameData({
@@ -190,6 +182,15 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         dispatch(updateMLBPlayerPosition({ matchId, team, playerId, position }));
     };
 
+    const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+        setSelectedGameTab(newValue);
+        dispatch(switchCurrentSeriesGame({ 
+          league,
+          matchId, 
+          gameNumber: newValue + 1,
+        }));
+    };
+
     // ---------- Render ----------
     if (dataStatus === 'loading' || playerStatsStatus === 'loading' || (dataStatus === 'succeeded' && playerStatsStatus === 'idle')) return <CircularProgress />;
     if (dataError) return <Alert severity="error">{dataError}</Alert>;
@@ -236,32 +237,45 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                     }));
                 }}
             />
-            <Grid container spacing={2} sx={{ display: 'flex', flexWrap: 'wrap' }}>
-                <TeamCard>
-                    <DraggableLineup
-                        teamName={`${participant1} (Away)`}
-                        teamData={gameLineups.away}
-                        teamType="away"
-                        matchId={matchId}
-                        league={league}
-                        onLineupReorder={handleLineupReorder}
-                        onPitcherReorder={handlePitcherReorder}
-                        onPositionChange={handlePositionChange}
-                    />
-                </TeamCard>
-                <TeamCard>
-                    <DraggableLineup
-                        teamName={`${participant2} (Home)`}
-                        teamData={gameLineups.home}
-                        teamType="home"
-                        matchId={matchId}
-                        league={league}
-                        onLineupReorder={handleLineupReorder}
-                        onPitcherReorder={handlePitcherReorder}
-                        onPositionChange={handlePositionChange}
-                    />
-                </TeamCard>
-            </Grid>
+            
+            {seriesGames && Object.keys(seriesGames).length > 0 && (
+                <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+                    <Tabs value={selectedGameTab} onChange={handleTabChange}>
+                        {Object.keys(seriesGames).map((gameNumber: string) => (
+                            <Tab key={gameNumber} label={`Game ${gameNumber}`} />
+                        ))}
+                    </Tabs>
+                </Box>
+            )}
+            
+            <Box sx={{ border: '1px solid', borderColor: 'divider', p: 2, mb: 2 }}>
+                <Grid container spacing={2} sx={{ display: 'flex', flexWrap: 'wrap' }}>
+                    <TeamCard>
+                        <DraggableLineup
+                            teamName={`${participant1} (Away)`}
+                            teamData={gameLineups.away}
+                            teamType="away"
+                            matchId={matchId}
+                            league={league}
+                            onLineupReorder={handleLineupReorder}
+                            onPitcherReorder={handlePitcherReorder}
+                            onPositionChange={handlePositionChange}
+                        />
+                    </TeamCard>
+                    <TeamCard>
+                        <DraggableLineup
+                            teamName={`${participant2} (Home)`}
+                            teamData={gameLineups.home}
+                            teamType="home"
+                            matchId={matchId}
+                            league={league}
+                            onLineupReorder={handleLineupReorder}
+                            onPitcherReorder={handlePitcherReorder}
+                            onPositionChange={handlePositionChange}
+                        />
+                    </TeamCard>
+                </Grid>
+            </Box>
 
             <Snackbar
                 open={showInvalidLeansSnackbar}

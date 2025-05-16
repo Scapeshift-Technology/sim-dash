@@ -44,6 +44,18 @@ const formatResponseAsGameInputs = (gameData: MLBGameData) => {
   return newGame;
 }
 
+function syncCurrentGameEdit(state: SimInputsState, matchId: number) {
+  const container = state['MLB']?.[matchId];
+  if (container?.currentGame && container?.seriesGames) {
+    // Find which series game number matches current game
+    const gameNumber = container.currentGame.gameInfo.seriesGameNumber;
+    if (gameNumber) {
+      // Sync the changes
+      container.seriesGames[gameNumber] = container.currentGame;
+    }
+  }
+}
+
 // ---------- Thunks ----------
 
 export const fetchMlbGameData = createAsyncThunk<
@@ -127,6 +139,7 @@ const simInputsSlice = createSlice({
       const { matchId, team, newLineup } = action.payload;
       if (state['MLB']?.[matchId]?.currentGame) {
         state['MLB'][matchId].currentGame.lineups[team].lineup = newLineup;
+        syncCurrentGameEdit(state, matchId);
       }
     },
     editMLBBench: (state, action: {
@@ -139,6 +152,7 @@ const simInputsSlice = createSlice({
       const { matchId, team, newBench } = action.payload;
       if (state['MLB']?.[matchId]?.currentGame) {
         state['MLB'][matchId].currentGame.lineups[team].bench = newBench;
+        syncCurrentGameEdit(state, matchId);
       }
     },
     editMLBStartingPitcher: (state, action: {
@@ -151,6 +165,7 @@ const simInputsSlice = createSlice({
       const { matchId, team, newStartingPitcher } = action.payload;
       if (state['MLB']?.[matchId]?.currentGame) {
         state['MLB'][matchId].currentGame.lineups[team].startingPitcher = newStartingPitcher;
+        syncCurrentGameEdit(state, matchId);
       }
     },
     editMLBBullpen: (state, action: {
@@ -163,6 +178,7 @@ const simInputsSlice = createSlice({
       const { matchId, team, newBullpen } = action.payload;
       if (state['MLB']?.[matchId]?.currentGame) {
         state['MLB'][matchId].currentGame.lineups[team].bullpen = newBullpen;
+        syncCurrentGameEdit(state, matchId);
       }
     },
 
@@ -180,6 +196,7 @@ const simInputsSlice = createSlice({
         if (player) {
           player.position = position;
         }
+        syncCurrentGameEdit(state, matchId);
       }
     },
     updateTeamLean: (state, action: {
@@ -200,6 +217,7 @@ const simInputsSlice = createSlice({
         } else {
           state[league][matchId].currentGame.simInputs[teamType].teamPitcherLean = value;
         }
+        syncCurrentGameEdit(state, matchId);
       }
     },
     updatePlayerLean: (state, action: {
@@ -220,6 +238,30 @@ const simInputsSlice = createSlice({
           state[league][matchId].currentGame.simInputs[teamType].individualHitterLeans[playerId] = value;
         } else {
           state[league][matchId].currentGame.simInputs[teamType].individualPitcherLeans[playerId] = value;
+        }
+        syncCurrentGameEdit(state, matchId);
+      }
+    },
+    switchCurrentSeriesGame: (state, action: {
+      payload: {
+        league: LeagueName;
+        matchId: number;
+        gameNumber: number;
+      }
+    }) => {
+      const { league, matchId, gameNumber } = action.payload;
+      
+      if (league === 'MLB' && state[league]?.[matchId]) {
+        const container = state[league][matchId];
+        
+        // If we're switching to game 1 and there's no series data, keep current game
+        if (gameNumber === 1 && !container.seriesGames) {
+          return;
+        }
+
+        // If we have series data and the requested game exists, switch to it
+        if (container.seriesGames?.[gameNumber]) {
+          container.currentGame = container.seriesGames[gameNumber];
         }
       }
     }
@@ -320,7 +362,8 @@ export const {
   updateTeamLean,
   updatePlayerLean,
   editMLBStartingPitcher,
-  editMLBBullpen
+  editMLBBullpen,
+  switchCurrentSeriesGame
 } = simInputsSlice.actions;
 
 // ---------- Selectors ----------
