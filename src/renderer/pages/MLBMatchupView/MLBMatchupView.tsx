@@ -8,7 +8,8 @@ import {
     Snackbar,
     Tabs,
     Tab,
-    Paper
+    Paper,
+    Typography
 } from '@mui/material';
 import type { Player, Position } from '@/types/mlb';
 import DraggableLineup from './components/DraggableLineup';
@@ -36,6 +37,7 @@ import {
     selectGameSeriesGames,
     selectMLBGameContainer,
     switchCurrentSeriesGame,
+    selectGameMetadata
 } from '@/store/slices/simInputsSlice';
 import { LeagueName } from '@@/types/league';
 import { useLeanValidation } from './hooks/leanValidation';
@@ -89,6 +91,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const playerStatsError = useSelector((state: RootState) => selectGamePlayerStatsError(state, league, matchId));
     const teamInputs = useSelector((state: RootState) => selectTeamInputs(state, league, matchId));
     const seriesGames = useSelector((state: RootState) => selectGameSeriesGames(state, league, matchId));
+    const gameMetadata = useSelector((state: RootState) => selectGameMetadata(state, league, matchId));
 
     const [selectedGameTab, setSelectedGameTab] = useState(0);
 
@@ -139,6 +142,27 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     }, [dispatch, matchId, league, simStatus]);
 
     // ---------- Handlers ----------
+    const handleTeamLeanUpdate = (teamType: 'home' | 'away', leanType: 'offense' | 'defense', value: number) => {
+        dispatch(updateTeamLean({
+            league,
+            matchId,
+            teamType,
+            leanType,
+            value
+        }));
+    };
+
+    const handlePlayerLeanUpdate = (teamType: 'home' | 'away', playerType: 'hitter' | 'pitcher', playerId: number, value: number) => {
+        dispatch(updatePlayerLean({
+            league,
+            matchId,
+            teamType,
+            playerType,
+            playerId,
+            value
+        }));
+    };
+
     const handleRunSimulation = async (isSeries: boolean) => {
         if (!gameContainer || !teamInputs) return;
         
@@ -217,25 +241,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 awayTeamName={participant1}
                 homeTeamName={participant2}
                 gameContainer={gameContainer}
-                onUpdateTeamLean={(teamType, leanType, value) => {
-                    dispatch(updateTeamLean({
-                        league,
-                        matchId,
-                        teamType,
-                        leanType,
-                        value
-                    }));
-                }}
-                onUpdatePlayerLean={(teamType, playerType, playerId, value) => {
-                    dispatch(updatePlayerLean({
-                        league,
-                        matchId,
-                        teamType,
-                        playerType,
-                        playerId,
-                        value
-                    }));
-                }}
+                onUpdateTeamLean={handleTeamLeanUpdate}
+                onUpdatePlayerLean={handlePlayerLeanUpdate}
             />
             
             {seriesGames && Object.keys(seriesGames).length > 0 && (
@@ -249,6 +256,31 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             )}
             
             <Box sx={{ border: '1px solid', borderColor: 'divider', p: 2, mb: 2 }}>
+                {gameMetadata && (
+                    <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        mb: 2,
+                        pb: 1,
+                        borderBottom: '1px dashed',
+                        borderColor: 'divider',
+                        color: 'text.secondary'
+                    }}>
+                        <Typography 
+                            variant="caption" 
+                            sx={{ 
+                                fontStyle: 'italic',
+                                letterSpacing: '0.5px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.5
+                            }}
+                        >
+                            <span style={{ color: 'text.primary' }}>Lineup Source:</span> {gameMetadata.lineupsSource}
+                        </Typography>
+                    </Box>
+                )}
+
                 <Grid container spacing={2} sx={{ display: 'flex', flexWrap: 'wrap' }}>
                     <TeamCard>
                         <DraggableLineup

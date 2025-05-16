@@ -8,8 +8,11 @@ export interface SeriesInfoMLB {
   [key: number]: MLBGameData;
 }
 
+export type LineupsSource = 'MLB' | 'Swish' | 'Manual';
+
 export interface GameMetadataMLB {
   seriesGameNumber?: number;
+  lineupsSource?: LineupsSource;
 }
 
 export interface MLBGameData { // Very similar to MLBGameInputs2(type in simInputs.ts), but with less info

@@ -22,17 +22,13 @@ async function getGameDataMLB(date: string, awayTeam: string, homeTeam: string, 
   const homeTeamNameMLB = teamNameToMLBApiTeamName(homeTeam.trim());
 
   try {
-    // Get game info
     const game: MlbScheduleApiGame = await getMlbScheduleApiGame(formattedDate, awayTeamNameMLB, homeTeamNameMLB, daySequenceNumber);
-    const gameInfo: GameMetadataMLB = {
-      seriesGameNumber: game.seriesGameNumber
-    }
 
     // Potentially get series info and return
     let seriesInfo: SeriesInfoMLB = {};
     if (game.seriesGameNumber === 1 && game.gamesInSeries >= 3) {
       seriesInfo = await getSeriesInfoMLB(formattedDate, awayTeamNameMLB, homeTeamNameMLB);
-      const currentGame = seriesInfo[gameInfo.seriesGameNumber as number];
+      const currentGame = seriesInfo[game.seriesGameNumber as number];
 
       return {
         currentGame,
@@ -40,8 +36,12 @@ async function getGameDataMLB(date: string, awayTeam: string, homeTeam: string, 
       }
     }
 
-    // Get matchup lineups
-    const matchupLineups = await getLineupsMLB(formattedDate, awayTeamNameMLB, homeTeamNameMLB, daySequenceNumber, game);
+    // Get matchup lineups and source
+    const { matchupLineups, lineupsSource } = await getLineupsMLB(formattedDate, awayTeamNameMLB, homeTeamNameMLB, daySequenceNumber, game);
+    const gameInfo: GameMetadataMLB = {
+      seriesGameNumber: game.seriesGameNumber,
+      lineupsSource
+    }
 
     // Put it all together
     const gameData: MLBGameDataResponse = {
@@ -111,14 +111,16 @@ async function getSeriesInfoMLB(date: string, awayTeamName: string, homeTeamName
  */
 async function getIndividualGameDataMLB(date: string, awayTeam: string, homeTeam: string, daySequenceNumber: number): Promise<MLBGameData> {
   const game: MlbScheduleApiGame = await getMlbScheduleApiGame(date, awayTeam, homeTeam, daySequenceNumber);
+
+  const { matchupLineups, lineupsSource } = await getLineupsMLB(date, awayTeam, homeTeam, daySequenceNumber, game);
+
   const gameInfo: GameMetadataMLB = {
-    seriesGameNumber: game.seriesGameNumber
+    seriesGameNumber: game.seriesGameNumber,
+    lineupsSource
   }
 
-  const lineups: MatchupLineups = await getLineupsMLB(date, awayTeam, homeTeam, daySequenceNumber, game);
-
   return {
-    lineups,
+    lineups: matchupLineups,
     gameInfo
   }
 }

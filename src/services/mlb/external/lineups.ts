@@ -6,7 +6,8 @@ import type {
   MlbRosterApiResponse,
   MatchupLineups,
   TeamType,
-  Player
+  Player,
+  LineupsSource
 } from '@/types/mlb';
 
 import { 
@@ -17,14 +18,12 @@ import {
   extractTeamIds,
   extractBullPenFromMlbRoster,
   getMlbRosterApiRoster,
-  formatDateMlbApi,
   enrichPlayerWithHandedness,
   getProbablePitchers,
   extractBenchFromMlbRoster
 } from './mlbApi';
 
 import { getSwishLineups } from './swish';
-import { teamNameToMLBApiTeamName } from '../utils/teamName';
 
 // ---------- Main function ----------
 /**
@@ -37,7 +36,10 @@ import { teamNameToMLBApiTeamName } from '../utils/teamName';
  * @example
  * getLineupsMLB('2025-05-05', 'Los Angeles Dodgers', 'Miami Marlins', 1)
  */
-async function getLineupsMLB(date: string, awayTeam: string, homeTeam: string, daySequenceNumber: number, scheduleApiGame?: MlbScheduleApiGame): Promise<MatchupLineups> {
+async function getLineupsMLB(date: string, awayTeam: string, homeTeam: string, daySequenceNumber: number, scheduleApiGame?: MlbScheduleApiGame): Promise<{
+  matchupLineups: MatchupLineups,
+  lineupsSource: LineupsSource
+}> {
   try {
     // Get MLB API response for a given game
     if (!scheduleApiGame) {
@@ -55,10 +57,6 @@ async function getLineupsMLB(date: string, awayTeam: string, homeTeam: string, d
     const awayProbablePitchers = await getProbablePitchers(awayTeamId, date);
     const homeProbablePitchers = await getProbablePitchers(homeTeamId, date);
 
-
-    // console.log('GAME INFO:', gameInfo);  // Game info: Has player handedness. Hitting is batSide.code, pitching is pitchHand.code
-    // console.log('AWAY ROSTER INFO:', awayRosterInfo);
-
     // Extract lineups
     const awayTeamLineup: TeamLineup = extractCompleteTeamLineup(gameInfo, awayRosterInfo, 'away', awayProbablePitchers);
     const homeTeamLineup: TeamLineup = extractCompleteTeamLineup(gameInfo, homeRosterInfo, 'home', homeProbablePitchers);
@@ -71,12 +69,18 @@ async function getLineupsMLB(date: string, awayTeam: string, homeTeam: string, d
     // Enrich matchup lineups with handedness
     const enrichedMatchupLineups: MatchupLineups = await enrichMatchupLineupsWithHandedness(matchupLineups);
 
-    return enrichedMatchupLineups;
+    return {
+      matchupLineups: enrichedMatchupLineups,
+      lineupsSource: 'MLB'
+    };
   } catch (error) {
     console.error('Error getting lineups from MLB API:', error);
     // If MLB API fails, use backup function
     const backupLineups: MatchupLineups = await getBackupLineups(date, awayTeam, homeTeam, daySequenceNumber);
-    return backupLineups;
+    return {
+      matchupLineups: backupLineups,
+      lineupsSource: 'Swish'
+    };
   }
 }
 

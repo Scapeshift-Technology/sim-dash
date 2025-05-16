@@ -140,6 +140,7 @@ const simInputsSlice = createSlice({
       if (state['MLB']?.[matchId]?.currentGame) {
         state['MLB'][matchId].currentGame.lineups[team].lineup = newLineup;
         syncCurrentGameEdit(state, matchId);
+        state['MLB'][matchId].currentGame.gameInfo.lineupsSource = 'Manual';
       }
     },
     editMLBBench: (state, action: {
@@ -153,6 +154,7 @@ const simInputsSlice = createSlice({
       if (state['MLB']?.[matchId]?.currentGame) {
         state['MLB'][matchId].currentGame.lineups[team].bench = newBench;
         syncCurrentGameEdit(state, matchId);
+        state['MLB'][matchId].currentGame.gameInfo.lineupsSource = 'Manual';
       }
     },
     editMLBStartingPitcher: (state, action: {
@@ -166,6 +168,7 @@ const simInputsSlice = createSlice({
       if (state['MLB']?.[matchId]?.currentGame) {
         state['MLB'][matchId].currentGame.lineups[team].startingPitcher = newStartingPitcher;
         syncCurrentGameEdit(state, matchId);
+        state['MLB'][matchId].currentGame.gameInfo.lineupsSource = 'Manual';
       }
     },
     editMLBBullpen: (state, action: {
@@ -179,6 +182,7 @@ const simInputsSlice = createSlice({
       if (state['MLB']?.[matchId]?.currentGame) {
         state['MLB'][matchId].currentGame.lineups[team].bullpen = newBullpen;
         syncCurrentGameEdit(state, matchId);
+        state['MLB'][matchId].currentGame.gameInfo.lineupsSource = 'Manual';
       }
     },
 
@@ -197,6 +201,7 @@ const simInputsSlice = createSlice({
           player.position = position;
         }
         syncCurrentGameEdit(state, matchId);
+        state['MLB'][matchId].currentGame.gameInfo.lineupsSource = 'Manual';
       }
     },
     updateTeamLean: (state, action: {
