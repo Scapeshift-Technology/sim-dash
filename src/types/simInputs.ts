@@ -1,41 +1,47 @@
-import type { MatchupLineups } from './mlb';
+import type { MatchupLineups, MLBGameDataResponse, GameMetadataMLB } from './mlb';
 import type { LeagueName } from './league';
 
 // ---------- Types ----------
 
-export type GameInputs = MLBGameInputs; // Add other leagues later
+export type GameContainers = MLBGameContainer; // Add other leagues later
 
 export type SimInputsState = {
   [key in LeagueName]?: {
-    [matchId: number]: GameInputs;
+    [matchId: number]: GameContainers;
   };
 }
 
 // ---------- MLB ----------
 
-export interface MLBSimInputsTeam {
+export interface MLBGameSimInputsTeam {
   teamHitterLean: number // -0.1 to 0.1
   teamPitcherLean: number // -0.1 to 0.1
   individualHitterLeans: Record<number, number> // playerId to lean
   individualPitcherLeans: Record<number, number> // playerId to lean
 }
 
-export interface MLBSimInputs {
-  away: MLBSimInputsTeam;
-  home: MLBSimInputsTeam;
+export interface MLBGameSimInputs {
+  away: MLBGameSimInputsTeam;
+  home: MLBGameSimInputsTeam;
 }
 
-export interface MLBLineups {
-  data: MatchupLineups | null;
-  lineupsStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
-  lineupsError: string | null;
+
+export interface SeriesGameInputs { // Very similar to SeriesInfoMLB(type in mlb.ts), but with extra info
+  [gameNumber: number]: MLBGameInputs2;
+}
+
+export interface MLBGameInputs2 { // Very similar to MLBGameDataResponse(type in mlb.ts), but with extra info
+  lineups: MatchupLineups;
+  simInputs: MLBGameSimInputs;
+  gameInfo: GameMetadataMLB;
+} 
+
+export interface MLBGameContainer { // Very similar to MLBGameDataResponse(type in mlb.ts), but with extra info. Used as redux store type for single game.
+  currentGame: MLBGameInputs2 | null;
+  seriesGames?: SeriesGameInputs;
+  gameDataStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
+  gameDataError: string | null;
   statsStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
   statsError: string | null;
 }
-
-export interface MLBGameInputs {
-  lineups: MLBLineups;
-  inputs: MLBSimInputs;
-}
-
 

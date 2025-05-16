@@ -6,10 +6,10 @@ const url = require('url'); // Import url module
 const log = require('electron-log/main'); // <-- Import electron-log
 const dbHelper = require('./db'); // Local SQLite helper
 const sql = require('mssql'); // SQL Server driver
-const { getLineupsMLB } = require('./services/mlb/external/lineups');
 const { getPlayerStatsMLB } = require('./services/mlb/db/playerStats');
 const { createMLBSimResultsWindow2 } = require('./services/mlb/electron/createSimResultsWindows');
 const { Worker } = require('worker_threads');
+const { getGameDataMLB } = require('./services/mlb/external/gameData');
 
 // Force the app name at the system level for macOS menu
 app.name = 'SimDash'; // Directly set app.name property
@@ -421,28 +421,29 @@ ipcMain.handle('fetch-schedule', async (event, { league, date }) => {
 });
 // --- End Fetch Schedule Handler ---
 
-// --- Add Fetch MLB Lineup Handler ---
-ipcMain.handle('fetch-mlb-lineup', async (event, { league, date, participant1, participant2, daySequence }) => {
-    console.log(`IPC received: fetch-mlb-lineup for ${league} ${participant1}@${participant2} on ${date}`);
+// --- Add Fetch MLB Game Data Handler ---
+ipcMain.handle('fetch-mlb-game-data', async (event, { league, date, participant1, participant2, daySequence }) => {
+    console.log(`IPC received: fetch-mlb-data for ${league} ${participant1}@${participant2} on ${date}`);
     if (league !== 'MLB') {
-        console.error('fetch-mlb-lineup: Called for non-MLB league:', league);
-        throw new Error('Lineups are only available for MLB at this time.');
+        console.error('fetch-mlb-data: Called for non-MLB league:', league);
+        throw new Error('Game data is only available for MLB at this time.');
     }
     if (!date || !participant1 || !participant2) {
-        console.error('fetch-mlb-lineup: Missing required parameters.');
-        throw new Error('Date, participant1, and participant2 are required for MLB lineups.');
+        console.error('fetch-mlb-data: Missing required parameters.');
+        throw new Error('Date, participant1, and participant2 are required for MLB game data.');
     }
 
     try {
         // In the future, this would call an external API or query a different DB table
-        const lineupData = getLineupsMLB(date, participant1, participant2, daySequence);
-        console.log(`Lineup data generated for ${participant1}@${participant2} #${daySequence} on ${date}`);
-        return lineupData; 
+        const gameData = await getGameDataMLB(date, participant1, participant2, daySequence);
+        console.log(`Game data generated for ${participant1}@${participant2} #${daySequence} on ${date}`);
+        return gameData; 
     } catch (err) {
-        console.error(`Error fetching/generating MLB lineup for ${participant1}@${participant2} on ${date}:`, err);
+        console.error(`Error fetching/generating MLB game data for ${participant1}@${participant2} on ${date}:`, err);
         throw err; // Rethrow the error to be handled by the renderer
     }
 });
+// --- End Fetch MLB Game Data Handler ---
 
 ipcMain.handle('fetch-mlb-game-player-stats', async (event, { matchupLineups, date }) => {
   try {

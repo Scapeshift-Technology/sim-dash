@@ -32,7 +32,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // League/Schedule/Lineup data
     fetchLeagues: () => ipcRenderer.invoke('fetch-leagues'),
     fetchSchedule: (args) => ipcRenderer.invoke('fetch-schedule', args),
-    fetchMlbLineup: (args) => ipcRenderer.invoke('fetch-mlb-lineup', args),
+    fetchMlbGameData: (args) => ipcRenderer.invoke('fetch-mlb-game-data', args),
     fetchMlbGamePlayerStats: (args) => ipcRenderer.invoke('fetch-mlb-game-player-stats', args),
 
     // Simulations

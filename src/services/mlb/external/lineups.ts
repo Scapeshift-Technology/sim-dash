@@ -37,26 +37,23 @@ import { teamNameToMLBApiTeamName } from '../utils/teamName';
  * @example
  * getLineupsMLB('2025-05-05', 'Los Angeles Dodgers', 'Miami Marlins', 1)
  */
-async function getLineupsMLB(date: string, awayTeam: string, homeTeam: string, daySequenceNumber: number): Promise<MatchupLineups> {
-  // Put date in YYYY-MM-DD format
-  const formattedDate = formatDateMlbApi(date);
-  const awayTeamNameMLB = teamNameToMLBApiTeamName(awayTeam.trim());
-  const homeTeamNameMLB = teamNameToMLBApiTeamName(homeTeam.trim());
-
+async function getLineupsMLB(date: string, awayTeam: string, homeTeam: string, daySequenceNumber: number, scheduleApiGame?: MlbScheduleApiGame): Promise<MatchupLineups> {
   try {
     // Get MLB API response for a given game
-    const game: MlbScheduleApiGame = await getMlbScheduleApiGame(formattedDate, awayTeamNameMLB, homeTeamNameMLB, daySequenceNumber);
-    const gamePk = game.gamePk;
+    if (!scheduleApiGame) {
+      scheduleApiGame = await getMlbScheduleApiGame(date, awayTeam, homeTeam, daySequenceNumber);
+    }
+    const gamePk = scheduleApiGame.gamePk;
     const gameInfo: MlbGameApiResponse = await getMlbGameApiGame(gamePk);
 
     // Find roster data for both teams
     const { awayTeamId, homeTeamId } = extractTeamIds(gameInfo);
-    const awayRosterInfo: MlbRosterApiResponse = await getMlbRosterApiRoster(awayTeamId, formattedDate, '40Man');
-    const homeRosterInfo: MlbRosterApiResponse = await getMlbRosterApiRoster(homeTeamId, formattedDate, '40Man');
+    const awayRosterInfo: MlbRosterApiResponse = await getMlbRosterApiRoster(awayTeamId, date, '40Man');
+    const homeRosterInfo: MlbRosterApiResponse = await getMlbRosterApiRoster(homeTeamId, date, '40Man');
 
     // Get past (and future) probable pitchers for both teams. This helps in the bullpen selection process.
-    const awayProbablePitchers = await getProbablePitchers(awayTeamId, formattedDate);
-    const homeProbablePitchers = await getProbablePitchers(homeTeamId, formattedDate);
+    const awayProbablePitchers = await getProbablePitchers(awayTeamId, date);
+    const homeProbablePitchers = await getProbablePitchers(homeTeamId, date);
 
 
     // console.log('GAME INFO:', gameInfo);  // Game info: Has player handedness. Hitting is batSide.code, pitching is pitchHand.code
@@ -78,7 +75,7 @@ async function getLineupsMLB(date: string, awayTeam: string, homeTeam: string, d
   } catch (error) {
     console.error('Error getting lineups from MLB API:', error);
     // If MLB API fails, use backup function
-    const backupLineups: MatchupLineups = await getBackupLineups(formattedDate, awayTeam, homeTeam, daySequenceNumber);
+    const backupLineups: MatchupLineups = await getBackupLineups(date, awayTeam, homeTeam, daySequenceNumber);
     return backupLineups;
   }
 }
@@ -257,4 +254,4 @@ async function enrichMatchupLineupsWithHandedness(matchupLineups: MatchupLineups
 }
 
 // Export functions to be used in main.js
-module.exports = { getLineupsMLB };
+export { getLineupsMLB };

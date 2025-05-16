@@ -4,7 +4,8 @@ import {
   MlbGameApiResponse, 
   MlbRosterApiResponse,
   Player,
-  MlbPeopleApiResponse
+  MlbPeopleApiResponse,
+  MlbScheduleApiResponse
 } from '@/types/mlb';
 
 const BASE_MLB_API_URL = 'https://statsapi.mlb.com/api/v1';
@@ -21,7 +22,7 @@ async function getProbablePitchers(teamId: number, date: string, daysBefore: num
   const endDateString = formatDateYYYY_MM_DD(endDate);
 
   // Get the schedule for the team, but include probable pitchers
-  const url = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&hydrate=probablePitcher,hydrations&startDate=${startDateString}&endDate=${endDateString}&teamId=${teamId}`;
+  const url = `${BASE_MLB_API_URL}/schedule?sportId=1&hydrate=probablePitcher,hydrations&startDate=${startDateString}&endDate=${endDateString}&teamId=${teamId}`;
   const response = await fetch(url);
   const data = await response.json();
 
@@ -62,7 +63,37 @@ async function getMlbScheduleApiGame(date: string, awayTeam: string, homeTeam: s
   }
 }
 
-export { getProbablePitchers, getMlbScheduleApiGame }
+async function getMlbScheduleApiGames(startDate: string, endDate: string, teamId: number | null): Promise<MlbScheduleApiResponse> {
+  // Get all team games in a date range
+  const seriesGames = await hitMlbScheduleApi(startDate, endDate, teamId, ['game(seriesStatus)']);
+
+  return seriesGames;
+}
+
+async function hitMlbScheduleApi(startDate: string, endDate: string, teamId: number | null, hydrate: string[] = []): Promise<MlbScheduleApiResponse> {
+  const scheduleUrl = buildMlbScheduleUrl(startDate, endDate, teamId, hydrate);
+  const scheduleResponse = await fetch(scheduleUrl);
+  const scheduleData = await scheduleResponse.json();
+
+  return scheduleData;
+}
+
+function buildMlbScheduleUrl(startDate: string, endDate: string, teamId: number | null, hydrate: string[] = []): string {
+  const queryParams = new URLSearchParams({
+    sportId: '1',
+    startDate: startDate,
+    endDate: endDate
+  });
+
+  if (teamId) queryParams.append('teamId', teamId.toString());
+  if (hydrate?.length) queryParams.append('hydrate', hydrate.join(','));
+
+  const scheduleUrl = `${BASE_MLB_API_URL}/schedule?${queryParams.toString()}`;
+
+  return scheduleUrl;
+}
+
+export { getProbablePitchers, getMlbScheduleApiGame, getMlbScheduleApiGames }
 
 // ---------- Game endpoint ----------
 // -- Functions to get info
@@ -165,11 +196,19 @@ function extractTeamIds(gameInfo: MlbGameApiResponse): { awayTeamId: number, hom
   }
 }
 
+function extractTeamIdsSchedule(scheduleInfo: MlbScheduleApiGame): { awayTeamId: number, homeTeamId: number } {
+  return {
+    awayTeamId: scheduleInfo.teams.away.team.id,
+    homeTeamId: scheduleInfo.teams.home.team.id
+  }
+}
+
 export { 
   getMlbGameApiGame, 
   extractStartingLineupFromMlbGameApiGame, 
   extractStartingPitcherFromMlbGameApiGame, 
-  extractTeamIds, 
+  extractTeamIds,
+  extractTeamIdsSchedule,
   extractBenchFromMlbRoster 
 };
 

@@ -5,22 +5,22 @@ import {
     CircularProgress, 
     Alert, 
     Grid,
-    Snackbar
+    Snackbar,
+    Tabs,
+    Tab,
+    Paper
 } from '@mui/material';
 import type { Player, Position } from '@/types/mlb';
-import type { SimResultsMLB } from '@/types/bettingResults';
 import DraggableLineup from './components/DraggableLineup';
 import MLBMatchupHeader from './components/MLBMatchupHeader';
 import BettingBoundsSection from './components/BettingBoundsSection';
-import { SimHistoryEntry } from '@/types/simHistory';
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchSimResults, selectMatchSimResults, selectMatchSimStatus } from '@/store/slices/scheduleSlice';
-import { 
-    fetchMlbLineup, 
+import {
     fetchMlbGamePlayerStats,
-    selectGameLineupsData, 
-    selectGameLineupsStatus, 
-    selectGameLineupsError,
+    fetchMlbGameData,
+    selectGameDataStatus, 
+    selectGameDataError,
     selectGamePlayerStatsStatus,
     clearGameData,
     editMLBLineup,
@@ -31,11 +31,15 @@ import {
     selectGameLineups,
     editMLBBench,
     editMLBStartingPitcher,
-    editMLBBullpen
+    editMLBBullpen,
+    selectGamePlayerStatsError,
+    selectGameSeriesGames,
+    selectMLBGameContainer,
+    switchCurrentSeriesGame,
 } from '@/store/slices/simInputsSlice';
 import { LeagueName } from '@@/types/league';
-import { applyMatchupLeansMLB } from './functions/leans';
 import { useLeanValidation } from './hooks/leanValidation';
+import { useSimulationRunner } from './hooks/useSimulationRunner';
 
 // ---------- Sub-components ----------
 
@@ -75,17 +79,18 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const dispatch = useDispatch<AppDispatch>();
     
     // ---------- State ----------
-    const [isSimulating, setIsSimulating] = useState(false);
-    const [simError, setSimError] = useState<string | null>(null);
+    const gameContainer = useSelector((state: RootState) => selectMLBGameContainer(state, league, matchId));
     const simResults = useSelector((state: RootState) => selectMatchSimResults(state, league, matchId));
     const simStatus = useSelector((state: RootState) => selectMatchSimStatus(state, league, matchId));
     const gameLineups = useSelector((state: RootState) => selectGameLineups(state, league, matchId));
-    const lineupData = useSelector((state: RootState) => selectGameLineupsData(state, league, matchId));
-    const lineupStatus = useSelector((state: RootState) => selectGameLineupsStatus(state, league, matchId));
-    const lineupError = useSelector((state: RootState) => selectGameLineupsError(state, league, matchId));
+    const dataStatus = useSelector((state: RootState) => selectGameDataStatus(state, league, matchId));
+    const dataError = useSelector((state: RootState) => selectGameDataError(state, league, matchId));
     const playerStatsStatus = useSelector((state: RootState) => selectGamePlayerStatsStatus(state, league, matchId));
-    // const playerStatsError = useSelector((state: RootState) => selectGamePlayerStatsError(state, league, matchId));
+    const playerStatsError = useSelector((state: RootState) => selectGamePlayerStatsError(state, league, matchId));
     const teamInputs = useSelector((state: RootState) => selectTeamInputs(state, league, matchId));
+    const seriesGames = useSelector((state: RootState) => selectGameSeriesGames(state, league, matchId));
+
+    const [selectedGameTab, setSelectedGameTab] = useState(0);
 
     const {
         hasInvalidLeans,
@@ -94,10 +99,17 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         setShowInvalidLeansSnackbar
     } = useLeanValidation({ league, matchId });
 
+    const {
+        isSimulating,
+        simError,
+        runSingleGame,
+        runSeries
+    } = useSimulationRunner(matchId, league, gameContainer);
+
     // ---------- Effect ----------
-    useEffect(() => { // Fetch lineup data
-        if (lineupStatus === 'idle') {
-            dispatch(fetchMlbLineup({
+    useEffect(() => { // Fetch game data
+        if (dataStatus === 'idle') {
+            dispatch(fetchMlbGameData({
                 league,
                 date,
                 participant1,
@@ -109,14 +121,15 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     }, [dispatch, league, date, participant1, participant2, daySequence, matchId]);
 
     useEffect(() => { // Fetch player stats
-        if (lineupStatus === 'succeeded' && playerStatsStatus === 'idle' && lineupData) {
+        if (dataStatus === 'succeeded' && playerStatsStatus === 'idle' && gameLineups) {
             dispatch(fetchMlbGamePlayerStats({
                 matchId: matchId,
-                matchupLineups: (lineupData),
-                date: date
+                matchupLineups: (gameLineups),
+                date: date,
+                seriesGames: gameContainer?.seriesGames
             }));
         }
-    }, [dispatch, lineupStatus, playerStatsStatus, lineupData, matchId]);
+    }, [dispatch, dataStatus, playerStatsStatus, gameLineups, matchId]);
 
     useEffect(() => { // Fetch sim history
         if (!matchId) return;
@@ -126,59 +139,13 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     }, [dispatch, matchId, league, simStatus]);
 
     // ---------- Handlers ----------
-    const handleRunSimulation = async () => {
-        if (!gameLineups || !teamInputs) return;
-
-        const redoneLineups = applyMatchupLeansMLB({
-          lineups: gameLineups,
-          inputs: teamInputs
-        });
-
-        try {
-            setIsSimulating(true);
-            setSimError(null);
-            
-            // Get timestamp for later 
-            const timestamp = new Date().toISOString();
-
-            // Run simulation
-            let simResults: SimResultsMLB;
-            try {
-                simResults = await window.electronAPI.simulateMatchupMLB({
-                    // TO ADD:
-                    // League avg stats
-                    // Player stats
-                    matchupLineups: redoneLineups,
-                    numGames: 50000
-                });
-            } catch (error) {
-                throw new Error(`Error while running simulation`);
-            }
-
-            // Save sim history
-            const simHistoryEntry: SimHistoryEntry = {
-                matchId: matchId,
-                timestamp: timestamp,
-                simResults: simResults,
-                inputData: teamInputs
-            };
-            
-            try {
-                const saveSuccess = await window.electronAPI.saveSimHistory(simHistoryEntry);
-                if (!saveSuccess) {
-                    throw new Error('Unknown error');
-                }
-            } catch (error) {
-                throw new Error(`Error while saving simulation results`);
-            }
-
-            // Fetch updated sim history
-            dispatch(fetchSimResults({ league, matchId }));
-        } catch (error) {
-            setSimError(error instanceof Error ? error.message : 'An unexpected error occurred');
-            console.error('Simulation error:', error);
-        } finally {
-            setIsSimulating(false);
+    const handleRunSimulation = async (isSeries: boolean) => {
+        if (!gameContainer || !teamInputs) return;
+        
+        if (isSeries) {
+            await runSeries();
+        } else {
+            await runSingleGame();
         }
     };
 
@@ -187,7 +154,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         dispatch(clearGameData({ league, matchId }));
         
         // Fetch new lineup data(this will trigger the useEffect to fetch player stats)
-        dispatch(fetchMlbLineup({
+        dispatch(fetchMlbGameData({
             league,
             date,
             participant1,
@@ -215,10 +182,20 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         dispatch(updateMLBPlayerPosition({ matchId, team, playerId, position }));
     };
 
+    const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+        setSelectedGameTab(newValue);
+        dispatch(switchCurrentSeriesGame({ 
+          league,
+          matchId, 
+          gameNumber: newValue + 1,
+        }));
+    };
+
     // ---------- Render ----------
-    if (lineupStatus === 'loading' || playerStatsStatus === 'loading' || (lineupStatus === 'succeeded' && playerStatsStatus === 'idle')) return <CircularProgress />;
-    if (lineupError) return <Alert severity="error">{lineupError}</Alert>;
-    if (!lineupData) return <Alert severity="info">No lineup data found.</Alert>;
+    if (dataStatus === 'loading' || playerStatsStatus === 'loading' || (dataStatus === 'succeeded' && playerStatsStatus === 'idle')) return <CircularProgress />;
+    if (dataError) return <Alert severity="error">{dataError}</Alert>;
+    if (playerStatsError) return <Alert severity="error">{'Error fetching player stats. Please try again.'}</Alert>;
+    if (!gameLineups) return <Alert severity="info">No lineup data found.</Alert>;
 
     return (
         <Box sx={{ flexGrow: 1, p: 2 }}>
@@ -230,15 +207,16 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 simError={simError}
                 simResults={simResults}
                 simStatus={simStatus}
-                lineupData={lineupData}
+                lineupData={gameLineups}
                 hasInvalidLeans={hasInvalidLeans}
+                seriesGames={seriesGames}
                 onRefresh={handleRefresh}
                 onRunSimulation={handleRunSimulation}
             />
             <BettingBoundsSection
                 awayTeamName={participant1}
                 homeTeamName={participant2}
-                gameLineups={gameLineups}
+                gameContainer={gameContainer}
                 onUpdateTeamLean={(teamType, leanType, value) => {
                     dispatch(updateTeamLean({
                         league,
@@ -259,32 +237,45 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                     }));
                 }}
             />
-            <Grid container spacing={2} sx={{ display: 'flex', flexWrap: 'wrap' }}>
-                <TeamCard>
-                    <DraggableLineup
-                        teamName={`${participant1} (Away)`}
-                        teamData={lineupData.away}
-                        teamType="away"
-                        matchId={matchId}
-                        league={league}
-                        onLineupReorder={handleLineupReorder}
-                        onPitcherReorder={handlePitcherReorder}
-                        onPositionChange={handlePositionChange}
-                    />
-                </TeamCard>
-                <TeamCard>
-                    <DraggableLineup
-                        teamName={`${participant2} (Home)`}
-                        teamData={lineupData.home}
-                        teamType="home"
-                        matchId={matchId}
-                        league={league}
-                        onLineupReorder={handleLineupReorder}
-                        onPitcherReorder={handlePitcherReorder}
-                        onPositionChange={handlePositionChange}
-                    />
-                </TeamCard>
-            </Grid>
+            
+            {seriesGames && Object.keys(seriesGames).length > 0 && (
+                <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+                    <Tabs value={selectedGameTab} onChange={handleTabChange}>
+                        {Object.keys(seriesGames).map((gameNumber: string) => (
+                            <Tab key={gameNumber} label={`Game ${gameNumber}`} />
+                        ))}
+                    </Tabs>
+                </Box>
+            )}
+            
+            <Box sx={{ border: '1px solid', borderColor: 'divider', p: 2, mb: 2 }}>
+                <Grid container spacing={2} sx={{ display: 'flex', flexWrap: 'wrap' }}>
+                    <TeamCard>
+                        <DraggableLineup
+                            teamName={`${participant1} (Away)`}
+                            teamData={gameLineups.away}
+                            teamType="away"
+                            matchId={matchId}
+                            league={league}
+                            onLineupReorder={handleLineupReorder}
+                            onPitcherReorder={handlePitcherReorder}
+                            onPositionChange={handlePositionChange}
+                        />
+                    </TeamCard>
+                    <TeamCard>
+                        <DraggableLineup
+                            teamName={`${participant2} (Home)`}
+                            teamData={gameLineups.home}
+                            teamType="home"
+                            matchId={matchId}
+                            league={league}
+                            onLineupReorder={handleLineupReorder}
+                            onPitcherReorder={handlePitcherReorder}
+                            onPositionChange={handlePositionChange}
+                        />
+                    </TeamCard>
+                </Grid>
+            </Box>
 
             <Snackbar
                 open={showInvalidLeansSnackbar}

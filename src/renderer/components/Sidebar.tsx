@@ -8,6 +8,7 @@ import { fetchLeagues, selectAllLeagues, selectLeaguesLoading, selectLeaguesErro
 import { openLeagueTab } from '@/store/slices/tabSlice';
 import { initializeLeague } from '@/store/slices/scheduleSlice';
 import { initializeLeagueSimInputs } from '@/store/slices/simInputsSlice';
+import { LeagueName } from '@@/types/league';
 
 // Define props for Sidebar, including width and resize handler
 interface SidebarProps {
@@ -37,7 +38,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentWidth, onResize }) => {
             leagues.forEach(league => {
                 dispatch(initializeLeague(league.League.trim()));
                 console.log("Initialized schedule state for league:", league.League.trim());
-                dispatch(initializeLeagueSimInputs(league.League.trim()));
+                dispatch(initializeLeagueSimInputs(league.League.trim() as LeagueName));
                 console.log("Initialized sim inputs for league:", league.League.trim());
             });
         }

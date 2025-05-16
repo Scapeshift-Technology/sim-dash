@@ -3,15 +3,14 @@ import {
     Box,
     Typography,
     Paper,
-    Button,
     IconButton,
     Alert,
-    CircularProgress
+    Tooltip
 } from '@mui/material';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import MLBSimulationResultsSummary from '@/components/simulation/MLBSimulationResultsSummary';
 import type { SimHistoryEntry } from '@/types/simHistory';
+import SimulationButton from './SimulationButton';
 
 interface MLBMatchupHeaderProps {
     participant1: string;
@@ -23,8 +22,9 @@ interface MLBMatchupHeaderProps {
     simStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
     lineupData: any; // TODO: Add proper type
     hasInvalidLeans: boolean;
+    seriesGames?: { [key: string]: any };
     onRefresh: () => void;
-    onRunSimulation: () => void;
+    onRunSimulation: (isSeries: boolean) => void;
 }
 
 const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
@@ -37,6 +37,7 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
     simStatus,
     lineupData,
     hasInvalidLeans,
+    seriesGames,
     onRefresh,
     onRunSimulation
 }) => {
@@ -63,14 +64,16 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
                         {date}
                     </Typography>
                 </Box>
-                <IconButton 
-                    onClick={onRefresh}
-                    size="small"
-                    sx={{ ml: 2 }}
-                    disabled={!lineupData}
-                >
-                    <RefreshIcon />
-                </IconButton>
+                <Tooltip title="Reload lineups">
+                    <IconButton 
+                        onClick={onRefresh}
+                        size="small"
+                        sx={{ ml: 2 }}
+                        disabled={!lineupData}
+                    >
+                        <RefreshIcon />
+                    </IconButton>
+                </Tooltip>
             </Box>
             {simError && (
                 <Alert severity="error" sx={{ mb: 2 }}>
@@ -86,22 +89,12 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
                     flex: '0 0 200px',
                     maxWidth: '200px'
                 }}>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        size="large"
-                        startIcon={isSimulating ? <CircularProgress size={20} color="inherit" /> : <PlayArrowIcon />}
-                        onClick={onRunSimulation}
+                    <SimulationButton
+                        isSimulating={isSimulating}
                         disabled={isSimulating || !lineupData || hasInvalidLeans}
-                        sx={{ 
-                            height: '100%', 
-                            width: '100%',
-                            py: '8px',
-                            px: '16px'
-                        }}
-                    >
-                        {isSimulating ? 'Running...' : 'Run Simulation'}
-                    </Button>
+                        seriesGames={seriesGames}
+                        onRunSimulation={onRunSimulation}
+                    />
                 </Box>
                 <Box sx={{ 
                     flex: '0 0 200px',

@@ -2,6 +2,26 @@
 
 export type TeamType = 'away' | 'home';
 
+// ---------- MLB game data types ----------
+
+export interface SeriesInfoMLB {
+  [key: number]: MLBGameData;
+}
+
+export interface GameMetadataMLB {
+  seriesGameNumber?: number;
+}
+
+export interface MLBGameData { // Very similar to MLBGameInputs2(type in simInputs.ts), but with less info
+  lineups: MatchupLineups;
+  gameInfo: GameMetadataMLB;
+}
+
+export interface MLBGameDataResponse { // Very similar to MLBGameContainer(type in simInputs.ts), but with less info. Used when finding game data using MLB Api and swish.
+  currentGame: MLBGameData;
+  seriesGames?: SeriesInfoMLB;  // Optional series data for other games if current game is first game of series
+}
+
 // ---------- MLB sim types ----------
 
 export type Position = 'C' | '1B' | '2B' | '3B' | 'SS' | 'LF' | 'CF' | 'RF' | 'DH' | 'SP' | 'RP' | 'TBD';
@@ -241,6 +261,7 @@ export interface MlbScheduleApiTeam {
     id: number;
     name: string;
   };
+  seriesNumber: number;
   probablePitcher: {
     id: number;
   }
@@ -248,12 +269,24 @@ export interface MlbScheduleApiTeam {
 
 export interface MlbScheduleApiGame {
   gamePk: number;
+  officialDate: string;
   gameDate: string;
   gameNumber: number;
+  gamesInSeries: number;
   teams: {
     away: MlbScheduleApiTeam;
     home: MlbScheduleApiTeam;
   };
+  seriesGameNumber: number;
+}
+
+export interface MlbScheduleApiDate {
+  date: string;
+  games: MlbScheduleApiGame[];
+}
+
+export interface MlbScheduleApiResponse {
+  dates: MlbScheduleApiDate[];
 }
 
 // ----- Roster endpoint -----

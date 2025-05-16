@@ -9,6 +9,12 @@ export interface OutcomeCounts {
 
 // ----- Table display types ----------
 
+export interface SeriesData {
+  team: string;
+  winPercent: number;
+  usaFair: number;
+}
+
 export interface SidesData {
   team: string;
   period: string;
@@ -63,6 +69,19 @@ export interface SimResultsMLB {
   sides: SidesCountsMLB;
   props: PropsCountsMLB;
   totals: TotalsCountsMLB;
+  series?: SeriesProbsMLB
+}
+
+// ----- Series -----
+
+export interface SeriesProbsMLB {
+  home: TeamSeriesProbsMLB;
+  away: TeamSeriesProbsMLB;
+}
+
+export interface TeamSeriesProbsMLB {
+  winPercent: number;
+  lossPercent: number;
 }
 
 // ----- Sides -----

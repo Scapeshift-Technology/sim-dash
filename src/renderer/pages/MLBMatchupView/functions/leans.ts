@@ -1,4 +1,4 @@
-import type { MLBGameInputs, MLBSimInputs } from "@/types/simInputs";
+import type { MLBGameInputs2, MLBGameSimInputs } from "@/types/simInputs";
 import type { MatchupLineups, Player, Stats } from "@/types/mlb";
 import { normalizeStats } from "@@/services/mlb/sim/probabilities";
 
@@ -30,12 +30,12 @@ const PITCHER_WEIGHTS: StatWeights = {
  * @param {MLBGameInputs} gameInputs - The full set of game inputs. Includes lineups and leans.
  * @returns {MatchupLineups} The same set of lineups, but with the leans applied.
  */
-function applyMatchupLeansMLB(gameInputs: MLBGameInputs): MatchupLineups {
-  const lineups = gameInputs.lineups.data;
-  const inputs = gameInputs.inputs;
+function applyMatchupLeansMLB(gameInputs: MLBGameInputs2): MatchupLineups {
+  const lineups = gameInputs.lineups;
+  const inputs = gameInputs.simInputs;
 
   if (!lineups || !inputs) {
-    return gameInputs.lineups.data as MatchupLineups;
+    return gameInputs.lineups;
   }
 
   // Apply matchup leans
@@ -77,7 +77,7 @@ type StatWeights = {
 
 // ----- Functions -----
 
-function applyLeansToLineups(lineups: MatchupLineups, inputs: MLBSimInputs): MatchupLineups {
+function applyLeansToLineups(lineups: MatchupLineups, inputs: MLBGameSimInputs): MatchupLineups {
   // Calculate leans for each team
   const matchupLeans: MatchupLeans = {
     home: calculateTeamLeans(lineups.home, inputs.home),
@@ -123,7 +123,7 @@ function applyPlayerLeansToLineups(lineups: MatchupLineups, leans: MatchupLeans)
   return newLineups;
 }
 
-function calculateTeamLeans(teamLineup: MatchupLineups['home' | 'away'], teamInputs: MLBSimInputs['home' | 'away']): TeamLeans {
+function calculateTeamLeans(teamLineup: MatchupLineups['home' | 'away'], teamInputs: MLBGameSimInputs['home' | 'away']): TeamLeans {
   const hitters: TeamLeanMap = {};
   const bullpen: TeamLeanMap = {};
 

@@ -1,17 +1,14 @@
-import { MLBGameInputs } from "@@/types/simInputs";
+import { MLBGameInputs2, SeriesGameInputs } from "@@/types/simInputs";
 import { applyMatchupLeansMLB } from "./leans";
 import { SimResultsMLB } from "@@/types/bettingResults";
-
-// ---------- Main function ----------
+import { calculateSeriesWinProbability } from "@@/services/mlb/sim/analysis/seriesAnalyzer";
+// ---------- Main functions ----------
 
 export async function runSimulation(
-    gameInputs: MLBGameInputs,
+    gameInputs: MLBGameInputs2,
     numGames: number = 50000
 ): Promise<SimResultsMLB> {
-    const redoneLineups = applyMatchupLeansMLB({
-        lineups: gameInputs.lineups,
-        inputs: gameInputs.inputs
-    });
+    const redoneLineups = applyMatchupLeansMLB(gameInputs);
 
     const results = await window.electronAPI.simulateMatchupMLB({
         matchupLineups: redoneLineups,
@@ -19,4 +16,32 @@ export async function runSimulation(
     });
 
     return results;
+}
+
+export async function runSeriesSimulation(
+    gameInputs: SeriesGameInputs,
+    numGames: number = 50000
+): Promise<SimResultsMLB> {
+    const simResults: {[key: number]: SimResultsMLB} = {};
+    
+    // Only process first 3 games
+    const seriesGames = Object.values(gameInputs)
+      .filter(game => game.gameInfo.seriesGameNumber <= 3);
+    
+    for (const game of seriesGames) {
+      const gameSimResults = await runSimulation(game, numGames);
+      simResults[game.gameInfo.seriesGameNumber] = gameSimResults;
+    }
+
+    // Calculate series probabilities
+    const seriesProbs = calculateSeriesWinProbability(simResults);
+
+    const calculatedResults: SimResultsMLB = {
+      ...simResults[1],
+      series: seriesProbs
+    };
+    console.log('Probabilities', calculatedResults);
+
+    // Return
+    return calculatedResults;
 }
