@@ -36,7 +36,7 @@ exports.default = async function notarizing(context) {
   console.log(`  App Path: ${appPath}`);
   console.log(`  Using APPLE_ID: ${process.env.APPLE_ID}`);
   // Do not log the password itself, just its presence
-  console.log(`  Using APPLE_ID_PASSWORD: ${process.env.APPLE_ID_PASSWORD ? 'Set' : 'NOT SET'}`);
+  console.log(`  Using APPLE_APP_SPECIFIC_PASSWORD: ${process.env.APPLE_APP_SPECIFIC_PASSWORD ? 'Set' : 'NOT SET'}`);
   console.log(`  Using APPLE_TEAM_ID: ${process.env.APPLE_TEAM_ID}`);
 
   try {

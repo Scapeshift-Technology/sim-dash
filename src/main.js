@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs'); // Import fs module
+const url = require('url'); // Import url module
 const log = require('electron-log/main'); // <-- Import electron-log
 const dbHelper = require('./db'); // Local SQLite helper
 const sql = require('mssql'); // SQL Server driver
@@ -123,14 +124,16 @@ async function createMainWindow() {
     } else {
         // Production: Load the built HTML file
         // Adjust the path to point to the built output in dist/renderer
-        const indexPath = path.join(__dirname, '..', 'dist', 'renderer', 'index.html');
-        log.info(`Production mode: Attempting to load file: ${indexPath}`); // <-- Log before loading
+        const indexPath = path.join(app.getAppPath(), 'dist', 'renderer', 'index.html');
         console.log(`Loading production build from: ${indexPath}`);
-        mainWindow.loadFile(indexPath).then(() => {
-            log.info(`Successfully loaded production file: ${indexPath}`); // <-- Log success
+        mainWindow.loadURL(url.format({
+            pathname: indexPath,
+            protocol: 'file:',
+            slashes: true
+        })).then(() => {
+            log.info(`Successfully loaded production file: ${indexPath}`);
         }).catch(err => {
-            log.error(`Failed to load production build from ${indexPath}:`, err); // <-- Log error
-            console.error('Failed to load production build:', err);
+            log.error(`Failed to load production build from ${indexPath}:`, err);
         });
     }
 
