@@ -4,7 +4,8 @@ import {
   teamNameToAbbreviationMLB, 
   transformSidesCountsMLB, 
   transformTotalsCountsMLB,
-  transformPropsCountsMLB
+  transformPropsCountsMLB,
+  transformSeriesProbsMLB
 } from '@/utils/displayMLB';
 import SidesTable from '@/components/SidesTable';
 import { Box, Typography, IconButton, CircularProgress, Divider } from '@mui/material';
@@ -12,6 +13,7 @@ import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material';
 import TotalsTable from '@/components/TotalsTable';
 import FirstInningTable from '@/components/FirstInningTable';
 import PlayerPropsTable from '@/components/PlayerPropsTable';
+import SeriesTable from '@/components/SeriesTable';
 import { MLBGameSimInputs } from '@@/types/simInputs';
 
 // ---------- Collapsible Section ----------
@@ -61,6 +63,7 @@ const MLBSimulationView: React.FC = () => {
   const [inputData, setInputData] = useState<MLBGameSimInputs | null>(null);
   const [sectionVisibility, setSectionVisibility] = useState({
     inputs: true,
+    series: true,
     sides: true,
     totals: true,
     firstInningProps: true,
@@ -188,6 +191,7 @@ const MLBSimulationView: React.FC = () => {
   const sidesData = transformSidesCountsMLB(simData.sides, awayTeamAbbreviation, homeTeamAbbreviation);
   const totalsData = transformTotalsCountsMLB(simData.totals, awayTeamAbbreviation, homeTeamAbbreviation);
   const propsData = transformPropsCountsMLB(simData.props, awayTeamAbbreviation, homeTeamAbbreviation);
+  const seriesData = simData.series ? transformSeriesProbsMLB(simData.series, awayTeamAbbreviation, homeTeamAbbreviation) : [];
 
   return (
     <div style={{ padding: '20px' }}>
@@ -217,6 +221,16 @@ const MLBSimulationView: React.FC = () => {
           {renderTeamLeans('home', homeTeamName)}
         </Box>
       </CollapsibleSection>
+
+      {simData.series && (
+        <CollapsibleSection
+          title="Series Win Probabilities"
+          isOpen={sectionVisibility.series}
+          onToggle={() => toggleSection('series')}
+        >
+          <SeriesTable data={seriesData} />
+        </CollapsibleSection>
+      )}
       
       <CollapsibleSection
         title="Simulated Sides Results"

@@ -6,6 +6,7 @@ import {
   OutcomeCounts, 
   TotalsData,
   TotalsCountsMLB, 
+  SeriesData,
   GamePeriodTotalsMLB, 
   TotalsLinesMLB,
   PropsCountsMLB,
@@ -13,7 +14,9 @@ import {
   FirstInningScoreCountsMLB,
   PropsData,
   PlayerPropsData,
-  AllPlayersPropsCountsMLB
+  AllPlayersPropsCountsMLB,
+  SeriesProbsMLB,
+  TeamSeriesProbsMLB
 } from "@/types/bettingResults";
 import { countsToAmericanOdds, countsToProbability, marginOfError, proportionToAmericanOdds } from "./oddsCalculations";
 import {
@@ -157,6 +160,28 @@ function transformTotalsOutcomeCountsMLB(
 
 export { transformTotalsCountsMLB };
 
+// ----- Series -----
+
+function transformSeriesProbsMLB(seriesProbs: SeriesProbsMLB, awayTeamName: string, homeTeamName: string): SeriesData[] {
+  const { home, away } = seriesProbs;
+  const homeData = transformTeamSeriesProbsMLB(home, homeTeamName);
+  const awayData = transformTeamSeriesProbsMLB(away, awayTeamName);
+
+  return [homeData, awayData];
+}
+
+function transformTeamSeriesProbsMLB(teamSeriesProbs: TeamSeriesProbsMLB, teamName: string): SeriesData {
+  const { winPercent } = teamSeriesProbs;
+  const usaFair = proportionToAmericanOdds(winPercent);
+
+  return {
+    team: teamName,
+    winPercent: winPercent,
+    usaFair: usaFair
+  }
+}
+
+export { transformSeriesProbsMLB };
 // ----- Props -----
 // -- Player props --
 
