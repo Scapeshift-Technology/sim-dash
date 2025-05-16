@@ -4,7 +4,8 @@ import {
     Typography,
     Paper,
     IconButton,
-    Alert
+    Alert,
+    Tooltip
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import MLBSimulationResultsSummary from '@/components/simulation/MLBSimulationResultsSummary';
@@ -63,14 +64,16 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
                         {date}
                     </Typography>
                 </Box>
-                <IconButton 
-                    onClick={onRefresh}
-                    size="small"
-                    sx={{ ml: 2 }}
-                    disabled={!lineupData}
-                >
-                    <RefreshIcon />
-                </IconButton>
+                <Tooltip title="Reload lineups">
+                    <IconButton 
+                        onClick={onRefresh}
+                        size="small"
+                        sx={{ ml: 2 }}
+                        disabled={!lineupData}
+                    >
+                        <RefreshIcon />
+                    </IconButton>
+                </Tooltip>
             </Box>
             {simError && (
                 <Alert severity="error" sx={{ mb: 2 }}>
