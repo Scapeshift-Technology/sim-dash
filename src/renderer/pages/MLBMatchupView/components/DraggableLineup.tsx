@@ -137,30 +137,6 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
             <Typography variant="h6" gutterBottom>{teamName}</Typography>
             <Divider sx={{ mb: 1 }}/>
 
-            {/* Hitters Section */}
-            <TeamSectionCard
-                title="Hitter"
-                adjustmentValue={hitterAdjustment}
-                onAdjustmentChange={handleHitterAdjustmentChange}
-                isDraggable={true}
-                sortableItems={[...teamData.lineup.map(p => p.id), ...teamData.bench.map(p => p.id)]}
-                onDragEnd={handleDragEnd}
-            >
-                <Box sx={{ mb: 1 }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                        Batting Order
-                    </Typography>
-                    {renderPlayerList(teamData.lineup, true, false, true)}
-                </Box>
-
-                <Box>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                        Bench
-                    </Typography>
-                    {renderPlayerList(teamData.bench, true, false)}
-                </Box>
-            </TeamSectionCard>
-
             {/* Pitchers Section */}
             <TeamSectionCard
                 title="Pitcher"
@@ -184,6 +160,30 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                         Bullpen
                     </Typography>
                     {renderPlayerList(teamData.bullpen, true, true)}
+                </Box>
+            </TeamSectionCard>
+
+            {/* Hitters Section */}
+            <TeamSectionCard
+                title="Hitter"
+                adjustmentValue={hitterAdjustment}
+                onAdjustmentChange={handleHitterAdjustmentChange}
+                isDraggable={true}
+                sortableItems={[...teamData.lineup.map(p => p.id), ...teamData.bench.map(p => p.id)]}
+                onDragEnd={handleDragEnd}
+            >
+                <Box sx={{ mb: 1 }}>
+                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                        Batting Order
+                    </Typography>
+                    {renderPlayerList(teamData.lineup, true, false, true)}
+                </Box>
+
+                <Box>
+                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                        Bench
+                    </Typography>
+                    {renderPlayerList(teamData.bench, true, false)}
                 </Box>
             </TeamSectionCard>
         </Paper>
