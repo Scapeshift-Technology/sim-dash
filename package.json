@@ -66,7 +66,7 @@
       "src/**/*",
       "node_modules/**/*",
       "package.json",
-      "src/build-info.json"
+      "dist/renderer/**/*"
     ],
     "directories": {
       "buildResources": "assets",

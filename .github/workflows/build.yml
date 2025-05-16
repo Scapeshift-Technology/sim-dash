@@ -139,7 +139,7 @@ jobs:
           CSC_LINK: ${{ secrets.MACOS_CERT_BASE64 }}
           CSC_KEY_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID_EMAIL }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_APP_PASSWORD }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
       - name: Upload macOS artifacts (x64 + arm64)
