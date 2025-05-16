@@ -12,14 +12,14 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import type { MLBLineups, MLBSimInputs } from "@/types/simInputs";
+import type { MLBGameContainer, MLBGameSimInputs } from "@/types/simInputs";
 import { findOptimalLeans } from '@/pages/MLBMatchupView/functions/optimalLeans';
-import { MarketLinesMLB } from '@@/types/mlb';
+import { MarketLinesMLB, MatchupLineups } from '@@/types/mlb';
 
 interface BettingBoundsSectionProps {
     awayTeamName: string;
     homeTeamName: string;
-    gameLineups: MLBLineups | undefined;
+    gameContainer: MLBGameContainer | undefined;
     onUpdateTeamLean: (teamType: 'home' | 'away', leanType: 'offense' | 'defense', value: number) => void;
     onUpdatePlayerLean: (teamType: 'home' | 'away', playerType: 'hitter' | 'pitcher', playerId: number, value: number) => void;
 }
@@ -27,7 +27,7 @@ interface BettingBoundsSectionProps {
 const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
     awayTeamName,
     homeTeamName,
-    gameLineups,
+    gameContainer,
     onUpdateTeamLean,
     onUpdatePlayerLean
 }) => {
@@ -35,7 +35,7 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
     
     const [isExpanded, setIsExpanded] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
-    const [leanResults, setLeanResults] = useState<MLBSimInputs | null>(null);
+    const [leanResults, setLeanResults] = useState<MLBGameSimInputs | null>(null);
     const [processError, setProcessError] = useState<string>('');
 
     const [awayMoneyline, setAwayMoneyline] = useState('');
@@ -122,7 +122,7 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
         };
 
         try {
-            const optimalLeans = await findOptimalLeans(gameLineups as MLBLineups, marketLines);
+            const optimalLeans = await findOptimalLeans(gameContainer?.currentGame?.lineups as MatchupLineups, marketLines);
             console.log(optimalLeans);
             setLeanResults(optimalLeans);
         } catch (error) {

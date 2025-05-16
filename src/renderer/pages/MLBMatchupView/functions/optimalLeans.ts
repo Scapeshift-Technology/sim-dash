@@ -1,8 +1,9 @@
 import type { 
     MarketLinesMLB, 
-    MarketLineDifferenceMLB
+    MarketLineDifferenceMLB,
+    MatchupLineups
   } from "@/types/mlb";
-  import type { MLBGameInputs, MLBLineups, MLBSimInputs, MLBSimInputsTeam } from "@/types/simInputs";
+  import type { MLBGameInputs2, MLBGameSimInputs, MLBGameSimInputsTeam } from "@/types/simInputs";
   import { runSimulation } from "./simulation";
   import { SimResultsMLB } from "@@/types/bettingResults";
   import { americanOddsToProbability, countsToProbability } from "@/utils/oddsCalculations";
@@ -10,23 +11,23 @@ import type {
   // ---------- Main function ----------
   
   async function findOptimalLeans(
-      lineups: MLBLineups,
+      lineups: MatchupLineups,
       marketLines: MarketLinesMLB
   ) {
     // Set up before finding the optimal leans
-    const initialTeamLean: MLBSimInputsTeam = {
+    const initialTeamLean: MLBGameSimInputsTeam = {
       teamHitterLean: 0,
       teamPitcherLean: 0,
       individualHitterLeans: {},
       individualPitcherLeans: {}
     }
   
-    let leans: MLBSimInputs = {
+    let leans: MLBGameSimInputs = {
       away: initialTeamLean,
       home: initialTeamLean
     }
   
-    let adjustments: MLBSimInputs = {
+    let adjustments: MLBGameSimInputs = {
       away: initialTeamLean,
       home: initialTeamLean
     }
@@ -36,9 +37,10 @@ import type {
     const maxIterations = 13;
     
     while (iterations < maxIterations) {
-      const gameInputs: MLBGameInputs = {
+      const gameInputs: MLBGameInputs2 = {
         lineups: lineups,
-        inputs: leans
+        simInputs: leans,
+        gameInfo: {}
       }
   
       // Run the sim
@@ -74,9 +76,9 @@ import type {
   
   // ---------- Helper functions ----------
   
-  function findAdjustments(diffs: MarketLineDifferenceMLB, leans: MLBSimInputs): MLBSimInputs {
+  function findAdjustments(diffs: MarketLineDifferenceMLB, leans: MLBGameSimInputs): MLBGameSimInputs {
     // Initialize adjustments
-    const adjustments: MLBSimInputs = {
+    const adjustments: MLBGameSimInputs = {
       away: {
         teamHitterLean: 0,
         teamPitcherLean: 0,
@@ -143,14 +145,14 @@ import type {
     return adjustments;
   }
   
-  function addMLBSimInputsObjects(leans1: MLBSimInputs, leans2: MLBSimInputs): MLBSimInputs {
+  function addMLBSimInputsObjects(leans1: MLBGameSimInputs, leans2: MLBGameSimInputs): MLBGameSimInputs {
     return {
-      away: addMLBSimInputsTeamObjects(leans1.away, leans2.away),
-      home: addMLBSimInputsTeamObjects(leans1.home, leans2.home)
+      away: addMLBGameSimInputsTeamObjects(leans1.away, leans2.away),
+      home: addMLBGameSimInputsTeamObjects(leans1.home, leans2.home)
     }
   }
   
-  function addMLBSimInputsTeamObjects(leans1: MLBSimInputsTeam, leans2: MLBSimInputsTeam): MLBSimInputsTeam {
+  function addMLBGameSimInputsTeamObjects(leans1: MLBGameSimInputsTeam, leans2: MLBGameSimInputsTeam): MLBGameSimInputsTeam {
     return {
       teamHitterLean: Math.max(-10, Math.min(10, leans1.teamHitterLean + leans2.teamHitterLean)),
       teamPitcherLean: Math.max(-10, Math.min(10, leans1.teamPitcherLean + leans2.teamPitcherLean)),

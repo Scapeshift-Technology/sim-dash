@@ -4,7 +4,7 @@ import type { Profile } from './store/slices/profilesSlice'; // Assuming Profile
 import type { SimResultsMLB } from '@/types/bettingResults';
 import type { SimResults } from '@/types/mlb';
 import type { SimHistoryEntry } from '@/types/simHistory';
-import type { MLBSimInputs } from '@/types/simInputs';
+import type { MLBGameSimInputs } from '@/types/simInputs';
 import type { 
   LoginConfig, 
   LoginResult, 
@@ -37,7 +37,7 @@ declare global {
 
       // ---------- MLB-specific functions ----------
       // Fetching data
-      fetchMlbLineup: (args: FetchMlbLineupArgs) => Promise<MatchupLineups>;
+      fetchMlbGameData: (args: FetchMlbGameDataArgs) => Promise<MLBGameDataResponse>;
       fetchMlbGamePlayerStats: (args: { matchupLineups: MatchupLineups, date: string }) => Promise<MatchupLineups>;
 
       // Simulations
@@ -55,7 +55,7 @@ declare global {
       // Simulation Results Window Communication
       getSimData: () => Promise<{
         simData: SimResultsMLB;
-        inputData: MLBSimInputs;
+        inputData: MLBGameSimInputs;
         timestamp: string;
         awayTeamName: string;
         homeTeamName: string;

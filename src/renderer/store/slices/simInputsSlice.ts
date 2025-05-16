@@ -1,68 +1,96 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { MatchupLineups, Player, Position } from '@/types/mlb';
-import type { MLBGameInputs, MLBLineups, MLBSimInputs, MLBSimInputsTeam, SimInputsState } from '@/types/simInputs';
+import type { GameMetadataMLB, MatchupLineups, MLBGameData, MLBGameDataResponse, Player, Position, SeriesInfoMLB } from '@/types/mlb';
+import type { 
+  MLBGameSimInputs, 
+  MLBGameSimInputsTeam, 
+  SimInputsState, 
+  MLBGameInputs2, 
+  MLBGameContainer 
+} from '@/types/simInputs';
 import { LeagueName } from '@@/types/league';
 
 // ---------- Initial States ----------
 // ----- MLB -----
 
-const initialMLBTeamInputs: MLBSimInputsTeam = {
-  teamHitterLean: 0,
-  teamPitcherLean: 0,
-  individualHitterLeans: {},
-  individualPitcherLeans: {}
-}
+const initialMLBTeamInputs: MLBGameSimInputsTeam = {
+    teamHitterLean: 0,
+    teamPitcherLean: 0,
+    individualHitterLeans: {},
+    individualPitcherLeans: {}
+  }
 
-const initialMLBInputs: MLBSimInputs = {
+const initialMLBSimInputs: MLBGameSimInputs = {
   away: initialMLBTeamInputs,
   home: initialMLBTeamInputs
 }
 
-const initialMLBLineups: MLBLineups = {
-  data: null,
-  lineupsStatus: 'idle',
-  lineupsError: null,
+const initialMLBGameContainer: MLBGameContainer = {
+  currentGame: null,
+  gameDataStatus: 'idle',
+  gameDataError: null,
   statsStatus: 'idle',
   statsError: null
 }
 
-const initialGameInputsMLB: MLBGameInputs = {
-  lineups: initialMLBLineups,
-  inputs: initialMLBInputs
-};
+// ---------- Helpers ----------
+
+const formatResponseAsGameInputs = (gameData: MLBGameData) => {
+  const newGame: MLBGameInputs2 = {
+    lineups: gameData.lineups,
+    gameInfo: gameData.gameInfo,
+    simInputs: initialMLBSimInputs
+  }
+
+  return newGame;
+}
 
 // ---------- Thunks ----------
 
-export const fetchMlbLineup = createAsyncThunk<
-  { matchId: number; lineups: MatchupLineups },
+export const fetchMlbGameData = createAsyncThunk<
+  { matchId: number; gameData: MLBGameDataResponse },
   { 
-    league: string;
-    date: string;
-    participant1: string;
-    participant2: string;
-    daySequence?: number;
-    matchId: number;
-  }
+    league: string; 
+    date: string; 
+    participant1: string; 
+    participant2: string; 
+    daySequence?: number; 
+    matchId: number }
 >(
-  'simInputs/fetchMlbLineup',
+  'simInputs/fetchMlbGameData',
   async ({ league, date, participant1, participant2, daySequence, matchId }) => {
-    const lineups = await window.electronAPI.fetchMlbLineup({
+    const gameData = await window.electronAPI.fetchMlbGameData({
       league,
       date,
       participant1,
       participant2,
       daySequence
     });
-    return { matchId, lineups };
+    return { matchId, gameData };
   }
 );
 
 export const fetchMlbGamePlayerStats = createAsyncThunk<
-  { matchId: number; playerStats: MatchupLineups },
-  { matchId: number; matchupLineups: MatchupLineups, date: string }
+  { matchId: number; playerStats: MatchupLineups; seriesGamesStats?: { [key: number]: MatchupLineups } },
+  { matchId: number; matchupLineups: MatchupLineups, date: string, seriesGames?: SeriesInfoMLB }
 >(
   'simInputs/fetchMlbGamePlayerStats',
-  async ({ matchId, matchupLineups, date }) => {
+  async ({ matchId, matchupLineups, date, seriesGames }) => {
+    const seriesGamesStats: { [key: number]: MatchupLineups } = {};
+
+    if (seriesGames) {
+      for (const game of Object.values(seriesGames)) {
+        const gameMatchupLineups = game.lineups;
+        const seriesGameNumber = game.gameInfo.seriesGameNumber;
+
+        const gameStats = await window.electronAPI.fetchMlbGamePlayerStats({ matchupLineups: gameMatchupLineups, date });
+        seriesGamesStats[seriesGameNumber] = gameStats;
+      }
+
+      const playerStats = seriesGamesStats[1];
+
+      return { matchId, playerStats, seriesGamesStats };
+    }
+
     const playerStats = await window.electronAPI.fetchMlbGamePlayerStats({ matchupLineups, date });
     return { matchId, playerStats };
   }
@@ -85,7 +113,7 @@ const simInputsSlice = createSlice({
     clearGameData: (state, action: { payload: { league: LeagueName; matchId: number } }) => {
       const { league, matchId } = action.payload;
       if (league === 'MLB' && state[league]?.[matchId]) {
-        state[league][matchId] = initialGameInputsMLB;
+        state[league][matchId] = initialMLBGameContainer;
       }
     },
 
@@ -97,8 +125,8 @@ const simInputsSlice = createSlice({
       } 
     }) => {
       const { matchId, team, newLineup } = action.payload;
-      if (state['MLB']?.[matchId]?.lineups.data) {
-        state['MLB'][matchId].lineups.data[team].lineup = newLineup;
+      if (state['MLB']?.[matchId]?.currentGame) {
+        state['MLB'][matchId].currentGame.lineups[team].lineup = newLineup;
       }
     },
     editMLBBench: (state, action: {
@@ -109,8 +137,8 @@ const simInputsSlice = createSlice({
       }
     }) => {
       const { matchId, team, newBench } = action.payload;
-      if (state['MLB']?.[matchId]?.lineups.data) {
-        state['MLB'][matchId].lineups.data[team].bench = newBench;
+      if (state['MLB']?.[matchId]?.currentGame) {
+        state['MLB'][matchId].currentGame.lineups[team].bench = newBench;
       }
     },
     editMLBStartingPitcher: (state, action: {
@@ -121,8 +149,8 @@ const simInputsSlice = createSlice({
       }
     }) => {
       const { matchId, team, newStartingPitcher } = action.payload;
-      if (state['MLB']?.[matchId]?.lineups.data) {
-        state['MLB'][matchId].lineups.data[team].startingPitcher = newStartingPitcher;
+      if (state['MLB']?.[matchId]?.currentGame) {
+        state['MLB'][matchId].currentGame.lineups[team].startingPitcher = newStartingPitcher;
       }
     },
     editMLBBullpen: (state, action: {
@@ -133,8 +161,8 @@ const simInputsSlice = createSlice({
       }
     }) => {
       const { matchId, team, newBullpen } = action.payload;
-      if (state['MLB']?.[matchId]?.lineups.data) {
-        state['MLB'][matchId].lineups.data[team].bullpen = newBullpen;
+      if (state['MLB']?.[matchId]?.currentGame) {
+        state['MLB'][matchId].currentGame.lineups[team].bullpen = newBullpen;
       }
     },
 
@@ -147,8 +175,8 @@ const simInputsSlice = createSlice({
       }
     }) => {
       const { matchId, team, playerId, position } = action.payload;
-      if (state['MLB']?.[matchId]?.lineups.data) {
-        const player = state['MLB'][matchId].lineups.data[team].lineup.find(p => p.id === playerId);
+      if (state['MLB']?.[matchId]?.currentGame) {
+        const player = state['MLB'][matchId].currentGame.lineups[team].lineup.find(p => p.id === playerId);
         if (player) {
           player.position = position;
         }
@@ -166,11 +194,11 @@ const simInputsSlice = createSlice({
       const { league, matchId, teamType, leanType, value } = action.payload;
       
       // Only handle MLB for now
-      if (league === 'MLB' && state[league]?.[matchId]) {
+      if (league === 'MLB' && state[league]?.[matchId]?.currentGame) {
         if (leanType === 'offense') {
-          state[league][matchId].inputs[teamType].teamHitterLean = value;
+          state[league][matchId].currentGame.simInputs[teamType].teamHitterLean = value;
         } else {
-          state[league][matchId].inputs[teamType].teamPitcherLean = value;
+          state[league][matchId].currentGame.simInputs[teamType].teamPitcherLean = value;
         }
       }
     },
@@ -187,49 +215,63 @@ const simInputsSlice = createSlice({
       const { league, matchId, teamType, playerType, playerId, value } = action.payload;
       
       // Only handle MLB for now
-      if (league === 'MLB' && state[league]?.[matchId]) {
+      if (league === 'MLB' && state[league]?.[matchId]?.currentGame) {
         if (playerType === 'hitter') {
-          state[league][matchId].inputs[teamType].individualHitterLeans[playerId] = value;
+          state[league][matchId].currentGame.simInputs[teamType].individualHitterLeans[playerId] = value;
         } else {
-          state[league][matchId].inputs[teamType].individualPitcherLeans[playerId] = value;
+          state[league][matchId].currentGame.simInputs[teamType].individualPitcherLeans[playerId] = value;
         }
       }
     }
   },
   extraReducers: (builder) => {
     builder
-      // ---------- Fetch MLB Lineup ----------
-      .addCase(fetchMlbLineup.pending, (state, action) => {
+      // ---------- Fetch MLB Game Data ----------
+      .addCase(fetchMlbGameData.pending, (state, action) => {
         const matchId = action.meta.arg.matchId;
         if (!state['MLB']) {
           state['MLB'] = {};
         }
         if (!state['MLB']?.[matchId]) {
-          state['MLB'][matchId] = initialGameInputsMLB;
+          state['MLB'][matchId] = initialMLBGameContainer;
         }
         
         // Create a copy of the current state to allow for direct assignment
-        const newState = { ...state['MLB'][matchId] };
-        newState.lineups = { ...newState.lineups };
-        
-        newState.lineups.lineupsError = null;
-        newState.lineups.lineupsStatus = 'loading';
+        const newState = { 
+          ...state['MLB'][matchId],
+          gameDataError: null,
+          gameDataStatus: 'loading' as 'loading'
+        };
         
         state['MLB'][matchId] = newState;
       })
-      .addCase(fetchMlbLineup.fulfilled, (state, action) => {
-        const { matchId, lineups } = action.payload;
+      .addCase(fetchMlbGameData.fulfilled, (state, action) => {
+        const { matchId, gameData } = action.payload;
+
         if (state['MLB']?.[matchId]) {
-          state['MLB'][matchId].lineups.data = lineups;
-          state['MLB'][matchId].lineups.lineupsStatus = 'succeeded';
-          state['MLB'][matchId].lineups.lineupsError = null;
+          const newGame = formatResponseAsGameInputs(gameData.currentGame);
+          state['MLB'][matchId].currentGame = newGame;
+
+          if (gameData.seriesGames) {
+            if (!state['MLB'][matchId].seriesGames) {
+              state['MLB'][matchId].seriesGames = {};
+            }
+
+            for (const [seriesGameNumber, gameStats] of Object.entries(gameData.seriesGames)) {
+              const newGame = formatResponseAsGameInputs(gameStats);
+              state['MLB'][matchId].seriesGames[Number(seriesGameNumber)] = newGame;
+            }
+          }
+
+          state['MLB'][matchId].gameDataStatus = 'succeeded';
+          state['MLB'][matchId].gameDataError = null;
         }
       })
-      .addCase(fetchMlbLineup.rejected, (state, action) => {
+      .addCase(fetchMlbGameData.rejected, (state, action) => {
         const { matchId } = action.meta.arg;
         if (state['MLB']?.[matchId]) {
-          state['MLB'][matchId].lineups.lineupsStatus = 'failed';
-          state['MLB'][matchId].lineups.lineupsError = action.error.message ?? 'Failed to fetch lineup data';
+          state['MLB'][matchId].gameDataStatus = 'failed';
+          state['MLB'][matchId].gameDataError = action.error.message ?? 'Failed to fetch game data';
         }
       })
       // ---------- Fetch MLB Game Player Stats ----------
@@ -238,24 +280,30 @@ const simInputsSlice = createSlice({
         // It should have already loaded by now
         // Just set state to loading and error to null
         if (state['MLB']?.[matchId]) {
-          state['MLB'][matchId].lineups.statsError = null;
-          state['MLB'][matchId].lineups.statsStatus = 'loading';
+          state['MLB'][matchId].statsError = null;
+          state['MLB'][matchId].statsStatus = 'loading';
         }
         
       })
       .addCase(fetchMlbGamePlayerStats.fulfilled, (state, action) => {
-        const { matchId, playerStats } = action.payload;
-        if (state['MLB']?.[matchId]) {
-          state['MLB'][matchId].lineups.data = playerStats;
-          state['MLB'][matchId].lineups.statsStatus = 'succeeded';
-          state['MLB'][matchId].lineups.statsError = null;
+        const { matchId, playerStats, seriesGamesStats } = action.payload;
+        if (state['MLB']?.[matchId]?.currentGame) {
+          state['MLB'][matchId].statsStatus = 'succeeded';
+          state['MLB'][matchId].statsError = null;
+          state['MLB'][matchId].currentGame.lineups = playerStats;
+
+          if (seriesGamesStats && state['MLB'][matchId].seriesGames) {
+            for (const [seriesGameNumber, gameStats] of Object.entries(seriesGamesStats)) {
+              state['MLB'][matchId].seriesGames[Number(seriesGameNumber)].lineups = gameStats;
+            }
+          }
         }
       })
       .addCase(fetchMlbGamePlayerStats.rejected, (state, action) => {
         const matchId = action.meta.arg.matchId;
         if (state['MLB']?.[matchId]) {
-          state['MLB'][matchId].lineups.statsStatus = 'failed';
-          state['MLB'][matchId].lineups.statsError = action.error.message ?? 'Failed to fetch player stats';
+          state['MLB'][matchId].statsStatus = 'failed';
+          state['MLB'][matchId].statsError = action.error.message ?? 'Failed to fetch player stats';
         }
       });
   }
@@ -277,22 +325,25 @@ export const {
 
 // ---------- Selectors ----------
 
-export const selectGameInputs = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number) => 
+export const selectMLBGameContainer = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number): MLBGameContainer | undefined => 
   state.simInputs[league]?.[matchId];
-export const selectTeamInputs = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number) => 
-  state.simInputs[league]?.[matchId]?.inputs;
-export const selectGameLineups = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number) => 
-  state.simInputs[league]?.[matchId]?.lineups;
-export const selectGameLineupsData = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number) => 
-  state.simInputs[league]?.[matchId]?.lineups.data;
-export const selectGameLineupsStatus = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number) => 
-  state.simInputs[league]?.[matchId]?.lineups.lineupsStatus ?? 'idle';
-export const selectGameLineupsError = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number) => 
-  state.simInputs[league]?.[matchId]?.lineups.lineupsError;
-export const selectGamePlayerStatsStatus = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number) => 
-  state.simInputs[league]?.[matchId]?.lineups.statsStatus ?? 'idle';
-export const selectGamePlayerStatsError = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number) => 
-  state.simInputs[league]?.[matchId]?.lineups.statsError;
+export const selectTeamInputs = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number): MLBGameSimInputs | undefined => 
+  state.simInputs[league]?.[matchId]?.currentGame?.simInputs;
+export const selectGameMetadata = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number): GameMetadataMLB | undefined => 
+  state.simInputs[league]?.[matchId]?.currentGame?.gameInfo;
+export const selectGameLineups = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number): MatchupLineups | undefined => 
+  state.simInputs[league]?.[matchId]?.currentGame?.lineups;
+export const selectGameSeriesGames = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number): SeriesInfoMLB | undefined => 
+  state.simInputs[league]?.[matchId]?.seriesGames;
+
+export const selectGameDataStatus = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number): 'idle' | 'loading' | 'succeeded' | 'failed' => 
+  state.simInputs[league]?.[matchId]?.gameDataStatus ?? 'idle';
+export const selectGameDataError = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number): string | null | undefined => 
+  state.simInputs[league]?.[matchId]?.gameDataError;
+export const selectGamePlayerStatsStatus = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number): 'idle' | 'loading' | 'succeeded' | 'failed' => 
+  state.simInputs[league]?.[matchId]?.statsStatus ?? 'idle';
+export const selectGamePlayerStatsError = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number): string | null | undefined => 
+  state.simInputs[league]?.[matchId]?.statsError;
 
 export default simInputsSlice.reducer;
 

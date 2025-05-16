@@ -12,7 +12,7 @@ import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material';
 import TotalsTable from '@/components/TotalsTable';
 import FirstInningTable from '@/components/FirstInningTable';
 import PlayerPropsTable from '@/components/PlayerPropsTable';
-import { MLBSimInputs } from '@@/types/simInputs';
+import { MLBGameSimInputs } from '@@/types/simInputs';
 
 // ---------- Collapsible Section ----------
 
@@ -58,7 +58,7 @@ const MLBSimulationView: React.FC = () => {
   // ---------- State ----------
   const [simData, setSimData] = useState<SimResultsMLB | null>(null);
   const [loading, setLoading] = useState(true);
-  const [inputData, setInputData] = useState<MLBSimInputs | null>(null);
+  const [inputData, setInputData] = useState<MLBGameSimInputs | null>(null);
   const [sectionVisibility, setSectionVisibility] = useState({
     inputs: true,
     sides: true,

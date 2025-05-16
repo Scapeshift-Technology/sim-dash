@@ -63,6 +63,19 @@ export interface SimResultsMLB {
   sides: SidesCountsMLB;
   props: PropsCountsMLB;
   totals: TotalsCountsMLB;
+  series?: SeriesProbsMLB
+}
+
+// ----- Series -----
+
+export interface SeriesProbsMLB {
+  home: TeamSeriesProbMLB;
+  away: TeamSeriesProbMLB;
+}
+
+interface TeamSeriesProbMLB {
+  winPercent: number;
+  lossPercent: number;
 }
 
 // ----- Sides -----
