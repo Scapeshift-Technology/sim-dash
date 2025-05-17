@@ -25,6 +25,7 @@ async function fetchPlayerStatsMLB(
   pool: ConnectionPool, 
   date: string,
   tableName: 'BaseballHitterProjectionStatistic' | 'BaseballPitcherProjectionStatistic',
+  columns: string[],
   errorMessage: string
 ): Promise<Player[]> {
   // Create batches of player IDs
@@ -41,7 +42,7 @@ async function fetchPlayerStatsMLB(
     const playerIdsString = batch.join(',');
 
     const query = `
-      SELECT s.*
+      SELECT ${columns.join(', ')}
       FROM ${tableName} s
       WHERE s.Player IN (${playerIdsString})
       AND s.Date = '${date}'
@@ -69,6 +70,7 @@ async function fetchHitterStatsMLB(matchupLineups: MatchupLineups, pool: Connect
     pool,
     date,
     'BaseballHitterProjectionStatistic',
+    ['Player', 'SplitType', 'Statistic', 'Value'],
     'hitter stats query'
   );
   
@@ -85,6 +87,7 @@ async function fetchPitcherStatsMLB(matchupLineups: MatchupLineups, pool: Connec
     pool,
     date,
     'BaseballPitcherProjectionStatistic',
+    ['Player', 'SplitType', 'PitcherType', 'Statistic', 'Value'],
     'pitcher stats query'
   );
   
