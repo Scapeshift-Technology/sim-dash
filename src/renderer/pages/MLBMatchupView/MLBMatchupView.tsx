@@ -9,8 +9,11 @@ import {
     Tabs,
     Tab,
     Typography,
-    Button
+    Button,
+    IconButton,
+    Tooltip
 } from '@mui/material';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import type { Player, Position } from '@/types/mlb';
 import DraggableLineup from './components/DraggableLineup';
 import MLBMatchupHeader from './components/MLBMatchupHeader';
@@ -107,6 +110,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const gameMetadata = useSelector((state: RootState) => selectGameMetadata(state, league, matchId));
 
     const [selectedGameTab, setSelectedGameTab] = useState(0);
+    const [showCopySuccess, setShowCopySuccess] = useState(false);
 
     const {
         hasInvalidLeans,
@@ -228,6 +232,36 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         }));
     };
 
+    const handleCopyLineup = () => {
+        if (!gameLineups || !gameMetadata) return;
+
+        const { away, home } = gameLineups;
+        const awayTeamName = participant1;
+        const homeTeamName = participant2;
+
+        const csvRows = [];
+        csvRows.push(`Lineup Source,${gameMetadata.lineupsSource}`);
+        csvRows.push(`Position,${awayTeamName},${homeTeamName}`);
+
+        const awayStartingPitcher = (away.startingPitcher as any)?.fullName || away.startingPitcher?.name || '';
+        const homeStartingPitcher = (home.startingPitcher as any)?.fullName || home.startingPitcher?.name || '';
+        csvRows.push(`Pitcher,${awayStartingPitcher},${homeStartingPitcher}`);
+
+        const maxBatters = Math.max(away.lineup.length, home.lineup.length);
+        for (let i = 0; i < maxBatters; i++) {
+            const awayBatterName = (away.lineup[i] as any)?.fullName || away.lineup[i]?.name || '';
+            const homeBatterName = (home.lineup[i] as any)?.fullName || home.lineup[i]?.name || '';
+            csvRows.push(`Batter${i + 1},${awayBatterName},${homeBatterName}`);
+        }
+
+        const csvString = csvRows.join('\n');
+        navigator.clipboard.writeText(csvString).then(() => {
+            setShowCopySuccess(true);
+        }).catch(err => {
+            console.error('Failed to copy lineup: ', err);
+        });
+    };
+
     // ---------- Render ----------
     if (dataStatus === 'loading' || playerStatsStatus === 'loading' || (dataStatus === 'succeeded' && playerStatsStatus === 'idle')) return <CircularProgress />;
     if (dataError) return <ErrorAlert message="Error fetching game data. Please try again." onRetry={handleRefresh} />;
@@ -291,6 +325,11 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                         >
                             <span style={{ color: 'text.primary' }}>Lineup Source:</span> {gameMetadata.lineupsSource}
                         </Typography>
+                        <Tooltip title="Copy lineup information">
+                            <IconButton onClick={handleCopyLineup} size="small" sx={{ ml: 1 }}>
+                                <ContentCopyIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
                     </Box>
                 )}
 
@@ -336,6 +375,13 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                     {invalidLeansCount} lean{invalidLeansCount !== 1 ? 's' : ''} {invalidLeansCount !== 1 ? 'are' : 'is'} outside the valid range (-10% to 10%)
                 </Alert>
             </Snackbar>
+            <Snackbar
+                open={showCopySuccess}
+                autoHideDuration={3000}
+                onClose={() => setShowCopySuccess(false)}
+                message="Lineup information copied to clipboard!"
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            />
         </Box>
     );
 };
