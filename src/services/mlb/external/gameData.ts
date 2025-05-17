@@ -15,7 +15,10 @@ import { extractTeamIdsSchedule, formatDateMlbApi, getMlbScheduleApiGame, getMlb
  * @param daySequenceNumber - The day sequence number
  * @returns The game data for the matchup
  */
-async function getGameDataMLB(date: string, awayTeam: string, homeTeam: string, daySequenceNumber: number): Promise<MLBGameDataResponse> {
+async function getGameDataMLB(date: string, awayTeam: string, homeTeam: string, daySequenceNumber?: number): Promise<MLBGameDataResponse> {
+  // Default to 1 if not provided
+  daySequenceNumber = daySequenceNumber ?? 1;
+
   // Put date in YYYY-MM-DD format
   const formattedDate = formatDateMlbApi(date);
   const awayTeamNameMLB = teamNameToMLBApiTeamName(awayTeam.trim());

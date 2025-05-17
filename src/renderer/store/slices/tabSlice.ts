@@ -18,6 +18,12 @@ const generateMatchupTabId = (details: Omit<MatchupTab, 'id' | 'type' | 'label'>
     return `${details.league}_${details.date}_${details.participant1}@${details.participant2}` + (details.daySequence ? `_${details.daySequence}` : '');
 };
 
+// Helper function to format date from YYYY-MM-DD to M/D/YY
+const formatDateToShort = (dateStr: string): string => {
+    const [year, month, day] = dateStr.split('-');
+    return `${parseInt(month)}/${parseInt(day)}/${year.slice(-2)}`;
+};
+
 const tabSlice = createSlice({
     name: 'tabs',
     initialState,
@@ -42,14 +48,19 @@ const tabSlice = createSlice({
         openMatchupTab(state, action: PayloadAction<Omit<MatchupTab, 'id' | 'type' | 'label'>>) {
             const details = action.payload;
             const tabId = generateMatchupTabId(details);
+            const formattedDate = formatDateToShort(details.date);
             const existingTab = state.openTabs.find(tab => tab.id === tabId);
 
             if (!existingTab) {
                 let label;
                 if (details.league === 'MLB') {
-                    label = `${teamNameToAbbreviationMLB(details.participant1)} @ ${teamNameToAbbreviationMLB(details.participant2)}${details.daySequence ? ` (Gm. ${details.daySequence})` : ''}`;
+                    label = `${teamNameToAbbreviationMLB(details.participant1)}@${teamNameToAbbreviationMLB(details.participant2)} ${formattedDate}${details.daySequence ? ` #${details.daySequence}` : ''}`;
                 } else {
-                    label = `${details.participant1} @ ${details.participant2}${details.daySequence ? ` (Gm. ${details.daySequence})` : ''}`;
+                    label = `${details.participant1}@${details.participant2} ${formattedDate}${details.daySequence ? ` #${details.daySequence}` : ''}`;
+                }
+
+                if (!details.daySequence) {
+                  details.daySequence = 1;
                 }
 
                 const newTab: MatchupTab = {

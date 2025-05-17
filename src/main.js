@@ -435,7 +435,7 @@ ipcMain.handle('fetch-mlb-game-data', async (event, { league, date, participant1
     try {
         // In the future, this would call an external API or query a different DB table
         const gameData = await getGameDataMLB(date, participant1, participant2, daySequence);
-        console.log(`Game data generated for ${participant1}@${participant2} #${daySequence} on ${date}`);
+        console.log(`Game data generated for ${participant1}@${participant2} ${daySequence ? `#${daySequence}` : ''} on ${date}`);
         return gameData; 
     } catch (err) {
         console.error(`Error fetching/generating MLB game data for ${participant1}@${participant2} on ${date}:`, err);

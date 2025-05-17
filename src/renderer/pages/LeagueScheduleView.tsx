@@ -196,13 +196,20 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
     // Updated Row Click Handler
     const handleRowClick = (item: ScheduleItem) => {
         if (league === 'MLB' && selectedDate) {
+            // Find all matchups between these teams today
+            const todayMatchups = scheduleData.filter(match => {
+                const team1 = match.Participant1 === item.Participant1;
+                const team2 = match.Participant2 === item.Participant2;
+                return team1 && team2;
+            });
+
             dispatch(openMatchupTab({
                 matchId: item.Match,
                 league: league,
                 date: selectedDate.format('YYYY-MM-DD'),
                 participant1: item.Participant1,
                 participant2: item.Participant2,
-                daySequence: item.DaySequence,
+                daySequence: todayMatchups.length > 1 ? item.DaySequence : undefined,
             }));
         } else {
             console.log('Row click ignored (not MLB or no date selected)');
