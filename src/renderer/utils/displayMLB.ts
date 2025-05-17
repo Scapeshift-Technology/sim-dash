@@ -182,8 +182,8 @@ function transformTeamSeriesProbsMLB(teamSeriesProbs: TeamSeriesProbsMLB, teamNa
 }
 
 export { transformSeriesProbsMLB };
+
 // ----- Props -----
-// -- Player props --
 
 function transformPropsCountsMLB(propsCounts: PropsCountsMLB, awayTeamName: string, homeTeamName: string): PropsData {
   const firstInningPropData = transformFirstInningCountsMLB(propsCounts.firstInning, awayTeamName, homeTeamName);
@@ -194,6 +194,8 @@ function transformPropsCountsMLB(propsCounts: PropsCountsMLB, awayTeamName: stri
     player: playerPropData
   }
 }
+
+// -- Player props --
 
 function transformAllPlayerCountsMLB(propsCounts: AllPlayersPropsCountsMLB, awayTeamName: string, homeTeamName: string): PlayerPropsData[] {
   const data: PlayerPropsData[] = [];
