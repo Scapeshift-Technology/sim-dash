@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <!-- This is intentionally kept minimal for helper tools and frameworks -->
-    <!-- They inherit the hardened runtime, but specific entitlements from the main app's entitlements file -->
-    <!-- may not be applicable or necessary for all embedded components. -->
-</dict>
-</plist> 

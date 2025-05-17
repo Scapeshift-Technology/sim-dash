@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, Menu } = require('electron');
-const path = require('path');
+// const path = require('path');
+import path from 'path';
 const fs = require('fs'); // Import fs module
 const url = require('url'); // Import url module
 const log = require('electron-log/main'); // <-- Import electron-log
