@@ -97,6 +97,12 @@ const profilesSlice = createSlice({
     clearProfileError: (state) => {
       state.error = null;
     },
+    resetProfileOperationStates: (state) => {
+      state.deleteProfileStatus = null;
+      state.deleteProfileError = null;
+      state.saveProfileStatus = null;
+      state.saveProfileError = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -138,7 +144,7 @@ const profilesSlice = createSlice({
   },
 });
 
-export const { setSelectedProfile, clearProfileStatus, clearProfileError } = profilesSlice.actions;
+export const { setSelectedProfile, clearProfileStatus, clearProfileError, resetProfileOperationStates } = profilesSlice.actions;
 
 // Selectors
 export const selectProfilesState = (state: RootState) => state.profiles;
