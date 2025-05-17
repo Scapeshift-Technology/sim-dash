@@ -8,8 +8,8 @@ import {
     Snackbar,
     Tabs,
     Tab,
-    Paper,
-    Typography
+    Typography,
+    Button
 } from '@mui/material';
 import type { Player, Position } from '@/types/mlb';
 import DraggableLineup from './components/DraggableLineup';
@@ -44,6 +44,19 @@ import { useLeanValidation } from './hooks/leanValidation';
 import { useSimulationRunner } from './hooks/useSimulationRunner';
 
 // ---------- Sub-components ----------
+
+const ErrorAlert: React.FC<{ message: string; onRetry: () => void }> = ({ message, onRetry }) => (
+    <Alert 
+        severity="error"
+        action={
+            <Button color="inherit" size="small" onClick={onRetry}>
+                Retry
+            </Button>
+        }
+    >
+        {message}
+    </Alert>
+);
 
 const TeamCard: React.FC<{ children: React.ReactNode }> = ({
   children
@@ -217,8 +230,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
 
     // ---------- Render ----------
     if (dataStatus === 'loading' || playerStatsStatus === 'loading' || (dataStatus === 'succeeded' && playerStatsStatus === 'idle')) return <CircularProgress />;
-    if (dataError) return <Alert severity="error">{dataError}</Alert>;
-    if (playerStatsError) return <Alert severity="error">{'Error fetching player stats. Please try again.'}</Alert>;
+    if (dataError) return <ErrorAlert message="Error fetching game data. Please try again." onRetry={handleRefresh} />;
+    if (playerStatsError) return <ErrorAlert message="Error fetching player stats. Please try again." onRetry={handleRefresh} />;
     if (!gameLineups) return <Alert severity="info">No lineup data found.</Alert>;
 
     return (
