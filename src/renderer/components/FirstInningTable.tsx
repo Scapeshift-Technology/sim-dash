@@ -8,6 +8,24 @@ interface FirstInningTableProps {
   data: FirstInningPropsData[];
 }
 
+// Helper function to convert probability to American odds
+function probabilityToAmericanOdds(p: number): number {
+  const epsilon = 1e-7; // Small epsilon to prevent division by zero and handle near 0/1 probabilities
+
+  // Clamp probability to avoid extreme values or division by zero
+  if (p >= 1.0 - epsilon) {
+    p = 1.0 - epsilon;
+  } else if (p <= epsilon) {
+    p = epsilon;
+  }
+
+  if (p >= 0.5) {
+    return Math.round(-(100 * p) / (1 - p));
+  } else {
+    return Math.round((100 * (1 - p)) / p);
+  }
+}
+
 const FirstInningTable: React.FC<FirstInningTableProps> = ({ data }) => {
   const columns: ColumnConfig[] = [
     { 
@@ -55,12 +73,26 @@ const FirstInningTable: React.FC<FirstInningTableProps> = ({ data }) => {
     { 
       name: 'usaFair', 
       type: 'string', 
-      label: 'USA-Fair'
+      label: 'USA-Fair(Ov)'
     },
     { 
-      name: 'varianceOdds', 
-      type: 'number', 
-      label: 'USA-MOE-PESSIMISTIC',
+      name: 'varianceOddsOver', 
+      type: 'string', // Type is string as displayAmericanOdds returns string
+      label: 'USA-MOE-PESSIMISTIC Over',
+      display: {
+        rules: [
+          {
+            condition: () => true,
+            style: { textAlign: 'left' },
+            type: 'text'
+          }
+        ]
+      }
+    },
+    {
+      name: 'varianceOddsUnder',
+      type: 'string', // Type is string as displayAmericanOdds returns string
+      label: 'USA-MOE-PESSIMISTIC Under',
       display: {
         rules: [
           {
@@ -73,14 +105,27 @@ const FirstInningTable: React.FC<FirstInningTableProps> = ({ data }) => {
     }
   ];
 
-  // Transform the data to ensure proper formatting
-  const formattedData = data.map(row => ({
-    ...row,
-    scorePercent: `${(100 * row.scorePercent).toFixed(2)}%`,
-    marginOfError: `${(100 * row.marginOfError).toFixed(2)}%`,
-    usaFair: displayAmericanOdds(Number(row.usaFair.toFixed(2))),
-    varianceOdds: displayAmericanOdds(Number(row.varianceOdds.toFixed(2)))
-  }));
+  // Transform the data to ensure proper formatting and calculate virtual columns
+  const formattedData = data.map(row => {
+    const probScore = row.scorePercent; // This is a fraction (0-1)
+    const moe = row.marginOfError;     // This is a fraction (0-1)
+
+    const probForOverCalc = probScore - moe;
+    const probForUnderCalc = 1-(probScore + moe);
+
+    const americanOddsOver = probabilityToAmericanOdds(probForOverCalc);
+    const americanOddsUnder = probabilityToAmericanOdds(probForUnderCalc);
+
+    return {
+      ...row,
+      scorePercent: `${(100 * probScore).toFixed(2)}%`,
+      marginOfError: `${(100 * moe).toFixed(2)}%`,
+      usaFair: displayAmericanOdds(Number(row.usaFair.toFixed(2))),
+      // Note: row.varianceOdds is part of FirstInningPropsData but not directly used for these new columns
+      varianceOddsOver: displayAmericanOdds(americanOddsOver),
+      varianceOddsUnder: displayAmericanOdds(americanOddsUnder)
+    };
+  });
 
   return (
     <Inline 
