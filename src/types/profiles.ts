@@ -14,6 +14,14 @@ export interface ProfilesState {
   selectedProfileName: string | null;
   isLoading: boolean;
   error: string | null;
-  statusMessage: string | null; // For save/delete feedback
+  statusMessage: string | null; // For save/delete feedback    -- Not sure if this really does anything. All I see in the slice is it being set to null
+
+  // ---------- Delete a profile ----------
+  deleteProfileStatus: string | null;
+  deleteProfileError: string | null;
+
+  // ---------- Save a profile ----------
+  saveProfileStatus: string | null;
+  saveProfileError: string | null;
 }
 

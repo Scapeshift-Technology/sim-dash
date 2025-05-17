@@ -9,6 +9,14 @@ const initialState: ProfilesState = {
   isLoading: false,
   error: null,
   statusMessage: null,
+
+  // ---------- Delete a profile ----------
+  deleteProfileStatus: null,
+  deleteProfileError: null,
+
+  // ---------- Save a profile ----------
+  saveProfileStatus: null,
+  saveProfileError: null
   };
 
 // Async thunk for fetching profiles
@@ -110,7 +118,23 @@ const profilesSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload ?? 'Failed to load profiles';
       })
-      // ... other builder cases ...
+      
+      // ---------- Delete a profile ----------
+
+      .addCase(deleteProfile.pending, (state) => {
+        state.deleteProfileStatus = 'pending';
+        state.deleteProfileError = null;
+      })
+      .addCase(deleteProfile.fulfilled, (state, action) => {
+        state.deleteProfileStatus = 'success';
+        state.deleteProfileError = null;
+      })
+      .addCase(deleteProfile.rejected, (state, action) => {
+        state.deleteProfileStatus = 'error';
+        state.deleteProfileError = action.payload ?? 'Error deleting profile';
+      })
+      
+      
   },
 });
 
