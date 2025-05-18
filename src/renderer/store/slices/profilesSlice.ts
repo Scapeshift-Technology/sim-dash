@@ -90,12 +90,23 @@ const profilesSlice = createSlice({
       state.selectedProfileName = action.payload;
       state.statusMessage = null; // Clear status when changing selection
       state.error = null;
+      // Reset save/delete states when changing profile
+      state.deleteProfileStatus = null;
+      state.deleteProfileError = null;
+      state.saveProfileStatus = null;
+      state.saveProfileError = null;
     },
     clearProfileStatus: (state) => {
       state.statusMessage = null;
     },
     clearProfileError: (state) => {
       state.error = null;
+    },
+    resetProfileOperationStates: (state) => {
+      state.deleteProfileStatus = null;
+      state.deleteProfileError = null;
+      state.saveProfileStatus = null;
+      state.saveProfileError = null;
     },
   },
   extraReducers: (builder) => {
@@ -120,7 +131,6 @@ const profilesSlice = createSlice({
       })
       
       // ---------- Delete a profile ----------
-
       .addCase(deleteProfile.pending, (state) => {
         state.deleteProfileStatus = 'pending';
         state.deleteProfileError = null;
@@ -134,11 +144,23 @@ const profilesSlice = createSlice({
         state.deleteProfileError = action.payload ?? 'Error deleting profile';
       })
       
-      
+      // ---------- Save a profile ----------
+      .addCase(saveProfile.pending, (state) => {
+        state.saveProfileStatus = 'pending';
+        state.saveProfileError = null;
+      })
+      .addCase(saveProfile.fulfilled, (state, action) => {
+        state.saveProfileStatus = 'success';
+        state.saveProfileError = null;
+      })
+      .addCase(saveProfile.rejected, (state, action) => {
+        state.saveProfileStatus = 'error';
+        state.saveProfileError = action.payload ?? 'Error saving profile';
+      });
   },
 });
 
-export const { setSelectedProfile, clearProfileStatus, clearProfileError } = profilesSlice.actions;
+export const { setSelectedProfile, clearProfileStatus, clearProfileError, resetProfileOperationStates } = profilesSlice.actions;
 
 // Selectors
 export const selectProfilesState = (state: RootState) => state.profiles;
