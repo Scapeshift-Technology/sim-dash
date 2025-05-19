@@ -10,6 +10,7 @@ const { getPlayerStatsMLB } = require('./services/mlb/db/playerStats');
 const { createMLBSimResultsWindow2 } = require('./services/mlb/electron/createSimResultsWindows');
 const { Worker } = require('worker_threads');
 const { getGameDataMLB } = require('./services/mlb/external/gameData');
+const { testConnection } = require('./services/login/connection');
 
 // Force the app name at the system level for macOS menu
 app.name = 'SimDash'; // Directly set app.name property
@@ -274,6 +275,13 @@ ipcMain.handle('get-sim-history', async (event, matchId) => {
 });
 
 // --- SQL Server Connection Handling ---
+
+ipcMain.handle('test-connection', async (event, config) => {
+    console.log('Attempting test connection with config:', config);
+
+    const result = await testConnection(sql, config);
+    return result;
+})
 
 ipcMain.handle('login', async (event, config) => {
     console.log('Attempting login with config:', config); // Be careful logging sensitive info

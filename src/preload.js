@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     deleteProfile: (profileName) => ipcRenderer.invoke('delete-profile', profileName),
 
     // Connection management
+    testConnection: (config) => ipcRenderer.invoke('test-connection', config),
     login: (config) => ipcRenderer.invoke('login', config),
     logout: () => ipcRenderer.invoke('logout'),
 

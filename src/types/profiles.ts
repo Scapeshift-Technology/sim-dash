@@ -23,5 +23,9 @@ export interface ProfilesState {
   // ---------- Save a profile ----------
   saveProfileStatus: string | null;
   saveProfileError: string | null;
+
+  // ---------- Test connection ----------
+  testConnectionStatus: string | null;
+  testConnectionError: string | null;
 }
 

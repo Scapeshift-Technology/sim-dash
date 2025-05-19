@@ -8,10 +8,12 @@ import {
     setSelectedProfile,
     selectProfilesState,
     selectProfileByName,
+    testConnection
 } from '@/store/slices/profilesSlice';
 import type { Profile } from '@/types/profiles';
 import { SelectChangeEvent } from '@mui/material';
 import { useStatusMessages } from './useStatusMessages';
+import { LoginConfig } from '@@/types/sqlite';
 
 export interface UseProfilesReturn {
     // Profile data
@@ -30,6 +32,7 @@ export interface UseProfilesReturn {
     handleProfileChange: (event: SelectChangeEvent<string>) => void;
     handleSaveProfile: (profileData: Profile) => void;
     handleDeleteProfile: (profileName: string) => void;
+    handleTestConnection: (config: LoginConfig) => void;
 }
 
 export function useProfiles(): UseProfilesReturn {
@@ -104,6 +107,26 @@ export function useProfiles(): UseProfilesReturn {
         }
     };
 
+    const handleTestConnection = (config: LoginConfig) => {
+        if (!config.host || !config.port || !config.database || !config.user) {
+            setError('Host, Port, Database, and User are required to test connection.');
+            return;
+        }
+
+        dispatch(testConnection(config))
+            .unwrap()
+            .then((success) => {
+                if (success) {
+                    setStatus('Connection test successful!');
+                } else {
+                    setError('Connection test failed.');
+                }
+            })
+            .catch((err) => {
+                setError('Error occured while testing connection');
+            });
+    };
+
     return {
         profiles,
         selectedProfileName,
@@ -118,5 +141,6 @@ export function useProfiles(): UseProfilesReturn {
         handleProfileChange,
         handleSaveProfile,
         handleDeleteProfile,
+        handleTestConnection
     };
 }

@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 import { current } from '@reduxjs/toolkit';
 import { Profile, ProfilesState } from '@/types/profiles';
+import { LoginConfig } from '@@/types/sqlite';
 
 const initialState: ProfilesState = {
   profiles: [],
@@ -16,8 +17,13 @@ const initialState: ProfilesState = {
 
   // ---------- Save a profile ----------
   saveProfileStatus: null,
-  saveProfileError: null
+  saveProfileError: null,
+
+  // ---------- Test connection ----------
+  testConnectionStatus: null,
+  testConnectionError: null
   };
+
 
 // Async thunk for fetching profiles
 export const fetchProfiles = createAsyncThunk<
@@ -81,6 +87,25 @@ export const deleteProfile = createAsyncThunk<
     return rejectWithValue(err.message || 'An unexpected error occurred while deleting profile.');
   }
 });
+
+// Thunk for checking connection
+export const testConnection = createAsyncThunk<
+  boolean, // Return type on success
+  LoginConfig, // Argument is the login config
+  { rejectValue: string }
+>('profiles/testConnection', async (config, { rejectWithValue }) => {
+  try {
+    if (!window.electronAPI?.testConnection) {
+      throw new Error('testConnection API is not available.');
+    }
+    const result: boolean = await window.electronAPI.testConnection(config);
+    return result;
+  } catch (err: any) {
+    return rejectWithValue(err.message || 'An unexpected error occurred while testing connection.');
+  }
+});
+
+// ---------- Slice ----------
 
 const profilesSlice = createSlice({
   name: 'profiles',
@@ -156,6 +181,20 @@ const profilesSlice = createSlice({
       .addCase(saveProfile.rejected, (state, action) => {
         state.saveProfileStatus = 'error';
         state.saveProfileError = action.payload ?? 'Error saving profile';
+      })
+
+      // ---------- Test connection ----------
+      .addCase(testConnection.pending, (state) => {
+        state.testConnectionStatus = 'pending';
+        state.testConnectionError = null;
+      })
+      .addCase(testConnection.fulfilled, (state, action) => {
+        state.testConnectionStatus = 'success';
+        state.testConnectionError = null;
+      })
+      .addCase(testConnection.rejected, (state, action) => {
+        state.testConnectionStatus = 'error';
+        state.testConnectionError = action.payload ?? 'Error testing connection';
       });
   },
 });

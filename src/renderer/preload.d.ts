@@ -28,6 +28,7 @@ declare global {
       deleteProfile: (profileName: string) => Promise<boolean>;
 
       // Connection management
+      testConnection: (config: LoginConfig) => Promise<boolean>;
       login: (config: LoginConfig) => Promise<LoginResult>;
       logout: () => Promise<LogoutResult>;
 

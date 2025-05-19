@@ -28,6 +28,7 @@ const LoginView: React.FC = () => {
         handleProfileChange,
         handleSaveProfile,
         handleDeleteProfile,
+        handleTestConnection,
     } = useProfiles();
 
     const {
@@ -75,6 +76,16 @@ const LoginView: React.FC = () => {
         if (selectedProfileName) {
             handleDeleteProfile(selectedProfileName);
         }
+    };
+
+    const handleTestConnectionClick = () => {
+        handleTestConnection({
+            host: formState.host,
+            port: formState.port || '1433',
+            database: formState.database,
+            user: formState.user,
+            password: formState.password
+        });
     };
 
     // ---------- Render ----------
@@ -131,6 +142,7 @@ const LoginView: React.FC = () => {
                     deleteProfileError={deleteProfileError}
                     saveProfileStatus={saveProfileStatus}
                     saveProfileError={saveProfileError}
+                    onTestConnection={handleTestConnectionClick}
                 />
             </Paper>
         </Box>
