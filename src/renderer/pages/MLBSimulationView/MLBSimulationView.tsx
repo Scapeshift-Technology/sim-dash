@@ -8,16 +8,16 @@ import {
   transformSeriesProbsMLB
 } from '@/utils/displayMLB';
 import SidesTable from '@/components/SidesTable';
-import { Box, Typography, IconButton, CircularProgress, Divider, List, ListItem, ListItemText } from '@mui/material';
-import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material';
+import { Box, Typography, CircularProgress, Divider, List, ListItem, ListItemText, Tooltip } from '@mui/material';
 import TotalsTable from '@/components/TotalsTable';
 import FirstInningTable from '@/components/FirstInningTable';
 import PlayerPropsTable from '@/components/PlayerPropsTable';
 import SeriesTable from '@/components/SeriesTable';
-import { ReducedMatchupLineups, ReducedPlayer } from '@@/types/simHistory';
+import { ReducedMatchupLineups, SimMetadataMLB } from '@@/types/simHistory';
 import { MLBGameSimInputs } from '@/types/simInputs';
-import LineupDisplay from './components/LineupDisplay';
 import CollapsibleSection from './components/CollapsibleSection';
+import SimInputs from './components/SimInputs';
+import LineupSection from './components/LineupSection';
 
 // ---------- Main component ----------
 
@@ -27,6 +27,7 @@ const MLBSimulationView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [lineups, setLineups] = useState<ReducedMatchupLineups | null>(null);
   const [simInputs, setSimInputs] = useState<MLBGameSimInputs | null>(null);
+  const [gameInfo, setGameInfo] = useState<SimMetadataMLB | null>(null);
   const [sectionVisibility, setSectionVisibility] = useState({
     lineups: false,
     inputs: false,
@@ -53,6 +54,7 @@ const MLBSimulationView: React.FC = () => {
           setSimData(data.simData);
           setSimInputs(data.inputData.simInputs);
           setLineups(data.inputData.lineups);
+          setGameInfo(data.inputData.gameInfo);
           setTimestamp(data.timestamp);
           setAwayTeamName(data.awayTeamName);
           setHomeTeamName(data.homeTeamName);
@@ -111,50 +113,6 @@ const MLBSimulationView: React.FC = () => {
     );
   }
 
-  const renderTeamLeans = (teamType: 'away' | 'home', teamName: string | null) => {
-    if (!simInputs) return null;
-    const teamData = simInputs[teamType];
-    function formatLean(lean: number) {
-      return lean.toFixed(2);
-    }
-    
-    return (
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="h6" sx={{ mb: 1 }}>{teamName}</Typography>
-        <Box sx={{ pl: 2 }}>
-          <Typography>
-            Team Hitting Lean: {formatLean(teamData.teamHitterLean)}%
-          </Typography>
-          <Typography>
-            Team Pitching Lean: {formatLean(teamData.teamPitcherLean)}%
-          </Typography>
-          
-          {Object.keys(teamData.individualHitterLeans).length > 0 && (
-            <Box sx={{ mt: 1 }}>
-              <Typography variant="subtitle2">Individual Hitter Leans:</Typography>
-              {Object.entries(teamData.individualHitterLeans).map(([playerId, lean]) => (
-                <Typography key={playerId} sx={{ pl: 2 }}>
-                  Player {playerId}: {formatLean(lean)}%
-                </Typography>
-              ))}
-            </Box>
-          )}
-          
-          {Object.keys(teamData.individualPitcherLeans).length > 0 && (
-            <Box sx={{ mt: 1 }}>
-              <Typography variant="subtitle2">Individual Pitcher Leans:</Typography>
-              {Object.entries(teamData.individualPitcherLeans).map(([playerId, lean]) => (
-                <Typography key={playerId} sx={{ pl: 2 }}>
-                  Player {playerId}: {formatLean(lean)}%
-                </Typography>
-              ))}
-            </Box>
-          )}
-        </Box>
-      </Box>
-    );
-  };
-
   // Data for betting tables
   const sidesData = transformSidesCountsMLB(simData.sides, awayTeamAbbreviation, homeTeamAbbreviation);
   const totalsData = transformTotalsCountsMLB(simData.totals, awayTeamAbbreviation, homeTeamAbbreviation);
@@ -177,25 +135,11 @@ const MLBSimulationView: React.FC = () => {
         isOpen={sectionVisibility.lineups}
         onToggle={() => toggleSection('lineups')}
       >
-        <Box sx={{ 
-          p: 2, 
-          bgcolor: 'background.paper', 
-          borderRadius: 1,
-          border: 1,
-          borderColor: 'divider'
-        }}>
-          {lineups && (
-            <Box sx={{ 
-              display: 'flex', 
-              gap: 4,
-              '& > *': { minWidth: 0 } // Ensures flex items can shrink below content size
-            }}>
-              <LineupDisplay teamName={awayTeamName || 'Away Team'} teamLineup={lineups.away} />
-              <Divider orientation="vertical" flexItem />
-              <LineupDisplay teamName={homeTeamName || 'Home Team'} teamLineup={lineups.home} />
-            </Box>
-          )}
-        </Box>
+        <LineupSection 
+          lineups={lineups}
+          awayTeamName={awayTeamName}
+          homeTeamName={homeTeamName}
+        />
       </CollapsibleSection>
 
       <CollapsibleSection
@@ -203,17 +147,12 @@ const MLBSimulationView: React.FC = () => {
         isOpen={sectionVisibility.inputs}
         onToggle={() => toggleSection('inputs')}
       >
-        <Box sx={{ 
-          p: 2, 
-          bgcolor: 'background.paper', 
-          borderRadius: 1,
-          border: 1,
-          borderColor: 'divider'
-        }}>
-          {renderTeamLeans('away', awayTeamName)}
-          <Divider sx={{ my: 2 }} />
-          {renderTeamLeans('home', homeTeamName)}
-        </Box>
+        <SimInputs 
+          simInputs={simInputs}
+          gameInfo={gameInfo}
+          awayTeamName={awayTeamName}
+          homeTeamName={homeTeamName}
+        />
       </CollapsibleSection>
 
       {simData.series && (

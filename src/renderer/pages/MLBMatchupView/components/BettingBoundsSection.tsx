@@ -15,11 +15,15 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import type { MLBGameContainer, MLBGameSimInputs } from "@/types/simInputs";
 import { findOptimalLeans } from '@/pages/MLBMatchupView/functions/optimalLeans';
 import { MarketLinesMLB, MatchupLineups } from '@@/types/mlb';
+import { useDispatch, useSelector } from 'react-redux';
+import { updateMLBMarketLines, updateMLBAutomatedLeans, selectGameAutomatedLeans } from '@/store/slices/simInputsSlice';
+import { AppDispatch, RootState } from '@/store/store';
 
 interface BettingBoundsSectionProps {
     awayTeamName: string;
     homeTeamName: string;
     gameContainer: MLBGameContainer | undefined;
+    matchId: number;
     onUpdateTeamLean: (teamType: 'home' | 'away', leanType: 'offense' | 'defense', value: number) => void;
     onUpdatePlayerLean: (teamType: 'home' | 'away', playerType: 'hitter' | 'pitcher', playerId: number, value: number) => void;
 }
@@ -28,14 +32,17 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
     awayTeamName,
     homeTeamName,
     gameContainer,
+    matchId,
     onUpdateTeamLean,
     onUpdatePlayerLean
 }) => {
+    const dispatch = useDispatch<AppDispatch>();
+    const automatedLeans = useSelector((state: RootState) => selectGameAutomatedLeans(state, 'MLB', matchId));
+    
     // ---------- State ----------
     
     const [isExpanded, setIsExpanded] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
-    const [leanResults, setLeanResults] = useState<MLBGameSimInputs | null>(null);
     const [processError, setProcessError] = useState<string>('');
 
     const [awayMoneyline, setAwayMoneyline] = useState('');
@@ -120,11 +127,19 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                 odds: parsedValues.underOdds!
             }
         };
+        dispatch(updateMLBMarketLines({
+            league: 'MLB',
+            matchId,
+            marketLines: marketLines
+        }));
 
         try {
             const optimalLeans = await findOptimalLeans(gameContainer?.currentGame?.lineups as MatchupLineups, marketLines);
-            console.log(optimalLeans);
-            setLeanResults(optimalLeans);
+            dispatch(updateMLBAutomatedLeans({
+                league: 'MLB',
+                matchId,
+                automatedLeans: optimalLeans
+            }));
         } catch (error) {
             console.error('Error finding optimal leans:', error);
             setProcessError('Failed to calculate optimal leans. Please try again or check your inputs.');
@@ -134,13 +149,12 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
     };
 
     const handleApplyLeans = () => {
-        if (!leanResults) return;
-        console.log('LEANRESULTS', leanResults);
+        if (!automatedLeans) return;
 
-        onUpdateTeamLean('away', 'offense', leanResults.away.teamHitterLean);
-        onUpdateTeamLean('away', 'defense', leanResults.away.teamPitcherLean);
-        onUpdateTeamLean('home', 'offense', leanResults.home.teamHitterLean);
-        onUpdateTeamLean('home', 'defense', leanResults.home.teamPitcherLean);
+        onUpdateTeamLean('away', 'offense', automatedLeans.away.teamHitterLean);
+        onUpdateTeamLean('away', 'defense', automatedLeans.away.teamPitcherLean);
+        onUpdateTeamLean('home', 'offense', automatedLeans.home.teamHitterLean);
+        onUpdateTeamLean('home', 'defense', automatedLeans.home.teamPitcherLean);
     };
 
     // ---------- Render ----------
@@ -258,7 +272,7 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                             >
                                 {isSearching ? 'Finding Optimal Leans...' : 'Find Optimal Leans'}
                             </Button>
-                            {leanResults && !processError && (
+                            {automatedLeans && !processError && (
                                 <Button
                                     variant="outlined"
                                     color="primary"
@@ -271,7 +285,7 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                     </Box>
 
                     {/* Results Section */}
-                    {leanResults && (
+                    {automatedLeans && (
                         <Box sx={{ mt: 2 }}>
                             <Typography variant="subtitle1" sx={{ mb: 1, color: 'text.secondary' }}>
                                 Found Leans
@@ -284,10 +298,10 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                                     </Typography>
                                     <Box sx={{ pl: 2 }}>
                                         <Typography variant="body2" color="text.secondary">
-                                            Hitter Lean: {Math.round(leanResults.away.teamHitterLean * 100) / 100}%
+                                            Hitter Lean: {Math.round(automatedLeans.away.teamHitterLean * 100) / 100}%
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                            Pitcher Lean: {Math.round(leanResults.away.teamPitcherLean * 100) / 100}%
+                                            Pitcher Lean: {Math.round(automatedLeans.away.teamPitcherLean * 100) / 100}%
                                         </Typography>
                                     </Box>
                                 </Box>
@@ -298,10 +312,10 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                                     </Typography>
                                     <Box sx={{ pl: 2 }}>
                                         <Typography variant="body2" color="text.secondary">
-                                            Hitter Lean: {Math.round(leanResults.home.teamHitterLean * 100) / 100}%
+                                            Hitter Lean: {Math.round(automatedLeans.home.teamHitterLean * 100) / 100}%
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                            Pitcher Lean: {Math.round(leanResults.home.teamPitcherLean * 100) / 100}%
+                                            Pitcher Lean: {Math.round(automatedLeans.home.teamPitcherLean * 100) / 100}%
                                         </Typography>
                                     </Box>
                                 </Box>

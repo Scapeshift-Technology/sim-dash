@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { GameMetadataMLB, MatchupLineups, MLBGameData, MLBGameDataResponse, Player, Position, SeriesInfoMLB } from '@/types/mlb';
+import type { GameMetadataMLB, MarketLinesMLB, MatchupLineups, MLBGameData, MLBGameDataResponse, Player, Position, SeriesInfoMLB } from '@/types/mlb';
 import type { 
   MLBGameSimInputs, 
   MLBGameSimInputsTeam, 
@@ -269,6 +269,32 @@ const simInputsSlice = createSlice({
           container.currentGame = container.seriesGames[gameNumber];
         }
       }
+    },
+    updateMLBMarketLines: (state, action: {
+      payload: {
+          league: LeagueName;
+          matchId: number;
+          marketLines: MarketLinesMLB;
+      }
+    }) => {
+        const { league, matchId, marketLines } = action.payload;
+        if (league === 'MLB' && state[league]?.[matchId]?.currentGame) {
+            state[league][matchId].currentGame.gameInfo.bettingBounds = marketLines;
+            syncCurrentGameEdit(state, matchId);
+        }
+    },
+    updateMLBAutomatedLeans: (state, action: {
+      payload: {
+        league: LeagueName;
+        matchId: number;
+        automatedLeans: MLBGameSimInputs;
+      }
+    }) => {
+      const { league, matchId, automatedLeans } = action.payload;
+      if (league === 'MLB' && state[league]?.[matchId]?.currentGame) {
+        state[league][matchId].currentGame.gameInfo.automatedLeans = automatedLeans;
+        syncCurrentGameEdit(state, matchId);
+      }
     }
   },
   extraReducers: (builder) => {
@@ -368,7 +394,9 @@ export const {
   updatePlayerLean,
   editMLBStartingPitcher,
   editMLBBullpen,
-  switchCurrentSeriesGame
+  switchCurrentSeriesGame,
+  updateMLBMarketLines,
+  updateMLBAutomatedLeans
 } = simInputsSlice.actions;
 
 // ---------- Selectors ----------
@@ -379,6 +407,10 @@ export const selectTeamInputs = (state: { simInputs: SimInputsState }, league: L
   state.simInputs[league]?.[matchId]?.currentGame?.simInputs;
 export const selectGameMetadata = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number): GameMetadataMLB | undefined => 
   state.simInputs[league]?.[matchId]?.currentGame?.gameInfo;
+export const selectGameBettingBounds = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number): MarketLinesMLB | undefined => 
+  state.simInputs[league]?.[matchId]?.currentGame?.gameInfo?.bettingBounds;
+export const selectGameAutomatedLeans = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number): MLBGameSimInputs | undefined => 
+  state.simInputs[league]?.[matchId]?.currentGame?.gameInfo?.automatedLeans;
 export const selectGameLineups = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number): MatchupLineups | undefined => 
   state.simInputs[league]?.[matchId]?.currentGame?.lineups;
 export const selectGameSeriesGames = (state: { simInputs: SimInputsState }, league: LeagueName, matchId: number): SeriesInfoMLB | undefined => 

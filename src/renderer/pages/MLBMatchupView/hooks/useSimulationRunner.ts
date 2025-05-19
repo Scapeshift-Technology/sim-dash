@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { fetchSimResults } from '@/store/slices/scheduleSlice';
-import type { MLBGameContainer, MLBGameInputs2, MLBGameSimInputs } from '@/types/simInputs';
+import type { MLBGameContainer, MLBGameInputs2 } from '@/types/simInputs';
 import type { SimResultsMLB } from '@/types/bettingResults';
 import type { MLBGameSimInputData, SimHistoryEntry } from '@/types/simHistory';
 import { runSimulation, runSeriesSimulation } from '../functions/simulation';
 import { AppDispatch } from '@/store/store';
 import { transformMLBGameInputs2ToDB } from '@/utils/transformers';
+import { MarketLinesMLB } from '@/types/mlb';
 
 interface UseSimulationRunnerReturn {
     isSimulating: boolean;

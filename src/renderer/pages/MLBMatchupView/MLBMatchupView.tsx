@@ -288,6 +288,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 awayTeamName={participant1}
                 homeTeamName={participant2}
                 gameContainer={gameContainer}
+                matchId={matchId}
                 onUpdateTeamLean={handleTeamLeanUpdate}
                 onUpdatePlayerLean={handlePlayerLeanUpdate}
             />

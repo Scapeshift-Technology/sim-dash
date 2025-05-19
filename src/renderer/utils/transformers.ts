@@ -1,13 +1,21 @@
-import { MatchupLineups, Player, TeamLineup } from '@/types/mlb';
-import { MLBGameSimInputData, ReducedMatchupLineups, ReducedPlayer, ReducedTeamLineup } from '@/types/simHistory';
-import { MLBGameInputs2 } from '@/types/simInputs';
+import { MatchupLineups, Player, TeamLineup, LineupsSource } from '@/types/mlb';
+import { MLBGameSimInputData, ReducedMatchupLineups, ReducedPlayer, ReducedTeamLineup, SimMetadataMLB } from '@/types/simHistory';
+import { MLBGameInputs2, MLBGameSimInputs } from '@/types/simInputs';
 
-// ---------- Matchup Lineups ----------
+// ---------- Matchup Lineups ----------\
 
 function transformMLBGameInputs2ToDB(gameInputs: MLBGameInputs2): MLBGameSimInputData {
+    const simInputs: MLBGameSimInputs = gameInputs.simInputs;
+    const lineups: ReducedMatchupLineups = transformMatchupLineupsToReduced(gameInputs.lineups);
+    const gameInfo: SimMetadataMLB = {
+        ...gameInputs.gameInfo,
+        lineupsSource: gameInputs.gameInfo.lineupsSource as LineupsSource,
+    }
+
     return {
-        simInputs: gameInputs.simInputs,
-        lineups: transformMatchupLineupsToReduced(gameInputs.lineups)
+        simInputs,
+        lineups,
+        gameInfo
     }
 }
 

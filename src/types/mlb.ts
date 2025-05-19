@@ -1,5 +1,7 @@
 // Define types related to MLB lineups and player stats
 
+import { MLBGameSimInputs } from "./simInputs";
+
 export type TeamType = 'away' | 'home';
 
 // ---------- MLB game data types ----------
@@ -13,6 +15,8 @@ export type LineupsSource = 'MLB' | 'Swish' | 'Manual';
 export interface GameMetadataMLB {
   seriesGameNumber?: number;
   lineupsSource?: LineupsSource;
+  bettingBounds?: MarketLinesMLB;
+  automatedLeans?: MLBGameSimInputs;
 }
 
 export interface MLBGameData { // Very similar to MLBGameInputs2(type in simInputs.ts), but with less info

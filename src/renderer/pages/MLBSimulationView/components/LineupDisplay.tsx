@@ -24,7 +24,15 @@ const LineupDisplay: React.FC<LineupDisplayProps> = ({ teamName, teamLineup }) =
   );
 
   return (
-    <Box sx={{ flex: 1 }}>
+    <Box sx={{ 
+      flex: 1,
+      minWidth: '250px',
+      '& .MuiListItemText-primary': {
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
+      }
+    }}>
       <Typography variant="h6" component="h3" sx={{ mb: 1 }}>
         {teamName}
       </Typography>
