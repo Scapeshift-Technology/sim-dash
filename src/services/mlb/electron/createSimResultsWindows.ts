@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain } from 'electron';
+import { BrowserWindow, app } from 'electron';
 import path from 'path';
 
 interface CreateMLBSimResultsWindowOptions {
@@ -44,7 +44,7 @@ export function createMLBSimResultsWindow2({
         simWindow.loadURL(url.toString());
     } else {
         simWindow.loadFile(
-            path.join(__dirname, '@@', 'dist', 'renderer', 'index.html'),
+            path.join(app.getAppPath(), 'dist', 'renderer', 'index.html'),
             { hash: '/sim-results' }
         );
     }
