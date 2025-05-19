@@ -21,9 +21,9 @@ describe('MLB Quick Grade Parsing', () => {
             expect(parse_usa_price('150.0')).toBe(150);
         });
         test('should throw error for invalid price string', () => {
-            expect(() => parse_usa_price('invalid')).toThrowError('Invalid USA price format: "invalid"');
-            expect(() => parse_usa_price('')).toThrowError('Invalid USA price format: ""');
-            expect(() => parse_usa_price('+-150')).toThrowError('Invalid USA price format: "+-150"');
+            expect(() => parse_usa_price('invalid')).toThrow('Invalid USA price format: "invalid"');
+            expect(() => parse_usa_price('')).toThrow('Invalid USA price format: ""');
+            expect(() => parse_usa_price('+-150')).toThrow('Invalid USA price format: "+-150"');
         });
     });
 
@@ -141,6 +141,30 @@ describe('MLB Quick Grade Parsing', () => {
             expect(cm.IsOver).toBe(true);
         });
 
+        test('Example 4a: Astros/White Sox 1st inning o0.5', () => {
+            const line = "5/2/2025, 7:39 PM, YG Astros/White Sox 1st inning o0.5 @ +123 = 0.216";
+            const [dateStr, timeStr, detailsStr] = line.split(',').map(s => s.trim());
+            const result = parseBetDetails(dateStr, timeStr, detailsStr);
+
+            expect(result).not.toBeNull();
+            const bet = result as Bet;
+            const cm = bet.ContractMatch as Contract_Match_Total;
+
+            expect(cm.Match.Team1).toBe("Astros");
+            expect(cm.Match.Team2).toBe("White Sox");
+        });
+        test('Example 4b: White Sox/Astros 1st inning o0.5', () => {
+            const line = "5/2/2025, 7:39 PM, YG White Sox/Astros 1st inning o0.5 @ +123 = 0.216";
+            const [dateStr, timeStr, detailsStr] = line.split(',').map(s => s.trim());
+            const result = parseBetDetails(dateStr, timeStr, detailsStr);
+
+            expect(result).not.toBeNull();
+            const bet = result as Bet;
+            const cm = bet.ContractMatch as Contract_Match_Total;
+
+            expect(cm.Match.Team1).toBe("White Sox");
+            expect(cm.Match.Team2).toBe("Astros");
+        });
         // Add more test cases for edge conditions and errors:
         // - Line not divisible by 0.5
         // - Missing parts of the string
