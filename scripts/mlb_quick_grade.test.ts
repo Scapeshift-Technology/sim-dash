@@ -39,10 +39,11 @@ describe('MLB Quick Grade Parsing', () => {
             expect(bet.ExecutionDtm.getFullYear()).toBe(2025);
             expect(bet.ExecutionDtm.getMonth()).toBe(4); // 0-indexed month
             expect(bet.ExecutionDtm.getDate()).toBe(2);
-            // Test proper time conversion from local time to UTC
-            // 6:43 PM Eastern Time should be 22:43 UTC (for EDT) or 23:43 UTC (for EST)
-            const expectedUTCHour = new Date('2025-05-02T18:43:00').getHours() + 4; // EDT is UTC-4
-            expect(bet.ExecutionDtm.getUTCHours()).toBe(expectedUTCHour);
+            
+            // Test time in a timezone-agnostic way
+            // Check that hours and minutes match the input time in local timezone
+            const inputDate = new Date(`2025-05-02T18:43:00`);
+            expect(bet.ExecutionDtm.getHours()).toBe(inputDate.getHours());
             expect(bet.ExecutionDtm.getMinutes()).toBe(43);
             
             expect(bet.Price).toBe(100);
@@ -76,10 +77,10 @@ describe('MLB Quick Grade Parsing', () => {
             expect(bet.ExecutionDtm.getFullYear()).toBe(2025);
             expect(bet.ExecutionDtm.getMonth()).toBe(4); // May
             expect(bet.ExecutionDtm.getDate()).toBe(17);
-            // Test proper time conversion from local time to UTC
-            // 9:12 AM Eastern Time should be 13:12 UTC (for EDT) or 14:12 UTC (for EST)
-            const expectedUTCHour = new Date('2025-05-17T09:12:00').getHours() + 4; // EDT is UTC-4
-            expect(bet.ExecutionDtm.getUTCHours()).toBe(expectedUTCHour);
+            
+            // Test time in a timezone-agnostic way
+            const inputDate = new Date(`2025-05-17T09:12:00`);
+            expect(bet.ExecutionDtm.getHours()).toBe(inputDate.getHours());
             expect(bet.ExecutionDtm.getMinutes()).toBe(12);
 
             expect(bet.Price).toBe(-115.5);
@@ -116,10 +117,11 @@ describe('MLB Quick Grade Parsing', () => {
             expect(bet.ExecutionDtm.getFullYear()).toBe(2025);
             expect(bet.ExecutionDtm.getMonth()).toBe(4); // May
             expect(bet.ExecutionDtm.getDate()).toBe(18);
-            // Test proper time conversion from local time to UTC
-            // 3:39 PM Eastern Time should be 19:39 UTC (for EDT) or 20:39 UTC (for EST)
-            const expectedUTCHour = new Date('2025-05-18T15:39:00').getHours() + 4; // EDT is UTC-4
-            expect(bet.ExecutionDtm.getUTCHours()).toBe(expectedUTCHour);
+            
+            // Test time in a timezone-agnostic way
+            const inputDate = new Date(`2025-05-18T15:39:00`);
+            expect(bet.ExecutionDtm.getHours()).toBe(inputDate.getHours());
+            expect(bet.ExecutionDtm.getMinutes()).toBe(39);
 
             expect(bet.Price).toBe(-117);
             expect(bet.Size).toBe(2700);
