@@ -5,7 +5,9 @@ import {
     Typography,
     Paper,
     List,
-    Divider
+    Divider,
+    IconButton,
+    Tooltip
 } from '@mui/material';
 import type { TeamLineup, Player, Position, TeamType } from '@/types/mlb';
 import { updateTeamLean, updatePlayerLean, selectTeamInputs } from '@/store/slices/simInputsSlice';
@@ -14,6 +16,7 @@ import type { RootState } from '@/store/store';
 import SortablePlayerItem from './SortablePlayerItem';
 import TeamSectionCard from './TeamSectionCard';
 import useDragAndDrop from '../hooks/useDragAndDrop';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 // ---------- Main component ----------
 
@@ -98,6 +101,21 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
         }));
     };
 
+    const handleCopyTeam = () => {
+        const formatPlayers = (players: Player[], section: string) => {
+            return `${section}:\n${players.map(p => p.name).join('\n')}`;
+        };
+
+        const text = [
+            formatPlayers([teamData.startingPitcher], 'Starting Pitcher'),
+            formatPlayers(teamData.bullpen, 'Bullpen'),
+            formatPlayers(teamData.lineup, 'Batting Order'),
+            formatPlayers(teamData.bench, 'Bench')
+        ].join('\n\n');
+
+        navigator.clipboard.writeText(text);
+    };
+
     // ---------- Render functions ----------
 
     const renderPlayerList = (players: Player[], isDraggable: boolean = false, isPitcher: boolean = false, isStarter: boolean = false) => (
@@ -134,7 +152,14 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                 gap: 2
             }}
         >
-            <Typography variant="h6" gutterBottom>{teamName}</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Typography variant="h6" gutterBottom>{teamName}</Typography>
+                <Tooltip title="Copy team players">
+                    <IconButton size="small" onClick={handleCopyTeam}>
+                        <ContentCopyIcon fontSize="small" />
+                    </IconButton>
+                </Tooltip>
+            </Box>
             <Divider sx={{ mb: 1 }}/>
 
             {/* Pitchers Section */}
