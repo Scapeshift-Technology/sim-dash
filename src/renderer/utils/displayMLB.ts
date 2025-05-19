@@ -63,7 +63,7 @@ function transformSidesOutcomeCountsMLB(outcomeCounts: OutcomeCounts, teamName: 
   const coverPercent = countsToProbability(success, failure, pushCt);
   const moe = marginOfError(total - pushCt, coverPercent);
   const usaOdds = countsToAmericanOdds(success, failure, pushCt);
-  const varianceProportion = Math.min(Math.max(coverPercent + moe, 0), 1);
+  const varianceProportion = Math.min(Math.max(coverPercent - moe, 0), 1);
   const varianceOdds = proportionToAmericanOdds(varianceProportion);
   const lineNumber = parseFloat(line);
 
@@ -226,7 +226,7 @@ function transformPlayerStatLinesPropsCountsMLB(playerName: string, statName: st
   const overPercent = countsToProbability(success, failure, pushCt);
   const moe = marginOfError(total - pushCt, overPercent);
   const usaOdds = countsToAmericanOdds(success, failure, pushCt);
-  const varianceProportion = Math.min(Math.max(overPercent + moe, 0), 1);
+  const varianceProportion = Math.min(Math.max(overPercent - moe, 0), 1);
   const varianceOdds = proportionToAmericanOdds(varianceProportion);
 
   return {
@@ -256,7 +256,7 @@ function transformFirstInningScoreCountsMLB(outcomeCounts: OutcomeCounts, teamNa
   const scorePercent = countsToProbability(success, failure, pushCt);
   const moe = marginOfError(total - pushCt, scorePercent);
   const usaOdds = countsToAmericanOdds(success, failure, pushCt);
-  const varianceProportion = Math.min(Math.max(scorePercent + moe, 0), 1);
+  const varianceProportion = Math.min(Math.max(scorePercent - moe, 0), 1);
   const varianceOdds = proportionToAmericanOdds(varianceProportion);
   const displayTeamName = teamName;
 
