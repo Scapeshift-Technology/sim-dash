@@ -25,15 +25,16 @@ const SimInputs: React.FC<SimInputsProps> = ({ simInputs, gameInfo, awayTeamName
     function renderLeanWithDelta(currentLean: number, automatedLean: number | undefined, label: string) {
       if (automatedLean === undefined) return `${label}: ${formatLean(currentLean)}%`;
       
-      const delta = currentLean - automatedLean;
-      const deltaText = delta > 0 ? `+${formatLean(delta)}` : formatLean(delta);
-      const deltaColor = delta > 0 ? 'success.main' : delta < 0 ? 'error.main' : 'text.primary';
-      
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <span>{label}: {formatLean(currentLean)}%</span>
-          <span style={{ color: deltaColor }}>({deltaText}%)</span>
-          <Tooltip title={`Suggested lean: ${formatLean(automatedLean)}%`}>
+          <Tooltip title={
+            <Box>
+              <Typography variant="body2">Final Lean: {formatLean(currentLean)}%</Typography>
+              <Typography variant="body2">Automated Lean: {formatLean(automatedLean)}%</Typography>
+              <Typography variant="body2">Manual Adjustment: {formatLean(currentLean - automatedLean)}%</Typography>
+            </Box>
+          }>
             <InfoIcon sx={{ fontSize: 16, color: 'action.active', cursor: 'help' }} />
           </Tooltip>
         </Box>

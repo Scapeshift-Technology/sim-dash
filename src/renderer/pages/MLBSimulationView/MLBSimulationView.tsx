@@ -139,6 +139,7 @@ const MLBSimulationView: React.FC = () => {
           lineups={lineups}
           awayTeamName={awayTeamName}
           homeTeamName={homeTeamName}
+          lineupsSource={gameInfo?.lineupsSource}
         />
       </CollapsibleSection>
 
