@@ -135,8 +135,8 @@ function transformTotalsOutcomeCountsMLB(
   const usaFairOver = countsToAmericanOdds(overCounts.success, overCounts.failure, overCounts.push || 0);
   const usaFairUnder = countsToAmericanOdds(underCounts.success, underCounts.failure, underCounts.push || 0);
   
-  const varianceProportionOver = Math.min(Math.max(overPercent + moe, 0), 1);
-  const varianceProportionUnder = Math.min(Math.max(underPercent + moe, 0), 1);
+  const varianceProportionOver = Math.min(Math.max(overPercent - moe, 0), 1);
+  const varianceProportionUnder = Math.min(Math.max(underPercent - moe, 0), 1);
   const varianceOddsOver = proportionToAmericanOdds(varianceProportionOver);
   const varianceOddsUnder = proportionToAmericanOdds(varianceProportionUnder);
   
