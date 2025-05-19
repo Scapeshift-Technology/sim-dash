@@ -269,10 +269,11 @@ export function validateLine(line: string): { date: string; time: string; detail
     return null;
 }
 
-export function processFile(filePath: string) {
+// Modified to be async and accept sql.ConnectionPool
+export async function processFile(filePath: string, pool: import('mssql').ConnectionPool) {
     if (!fs.existsSync(filePath)) {
         console.error(`Error: File not found at ${filePath}`);
-        process.exit(1);
+        return;
     }
 
     const fileContent = fs.readFileSync(filePath, 'utf-8');
@@ -336,41 +337,125 @@ export function processFile(filePath: string) {
         console.log('\n'); // Separator
     }
 
-    if (parsedBets.length > 0) {
-        console.log("Successfully parsed bets output (JSON format):");
-        parsedBets.forEach((bet, index) => {
-            console.log(`--- Bet ${index + 1} ---`);
-            console.log(JSON.stringify(bet, null, 2));
+    const totalBets = parsedBets.filter(bet => !('Team' in bet.ContractMatch));
+    const teamTotalBets = parsedBets.filter(bet => 'Team' in bet.ContractMatch);
+
+    const printFormattedTable = (title: string, headers: string[], rowsData: (string | number | Date | boolean | undefined)[][]) => {
+        if (rowsData.length === 0) {
+            // console.log(`No data for table: ${title}`); // Optional: log if no data for a specific table
+            return;
+        }
+
+        const columnWidths = headers.map((header, colIndex) => {
+            let maxWidth = header.length;
+            for (const row of rowsData) {
+                const cellValue = row[colIndex];
+                const cellLength = String(cellValue ?? '').length;
+                if (cellLength > maxWidth) {
+                    maxWidth = cellLength;
+                }
+            }
+            return maxWidth;
+        });
+
+        const outputTableLines: string[] = [];
+        outputTableLines.push(
+            headers.map((header, i) => header.padEnd(columnWidths[i])).join(',')
+        );
+
+        rowsData.forEach(row => {
+            outputTableLines.push(
+                row.map((cell, i) => {
+                    return String(cell ?? '').padEnd(columnWidths[i]);
+                }).join(',')
+            );
         });
         
-        // The original printTable is not suitable for complex Bet objects.
-        // If a table summary is needed, it would require a new function
-        // to extract specific fields from the Bet objects.
-        // console.log("--- Original Table Format (Example if adapted) ---");
-        // const headersForBets = ['Exec DTM', 'Team1', 'Period', 'Line', 'IsOver', 'Price', 'Size'];
-        // const rowsForBets = parsedBets.map(b => [
-        // b.ExecutionDtm.toLocaleString(),
-        // b.ContractMatch.Match.Team1,
-        // `${b.ContractMatch.Period.PeriodTypeCode}${b.ContractMatch.Period.PeriodNumber}`,
-        // b.ContractMatch.Line,
-        // b.ContractMatch.IsOver,
-        // b.Price,
-        // b.Size
-        // ]);
-        // printTable(headersForBets, rowsForBets);
+        const finalStringToPrint = `\n${title}\n${outputTableLines.join('\n')}`;
+        console.log(finalStringToPrint);
+    };
 
+    if (totalBets.length > 0) {
+        const headers = ['Date', 'Team1', 'Team2', 'periodTypeCode', 'periodNumber', 'Line', 'IsOver'];
+        const rowsData = totalBets.map(bet => {
+            const contractMatch = bet.ContractMatch as Contract_Match_Total;
+            // Use toISOString() for date for consistency, or just date part if preferred.
+            const matchDate = contractMatch.Match.Date.toLocaleDateString(); // Or .toISOString().split('T')[0]
+            const team1 = contractMatch.Match.Team1;
+            const team2 = contractMatch.Match.Team2 ?? "";
+            const periodTypeCode = contractMatch.Period.PeriodTypeCode;
+            const periodNumber = contractMatch.Period.PeriodNumber;
+            const line = contractMatch.Line;
+            const totalStatus = contractMatch.IsOver ? "OV" : "UN";
 
-    } else if (linesToWarnBasicFormat.length === 0) { 
+            return [matchDate, team1, team2, periodTypeCode, periodNumber, line, contractMatch.IsOver];
+        });
+        printFormattedTable("--- Parsed Totals Bets ---", headers, rowsData);
+    }
+
+    if (teamTotalBets.length > 0) {
+        const headers = ['Date', 'Team', 'periodTypeCode', 'periodNumber', 'Line', 'IsOver', 'Grade'];
+        
+        // Asynchronously map teamTotalBets to rowsData, fetching grade for each
+        const rowsData = await Promise.all(teamTotalBets.map(async (bet) => {
+            const contractMatch = bet.ContractMatch as Contract_Match_TeamTotal;
+            const matchDate = contractMatch.Match.Date; // This is a Date object
+            
+            // Format date as YYYY-MM-DD for SQL
+            const formattedMatchDate = `${matchDate.getFullYear()}-${String(matchDate.getMonth() + 1).padStart(2, '0')}-${String(matchDate.getDate()).padStart(2, '0')}`;
+
+            let grade = 'N/A'; // Default grade
+
+            try {
+                // OLD: .execute('dbo.UserAPICall_Contract_TeamTotal_Grade_fn');
+                // NEW: Call as a function in a SELECT statement
+                const query = `
+                    SELECT dbo.UserAPICall_Contract_TeamTotal_Grade_fn(
+                        @MatchScheduledDate,
+                        @SelectedTeam,
+                        @PeriodTypeCode,
+                        @PeriodNumber,
+                        @Line,
+                        @IsOver
+                    ) AS GradeValue;`; // Assign an alias to the result column
+
+                const result = await pool.request()
+                    .input('MatchScheduledDate', sql.Date, formattedMatchDate)
+                    .input('SelectedTeam', sql.Char(50), contractMatch.Team)
+                    .input('PeriodTypeCode', sql.Char(2), contractMatch.Period.PeriodTypeCode)
+                    .input('PeriodNumber', sql.TinyInt, contractMatch.Period.PeriodNumber)
+                    .input('Line', sql.Decimal(5, 2), contractMatch.Line)
+                    .input('IsOver', sql.Bit, contractMatch.IsOver ? 1 : 0)
+                    .query(query); // Use .query() instead of .execute()
+
+                if (result.recordset && result.recordset.length > 0 && result.recordset[0] && result.recordset[0].GradeValue !== null && result.recordset[0].GradeValue !== undefined) {
+                    grade = String(result.recordset[0].GradeValue).trim(); // Access by the alias 'GradeValue' and trim
+                } else {
+                    console.warn(`[Grade WARN] No grade returned or unexpected SQL result for TeamTotal: ${contractMatch.Team} on ${formattedMatchDate}, Line: ${contractMatch.Line}, Over: ${contractMatch.IsOver}`);
+                    // Grade remains 'N/A' or you can set to 'ERR' if preferred for this case
+                }
+            } catch (err) {
+                const message = err instanceof Error ? err.message : String(err);
+                console.error(`[Grade ERROR] Failed to fetch grade for TeamTotal ${contractMatch.Team} on ${formattedMatchDate}, Line: ${contractMatch.Line}, Over: ${contractMatch.IsOver}: ${message}`);
+                grade = 'ERR';
+            }
+
+            return [
+                matchDate.toLocaleDateString(), // For display
+                contractMatch.Team,
+                contractMatch.Period.PeriodTypeCode,
+                contractMatch.Period.PeriodNumber,
+                contractMatch.Line,
+                contractMatch.IsOver, // Will display as true/false
+                grade
+            ];
+        }));
+        printFormattedTable("--- Parsed Team Totals Bets ---", headers, rowsData);
+    }
+
+    if (parsedBets.length === 0 && linesToWarnBasicFormat.length === 0) { 
         console.log("No processable bets found in the file after detailed parsing.");
     }
-    // Original printTable call block commented out
-    // if (validLines.length > 0) {
-    //     const headers = ['Date', 'Time', 'Details'];
-    //     const rows = validLines.map(vl => [vl.date, vl.time, vl.details]);
-    //     printTable(headers, rows);
-    // } else if (linesToWarn.length === 0) { 
-    //     console.log("No processable content found in the file.");
-    // }
 }
 
 // New async function to manage database operations and subsequent file processing
@@ -381,70 +466,67 @@ async function runOperations() {
         process.exit(1);
     }
 
-    let pool; // Declare pool outside try so it can be used in finally
+    let pool: import('mssql').ConnectionPool | undefined;
     try {
-        // Attempt to connect to the database
         pool = await sql.connect(dbConnectionString);
         console.log("connection succeeded");
 
-        // Execute the query
+        if (!pool) { // Guard for TypeScript CFA
+            throw new Error("Database pool not initialized after connect call.");
+        }
+
         const queryText = "SELECT COUNT(*) FROM dbo.LeagueTeam_V WHERE League = 'MLB'";
         const result = await pool.request().query(queryText);
 
-        // Print the results as a single JSON string
         console.log(JSON.stringify(result.recordset, null, 2));
+
+        const args = process.argv.slice(2);
+        if (args.length > 0 && (args[0] === '-h' || args[0] === '--help')) {
+            console.log("Usage: ts-node scripts/mlb_quick_grade.ts <file_path>");
+            console.log("Processes a CSV-like file, parsing lines into Bet objects.");
+            console.log("Connects to DB specified by DB_CONNECTION_STRING and runs a test query before file processing.");
+            process.exit(0);
+        }
+
+        if (args.length !== 1) {
+            console.error("Usage: ./mlb_quick_grade.js <file_path> or node mlb_quick_grade.js <file_path>");
+            process.exit(1);
+        }
+        const filePath = args[0];
+
+        if (!pool) { // Guard for TypeScript CFA before passing to processFile
+            throw new Error("Database pool is not available for file processing due to an unexpected state.");
+        }
+        await processFile(filePath, pool);
 
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
-        console.error('Database connection or query failed:', message);
+        console.error('Operation failed:', message);
         if (err && typeof err === 'object' && 'originalError' in err && err.originalError && typeof err.originalError === 'object' && 'message' in err.originalError) {
              console.error('Original error:', err.originalError.message);
         }
-        process.exit(1);
+        // No explicit process.exit(1) here; error will propagate to main catch
+        // or if not caught, finally will run and then process will exit with error status.
+        // Forcing re-throw to ensure main catch handler is invoked for consistent exit code management.
+        throw err;
     } finally {
-        if (pool) {
+        if (pool && pool.connected) { // Check if pool exists and is connected
             try {
                 await pool.close();
+                console.log("Database connection closed.");
             } catch (closeErr: unknown) {
-                // Log error during close, but don't necessarily exit if main operations succeeded
                 const message = closeErr instanceof Error ? closeErr.message : String(closeErr);
                 console.error('Error closing database connection:', message);
             }
         }
     }
-
-    // Original script's argument parsing and file processing logic
-    // This part will only run if the database operations above did not cause an exit
-    const args = process.argv.slice(2);
-    if (args.length !== 1) {
-        console.error("Usage: ./mlb_quick_grade.js <file_path> or node mlb_quick_grade.js <file_path>");
-        process.exit(1);
-    }
-    const filePath = args[0];
-    processFile(filePath); // Call the original file processing function
 }
 
 if (require.main === module) {
-    // const args = process.argv.slice(2);
-    // if (args.length !== 1) {
-    //     console.error("Usage: node process_log.js <file_path>"); // Original, incorrect usage message
-    //     process.exit(1);
-    // }
-    // const filePath = args[0];
-    // processFile(filePath);
-
-    // Update usage message for TypeScript execution
-    const args = process.argv.slice(2);
-    if (args.length > 0 && (args[0] === '-h' || args[0] === '--help')) {
-        console.log("Usage: ts-node scripts/mlb_quick_grade.ts <file_path>");
-        console.log("Processes a CSV-like file, parsing lines into Bet objects.");
-        console.log("Connects to DB specified by DB_CONNECTION_STRING and runs a test query before file processing.");
-        process.exit(0);
-    }
-    
     runOperations().catch(err => {
         // Catch any unhandled errors from the async runOperations function
-        console.error("Unhandled error during script execution:", err);
+        // Error message is already logged by runOperations' catch block
+        // console.error("Unhandled error during script execution:", err.message || String(err));
         process.exit(1);
     });
 }
