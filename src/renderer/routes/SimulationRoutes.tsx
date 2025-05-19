@@ -1,6 +1,6 @@
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
-import MLBSimulationView from '@/pages/MLBSimulationView';
+import MLBSimulationView from '@/pages/MLBSimulationView/MLBSimulationView';
 
 const SimulationRoutes: React.FC = () => {
   return (

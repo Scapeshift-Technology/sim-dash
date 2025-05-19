@@ -8,61 +8,28 @@ import {
   transformSeriesProbsMLB
 } from '@/utils/displayMLB';
 import SidesTable from '@/components/SidesTable';
-import { Box, Typography, IconButton, CircularProgress, Divider } from '@mui/material';
+import { Box, Typography, IconButton, CircularProgress, Divider, List, ListItem, ListItemText } from '@mui/material';
 import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material';
 import TotalsTable from '@/components/TotalsTable';
 import FirstInningTable from '@/components/FirstInningTable';
 import PlayerPropsTable from '@/components/PlayerPropsTable';
 import SeriesTable from '@/components/SeriesTable';
-import { MLBGameSimInputs } from '@@/types/simInputs';
+import { ReducedMatchupLineups, ReducedPlayer } from '@@/types/simHistory';
+import { MLBGameSimInputs } from '@/types/simInputs';
+import LineupDisplay from './components/LineupDisplay';
+import CollapsibleSection from './components/CollapsibleSection';
 
-// ---------- Collapsible Section ----------
-
-interface CollapsibleSectionProps {
-  title: string;
-  isOpen: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-}
-
-const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
-  title,
-  isOpen,
-  onToggle,
-  children
-}) => (
-  <Box sx={{ mb: 3 }}>
-    <Box 
-      onClick={onToggle}
-      sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        cursor: 'pointer',
-        '&:hover': { opacity: 0.8 }
-      }}
-    >
-      <Typography variant="h5" component="h2">{title}</Typography>
-      <IconButton size="small">
-        {isOpen ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
-      </IconButton>
-    </Box>
-    {isOpen && (
-      <Box sx={{ mt: 3 }}>
-        {children}
-      </Box>
-    )}
-  </Box>
-);
-
-// ---------- MLB Simulation View ----------
+// ---------- Main component ----------
 
 const MLBSimulationView: React.FC = () => {
   // ---------- State ----------
   const [simData, setSimData] = useState<SimResultsMLB | null>(null);
   const [loading, setLoading] = useState(true);
-  const [inputData, setInputData] = useState<MLBGameSimInputs | null>(null);
+  const [lineups, setLineups] = useState<ReducedMatchupLineups | null>(null);
+  const [simInputs, setSimInputs] = useState<MLBGameSimInputs | null>(null);
   const [sectionVisibility, setSectionVisibility] = useState({
-    inputs: true,
+    lineups: false,
+    inputs: false,
     series: true,
     sides: true,
     totals: true,
@@ -84,7 +51,8 @@ const MLBSimulationView: React.FC = () => {
         console.log('Sim data received:', data);
         if (data) {
           setSimData(data.simData);
-          setInputData(data.inputData);
+          setSimInputs(data.inputData.simInputs);
+          setLineups(data.inputData.lineups);
           setTimestamp(data.timestamp);
           setAwayTeamName(data.awayTeamName);
           setHomeTeamName(data.homeTeamName);
@@ -144,8 +112,8 @@ const MLBSimulationView: React.FC = () => {
   }
 
   const renderTeamLeans = (teamType: 'away' | 'home', teamName: string | null) => {
-    if (!inputData) return null;
-    const teamData = inputData[teamType];
+    if (!simInputs) return null;
+    const teamData = simInputs[teamType];
     function formatLean(lean: number) {
       return lean.toFixed(2);
     }
@@ -204,6 +172,32 @@ const MLBSimulationView: React.FC = () => {
         <h5 style={{ marginTop: '0px', paddingTop: '0px' }}>Simulated at {new Date(timestamp).toLocaleString()}</h5>
       )}
       
+      <CollapsibleSection
+        title="Team Lineups"
+        isOpen={sectionVisibility.lineups}
+        onToggle={() => toggleSection('lineups')}
+      >
+        <Box sx={{ 
+          p: 2, 
+          bgcolor: 'background.paper', 
+          borderRadius: 1,
+          border: 1,
+          borderColor: 'divider'
+        }}>
+          {lineups && (
+            <Box sx={{ 
+              display: 'flex', 
+              gap: 4,
+              '& > *': { minWidth: 0 } // Ensures flex items can shrink below content size
+            }}>
+              <LineupDisplay teamName={awayTeamName || 'Away Team'} teamLineup={lineups.away} />
+              <Divider orientation="vertical" flexItem />
+              <LineupDisplay teamName={homeTeamName || 'Home Team'} teamLineup={lineups.home} />
+            </Box>
+          )}
+        </Box>
+      </CollapsibleSection>
+
       <CollapsibleSection
         title="Simulation Inputs"
         isOpen={sectionVisibility.inputs}

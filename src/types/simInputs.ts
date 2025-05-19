@@ -1,4 +1,4 @@
-import type { MatchupLineups, MLBGameDataResponse, GameMetadataMLB } from './mlb';
+import type { MatchupLineups, GameMetadataMLB } from './mlb';
 import type { LeagueName } from './league';
 
 // ---------- Types ----------
@@ -14,6 +14,7 @@ export type SimInputsState = {
 // ---------- MLB ----------
 
 export interface MLBGameSimInputsTeam {
+  // --- Leans ---
   teamHitterLean: number // -0.1 to 0.1
   teamPitcherLean: number // -0.1 to 0.1
   individualHitterLeans: Record<number, number> // playerId to lean

@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { fetchSimResults } from '@/store/slices/scheduleSlice';
-import type { MLBGameContainer, MLBGameInputs2 } from '@/types/simInputs';
+import type { MLBGameContainer, MLBGameInputs2, MLBGameSimInputs } from '@/types/simInputs';
 import type { SimResultsMLB } from '@/types/bettingResults';
-import type { SimHistoryEntry } from '@/types/simHistory';
+import type { MLBGameSimInputData, SimHistoryEntry } from '@/types/simHistory';
 import { runSimulation, runSeriesSimulation } from '../functions/simulation';
 import { AppDispatch } from '@/store/store';
+import { transformMLBGameInputs2ToDB } from '@/utils/transformers';
 
 interface UseSimulationRunnerReturn {
     isSimulating: boolean;
@@ -28,13 +29,16 @@ export function useSimulationRunner(
 
     // ---------- Functions ----------
 
-    const saveAndUpdateHistory = async (simResults: SimResultsMLB, inputData: any) => {
+    const saveAndUpdateHistory = async (simResults: SimResultsMLB, inputData: MLBGameInputs2) => {
+        // Transform data to specific DB types
+        const dbInputData: MLBGameSimInputData = transformMLBGameInputs2ToDB(inputData);
         const timestamp = new Date().toISOString();
+
         const simHistoryEntry: SimHistoryEntry = {
             matchId,
             timestamp,
             simResults,
-            inputData
+            inputData: dbInputData
         };
 
         try {
@@ -59,7 +63,7 @@ export function useSimulationRunner(
             setSimError(null);
 
             const simResults = await runSimulation(simInputs.currentGame as MLBGameInputs2, numGames);
-            await saveAndUpdateHistory(simResults, simInputs.currentGame?.simInputs);
+            await saveAndUpdateHistory(simResults, simInputs.currentGame as MLBGameInputs2);
         } catch (error) {
             setSimError(error instanceof Error ? error.message : 'An unexpected error occurred');
             console.error('Simulation error:', error);
@@ -79,7 +83,7 @@ export function useSimulationRunner(
             setSimError(null);
             
             const simResults = await runSeriesSimulation(simInputs.seriesGames, numGames);
-            await saveAndUpdateHistory(simResults, simInputs.currentGame?.simInputs);
+            await saveAndUpdateHistory(simResults, simInputs.currentGame as MLBGameInputs2);
         } catch (error) {
             setSimError(error instanceof Error ? error.message : 'An unexpected error occurred');
             console.error('Series simulation error:', error);

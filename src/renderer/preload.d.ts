@@ -55,8 +55,9 @@ declare global {
       
       // Simulation Results Window Communication
       getSimData: () => Promise<{
+        matchId: number;
         simData: SimResultsMLB;
-        inputData: MLBGameSimInputs;
+        inputData: MLBGameSimInputData;
         timestamp: string;
         awayTeamName: string;
         homeTeamName: string;
