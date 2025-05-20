@@ -9,7 +9,7 @@ export interface Match {
     Date: Date;
     Team1: string;
     Team2?: string;
-    DaySequence?: number; // Defaults to 1 if not provided
+    DaySequence?: number; // DaySequence is optional
 }
 
 export interface Period {
@@ -42,6 +42,41 @@ export interface Bet {
 
 // Default value for DaySequence can be handled in functions creating Match objects
 // const defaultMatch: Match = { Date: new Date(), Team1: "Team A", DaySequence: 1 };
+
+// --- BEGIN toString UTILITY FUNCTIONS ---
+
+export function periodToString(period: Period): string {
+    return `${period.PeriodTypeCode}${period.PeriodNumber}`;
+}
+
+export function matchToString(match: Match): string {
+    const dateStr = `${match.Date.getMonth() + 1}/${match.Date.getDate()}/${match.Date.getFullYear()}`;
+    let str = `${dateStr} ${match.Team1}`;
+    if (match.Team2) {
+        str += `/${match.Team2}`;
+    }
+    if (match.DaySequence && match.DaySequence > 1) {
+        str += ` #${match.DaySequence}`;
+    }
+    return str;
+}
+
+export function contractMatchToString(contract: Contract_Match): string {
+    const matchStr = matchToString(contract.Match);
+    const overUnder = contract.IsOver ? 'o' : 'u';
+
+    if ('Team' in contract) { // Contract_Match_TeamTotal
+        // Example: "5/12/2025 MIL #2: MIL u4.5"
+        // Period is not shown for TeamTotal in this format based on user example.
+        return `${matchStr}: ${contract.Team} ${overUnder}${contract.Line}`;
+    } else { // Contract_Match_Total
+        // Example: "5/12/2025 MIL/CLE: H1 o5"
+        const periodStr = periodToString(contract.Period);
+        return `${matchStr}: ${periodStr} ${overUnder}${contract.Line}`;
+    }
+}
+
+// --- END toString UTILITY FUNCTIONS ---
 
 // --- BEGIN NEW PARSING LOGIC ---
 
@@ -148,6 +183,16 @@ export function parseBetDetails(dateOnlyStr: string, timeOnlyStr: string, rawDet
         let teamAndPeriodStr = teamPeriodLineInfo.substring(0, ouMatch.index).trim();
 
         let currentPeriod: Period = defaultPeriodDetails;
+        let daySequence: number | undefined = undefined; // Initialize as undefined
+
+        // Regex to find game number like G1, GM2, #1
+        const gameNumberPattern = /(?:\s+(?:GM?|#)([12]))$/i; // Matches " G1", " GM2", " #1" at the end of a segment
+
+        // Attempt to extract game number before period or TT
+        // We will apply this pattern *after* period/TT extraction if it makes more sense,
+        // but the rule states "immediately after the teams specification and before where the TT or the period specification would go".
+        // This implies it's part of the `teamAndPeriodStr` before period/TT stripping.
+
         for (const key in periodStringMap) {
             if (teamAndPeriodStr.toLowerCase().endsWith(key)) {
                 currentPeriod = periodStringMap[key];
@@ -162,6 +207,13 @@ export function parseBetDetails(dateOnlyStr: string, timeOnlyStr: string, rawDet
         
         if (isTeamTotal) {
             teamPartForProcessing = teamPartForProcessing.replace(ttPattern, "").trim();
+        }
+
+        // Now, extract game number from the remaining teamPartForProcessing (if it exists there)
+        const gameNumberMatch = teamPartForProcessing.match(gameNumberPattern);
+        if (gameNumberMatch && gameNumberMatch[1]) {
+            daySequence = parseInt(gameNumberMatch[1], 10);
+            teamPartForProcessing = teamPartForProcessing.substring(0, gameNumberMatch.index).trim(); // Remove game number from team string
         }
         
         const teams = teamPartForProcessing.split("/").map(t => t.trim()).filter(t => t.length > 0);
@@ -187,7 +239,7 @@ export function parseBetDetails(dateOnlyStr: string, timeOnlyStr: string, rawDet
             Date: matchDate,
             Team1: team1,
             Team2: team2,
-            DaySequence: 1 // Default
+            DaySequence: daySequence // Use extracted or undefined DaySequence
         };
 
         let contractMatch: Contract_Match;
@@ -337,9 +389,6 @@ export async function processFile(filePath: string, pool: import('mssql').Connec
         console.log('\n'); // Separator
     }
 
-    const totalBets = parsedBets.filter(bet => !('Team' in bet.ContractMatch));
-    const teamTotalBets = parsedBets.filter(bet => 'Team' in bet.ContractMatch);
-
     const printFormattedTable = (title: string, headers: string[], rowsData: (string | number | Date | boolean | undefined)[][]) => {
         if (rowsData.length === 0) {
             // console.log(`No data for table: ${title}`); // Optional: log if no data for a specific table
@@ -355,7 +404,7 @@ export async function processFile(filePath: string, pool: import('mssql').Connec
                     maxWidth = cellLength;
                 }
             }
-            return maxWidth;
+            return maxWidth + 1;
         });
 
         const outputTableLines: string[] = [];
@@ -375,122 +424,100 @@ export async function processFile(filePath: string, pool: import('mssql').Connec
         console.log(finalStringToPrint);
     };
 
-    if (totalBets.length > 0) {
-        const headers = ['Date', 'Team1', 'Team2', 'periodTypeCode', 'periodNumber', 'Line', 'IsOver', 'Grade'];
+    if (parsedBets.length > 0) {
+        const headers = ['Contract', 'Price', 'Size', 'Grade'];
         
-        // Asynchronously map totalBets to rowsData, fetching grade for each
-        const rowsData = await Promise.all(totalBets.map(async (bet) => {
-            const contractMatch = bet.ContractMatch as Contract_Match_Total;
-            const matchDate = contractMatch.Match.Date; // This is a Date object
+        const rowsData = await Promise.all(parsedBets.map(async (bet) => {
+            const contractStr = contractMatchToString(bet.ContractMatch);
+            let grade = 'N/A'; // Default grade
+            const matchDate = bet.ContractMatch.Match.Date; // Common for both types
             const formattedMatchDate = `${matchDate.getFullYear()}-${String(matchDate.getMonth() + 1).padStart(2, '0')}-${String(matchDate.getDate()).padStart(2, '0')}`;
 
-            let grade = 'N/A'; // Default grade
-
             try {
-                const query = `
-                    SELECT dbo.UserAPICall_Contract_MatchTotal_Grade_fn(
-                        @MatchScheduledDate,
-                        @Team1,
-                        @Team2,
-                        @PeriodTypeCode,
-                        @PeriodNumber,
-                        @Line,
-                        @IsOver
-                    ) AS GradeValue;`;
+                if ('Team' in bet.ContractMatch) { // It's a Contract_Match_TeamTotal
+                    const contractMatch = bet.ContractMatch as Contract_Match_TeamTotal;
+                    let daySequenceSqlArgument = 'DEFAULT';
+                    const request = pool.request()
+                        .input('MatchScheduledDate', sql.Date, formattedMatchDate)
+                        .input('SelectedTeam', sql.Char(50), contractMatch.Team)
+                        .input('PeriodTypeCode', sql.Char(2), contractMatch.Period.PeriodTypeCode)
+                        .input('PeriodNumber', sql.TinyInt, contractMatch.Period.PeriodNumber)
+                        .input('Line', sql.Decimal(5, 2), contractMatch.Line)
+                        .input('IsOver', sql.Bit, contractMatch.IsOver ? 1 : 0);
 
-                const result = await pool.request()
-                    .input('MatchScheduledDate', sql.Date, formattedMatchDate)
-                    .input('Team1', sql.Char(50), contractMatch.Match.Team1)
-                    .input('Team2', sql.Char(50), contractMatch.Match.Team2 ?? null) // Pass null if Team2 is undefined
-                    .input('PeriodTypeCode', sql.Char(2), contractMatch.Period.PeriodTypeCode)
-                    .input('PeriodNumber', sql.TinyInt, contractMatch.Period.PeriodNumber)
-                    .input('Line', sql.Decimal(5, 2), contractMatch.Line)
-                    .input('IsOver', sql.Bit, contractMatch.IsOver ? 1 : 0)
-                    .query(query);
+                    if (typeof contractMatch.Match.DaySequence === 'number') {
+                        request.input('DaySequenceParam', sql.TinyInt, contractMatch.Match.DaySequence);
+                        daySequenceSqlArgument = '@DaySequenceParam';
+                    }
 
-                if (result.recordset && result.recordset.length > 0 && result.recordset[0] && result.recordset[0].GradeValue !== null && result.recordset[0].GradeValue !== undefined) {
-                    grade = String(result.recordset[0].GradeValue).trim();
-                } else {
-                    console.warn(`[Grade WARN] No grade returned or unexpected SQL result for Total: ${contractMatch.Match.Team1}/${contractMatch.Match.Team2 || 'N/A'} on ${formattedMatchDate}, Line: ${contractMatch.Line}, Over: ${contractMatch.IsOver}`);
+                    const query = `
+                        SELECT dbo.UserAPICall_Contract_TeamTotal_Grade_fn(
+                            @MatchScheduledDate,
+                            @SelectedTeam,
+                            @PeriodTypeCode,
+                            @PeriodNumber,
+                            @Line,
+                            @IsOver,
+                            ${daySequenceSqlArgument}
+                        ) AS GradeValue;`;
+
+                    const result = await request.query(query);
+                    if (result.recordset && result.recordset.length > 0 && result.recordset[0] && result.recordset[0].GradeValue !== null && result.recordset[0].GradeValue !== undefined) {
+                        grade = String(result.recordset[0].GradeValue).trim();
+                    } else {
+                        console.warn(`[Grade WARN] No grade returned or unexpected SQL result for TeamTotal: ${contractMatch.Team} on ${formattedMatchDate}, Line: ${contractMatch.Line}, Over: ${contractMatch.IsOver}`);
+                    }
+                } else { // It's a Contract_Match_Total
+                    const contractMatch = bet.ContractMatch as Contract_Match_Total;
+                    let daySequenceSqlArgument = 'DEFAULT';
+                    const request = pool.request()
+                        .input('MatchScheduledDate', sql.Date, formattedMatchDate)
+                        .input('Team1', sql.Char(50), contractMatch.Match.Team1)
+                        .input('Team2', sql.Char(50), contractMatch.Match.Team2 ?? null)
+                        .input('PeriodTypeCode', sql.Char(2), contractMatch.Period.PeriodTypeCode)
+                        .input('PeriodNumber', sql.TinyInt, contractMatch.Period.PeriodNumber)
+                        .input('Line', sql.Decimal(5, 2), contractMatch.Line)
+                        .input('IsOver', sql.Bit, contractMatch.IsOver ? 1 : 0);
+
+                    if (typeof contractMatch.Match.DaySequence === 'number') {
+                        request.input('DaySequenceParam', sql.TinyInt, contractMatch.Match.DaySequence);
+                        daySequenceSqlArgument = '@DaySequenceParam';
+                    }
+
+                    const query = `
+                        SELECT dbo.UserAPICall_Contract_MatchTotal_Grade_fn(
+                            @MatchScheduledDate,
+                            @Team1,
+                            @Team2,
+                            @PeriodTypeCode,
+                            @PeriodNumber,
+                            @Line,
+                            @IsOver,
+                            ${daySequenceSqlArgument}
+                        ) AS GradeValue;`;
+                        
+                    const result = await request.query(query);
+                    if (result.recordset && result.recordset.length > 0 && result.recordset[0] && result.recordset[0].GradeValue !== null && result.recordset[0].GradeValue !== undefined) {
+                        grade = String(result.recordset[0].GradeValue).trim();
+                    } else {
+                        console.warn(`[Grade WARN] No grade returned or unexpected SQL result for Total: ${contractMatch.Match.Team1}/${contractMatch.Match.Team2 || 'N/A'} on ${formattedMatchDate}, Line: ${contractMatch.Line}, Over: ${contractMatch.IsOver}`);
+                    }
                 }
             } catch (err) {
                 const message = err instanceof Error ? err.message : String(err);
-                console.error(`[Grade ERROR] Failed to fetch grade for Total ${contractMatch.Match.Team1}/${contractMatch.Match.Team2 || 'N/A'} on ${formattedMatchDate}, Line: ${contractMatch.Line}, Over: ${contractMatch.IsOver}: ${message}`);
+                // Construct a more informative error message using the contract string
+                console.error(`[Grade ERROR] Failed to fetch grade for ${contractMatchToString(bet.ContractMatch)}: ${message}`);
                 grade = 'ERR';
             }
 
             return [
-                matchDate.toLocaleDateString(), // For display
-                contractMatch.Match.Team1,
-                contractMatch.Match.Team2 ?? "", // Display as empty string if undefined
-                contractMatch.Period.PeriodTypeCode,
-                contractMatch.Period.PeriodNumber,
-                contractMatch.Line,
-                contractMatch.IsOver, // Will display as true/false
+                contractMatchToString(bet.ContractMatch),
+                bet.Price,
+                bet.Size,
                 grade
             ];
         }));
-        printFormattedTable("--- Parsed Totals Bets ---", headers, rowsData);
-    }
-
-    if (teamTotalBets.length > 0) {
-        const headers = ['Date', 'Team', 'periodTypeCode', 'periodNumber', 'Line', 'IsOver', 'Grade'];
-        
-        // Asynchronously map teamTotalBets to rowsData, fetching grade for each
-        const rowsData = await Promise.all(teamTotalBets.map(async (bet) => {
-            const contractMatch = bet.ContractMatch as Contract_Match_TeamTotal;
-            const matchDate = contractMatch.Match.Date; // This is a Date object
-            
-            // Format date as YYYY-MM-DD for SQL
-            const formattedMatchDate = `${matchDate.getFullYear()}-${String(matchDate.getMonth() + 1).padStart(2, '0')}-${String(matchDate.getDate()).padStart(2, '0')}`;
-
-            let grade = 'N/A'; // Default grade
-
-            try {
-                // OLD: .execute('dbo.UserAPICall_Contract_TeamTotal_Grade_fn');
-                // NEW: Call as a function in a SELECT statement
-                const query = `
-                    SELECT dbo.UserAPICall_Contract_TeamTotal_Grade_fn(
-                        @MatchScheduledDate,
-                        @SelectedTeam,
-                        @PeriodTypeCode,
-                        @PeriodNumber,
-                        @Line,
-                        @IsOver
-                    ) AS GradeValue;`; // Assign an alias to the result column
-
-                const result = await pool.request()
-                    .input('MatchScheduledDate', sql.Date, formattedMatchDate)
-                    .input('SelectedTeam', sql.Char(50), contractMatch.Team)
-                    .input('PeriodTypeCode', sql.Char(2), contractMatch.Period.PeriodTypeCode)
-                    .input('PeriodNumber', sql.TinyInt, contractMatch.Period.PeriodNumber)
-                    .input('Line', sql.Decimal(5, 2), contractMatch.Line)
-                    .input('IsOver', sql.Bit, contractMatch.IsOver ? 1 : 0)
-                    .query(query); // Use .query() instead of .execute()
-
-                if (result.recordset && result.recordset.length > 0 && result.recordset[0] && result.recordset[0].GradeValue !== null && result.recordset[0].GradeValue !== undefined) {
-                    grade = String(result.recordset[0].GradeValue).trim(); // Access by the alias 'GradeValue' and trim
-                } else {
-                    console.warn(`[Grade WARN] No grade returned or unexpected SQL result for TeamTotal: ${contractMatch.Team} on ${formattedMatchDate}, Line: ${contractMatch.Line}, Over: ${contractMatch.IsOver}`);
-                    // Grade remains 'N/A' or you can set to 'ERR' if preferred for this case
-                }
-            } catch (err) {
-                const message = err instanceof Error ? err.message : String(err);
-                console.error(`[Grade ERROR] Failed to fetch grade for TeamTotal ${contractMatch.Team} on ${formattedMatchDate}, Line: ${contractMatch.Line}, Over: ${contractMatch.IsOver}: ${message}`);
-                grade = 'ERR';
-            }
-
-            return [
-                matchDate.toLocaleDateString(), // For display
-                contractMatch.Team,
-                contractMatch.Period.PeriodTypeCode,
-                contractMatch.Period.PeriodNumber,
-                contractMatch.Line,
-                contractMatch.IsOver, // Will display as true/false
-                grade
-            ];
-        }));
-        printFormattedTable("--- Parsed Team Totals Bets ---", headers, rowsData);
+        printFormattedTable("--- Processed Bets ---", headers, rowsData);
     }
 
     if (parsedBets.length === 0 && linesToWarnBasicFormat.length === 0) { 
@@ -514,11 +541,6 @@ async function runOperations() {
         if (!pool) { // Guard for TypeScript CFA
             throw new Error("Database pool not initialized after connect call.");
         }
-
-        const queryText = "SELECT COUNT(*) FROM dbo.LeagueTeam_V WHERE League = 'MLB'";
-        const result = await pool.request().query(queryText);
-
-        console.log(JSON.stringify(result.recordset, null, 2));
 
         const args = process.argv.slice(2);
         if (args.length > 0 && (args[0] === '-h' || args[0] === '--help')) {
@@ -572,5 +594,5 @@ if (require.main === module) {
 }
 
 // For CommonJS compatibility
-module.exports = { processFile, validateLine, parseBetDetails, parse_usa_price };
+module.exports = { processFile, validateLine, parseBetDetails, parse_usa_price, periodToString, matchToString, contractMatchToString };
 // This export ensures compatibility with both ES modules and CommonJS 

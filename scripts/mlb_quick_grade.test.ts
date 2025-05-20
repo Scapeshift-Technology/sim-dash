@@ -1,4 +1,5 @@
 import { parseBetDetails, parse_usa_price, Bet, Contract_Match_Total, Contract_Match_TeamTotal, Period, Match as MatchType } from './mlb_quick_grade'; // Adjust path as needed
+import { periodToString, matchToString, contractMatchToString } from './mlb_quick_grade'; // Adjust path as needed
 
 describe('MLB Quick Grade Parsing', () => {
     describe('parse_usa_price', () => {
@@ -59,7 +60,7 @@ describe('MLB Quick Grade Parsing', () => {
             
             expect(cm.Match.Team1).toBe("Padres");
             expect(cm.Match.Team2).toBe("Pirates");
-            expect(cm.Match.DaySequence).toBe(1);
+            expect(cm.Match.DaySequence).toBeUndefined();
 
             expect(cm.Line).toBe(0.5);
             expect(cm.IsOver).toBe(false);
@@ -92,7 +93,7 @@ describe('MLB Quick Grade Parsing', () => {
 
             expect(cm.Match.Team1).toBe("LAA");
             expect(cm.Match.Team2).toBeUndefined();
-            expect(cm.Match.DaySequence).toBe(1);
+            expect(cm.Match.DaySequence).toBeUndefined();
             // Match Date check: expect(cm.Match.Date).toEqual(new Date("2025-05-17T00:00:00.000Z"));
 
             // Instead check date parts
@@ -174,5 +175,138 @@ describe('MLB Quick Grade Parsing', () => {
         // - Invalid price
         // - Invalid date/time
         // - Unknown period string
+
+        test('should parse DaySequence G2 correctly: YG SEA G2 TT u4.5', () => {
+            const line = "5/20/2025, 10:00 AM, YG SEA G2 TT u4.5 @ -110 = 1.0";
+            const [dateStr, timeStr, detailsStr] = line.split(',').map(s => s.trim());
+            const result = parseBetDetails(dateStr, timeStr, detailsStr);
+
+            expect(result).not.toBeNull();
+            const bet = result! as Bet;
+            const cm = bet.ContractMatch as Contract_Match_TeamTotal;
+
+            expect(cm.Match.Team1).toBe("SEA");
+            expect(cm.Match.DaySequence).toBe(2);
+            expect(cm.Team).toBe("SEA");
+            expect(cm.Line).toBe(4.5);
+            expect(cm.IsOver).toBe(false);
+            expect(cm.Period.PeriodTypeCode).toBe('M'); // Default FG
+            expect(cm.Period.PeriodNumber).toBe(0);
+        });
+
+        test('should parse DaySequence #2 correctly: YG COL/ARI #2 1st inning u0.5', () => {
+            const line = "5/21/2025, 1:00 PM, YG COL/ARI #2 1st inning u0.5 @ +120 = 2.0";
+            const [dateStr, timeStr, detailsStr] = line.split(',').map(s => s.trim());
+            const result = parseBetDetails(dateStr, timeStr, detailsStr);
+
+            expect(result).not.toBeNull();
+            const bet = result! as Bet;
+            const cm = bet.ContractMatch as Contract_Match_Total;
+
+            expect(cm.Match.Team1).toBe("COL");
+            expect(cm.Match.Team2).toBe("ARI");
+            expect(cm.Match.DaySequence).toBe(2);
+            expect(cm.Line).toBe(0.5);
+            expect(cm.IsOver).toBe(false);
+            expect(cm.Period.PeriodTypeCode).toBe('I');
+            expect(cm.Period.PeriodNumber).toBe(1);
+        });
+
+        test('should parse DaySequence gm2 correctly: YG COL gm2 F5 u5', () => {
+            const line = "5/22/2025, 4:00 PM, YG COL gm2 F5 u5 @ -105 = 3.0";
+            const [dateStr, timeStr, detailsStr] = line.split(',').map(s => s.trim());
+            const result = parseBetDetails(dateStr, timeStr, detailsStr);
+
+            expect(result).not.toBeNull();
+            const bet = result! as Bet;
+            const cm = bet.ContractMatch as Contract_Match_Total; // Team total not specified by TT, so it's a game total for COL
+
+            expect(cm.Match.Team1).toBe("COL");
+            expect(cm.Match.Team2).toBeUndefined(); // No second team, not a team total explicitly
+            expect(cm.Match.DaySequence).toBe(2);
+            expect(cm.Line).toBe(5);
+            expect(cm.IsOver).toBe(false);
+            expect(cm.Period.PeriodTypeCode).toBe('H'); // F5
+            expect(cm.Period.PeriodNumber).toBe(1);
+        });
+
+        test('should have undefined DaySequence if no game number specified', () => {
+            const line = "5/23/2025, 2:00 PM, YG NYY/BOS o9.5 @ -110 = 1.1";
+            const [dateStr, timeStr, detailsStr] = line.split(',').map(s => s.trim());
+            const result = parseBetDetails(dateStr, timeStr, detailsStr);
+            expect(result).not.toBeNull();
+            const bet = result! as Bet;
+            const cm = bet.ContractMatch as Contract_Match_Total;
+            expect(cm.Match.DaySequence).toBeUndefined();
+        });
+
+    });
+});
+
+describe('toString Utility Functions', () => {
+    describe('periodToString', () => {
+        test('should format period correctly', () => {
+            const period: Period = { PeriodTypeCode: 'H', PeriodNumber: 1 };
+            expect(periodToString(period)).toBe('H1');
+        });
+        test('should format another period correctly', () => {
+            const period: Period = { PeriodTypeCode: 'M', PeriodNumber: 0 };
+            expect(periodToString(period)).toBe('M0');
+        });
+    });
+
+    describe('matchToString', () => {
+        test('should format match with two teams', () => {
+            const match: MatchType = { Date: new Date(2025, 4, 12), Team1: 'MIL', Team2: 'CLE' }; // Month is 0-indexed
+            expect(matchToString(match)).toBe('5/12/2025 MIL/CLE');
+        });
+
+        test('should format match with one team and DaySequence 2', () => {
+            const match: MatchType = { Date: new Date(2025, 4, 12), Team1: 'MIL', DaySequence: 2 };
+            expect(matchToString(match)).toBe('5/12/2025 MIL #2');
+        });
+
+        test('should format match with one team and DaySequence 1 (not shown)', () => {
+            const match: MatchType = { Date: new Date(2025, 4, 12), Team1: 'MIL', DaySequence: 1 };
+            expect(matchToString(match)).toBe('5/12/2025 MIL');
+        });
+
+        test('should format match with one team and no DaySequence (not shown)', () => {
+            const match: MatchType = { Date: new Date(2025, 4, 12), Team1: 'NYY' };
+            expect(matchToString(match)).toBe('5/12/2025 NYY');
+        });
+    });
+
+    describe('contractMatchToString', () => {
+        test('should format Contract_Match_Total correctly', () => {
+            const contract: Contract_Match_Total = {
+                Match: { Date: new Date(2025, 4, 12), Team1: 'MIL', Team2: 'CLE' }, // Month is 0-indexed
+                Period: { PeriodTypeCode: 'H', PeriodNumber: 1 },
+                Line: 5,
+                IsOver: true
+            };
+            expect(contractMatchToString(contract)).toBe('5/12/2025 MIL/CLE: H1 o5');
+        });
+
+        test('should format Contract_Match_TeamTotal correctly', () => {
+            const contract: Contract_Match_TeamTotal = {
+                Match: { Date: new Date(2025, 4, 12), Team1: 'MIL', DaySequence: 2 }, // Month is 0-indexed
+                Period: { PeriodTypeCode: 'M', PeriodNumber: 0 }, // Period info for TT is not in output string per example
+                Team: 'MIL',
+                Line: 4.5,
+                IsOver: false
+            };
+            expect(contractMatchToString(contract)).toBe('5/12/2025 MIL #2: MIL u4.5');
+        });
+
+        test('should format another Contract_Match_Total (under)', () => {
+            const contract: Contract_Match_Total = {
+                Match: { Date: new Date(2025, 6, 20), Team1: 'BOS', Team2: 'NYY' }, // Month is 0-indexed (July)
+                Period: { PeriodTypeCode: 'I', PeriodNumber: 1 },
+                Line: 0.5,
+                IsOver: false
+            };
+            expect(contractMatchToString(contract)).toBe('7/20/2025 BOS/NYY: I1 u0.5');
+        });
     });
 }); 
