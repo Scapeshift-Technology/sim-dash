@@ -41,7 +41,7 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
     
     // ---------- State ----------
     
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(true);
     const [isSearching, setIsSearching] = useState(false);
     const [processError, setProcessError] = useState<string>('');
 
