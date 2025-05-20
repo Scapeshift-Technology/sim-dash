@@ -117,12 +117,25 @@ function formatDateForSummary(date: Date): string {
 }
 
 function formatPnlForSummary(pnl: number): string {
-    const roundedPnl = Math.round(pnl);
-    const sign = roundedPnl >= 0 ? '+' : '-';
-    const absPnlFormatted = Math.abs(roundedPnl).toLocaleString('en-US');
-    // Pad the number string (e.g., "5,230" or "300") to 5 characters for alignment like in examples
-    const paddedNumber = absPnlFormatted.padStart(5, ' ');
-    return `${sign}$${paddedNumber}`;
+    // Format to 2 decimal places first
+    const pnlWithPennies = parseFloat(pnl.toFixed(2)); // Ensures we're working with a number rounded to 2 decimal places
+
+    const sign = pnlWithPennies >= 0 ? '+' : '-';
+    
+    // Get the absolute value, format with commas and 2 decimal places for consistency
+    const absPnlStr = Math.abs(pnlWithPennies).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }); // e.g., "5,230.75", "300.10", "0.00"
+
+    const parts = absPnlStr.split('.');
+    const integerPart = parts[0]; // e.g., "5,230", "300", "0"
+    const decimalPart = parts[1]; // e.g., "75", "10", "00"
+
+    // Pad the integer part to maintain alignment similar to the original examples
+    const paddedIntegerPart = integerPart.padStart(5, ' '); 
+    
+    return `${sign}$${paddedIntegerPart}.${decimalPart}`;
 }
 
 function getMonday(d: Date): Date {
@@ -667,10 +680,12 @@ export async function processFile(filePath: string, pool: import('mssql').Connec
                 pnlDisplay = pnlDisplay.toFixed(2);
             }
 
+            const formattedSize = bet.Size.toFixed(2); // Format Size to two decimal places
+
             return [
                 contractMatchToString(bet.ContractMatch),
                 bet.Price,
-                bet.Size,
+                formattedSize, // Use the formatted Size string
                 grade,
                 pnlDisplay
             ];
