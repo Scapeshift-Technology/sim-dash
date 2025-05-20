@@ -15,7 +15,7 @@ import SimulationButton from './SimulationButton';
 interface MLBMatchupHeaderProps {
     participant1: string;
     participant2: string;
-    date: string;
+    dateTime: string;
     isSimulating: boolean;
     simError: string | null;
     simResults: SimHistoryEntry[] | undefined;
@@ -30,7 +30,7 @@ interface MLBMatchupHeaderProps {
 const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
     participant1,
     participant2,
-    date,
+    dateTime,
     isSimulating,
     simError,
     simResults,
@@ -41,6 +41,11 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
     onRefresh,
     onRunSimulation
 }) => {
+    // Convert UTC datetime to local time
+    const localDateTime = new Date(dateTime);
+    const timeString = localDateTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const dateString = localDateTime.toLocaleDateString();
+
     return (
         <Paper 
             elevation={2} 
@@ -61,7 +66,7 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
                         {participant1} @ {participant2}
                     </Typography>
                     <Typography variant="h6" sx={{ color: 'text.secondary' }}>
-                        {date}
+                        {dateString} • {timeString}
                     </Typography>
                 </Box>
                 <Tooltip title="Reload lineups">

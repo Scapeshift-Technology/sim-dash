@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
-import { LeagueTab, MatchupTab, Tab } from '@/types/league';
+import { LeagueName, LeagueTab, MatchupTab, Tab } from '@/types/league';
 import { teamNameToAbbreviationMLB } from '@/utils/displayMLB';
 
 interface TabState {
@@ -29,7 +29,7 @@ const tabSlice = createSlice({
     initialState,
     reducers: {
         // Action to open a league tab (or focus if exists)
-        openLeagueTab(state, action: PayloadAction<string>) {
+        openLeagueTab(state, action: PayloadAction<LeagueName>) {
             const leagueName = action.payload.trim();
             const existingTab = state.openTabs.find(tab => tab.type === 'league' && tab.id === leagueName);
 
@@ -37,7 +37,7 @@ const tabSlice = createSlice({
                 const newTab: LeagueTab = {
                     id: leagueName,
                     type: 'league',
-                    league: leagueName,
+                    league: leagueName as LeagueName,
                 };
                 state.openTabs.push(newTab);
             }

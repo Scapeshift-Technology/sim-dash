@@ -72,6 +72,7 @@ const MainLayout: React.FC = () => {
                             matchId={tab.matchId}
                             league={tab.league} 
                             date={tab.date} 
+                            dateTime={tab.dateTime}
                             participant1={tab.participant1} 
                             participant2={tab.participant2} 
                             daySequence={tab.daySequence} 

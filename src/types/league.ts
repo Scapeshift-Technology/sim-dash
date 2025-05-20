@@ -9,15 +9,16 @@ export interface League {
 export interface LeagueTab {
     id: string;     // Use League name as unique ID for simplicity
     type: 'league';
-    league: string;
+    league: LeagueName;
 }
 
 export interface MatchupTab {
     id: string; // Unique identifier for the matchup, e.g., "MLB_2024-07-19_NYY@BOS_1". Here for backwards compatibility.
     matchId: number; // Unique identifier for the matchup from dev_satya
     type: 'matchup';
-    league: string;
+    league: LeagueName;
     date: string; // YYYY-MM-DD
+    dateTime: string; // YYYY-MM-DD HH:MM:SS.000
     participant1: string;
     participant2: string;
     daySequence?: number; // Optional, for MLB doubleheaders etc.

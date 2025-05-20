@@ -207,6 +207,7 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
                 matchId: item.Match,
                 league: league,
                 date: selectedDate.format('YYYY-MM-DD'),
+                dateTime: item.PostDtmUTC,
                 participant1: item.Participant1,
                 participant2: item.Participant2,
                 daySequence: todayMatchups.length > 1 ? item.DaySequence : undefined,

@@ -101,21 +101,6 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
         }));
     };
 
-    const handleCopyTeam = () => {
-        const formatPlayers = (players: Player[], section: string) => {
-            return `${section}:\n${players.map(p => p.name).join('\n')}`;
-        };
-
-        const text = [
-            formatPlayers([teamData.startingPitcher], 'Starting Pitcher'),
-            formatPlayers(teamData.bullpen, 'Bullpen'),
-            formatPlayers(teamData.lineup, 'Batting Order'),
-            formatPlayers(teamData.bench, 'Bench')
-        ].join('\n\n');
-
-        navigator.clipboard.writeText(text);
-    };
-
     // ---------- Render functions ----------
 
     const renderPlayerList = (players: Player[], isDraggable: boolean = false, isPitcher: boolean = false, isStarter: boolean = false) => (
@@ -154,11 +139,6 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
         >
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Typography variant="h6" gutterBottom>{teamName}</Typography>
-                <Tooltip title="Copy team players">
-                    <IconButton size="small" onClick={handleCopyTeam}>
-                        <ContentCopyIcon fontSize="small" />
-                    </IconButton>
-                </Tooltip>
             </Box>
             <Divider sx={{ mb: 1 }}/>
 

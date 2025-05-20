@@ -81,6 +81,7 @@ interface MLBMatchupViewProps {
     matchId: number;
     league: LeagueName;
     date: string;
+    dateTime: string;
     participant1: string; // Away Team
     participant2: string; // Home Team
     daySequence?: number;
@@ -90,11 +91,13 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     matchId,
     league,
     date,
+    dateTime,
     participant1,
     participant2,
     daySequence 
 }) => {
     const dispatch = useDispatch<AppDispatch>();
+    console.log('dateTime', dateTime);
     
     // ---------- State ----------
     const gameContainer = useSelector((state: RootState) => selectMLBGameContainer(state, league, matchId));
@@ -273,7 +276,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             <MLBMatchupHeader
                 participant1={participant1}
                 participant2={participant2}
-                date={date}
+                dateTime={dateTime}
                 isSimulating={isSimulating}
                 simError={simError}
                 simResults={simResults}
