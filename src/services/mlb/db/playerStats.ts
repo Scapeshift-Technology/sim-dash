@@ -1,5 +1,18 @@
-import { MatchupLineups, Player, Stats, PlayerStats } from "@/types/mlb";
+import { MatchupLineups, Player, PlayerStats, Stats } from "@/types/mlb";
 import { ConnectionPool } from "@/types/sql";
+
+// ---------- Types ----------
+
+interface StatsResult {
+  Player: number,
+  Date: string,
+  SplitType: string,
+  PitcherType?: string,
+  Statistic: string,
+  Value: number
+}
+
+type StatType = 'hit' | 'pitch';
 
 // ---------- Main function ----------
 
@@ -20,14 +33,14 @@ export { getPlayerStatsMLB };
 
 // ---------- Helper functions ----------
 
-async function fetchPlayerStatsMLB(
+async function fetchPlayerBatchStatsMLB(
   players: Player[], 
   pool: ConnectionPool, 
   date: string,
   tableName: 'BaseballHitterProjectionStatistic' | 'BaseballPitcherProjectionStatistic',
   columns: string[],
   errorMessage: string
-): Promise<Player[]> {
+): Promise<StatsResult[]> {
   // Create batches of player IDs
   const playerIds = players.map(player => player.id);
   const batchSize = 30;
@@ -49,6 +62,25 @@ async function fetchPlayerStatsMLB(
     `;
     try {
       const result = await pool.request().query(query);
+      
+      // Check for missing players in this batch
+      const foundPlayerIds = new Set(result.recordset.map(record => record.Player));
+      const missingPlayerIds = batch.filter(id => !foundPlayerIds.has(id));
+      
+      if (missingPlayerIds.length > 0) {
+        const historicalStats = await fetchHistoricalPlayerStats(
+          missingPlayerIds,
+          pool,
+          date,
+          tableName,
+          columns
+        );
+
+        const allStats: StatsResult[] = [...result.recordset, ...historicalStats];
+        
+        return allStats
+      }
+      
       return result.recordset;
     } catch (error) {
       console.error(`Error executing ${errorMessage}:`, error);
@@ -57,42 +89,83 @@ async function fetchPlayerStatsMLB(
   });
 
   // Wait for all queries to complete
-  const allStats = await Promise.all(statsPromises).then(results => results.flat());
+  const allStats: StatsResult[] = await Promise.all(statsPromises).then(results => results.flat());
 
   return allStats;
+}
+
+/**
+ * Fetches the most recent historical stats for players before a given date
+ * @param playerIds - Array of player IDs to fetch historical stats for
+ * @param pool - Database connection pool
+ * @param date - The target date to look back from
+ * @param tableName - The table to query from
+ * @param columns - The columns to select
+ * @returns Array of player stats from their most recent available date
+ */
+async function fetchHistoricalPlayerStats(
+  playerIds: number[],
+  pool: ConnectionPool,
+  date: string,
+  tableName: 'BaseballHitterProjectionStatistic' | 'BaseballPitcherProjectionStatistic',
+  columns: string[]
+): Promise<StatsResult[]> {
+  const playerIdsString = playerIds.join(',');
+  
+  const query = `
+    WITH LatestStats AS (
+      SELECT ${columns.join(', ')}, 
+             ROW_NUMBER() OVER (PARTITION BY Player, SplitType, Statistic 
+                               ORDER BY Date DESC) as row_num
+      FROM ${tableName}
+      WHERE Player IN (${playerIdsString})
+      AND Date <= '${date}'
+    )
+    SELECT ${columns.join(', ')}
+    FROM LatestStats 
+    WHERE row_num = 1
+  `;
+
+  try {
+    const result = await pool.request().query(query);
+    return result.recordset;
+  } catch (error) {
+    console.error(`Error executing historical stats query:`, error);
+    return [];
+  }
 }
 
 async function fetchHitterStatsMLB(matchupLineups: MatchupLineups, pool: ConnectionPool, date: string): Promise<Player[]> {
   // Get all hitters
   const hitterPlayers = extractHittersFromMatchupLineups(matchupLineups);
-  const allStats = await fetchPlayerStatsMLB(
+  const allStats: StatsResult[] = await fetchPlayerBatchStatsMLB(
     hitterPlayers, 
     pool,
     date,
     'BaseballHitterProjectionStatistic',
-    ['Player', 'SplitType', 'Statistic', 'Value'],
+    ['Player', 'Date', 'SplitType', 'Statistic', 'Value'],
     'hitter stats query'
   );
-  
+
   // Map stats back to players
-  const playersWithStats = mapStatsToHitters(hitterPlayers, allStats);
+  const playersWithStats = mapStatsToPlayer(hitterPlayers, allStats, 'hit');
   return playersWithStats;
 }
 
 async function fetchPitcherStatsMLB(matchupLineups: MatchupLineups, pool: ConnectionPool, date: string): Promise<Player[]> {
   // Get all pitchers
   const pitcherPlayers = extractPitchersFromMatchupLineups(matchupLineups);
-  const allStats = await fetchPlayerStatsMLB(
+  const allStats: StatsResult[] = await fetchPlayerBatchStatsMLB(
     pitcherPlayers, 
     pool,
     date,
     'BaseballPitcherProjectionStatistic',
-    ['Player', 'SplitType', 'PitcherType', 'Statistic', 'Value'],
+    ['Player', 'Date', 'SplitType', 'PitcherType', 'Statistic', 'Value'],
     'pitcher stats query'
   );
   
   // Map stats back to players
-  const playersWithStats = mapStatsToPitchers(pitcherPlayers, allStats);
+  const playersWithStats = mapStatsToPlayer(pitcherPlayers, allStats, 'pitch');
   return playersWithStats;
 }
 
@@ -180,151 +253,76 @@ function extractPitchersFromMatchupLineups(matchupLineups: MatchupLineups): Play
   return [homeStarter, awayStarter, ...homeRelievers, ...awayRelievers];
 }
 
-/**
- * Maps stats from DB to hitters. 
- * @param players - The hitters to map the stats to
- * @param stats - The stats to map to the players
- * @returns The hitters with the stats mapped to them
- */
-function mapStatsToHitters(players: Player[], stats: any[]): Player[] {
-  // Group stats by player ID and split type
+function mapStatsToPlayer<T extends StatType>(
+  players: Player[],
+  stats: StatsResult[],
+  statType: T,
+  validatePlayer?: (player: Player, stat: StatsResult) => boolean
+): Player[] {
   const statsByPlayer = stats.reduce((acc, stat) => {
     const playerId = stat.Player;
     const splitType = stat.SplitType.trim();
     
     // Skip overall splits
     if (splitType === 'O') return acc;
+
+    // Optional validation (used for pitcher type validation)
+    if (validatePlayer && !validatePlayer(players.find(p => p.id === playerId)!, stat)) {
+      return acc;
+    }
     
     // Initialize player stats if not exists
     if (!acc[playerId]) {
-      acc[playerId] = {
-        hitVsR: {
-          adj_perc_K: 0,
-          adj_perc_BB: 0,
-          adj_perc_1B: 0,
-          adj_perc_2B: 0,
-          adj_perc_3B: 0,
-          adj_perc_HR: 0,
-          adj_perc_OUT: 0
-        },
-        hitVsL: {
-          adj_perc_K: 0,
-          adj_perc_BB: 0,
-          adj_perc_1B: 0,
-          adj_perc_2B: 0,
-          adj_perc_3B: 0,
-          adj_perc_HR: 0,
-          adj_perc_OUT: 0
-        }
+      const statsObj = {
+        statsDate: new Date(stat.Date).toISOString().split('T')[0],
+        [`${statType}VsR`]: createEmptyStats(),
+        [`${statType}VsL`]: createEmptyStats()
       };
+      acc[playerId] = statsObj;
     }
     
-    // Map the statistic to the correct field based on split type
+    // Map the statistic
     const statName = stat.Statistic.trim();
-    const targetStats = splitType === 'R' ? acc[playerId].hitVsR : acc[playerId].hitVsL;
-    
-    if (statName === 'adj_perc_K') targetStats.adj_perc_K = stat.Value;
-    else if (statName === 'adj_perc_BB') targetStats.adj_perc_BB = stat.Value;
-    else if (statName === 'adj_perc_1B') targetStats.adj_perc_1B = stat.Value;
-    else if (statName === 'adj_perc_2B') targetStats.adj_perc_2B = stat.Value;
-    else if (statName === 'adj_perc_3B') targetStats.adj_perc_3B = stat.Value;
-    else if (statName === 'adj_perc_HR') targetStats.adj_perc_HR = stat.Value;
-    else if (statName === 'adj_perc_OUT') targetStats.adj_perc_OUT = stat.Value;
+    const targetStats = (splitType === 'R' ? acc[playerId][`${statType}VsR`] : acc[playerId][`${statType}VsL`])!;
+    mapStatValue(targetStats, statName, stat.Value);
     
     return acc;
   }, {} as Record<number, PlayerStats>);
 
-  // Map the stats to each player
   return players.map(player => {
     const playerStats = statsByPlayer[player.id];
-
-    if (!playerStats || !playerStats.hitVsR || !playerStats.hitVsL) {
+    if (!playerStats) {
       throw new Error(`Missing stats for player ${player.id}`);
     }
 
     return {
       ...player,
-      stats: {
-        hitVsR: playerStats?.hitVsR,
-        hitVsL: playerStats?.hitVsL
-      }
+      stats: playerStats
     };
   });
 }
 
-function mapStatsToPitchers(players: Player[], stats: any[]): Player[] {
-  // Group stats by player ID and split type
-  const statsByPlayer = stats.reduce((acc, stat) => {
-    const playerId = stat.Player;
-    const splitType = stat.SplitType.trim();
-    const pitcherType = stat.PitcherType.trim();
-    
-    // Skip overall splits
-    if (splitType === 'O') return acc;
+// Helper functions
+function createEmptyStats(): Stats {
+  return {
+    adj_perc_K: 0,
+    adj_perc_BB: 0,
+    adj_perc_1B: 0,
+    adj_perc_2B: 0,
+    adj_perc_3B: 0,
+    adj_perc_HR: 0,
+    adj_perc_OUT: 0
+  };
+}
 
-    // Find the player to check their position
-    const player = players.find(p => p.id === playerId);
-    if (!player) return acc;
-
-    // Skip if pitcher type doesn't match position
-    const expectedPitcherType = player.position === 'RP' ? 'R' : 'S';
-    if (pitcherType !== expectedPitcherType) return acc;
-    
-    // Initialize player stats if not exists
-    if (!acc[playerId]) {
-      acc[playerId] = {
-        pitchVsR: {
-          adj_perc_K: 0,
-          adj_perc_BB: 0,
-          adj_perc_1B: 0,
-          adj_perc_2B: 0,
-          adj_perc_3B: 0,
-          adj_perc_HR: 0,
-          adj_perc_OUT: 0
-        },
-        pitchVsL: {
-          adj_perc_K: 0,
-          adj_perc_BB: 0,
-          adj_perc_1B: 0,
-          adj_perc_2B: 0,
-          adj_perc_3B: 0,
-          adj_perc_HR: 0,
-          adj_perc_OUT: 0
-        }
-      };
-    }
-    
-    // Map the statistic to the correct field based on split type
-    const statName = stat.Statistic.trim();
-    const targetStats = splitType === 'R' ? acc[playerId].pitchVsR : acc[playerId].pitchVsL;
-    
-    if (statName === 'adj_perc_K') targetStats.adj_perc_K = stat.Value;
-    else if (statName === 'adj_perc_BB') targetStats.adj_perc_BB = stat.Value;
-    else if (statName === 'adj_perc_1B') targetStats.adj_perc_1B = stat.Value;
-    else if (statName === 'adj_perc_2B') targetStats.adj_perc_2B = stat.Value;
-    else if (statName === 'adj_perc_3B') targetStats.adj_perc_3B = stat.Value;
-    else if (statName === 'adj_perc_HR') targetStats.adj_perc_HR = stat.Value;
-    else if (statName === 'adj_perc_OUT') targetStats.adj_perc_OUT = stat.Value;
-    
-    return acc;
-  }, {} as Record<number, PlayerStats>);
-
-  // Map the stats to each player
-  return players.map(player => {
-    const playerStats = statsByPlayer[player.id];
-
-    if (!playerStats || !playerStats.pitchVsR || !playerStats.pitchVsL) {
-      throw new Error(`Missing stats for player ${player.id}`);
-    }
-
-    return {
-      ...player,
-      stats: {
-        pitchVsR: playerStats.pitchVsR,
-        pitchVsL: playerStats.pitchVsL
-      }
-    };
-  });
+function mapStatValue(targetStats: Stats, statName: string, value: number) {
+  if (statName === 'adj_perc_K') targetStats.adj_perc_K = value;
+  else if (statName === 'adj_perc_BB') targetStats.adj_perc_BB = value;
+  else if (statName === 'adj_perc_1B') targetStats.adj_perc_1B = value;
+  else if (statName === 'adj_perc_2B') targetStats.adj_perc_2B = value;
+  else if (statName === 'adj_perc_3B') targetStats.adj_perc_3B = value;
+  else if (statName === 'adj_perc_HR') targetStats.adj_perc_HR = value;
+  else if (statName === 'adj_perc_OUT') targetStats.adj_perc_OUT = value;
 }
 
 

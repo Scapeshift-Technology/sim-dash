@@ -70,9 +70,9 @@ function getBatterPitcherMatchupProbabilities(batter: Player, pitcher: Player, l
   const leagueAvgMatchupString = handednessToLeagueAvgString(matchupHandedness.battingSide, matchupHandedness.pitchingSide);
   const leagueAvgProbability = leagueAvgStats[leagueAvgMatchupString];
   const batterStatsKey = handednessToPlayerStatsString(matchupHandedness.pitchingSide, 'hit')
-  const batterStats = batter.stats?.[batterStatsKey];
+  const batterStats = batter.stats?.[batterStatsKey] as Stats;
   const pitcherStatsKey = handednessToPlayerStatsString(matchupHandedness.battingSide, 'pitch')
-  const pitcherStats = pitcher.stats?.[pitcherStatsKey];
+  const pitcherStats = pitcher.stats?.[pitcherStatsKey] as Stats;
 
   // console.log(`Batter stats: ${JSON.stringify(batterStats, null, 2)}`);
   // console.log(`Pitcher stats: ${JSON.stringify(pitcherStats, null, 2)}`);

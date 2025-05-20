@@ -96,6 +96,7 @@ export interface Stats {
 }
 
 export interface PlayerStats {
+  statsDate?: string; // Date that the stats came from in the DB
   hitVsL?: Stats; // Optional: A pitcher won't have hitting stats
   hitVsR?: Stats; // Optional: A pitcher won't have hitting stats
   pitchVsL?: Stats; // Optional: A batter won't have pitching stats

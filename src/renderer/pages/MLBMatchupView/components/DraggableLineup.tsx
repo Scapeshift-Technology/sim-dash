@@ -5,9 +5,7 @@ import {
     Typography,
     Paper,
     List,
-    Divider,
-    IconButton,
-    Tooltip
+    Divider
 } from '@mui/material';
 import type { TeamLineup, Player, Position, TeamType } from '@/types/mlb';
 import { updateTeamLean, updatePlayerLean, selectTeamInputs } from '@/store/slices/simInputsSlice';
@@ -16,7 +14,6 @@ import type { RootState } from '@/store/store';
 import SortablePlayerItem from './SortablePlayerItem';
 import TeamSectionCard from './TeamSectionCard';
 import useDragAndDrop from '../hooks/useDragAndDrop';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 // ---------- Main component ----------
 
@@ -45,6 +42,7 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
     const teamInputs = useSelector((state: RootState) => selectTeamInputs(state, league, matchId))?.[teamType];
     const hitterAdjustment = useSelector((state: RootState) => selectTeamInputs(state, league, matchId))?.[teamType].teamHitterLean || 0;
     const pitcherAdjustment = useSelector((state: RootState) => selectTeamInputs(state, league, matchId))?.[teamType].teamPitcherLean || 0;
+    console.log('teamData', teamData);
 
     const { handleDragEnd } = useDragAndDrop({
         teamData,

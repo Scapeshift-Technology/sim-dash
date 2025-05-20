@@ -97,7 +97,6 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     daySequence 
 }) => {
     const dispatch = useDispatch<AppDispatch>();
-    console.log('dateTime', dateTime);
     
     // ---------- State ----------
     const gameContainer = useSelector((state: RootState) => selectMLBGameContainer(state, league, matchId));
@@ -114,6 +113,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
 
     const [selectedGameTab, setSelectedGameTab] = useState(0);
     const [showCopySuccess, setShowCopySuccess] = useState(false);
+    const [hasHistoricalStats, setHasHistoricalStats] = useState(false);
 
     const {
         hasInvalidLeans,
@@ -160,6 +160,29 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             dispatch(fetchSimResults({ league, matchId }));
         }
     }, [dispatch, matchId, league, simStatus]);
+
+    useEffect(() => {
+        if (!gameLineups) return;
+        
+        const checkHistoricalStats = () => {
+            const allPlayers = [
+                ...gameLineups.away.lineup,
+                ...gameLineups.away.bench,
+                ...gameLineups.away.bullpen,
+                gameLineups.away.startingPitcher,
+                ...gameLineups.home.lineup,
+                ...gameLineups.home.bench,
+                ...gameLineups.home.bullpen,
+                gameLineups.home.startingPitcher
+            ];
+    
+            return allPlayers.some(player => 
+                player.stats?.statsDate && player.stats.statsDate !== date
+            );
+        };
+    
+        setHasHistoricalStats(checkHistoricalStats());
+    }, [gameLineups, date]);
 
     // ---------- Handlers ----------
     const handleTeamLeanUpdate = (teamType: 'home' | 'away', leanType: 'offense' | 'defense', value: number) => {
@@ -386,6 +409,18 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 message="Lineup information copied to clipboard!"
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
             />
+            <Snackbar
+                open={hasHistoricalStats}
+                autoHideDuration={null}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert 
+                    severity="warning"
+                    sx={{ width: '100%' }}
+                >
+                    Some players are using projected stats from a different date
+                </Alert>
+            </Snackbar>
         </Box>
     );
 };
