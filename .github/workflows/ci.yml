@@ -28,7 +28,7 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Echo DB Test username
+      - name: Echo DB Test username / host / db_name
         run: echo "${{ secrets.TEST_DB_USER }} @ ${{ secrets.TEST_DB_HOST }} . ${{ secrets.TEST_DB_NAME }}"
 
       - name: Mask DB Password
@@ -36,6 +36,9 @@ jobs:
 
       - name: Run Jest tests
         run: npm run test:jest
+
+      - name: Build Renderer
+        run: npm run build:renderer
 
       - name: Run Playwright tests
         run: npm run test:playwright
