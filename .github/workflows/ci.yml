@@ -35,7 +35,7 @@ jobs:
         run: echo "::add-mask::${{ secrets.TEST_DB_PASSWORD }}"
 
       - name: Run Jest tests
-        run: npm run test:test
+        run: npm run test:jest
 
       - name: Run Playwright tests
         run: npm run test:playwright
