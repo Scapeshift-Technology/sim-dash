@@ -6,6 +6,8 @@ import leagueReducer from './slices/leagueSlice';
 import tabReducer from './slices/tabSlice';
 import scheduleReducer from './slices/scheduleSlice';
 import simInputsReducer from './slices/simInputsSlice';
+import simulationStatusReducer from './slices/simulationStatusSlice';
+import bettingBoundsReducer from './slices/bettingBoundsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +18,8 @@ export const store = configureStore({
     tabs: tabReducer,
     schedule: scheduleReducer,
     simInputs: simInputsReducer,
+    simulationStatus: simulationStatusReducer,
+    bettingBounds: bettingBoundsReducer
   },
   // Optional: Add middleware here if needed (e.g., for logging)
   // middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),

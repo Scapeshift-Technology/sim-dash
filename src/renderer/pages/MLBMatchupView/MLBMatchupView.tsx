@@ -44,7 +44,14 @@ import {
 } from '@/store/slices/simInputsSlice';
 import { LeagueName } from '@@/types/league';
 import { useLeanValidation } from './hooks/leanValidation';
-import { useSimulationRunner } from './hooks/useSimulationRunner';
+import { 
+    runSeriesSimulationThunk, 
+    runSimulationThunk, 
+    selectSeriesSimulationError, 
+    selectSeriesSimulationStatus, 
+    selectTraditionalSimulationError, 
+    selectTraditionalSimulationStatus 
+} from '@/store/slices/simulationStatusSlice';
 
 // ---------- Sub-components ----------
 
@@ -101,7 +108,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     // ---------- State ----------
     const gameContainer = useSelector((state: RootState) => selectMLBGameContainer(state, league, matchId));
     const simResults = useSelector((state: RootState) => selectMatchSimResults(state, league, matchId));
-    const simStatus = useSelector((state: RootState) => selectMatchSimStatus(state, league, matchId));
+    const simHistoryStatus = useSelector((state: RootState) => selectMatchSimStatus(state, league, matchId));
     const gameLineups = useSelector((state: RootState) => selectGameLineups(state, league, matchId));
     const dataStatus = useSelector((state: RootState) => selectGameDataStatus(state, league, matchId));
     const dataError = useSelector((state: RootState) => selectGameDataError(state, league, matchId));
@@ -110,6 +117,10 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const teamInputs = useSelector((state: RootState) => selectTeamInputs(state, league, matchId));
     const seriesGames = useSelector((state: RootState) => selectGameSeriesGames(state, league, matchId));
     const gameMetadata = useSelector((state: RootState) => selectGameMetadata(state, league, matchId));
+    const traditionalSimulationStatus = useSelector((state: RootState) => selectTraditionalSimulationStatus(state, league, matchId));
+    const traditionalSimulationError = useSelector((state: RootState) => selectTraditionalSimulationError(state, league, matchId));
+    const seriesSimulationStatus = useSelector((state: RootState) => selectSeriesSimulationStatus(state, league, matchId));
+    const seriesSimulationError = useSelector((state: RootState) => selectSeriesSimulationError(state, league, matchId));
 
     const [selectedGameTab, setSelectedGameTab] = useState(0);
     const [showCopySuccess, setShowCopySuccess] = useState(false);
@@ -121,13 +132,6 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         showInvalidLeansSnackbar,
         setShowInvalidLeansSnackbar
     } = useLeanValidation({ league, matchId });
-
-    const {
-        isSimulating,
-        simError,
-        runSingleGame,
-        runSeries
-    } = useSimulationRunner(matchId, league, gameContainer);
 
     // ---------- Effect ----------
     useEffect(() => { // Fetch game data
@@ -156,10 +160,10 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
 
     useEffect(() => { // Fetch sim history
         if (!matchId) return;
-        if (simStatus === 'idle') {
+        if (simHistoryStatus === 'idle') {
             dispatch(fetchSimResults({ league, matchId }));
         }
-    }, [dispatch, matchId, league, simStatus]);
+    }, [dispatch, matchId, league, simHistoryStatus]);
 
     useEffect(() => {
         if (!gameLineups) return;
@@ -210,9 +214,19 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         if (!gameContainer || !teamInputs) return;
         
         if (isSeries) {
-            await runSeries();
+            if (!gameContainer.seriesGames) return;
+            dispatch(runSeriesSimulationThunk({
+                league,
+                matchId,
+                gameInputs: gameContainer.seriesGames
+            }));
         } else {
-            await runSingleGame();
+            if (!gameContainer.currentGame) return;
+            dispatch(runSimulationThunk({
+                league,
+                matchId,
+                gameInputs: gameContainer.currentGame
+            }));
         }
     };
 
@@ -300,10 +314,10 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 participant1={participant1}
                 participant2={participant2}
                 dateTime={dateTime}
-                isSimulating={isSimulating}
-                simError={simError}
+                isSimulating={traditionalSimulationStatus === 'loading' || seriesSimulationStatus === 'loading'}
+                simError={traditionalSimulationError || seriesSimulationError}
                 simResults={simResults}
-                simStatus={simStatus}
+                simStatus={simHistoryStatus}
                 lineupData={gameLineups}
                 hasInvalidLeans={hasInvalidLeans}
                 seriesGames={seriesGames}

@@ -4,6 +4,10 @@ import dayjs from 'dayjs';
 import type { RootState } from '../store';
 import { SimHistoryEntry } from '@/types/simHistory';
 
+// --------------------
+// This slice contains data needed to display the schedule in LeagueScheduleView.tsx
+// --------------------
+
 // ---------- Types ----------
 
 interface ScheduleItemWithDisplayedSimOdds extends ScheduleItem {

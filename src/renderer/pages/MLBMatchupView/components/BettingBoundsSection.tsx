@@ -13,11 +13,12 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import type { MLBGameContainer, MLBGameSimInputs } from "@/types/simInputs";
-import { findOptimalLeans } from '@/pages/MLBMatchupView/functions/optimalLeans';
 import { MarketLinesMLB, MatchupLineups } from '@@/types/mlb';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateMLBMarketLines, updateMLBAutomatedLeans, selectGameAutomatedLeans } from '@/store/slices/simInputsSlice';
+import { updateMLBMarketLines, selectGameAutomatedLeans, updateMLBAutomatedLeans } from '@/store/slices/simInputsSlice';
 import { AppDispatch, RootState } from '@/store/store';
+import { findLeansThunk, selectFindLeansStatus, selectFindLeansError } from '@/store/slices/simulationStatusSlice';
+import { selectBettingBoundsValues, selectBettingBoundsErrors, setBettingBounds } from '@/store/slices/bettingBoundsSlice';
 
 interface BettingBoundsSectionProps {
     awayTeamName: string;
@@ -38,82 +39,91 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
 }) => {
     const dispatch = useDispatch<AppDispatch>();
     const automatedLeans = useSelector((state: RootState) => selectGameAutomatedLeans(state, 'MLB', matchId));
-    
-    // ---------- State ----------
-    
-    const [isExpanded, setIsExpanded] = useState(true);
-    const [isSearching, setIsSearching] = useState(false);
-    const [processError, setProcessError] = useState<string>('');
-
-    const [awayMoneyline, setAwayMoneyline] = useState('');
-    const [homeMoneyline, setHomeMoneyline] = useState('');
-    const [totalLine, setTotalLine] = useState('');
-    const [overOdds, setOverOdds] = useState('');
-    const [underOdds, setUnderOdds] = useState('');
-
-    const [errors, setErrors] = useState({
-        awayMoneyline: '',
-        homeMoneyline: '',
+    const findLeansStatus = useSelector((state: RootState) => selectFindLeansStatus(state, 'MLB', matchId));
+    const findLeansError = useSelector((state: RootState) => selectFindLeansError(state, 'MLB', matchId));
+    const bounds = useSelector((state: RootState) => selectBettingBoundsValues(state, 'MLB', matchId)) || {
+        awayML: '',
+        homeML: '',
         totalLine: '',
         overOdds: '',
         underOdds: ''
-    });
+    };
+    const errors = useSelector((state: RootState) => selectBettingBoundsErrors(state, 'MLB', matchId)) || {
+        awayML: null,
+        homeML: null,
+        totalLine: null,
+        overOdds: null,
+        underOdds: null
+    };
+    
+    const [isExpanded, setIsExpanded] = useState(true);
 
     // ---------- Handlers ----------
 
-    const validateAndParseInput = (value: string, fieldName: string): number | null => {
-        // Remove any spaces
+    const handleBoundsChange = (value: string, field: keyof typeof bounds) => {
+        dispatch(setBettingBounds({
+            league: 'MLB',
+            matchId,
+            bettingBounds: {
+                values: { ...bounds, [field]: value },
+                errors
+            }
+        }));
+    };
+
+    const handleErrorChange = (error: string | null, field: keyof typeof errors) => {
+        dispatch(setBettingBounds({
+            league: 'MLB',
+            matchId,
+            bettingBounds: {
+                values: bounds,
+                errors: { ...errors, [field]: error }
+            }
+        }));
+    };
+
+    const validateAndParseInput = (value: string, fieldName: keyof typeof bounds): number | null => {
         const trimmed = value.trim();
         
         if (!trimmed) {
-            setErrors(prev => ({ ...prev, [fieldName]: 'This field is required' }));
+            handleErrorChange('This field is required', fieldName);
             return null;
         }
 
-        // Handle american odds format (+150, -110) and regular numbers
         const numericValue = trimmed.startsWith('+') 
             ? parseFloat(trimmed.substring(1))
             : parseFloat(trimmed);
 
         if (isNaN(numericValue)) {
-            setErrors(prev => ({ ...prev, [fieldName]: 'Invalid number format' }));
+            handleErrorChange('Invalid number format', fieldName);
             return null;
         } else if (numericValue < 100 && numericValue > -100 && fieldName !== 'totalLine') {
-            setErrors(prev => ({ ...prev, [fieldName]: 'Odds must be between -100 and 100' }));
+            handleErrorChange('Odds must be between -100 and 100', fieldName);
             return null;
         }
 
-        // Clear error if validation passes
-        setErrors(prev => ({ ...prev, [fieldName]: '' }));
+        handleErrorChange(null, fieldName);
         return trimmed.startsWith('+') ? numericValue : parseFloat(trimmed);
     };
 
     const handleFindLeans = async () => {
         // Reset all errors
-        setErrors({
-            awayMoneyline: '',
-            homeMoneyline: '',
-            totalLine: '',
-            overOdds: '',
-            underOdds: ''
-        });
-        setProcessError('');
+        const errorFields = ['awayML', 'homeML', 'totalLine', 'overOdds', 'underOdds'] as const;
+        errorFields.forEach(field => handleErrorChange(null, field));
 
         // Validate all inputs
         const parsedValues = {
-            awayML: validateAndParseInput(awayMoneyline, 'awayMoneyline'),
-            homeML: validateAndParseInput(homeMoneyline, 'homeMoneyline'),
-            totalLine: validateAndParseInput(totalLine, 'totalLine'),
-            overOdds: validateAndParseInput(overOdds, 'overOdds'),
-            underOdds: validateAndParseInput(underOdds, 'underOdds')
+            awayML: validateAndParseInput(bounds.awayML, 'awayML'),
+            homeML: validateAndParseInput(bounds.homeML, 'homeML'),
+            totalLine: validateAndParseInput(bounds.totalLine, 'totalLine'),
+            overOdds: validateAndParseInput(bounds.overOdds, 'overOdds'),
+            underOdds: validateAndParseInput(bounds.underOdds, 'underOdds')
         };
 
         // Check if any validation failed
         if (Object.values(parsedValues).some(value => value === null)) {
             return; // Stop if any validation failed
         }
-
-        setIsSearching(true);
 
         const marketLines: MarketLinesMLB = {
             awayML: parsedValues.awayML!,
@@ -127,25 +137,25 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                 odds: parsedValues.underOdds!
             }
         };
+
         dispatch(updateMLBMarketLines({
             league: 'MLB',
             matchId,
             marketLines: marketLines
         }));
 
-        try {
-            const optimalLeans = await findOptimalLeans(gameContainer?.currentGame?.lineups as MatchupLineups, marketLines);
-            dispatch(updateMLBAutomatedLeans({
-                league: 'MLB',
-                matchId,
-                automatedLeans: optimalLeans
-            }));
-        } catch (error) {
-            console.error('Error finding optimal leans:', error);
-            setProcessError('Failed to calculate optimal leans. Please try again or check your inputs.');
-        } finally {
-            setIsSearching(false);
-        }
+        const optimalLeansResult = await dispatch(findLeansThunk({
+            league: 'MLB',
+            matchId,
+            lineups: gameContainer?.currentGame?.lineups as MatchupLineups,
+            marketLines: marketLines
+        })).unwrap();
+
+        dispatch(updateMLBAutomatedLeans({
+            league: 'MLB',
+            matchId,
+            automatedLeans: optimalLeansResult
+        }));
     };
 
     const handleApplyLeans = () => {
@@ -188,10 +198,10 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                                 variant="outlined"
                                 size="small"
                                 placeholder="e.g. +150"
-                                value={awayMoneyline}
-                                onChange={(e) => setAwayMoneyline(e.target.value)}
-                                error={!!errors.awayMoneyline}
-                                helperText={errors.awayMoneyline}
+                                value={bounds.awayML}
+                                onChange={(e) => handleBoundsChange(e.target.value, 'awayML')}
+                                error={!!errors.awayML}
+                                helperText={errors.awayML}
                                 sx={{ flex: 1, minWidth: '250px' }}
                             />
                             <TextField
@@ -199,10 +209,10 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                                 variant="outlined"
                                 size="small"
                                 placeholder="e.g. -170"
-                                value={homeMoneyline}
-                                onChange={(e) => setHomeMoneyline(e.target.value)}
-                                error={!!errors.homeMoneyline}
-                                helperText={errors.homeMoneyline}
+                                value={bounds.homeML}
+                                onChange={(e) => handleBoundsChange(e.target.value, 'homeML')}
+                                error={!!errors.homeML}
+                                helperText={errors.homeML}
                                 sx={{ flex: 1, minWidth: '250px' }}
                             />
                         </Box>
@@ -221,8 +231,8 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                                 variant="outlined"
                                 size="small"
                                 placeholder="e.g. 7.5"
-                                value={totalLine}
-                                onChange={(e) => setTotalLine(e.target.value)}
+                                value={bounds.totalLine}
+                                onChange={(e) => handleBoundsChange(e.target.value, 'totalLine')}
                                 error={!!errors.totalLine}
                                 helperText={errors.totalLine}
                                 sx={{ flex: 1 }}
@@ -233,8 +243,8 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                                     variant="outlined"
                                     size="small"
                                     placeholder="e.g. -110"
-                                    value={underOdds}
-                                    onChange={(e) => setUnderOdds(e.target.value)}
+                                    value={bounds.underOdds}
+                                    onChange={(e) => handleBoundsChange(e.target.value, 'underOdds')}
                                     error={!!errors.underOdds}
                                     helperText={errors.underOdds}
                                     sx={{ flex: 1 }}
@@ -244,8 +254,8 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                                     variant="outlined"
                                     size="small"
                                     placeholder="e.g. +105"
-                                    value={overOdds}
-                                    onChange={(e) => setOverOdds(e.target.value)}
+                                    value={bounds.overOdds}
+                                    onChange={(e) => handleBoundsChange(e.target.value, 'overOdds')}
                                     error={!!errors.overOdds}
                                     helperText={errors.overOdds}
                                     sx={{ flex: 1 }}
@@ -258,21 +268,21 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
 
                     {/* Action Section */}
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        {processError && (
+                        {findLeansError && (
                             <Typography color="error" variant="body2" sx={{ mt: 1 }}>
-                                {processError}
+                                {findLeansError}
                             </Typography>
                         )}
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Button
                                 variant="contained"
                                 onClick={handleFindLeans}
-                                disabled={isSearching}
-                                startIcon={isSearching ? <CircularProgress size={20} /> : null}
+                                disabled={findLeansStatus === 'loading'}
+                                startIcon={findLeansStatus === 'loading' ? <CircularProgress size={20} /> : null}
                             >
-                                {isSearching ? 'Finding Optimal Leans...' : 'Find Optimal Leans'}
+                                {findLeansStatus === 'loading' ? 'Finding Optimal Leans...' : 'Find Optimal Leans'}
                             </Button>
-                            {automatedLeans && !processError && (
+                            {automatedLeans && !findLeansError && (
                                 <Button
                                     variant="outlined"
                                     color="primary"
