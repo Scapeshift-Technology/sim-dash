@@ -34,8 +34,11 @@ jobs:
       - name: Mask DB Password
         run: echo "::add-mask::${{ secrets.TEST_DB_PASSWORD }}"
 
+      - name: Run Jest tests
+        run: npm run test:test
+
       - name: Run Playwright tests
-        run: npm run test:e2e
+        run: npm run test:playwright
         env:
           DB_HOST: ${{ secrets.TEST_DB_HOST }}
           DB_PORT: ${{ secrets.TEST_DB_PORT }}
