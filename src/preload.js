@@ -52,6 +52,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // --- Added for About Window ---
     // Listener for receiving the app version from main process
     onVersion: (callback) => ipcRenderer.on('set-version', callback),
+    // Listener for receiving the build time from main process
+    onBuildTime: (callback) => ipcRenderer.on('set-build-time', callback),
 
     // Expose logger functions
     ...logFunctions

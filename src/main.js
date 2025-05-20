@@ -56,23 +56,23 @@ log.info('Main process script started.'); // Add an initial log message
 
 // --- Build Info Handling ---
 let buildInfo = { buildTimeISO: 'N/A' };
-// Only try to read build info if not in explicit development mode
-if (process.env.NODE_ENV !== 'development') {
-    const buildInfoPath = path.join(__dirname, 'build-info.json');
-    try {
-        if (fs.existsSync(buildInfoPath)) {
-            const rawData = fs.readFileSync(buildInfoPath);
-            buildInfo = JSON.parse(rawData);
-            console.log('Loaded build info:', buildInfo);
-        } else {
-            console.warn('Build info file not found:', buildInfoPath);
-            // Keep default 'N/A'
-        }
-    } catch (err) {
-        console.error('Error reading or parsing build info file:', err);
-        log.error('Error reading or parsing build info file:', err); // <-- Log error
-        // Keep default 'N/A' on error
+// Try to read build info in both development and production modes
+const buildInfoPath = path.join(__dirname, 'build-info.json');
+try {
+    if (fs.existsSync(buildInfoPath)) {
+        const rawData = fs.readFileSync(buildInfoPath);
+        buildInfo = JSON.parse(rawData);
+        console.log('Loaded build info:', buildInfo);
+        log.info('Loaded build info:', buildInfo);
+    } else {
+        console.warn('Build info file not found:', buildInfoPath);
+        log.warn('Build info file not found:', buildInfoPath);
+        // Keep default 'N/A'
     }
+} catch (err) {
+    console.error('Error reading or parsing build info file:', err);
+    log.error('Error reading or parsing build info file:', err);
+    // Keep default 'N/A' on error
 }
 
 // --- Development ---
@@ -290,14 +290,24 @@ ipcMain.handle('get-sim-history', async (event, matchId) => {
 // --- SQL Server Connection Handling ---
 
 ipcMain.handle('test-connection', async (event, config) => {
-    console.log('Attempting test connection with config:', config);
+    // Create a copy with masked password for logging
+    const maskedConfig = { 
+        ...config,
+        password: '********'
+    };
+    console.log('Attempting test connection with config:', maskedConfig);
 
     const result = await testConnection(sql, config);
     return result;
 })
 
 ipcMain.handle('login', async (event, config) => {
-    console.log('Attempting login with config:', config); // Be careful logging sensitive info
+    // Create a copy with masked password for logging
+    const maskedConfig = { 
+        ...config,
+        password: '********'
+    };
+    console.log('Attempting login with config:', maskedConfig);
 
     // Close previous connection if exists
     if (currentPool) {
