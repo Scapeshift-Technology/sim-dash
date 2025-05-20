@@ -57,10 +57,8 @@ import type {
   
       // Find the proper adjustment to make
       adjustments = findAdjustments(diffs, leans);
-  
       // Make the adjustment
       leans = addMLBSimInputsObjects(leans, adjustments);
-  
       iterations++;
     }
 
@@ -68,8 +66,8 @@ import type {
       throw new Error('Max iterations reached without finding optimal leans. Please try again.');
     }
   
-    const updatedLeans = addMLBSimInputsObjects(leans, adjustments);
-    return updatedLeans;
+    console.log(`FINAL LEANS:`, JSON.stringify(leans, null, 2));
+    return leans;
   }
   
   export { findOptimalLeans };
