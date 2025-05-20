@@ -64,13 +64,13 @@ async function extractTeamLineupFromSwishLineupCard(lineupCard: string, date: st
   const probablePitchers = await getProbablePitchers(teamId, date);
   
   // Get the team's starting pitcher
-  const startingPitcher = extractStartingPitcherFromSwishLineupCard(lineupCard, rosterInfo, teamType);
+  const startingPitcher = await extractStartingPitcherFromSwishLineupCard(lineupCard, rosterInfo, teamId, teamType);
 
   // Get the lineup
-  const lineup = getLineupFromSwishLineupCard(lineupCard, rosterInfo, teamType);
+  const lineup = await getLineupFromSwishLineupCard(lineupCard, rosterInfo, teamId, teamType);
 
   // Get the bench
-  const bench = extractBenchFromMlbRoster(rosterInfo, teamType, lineup);
+  const bench = extractBenchFromMlbRoster(rosterInfo, lineup);
 
   // Get the bullpen
   const bullpen = extractBullPenFromMlbRoster(rosterInfo, teamType, probablePitchers);
@@ -88,12 +88,13 @@ async function extractTeamLineupFromSwishLineupCard(lineupCard: string, date: st
  * Extracts the starting lineup from the swish analytics lineup card
  * @param {string} lineupCard - The HTML of the Swish Analytics lineup card
  * @param {MlbRosterApiResponse} rosterInfo - The roster info for the team
+ * @param {number} teamId - The team id
  * @param {TeamType} teamType - The team type (away or home)
  * @returns {Player[]} The lineup for the given team
  * @example
  * getLineupFromSwishLineupCard(lineupCard, rosterInfo, 'away')
  */
-function getLineupFromSwishLineupCard(lineupCard: string, rosterInfo: MlbRosterApiResponse, teamType: TeamType): Player[] {
+async function getLineupFromSwishLineupCard(lineupCard: string, rosterInfo: MlbRosterApiResponse, teamId: number, teamType: TeamType): Promise<Player[]> {
   // Get the lineup from the html
   const lineupSection = lineupCard.match(/<div[^>]*class="[^"]*mar-neg-chart[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>\s*<\/div>/);
 
@@ -120,7 +121,7 @@ function getLineupFromSwishLineupCard(lineupCard: string, rosterInfo: MlbRosterA
   const rows = table.match(/<tr[^>]*>[\s\S]*?<\/tr>/g) || [];
   
   // Process each row to extract player info
-  return rows.map((row, index) => {
+  const playerPromises = rows.map(async (row, index) => {
     const playerMatch = row.match(/<td[^>]*>([\s\S]*?)<\/td>/);
     if (!playerMatch) {
       throw new Error(`Could not extract player data from row ${index + 1}`);
@@ -143,7 +144,7 @@ function getLineupFromSwishLineupCard(lineupCard: string, rosterInfo: MlbRosterA
     }
 
     // Convert to Player object
-    const playerId = findPlayerId(name, rosterInfo) || 999;
+    const playerId = await findPlayerId(name, 'hitter', rosterInfo, teamId) || 999;
 
     const player: Player = {
       id: playerId,
@@ -154,9 +155,21 @@ function getLineupFromSwishLineupCard(lineupCard: string, rosterInfo: MlbRosterA
 
     return player;
   });
+
+  return Promise.all(playerPromises);
 }
 
-function extractStartingPitcherFromSwishLineupCard(lineupCard: string, rosterInfo: MlbRosterApiResponse, teamType: TeamType): Player {
+/**
+ * Extracts the starting pitcher player info from the swish analytics lineup card
+ * @param {string} lineupCard - The HTML of the Swish Analytics lineup card
+ * @param {MlbRosterApiResponse} rosterInfo - The roster info for the team
+ * @param {number} teamId - The team id
+ * @param {TeamType} teamType - The team type (away or home)
+ * @returns {Player} The starting pitcher for the given team
+ * @example
+ * extractStartingPitcherFromSwishLineupCard(lineupCard, rosterInfo, 'away')
+ */
+async function extractStartingPitcherFromSwishLineupCard(lineupCard: string, rosterInfo: MlbRosterApiResponse, teamId: number, teamType: TeamType): Promise<Player> {
   // Get the starting pitcher from html
   const pitcherSection = lineupCard.match(/<div class="row text-muted mar-top-5 pitcher-card-row">([\s\S]*?)<\/div>\s*<\/div>/);
 
@@ -184,8 +197,7 @@ function extractStartingPitcherFromSwishLineupCard(lineupCard: string, rosterInf
   const pitcherName = teamType === 'away' ? pitchers[0] : pitchers[1];
 
   // Convert to player object
-  const pitcherId: number = findPlayerId(pitcherName, rosterInfo) || 999;
-
+  const pitcherId = await findPlayerId(pitcherName, 'pitcher', rosterInfo, teamId) || 999;
   const player: Player = {
     id: pitcherId,
     name: pitcherName,

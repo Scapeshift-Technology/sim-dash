@@ -119,7 +119,7 @@ async function getMlbGameApiGame(gamePk: number): Promise<MlbGameApiResponse> {
  * @param {Player[]} startingLineup - The starting lineup for the team
  * @returns {Player[]} The bench players for the team in a list of player types
  */
-function extractBenchFromMlbRoster(rosterInfo: MlbRosterApiResponse, teamType: TeamType, startingLineup: Player[]): Player[] {
+function extractBenchFromMlbRoster(rosterInfo: MlbRosterApiResponse, startingLineup: Player[]): Player[] {
   const bench = rosterInfo.roster.filter((player: any) => 
     !startingLineup.some(startingPlayer => startingPlayer.id === player.person.id) && 
     player.position.abbreviation !== 'P' && 
@@ -271,6 +271,7 @@ async function enrichPlayerWithHandedness(player: Player): Promise<Player> {
     const data: MlbPeopleApiResponse = await response.json();
     
     if (!data.people || data.people.length !== 1) {
+      console.error('ERROR PLAYER', JSON.stringify(player, null, 2));
       throw new Error(`Unexpected number of people returned for player ${player.id}(not == 1): ${data.people.length}`);
     }
 
@@ -284,6 +285,49 @@ async function enrichPlayerWithHandedness(player: Player): Promise<Player> {
     console.error(`Error enriching player ${player.id} with handedness:`, error);
     throw error;
   }
+}
+
+async function findPlayerIdFromMlbApi(playerName: string, playerType: 'hitter' | 'pitcher', teamId: number): Promise<number | null> {
+  try {
+    const playerNameNoSpaces = playerName.replace(/\s+/g, '').toLowerCase();
+    const url = `${BASE_MLB_API_URL}/people/search?names=${playerNameNoSpaces}&hydrate=currentTeam`;
+    const response = await fetch(url);
+    const data: MlbPeopleApiResponse = await response.json();
+
+    // Search through to find the right person
+    if (!data.people || data.people.length === 0) {
+      return null;
+    } else if (data.people.length === 1) {
+      return data.people[0].id;
+    } else {
+      return extractPlayerIdFromPeopleList(data, playerType, teamId);
+    }
+  } catch (error) {
+    console.error(`Error finding player ID from MLB API:`, error);
+    return null;
+  }
+}
+
+/**
+ * Extracts the player id from the people list found by the MLB API people endpoint
+ * @param {MlbPeopleApiResponse} peopleList - The people list from the MLB API
+ * @param {string} playerType - The type of player(hitter or pitcher)
+ * @param {number} teamId - The id of the team
+ * @returns {number | null} The id of the player(or null if not found)
+ */
+function extractPlayerIdFromPeopleList(peopleList: MlbPeopleApiResponse, playerType: 'hitter' | 'pitcher', teamId: number): number | null {
+  const player = peopleList.people.find((person: any) => {
+    // Check position match
+    const isPitcher = person.primaryPosition.abbreviation === 'P' || person.primaryPosition.abbreviation === 'TWP';
+    const positionMatches = playerType === 'pitcher' ? isPitcher : !isPitcher;
+
+    // Check team match (either direct team or parent org)
+    const teamMatches = person.currentTeam?.id === teamId || person.currentTeam?.parentOrgId === teamId;
+
+    return positionMatches && teamMatches;
+  });
+
+  return player ? player.id : null;
 }
 
 export { enrichPlayerWithHandedness };
@@ -314,7 +358,33 @@ export { extractBullpenFromMlbRosterAndGame, extractBullPenFromMlbRoster }
 
 // ---------- Util type functions used with MLB API ----------
 
-function findPlayerId(playerName: string, roster: MlbRosterApiResponse): number | null {
+/**
+ * Finds the MLBAM player id for a given player name
+ * @param {string} playerName - The name of the player
+ * @param {string} playerType - The type of player(hitter or pitcher)
+ * @param {MlbRosterApiResponse} roster - The roster of that player's team
+ * @param {number} teamId - The MLBAM id of that player's team
+ * @returns {number | null} The MLBAM id of the player(or null if not found)
+ * @example
+ * findPlayerId('John Doe', 'hitter', roster, 123)
+ */
+async function findPlayerId(playerName: string, playerType: 'hitter' | 'pitcher', roster: MlbRosterApiResponse, teamId: number): Promise<number | null> {
+  // Try roster
+  const playerId = findPlayerIdFromRoster(playerName, roster);
+  if (playerId) {
+    return playerId;
+  }
+
+  // Try MLB API
+  const backupPlayerId = await findPlayerIdFromMlbApi(playerName, playerType, teamId);
+  if (backupPlayerId) {
+    return backupPlayerId;
+  }
+  
+  return null;
+}
+
+function findPlayerIdFromRoster(playerName: string, roster: MlbRosterApiResponse): number | null {
   // Clean up the name for comparison
   const cleanName = playerName.toLowerCase().trim();
   
@@ -327,7 +397,7 @@ function findPlayerId(playerName: string, roster: MlbRosterApiResponse): number 
   if (player) {
     return player.person.id;
   }
-  
+
   // Log if player not found
   console.log(`Could not find ID for player: ${playerName}`);
   return null;

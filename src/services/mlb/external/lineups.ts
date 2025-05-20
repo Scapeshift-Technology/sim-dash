@@ -129,7 +129,7 @@ function extractCompleteTeamLineup(
   const startingLineup = extractStartingLineupFromMlbGameApiGame(gameInfo, teamType);
 
   // Get bench players
-  const bench = extractBenchFromMlbRoster(rosterInfo, teamType, startingLineup);
+  const bench = extractBenchFromMlbRoster(rosterInfo, startingLineup);
 
   // Get starting pitcher
   const startingPitcher = extractStartingPitcherFromMlbGameApiGame(gameInfo, teamType);
