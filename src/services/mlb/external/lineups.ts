@@ -104,8 +104,7 @@ async function getBackupLineups(date: string, awayTeam: string, homeTeam: string
     return enrichedSwishLineups;
   } catch(error) {
     console.error('Error getting lineups from Swish analytics:', error);
-    const mockLineups: MatchupLineups = makeMockLineups(date, awayTeam, homeTeam, daySequenceNumber);
-    return mockLineups;
+    throw error;
   }
 }
 
