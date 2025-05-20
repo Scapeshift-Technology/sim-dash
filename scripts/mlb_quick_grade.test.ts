@@ -240,6 +240,43 @@ describe('MLB Quick Grade Parsing', () => {
             expect(cm.Match.DaySequence).toBeUndefined();
         });
 
+        test('should correctly parse "YG MIA F5 TT u1.5" as H1 Team Total', () => {
+            const line = "5/24/2025, 10:00 AM, YG MIA F5 TT u1.5 @ -110 = 1.0";
+            const [dateStr, timeStr, detailsStr] = line.split(',').map(s => s.trim());
+            const result = parseBetDetails(dateStr, timeStr, detailsStr);
+
+            expect(result).not.toBeNull();
+            const bet = result! as Bet;
+            const cm = bet.ContractMatch as Contract_Match_TeamTotal;
+
+            // Check ExecutionDtm
+            expect(bet.ExecutionDtm.getFullYear()).toBe(2025);
+            expect(bet.ExecutionDtm.getMonth()).toBe(4); // May
+            expect(bet.ExecutionDtm.getDate()).toBe(24);
+            const inputDate = new Date(`2025-05-24T10:00:00`);
+            expect(bet.ExecutionDtm.getHours()).toBe(inputDate.getHours());
+            expect(bet.ExecutionDtm.getMinutes()).toBe(0);
+
+
+            expect(bet.Price).toBe(-110);
+            expect(bet.Size).toBe(1000);
+
+            // Check ContractMatch details
+            expect(cm.Period.PeriodTypeCode).toBe('H'); // F5 should map to H1
+            expect(cm.Period.PeriodNumber).toBe(1);
+
+            expect(cm.Match.Date.getFullYear()).toBe(2025);
+            expect(cm.Match.Date.getMonth()).toBe(4); // May
+            expect(cm.Match.Date.getDate()).toBe(24);
+            expect(cm.Match.Team1).toBe("MIA");
+            expect(cm.Match.Team2).toBeUndefined();
+            expect(cm.Match.DaySequence).toBeUndefined();
+
+            expect(cm.Line).toBe(1.5);
+            expect(cm.IsOver).toBe(false);
+            expect(cm.Team).toBe("MIA");
+        });
+
     });
 });
 

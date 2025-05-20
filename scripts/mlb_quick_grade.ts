@@ -291,65 +291,85 @@ export function parseBetDetails(dateOnlyStr: string, timeOnlyStr: string, rawDet
         const parsedLineVal = parseFloat(lineStr);
 
         if (isNaN(parsedLineVal) || parsedLineVal < 0 || parsedLineVal * 10 % 5 !== 0) { // check for divisibility by 0.5
-            console.warn(`[DetailParse WARN] Invalid line value "${lineStr}" (not a non-negative number divisible by 0.5).`);
+            console.warn(`[DetailParse WARN] Invalid line value "${lineStr}" (not a non-negative number divisible by 0.5). Input: ${rawDetailsYg}`);
             return null;
         }
 
-        let teamAndPeriodStr = teamPeriodLineInfo.substring(0, ouMatch.index).trim();
+        // ---- Start of refactored section for team, period, TT, game number ----
+        let baseTeamPeriodString = teamPeriodLineInfo.substring(0, ouMatch.index).trim();
 
         let currentPeriod: Period = defaultPeriodDetails;
-        let daySequence: number | undefined = undefined; // Initialize as undefined
+        let daySequence: number | undefined = undefined;
+        let team1: string;
+        let team2: string | undefined;
+        let isTeamTotal = false;
 
-        // Regex to find game number like G1, GM2, #1
         const gameNumberPattern = /(?:\s+(?:GM?|#)([12]))$/i; // Matches " G1", " GM2", " #1" at the end of a segment
 
-        // Attempt to extract game number before period or TT
-        // We will apply this pattern *after* period/TT extraction if it makes more sense,
-        // but the rule states "immediately after the teams specification and before where the TT or the period specification would go".
-        // This implies it's part of the `teamAndPeriodStr` before period/TT stripping.
+        const ttIndex = baseTeamPeriodString.toUpperCase().indexOf(" TT");
+        
+        // Check if " TT" is found and is a standalone marker (followed by space or end of string)
+        if (ttIndex !== -1 && (baseTeamPeriodString.length === ttIndex + 3 || baseTeamPeriodString.charAt(ttIndex + 3) === ' ')) {
+            isTeamTotal = true;
+            let prefixBeforeTT = baseTeamPeriodString.substring(0, ttIndex).trim(); // e.g., "MIA F5", "SEA G2"
+            let teamProcessingString = prefixBeforeTT;
 
-        for (const key in periodStringMap) {
-            if (teamAndPeriodStr.toLowerCase().endsWith(key)) {
-                currentPeriod = periodStringMap[key];
-                teamAndPeriodStr = teamAndPeriodStr.substring(0, teamAndPeriodStr.toLowerCase().lastIndexOf(key)).trim();
-                break;
+            // 1. Extract Period from the string before TT
+            for (const key in periodStringMap) {
+                if (teamProcessingString.toLowerCase().endsWith(key)) {
+                    currentPeriod = periodStringMap[key];
+                    teamProcessingString = teamProcessingString.substring(0, teamProcessingString.toLowerCase().lastIndexOf(key)).trim();
+                    break;
+                }
             }
-        }
-        
-        let teamPartForProcessing = teamAndPeriodStr;
-        const ttPattern = / TT$/i; // " TT" at the end of the team string, case insensitive
-        const isTeamTotal = ttPattern.test(teamPartForProcessing);
-        
-        if (isTeamTotal) {
-            teamPartForProcessing = teamPartForProcessing.replace(ttPattern, "").trim();
-        }
 
-        // Now, extract game number from the remaining teamPartForProcessing (if it exists there)
-        const gameNumberMatch = teamPartForProcessing.match(gameNumberPattern);
-        if (gameNumberMatch && gameNumberMatch[1]) {
-            daySequence = parseInt(gameNumberMatch[1], 10);
-            teamPartForProcessing = teamPartForProcessing.substring(0, gameNumberMatch.index).trim(); // Remove game number from team string
+            // 2. Extract Game Number from the remaining string
+            const gameMatch = teamProcessingString.match(gameNumberPattern);
+            if (gameMatch && gameMatch[1]) {
+                daySequence = parseInt(gameMatch[1], 10);
+                teamProcessingString = teamProcessingString.substring(0, gameMatch.index).trim();
+            }
+            
+            // 3. The rest is the team for TT
+            const ttTeams = teamProcessingString.split("/").map(t => t.trim()).filter(t => t.length > 0);
+            if (ttTeams.length === 1) {
+                team1 = ttTeams[0];
+                // team2 remains undefined for TT
+            } else {
+                console.warn(`[DetailParse WARN] Invalid team specification for TT: "${teamProcessingString}" (expected one team). Original: "${baseTeamPeriodString}". Input: ${rawDetailsYg}`);
+                return null;
+            }
+        } else { // Not a Team Total
+            isTeamTotal = false; // Explicitly set
+            let nonTTProcessingStr = baseTeamPeriodString; // e.g., "Padres/Pirates 1st inning", "COL gm2 F5"
+
+            // 1. Extract Period
+            for (const key in periodStringMap) {
+                if (nonTTProcessingStr.toLowerCase().endsWith(key)) {
+                    currentPeriod = periodStringMap[key];
+                    nonTTProcessingStr = nonTTProcessingStr.substring(0, nonTTProcessingStr.toLowerCase().lastIndexOf(key)).trim();
+                    break;
+                }
+            }
+
+            // 2. Extract Game Number
+            const gameMatch = nonTTProcessingStr.match(gameNumberPattern);
+            if (gameMatch && gameMatch[1]) {
+                daySequence = parseInt(gameMatch[1], 10);
+                nonTTProcessingStr = nonTTProcessingStr.substring(0, gameMatch.index).trim();
+            }
+
+            // 3. The rest is team(s)
+            const gameTeams = nonTTProcessingStr.split("/").map(t => t.trim()).filter(t => t.length > 0);
+            if (gameTeams.length === 0) {
+                console.warn(`[DetailParse WARN] No teams found in: "${nonTTProcessingStr}". Original: "${baseTeamPeriodString}". Input: ${rawDetailsYg}`);
+                return null;
+            }
+            team1 = gameTeams[0];
+            team2 = gameTeams.length > 1 ? gameTeams[1] : undefined;
         }
+        // ---- End of refactored section ----
         
-        const teams = teamPartForProcessing.split("/").map(t => t.trim()).filter(t => t.length > 0);
-        
-        if (teams.length === 0) {
-            console.warn(`[DetailParse WARN] No teams found in: "${teamPartForProcessing}"`);
-            return null;
-        }
-        const team1 = teams[0];
-        const team2 = teams.length > 1 ? teams[1] : undefined;
-
-        if (isTeamTotal && team2) {
-            console.warn(`[DetailParse WARN] Error: Two teams ("${team1}", "${team2}") specified with TT in "${teamAndPeriodStr}"`);
-            return null;
-        }
-        if (isTeamTotal && teams.length > 1) {
-             console.warn(`[DetailParse WARN] Error: Multiple team segments ("${teams.join(',')}") found before 'TT' designation in "${teamAndPeriodStr}"`);
-            return null;
-        }
-
-
         const matchInfo: Match = {
             Date: matchDate,
             Team1: team1,
@@ -452,6 +472,7 @@ export async function processFile(filePath: string, pool: import('mssql').Connec
     // Define regex patterns for conditions
     const nothingOnRegex = /^["']?(nothing (on|for)|had late)/i; // Case-insensitive, optional leading quote
     const hyphenLineRegex = /^[-]+$/; // Matches one or more hyphens
+    const commentLineRegex = /^#/; // Matches lines starting with #
 
     lines.forEach((line: string) => {
         const trimmedLine = line.trim();
@@ -480,6 +501,9 @@ export async function processFile(filePath: string, pool: import('mssql').Connec
                 suppressWarning = true;
             }
             else if (nothingOnRegex.test(trimmedLine)) {
+                suppressWarning = true;
+            }
+            else if (commentLineRegex.test(trimmedLine)) {
                 suppressWarning = true;
             }
             else {
