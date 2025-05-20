@@ -9,7 +9,7 @@ export interface Match {
     Date: Date;
     Team1: string;
     Team2?: string;
-    DaySequence?: number; // Defaults to 1 if not provided
+    DaySequence?: number; // DaySequence is optional
 }
 
 export interface Period {
@@ -42,6 +42,169 @@ export interface Bet {
 
 // Default value for DaySequence can be handled in functions creating Match objects
 // const defaultMatch: Match = { Date: new Date(), Team1: "Team A", DaySequence: 1 };
+
+// --- BEGIN toString UTILITY FUNCTIONS ---
+
+export function periodToString(period: Period): string {
+    return `${period.PeriodTypeCode}${period.PeriodNumber}`;
+}
+
+export function matchToString(match: Match): string {
+    const dateStr = `${match.Date.getMonth() + 1}/${match.Date.getDate()}/${match.Date.getFullYear()}`;
+    let str = `${dateStr} ${match.Team1}`;
+    if (match.Team2) {
+        str += `/${match.Team2}`;
+    }
+    if (match.DaySequence && match.DaySequence > 1) {
+        str += ` #${match.DaySequence}`;
+    }
+    return str;
+}
+
+export function contractMatchToString(contract: Contract_Match): string {
+    const matchStr = matchToString(contract.Match);
+    const overUnder = contract.IsOver ? 'o' : 'u';
+
+    if ('Team' in contract) { // Contract_Match_TeamTotal
+        // Example: "5/12/2025 MIL #2: MIL u4.5"
+        // Period is not shown for TeamTotal in this format based on user example.
+        return `${matchStr}: ${contract.Team} ${overUnder}${contract.Line}`;
+    } else { // Contract_Match_Total
+        // Example: "5/12/2025 MIL/CLE: H1 o5"
+        const periodStr = periodToString(contract.Period);
+        return `${matchStr}: ${periodStr} ${overUnder}${contract.Line}`;
+    }
+}
+
+// --- END toString UTILITY FUNCTIONS ---
+
+// --- BEGIN NEW HELPER FUNCTION for Risk/ToWin ---
+
+export function calculateRiskAndToWin(price: number, betSize: number): { risk: number; toWin: number } | null {
+    let risk: number;
+    let toWin: number;
+
+    if (price >= 100) {
+        risk = betSize;
+        toWin = betSize * (price / 100);
+    } else if (price <= -100) {
+        // For negative odds, 'betSize' is the 'toWin' amount.
+        // Risk = ToWin / (100 / abs(Price)) = ToWin * (abs(Price) / 100)
+        toWin = betSize;
+        risk = betSize * (Math.abs(price) / 100);
+    } else {
+        // Price is not in the specified ranges (e.g. -99 to 99, excluding 0, or 0 itself).
+        // The user's definition of 'betSize' interpretation doesn't apply.
+        console.warn(`[calculateRiskAndToWin WARN] Price ${price} is not >= 100 or <= -100. Cannot determine Risk/ToWin based on standard American odds interpretation of Size.`);
+        return null;
+    }
+    // Round to 4 decimal places to avoid floating point inaccuracies
+    risk = parseFloat(risk.toFixed(4));
+    toWin = parseFloat(toWin.toFixed(4));
+
+    return { risk, toWin };
+}
+
+// --- END NEW HELPER FUNCTION for Risk/ToWin ---
+
+// --- BEGIN SUMMARY HELPER FUNCTIONS ---
+
+function formatDateForSummary(date: Date): string {
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`;
+}
+
+function formatPnlForSummary(pnl: number): string {
+    // Format to 2 decimal places first
+    const pnlWithPennies = parseFloat(pnl.toFixed(2)); // Ensures we're working with a number rounded to 2 decimal places
+
+    const sign = pnlWithPennies >= 0 ? '+' : '-';
+    
+    // Get the absolute value, format with commas and 2 decimal places for consistency
+    const absPnlStr = Math.abs(pnlWithPennies).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }); // e.g., "5,230.75", "300.10", "0.00"
+
+    const parts = absPnlStr.split('.');
+    const integerPart = parts[0]; // e.g., "5,230", "300", "0"
+    const decimalPart = parts[1]; // e.g., "75", "10", "00"
+
+    // Pad the integer part to maintain alignment similar to the original examples
+    const paddedIntegerPart = integerPart.padStart(5, ' '); 
+    
+    return `${sign}$${paddedIntegerPart}.${decimalPart}`;
+}
+
+function getMonday(d: Date): Date {
+    const date = new Date(d.valueOf()); // Clone date
+    const dayOfWeek = date.getDay(); // Sunday = 0, Monday = 1, ..., Saturday = 6
+    const diff = date.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust for Sunday
+    return new Date(date.setDate(diff));
+}
+
+function printDailySummary(pnlSummariesData: { date: Date, pnl: number }[]) {
+    if (pnlSummariesData.length === 0) return;
+
+    console.log("\n--- DAILIES ---");
+    const dailyTotals: Map<string, number> = new Map();
+
+    for (const item of pnlSummariesData) {
+        const dateKey = item.date.toISOString().split('T')[0]; // YYYY-MM-DD for sorting and grouping
+        dailyTotals.set(dateKey, (dailyTotals.get(dateKey) || 0) + item.pnl);
+    }
+
+    const sortedDays = Array.from(dailyTotals.keys()).sort();
+
+    for (const dateKey of sortedDays) {
+        const pnl = dailyTotals.get(dateKey)!;
+        // Create a new Date object from YYYY-MM-DD to ensure correct local date formatting
+        const parts = dateKey.split('-').map(Number);
+        const displayDateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+        console.log(`${formatDateForSummary(displayDateObj)}, ${formatPnlForSummary(pnl)}`);
+    }
+}
+
+function printWeeklySummary(pnlSummariesData: { date: Date, pnl: number }[]) {
+    if (pnlSummariesData.length === 0) return;
+
+    console.log("\n--- WEEKLIES (Monday thru Sunday) ---");
+    const weeklyTotals: Map<string, number> = new Map(); // Key is Monday's YYYY-MM-DD
+
+    for (const item of pnlSummariesData) {
+        const monday = getMonday(item.date);
+        const mondayKey = monday.toISOString().split('T')[0];
+        weeklyTotals.set(mondayKey, (weeklyTotals.get(mondayKey) || 0) + item.pnl);
+    }
+
+    const sortedMondays = Array.from(weeklyTotals.keys()).sort();
+
+    for (const mondayKey of sortedMondays) {
+        const pnl = weeklyTotals.get(mondayKey)!;
+        const parts = mondayKey.split('-').map(Number);
+        const mondayDate = new Date(parts[0], parts[1] - 1, parts[2]);
+        
+        const sundayDate = new Date(mondayDate);
+        sundayDate.setDate(mondayDate.getDate() + 6);
+
+        const dateRangeStr = `${formatDateForSummary(mondayDate)} - ${formatDateForSummary(sundayDate)}`;
+        console.log(`${dateRangeStr}, ${formatPnlForSummary(pnl)}`);
+    }
+}
+
+function printTotalSummary(pnlSummariesData: { date: Date, pnl: number }[]) {
+    if (pnlSummariesData.length === 0) {
+      // Print total as $0 if no PNL data, to match example structure if sections are always shown
+      console.log("\n--- TOTAL: +$    0 ---");
+      return;
+    }
+    const totalPnl = pnlSummariesData.reduce((sum, item) => sum + item.pnl, 0);
+    console.log(`\n--- TOTAL: ${formatPnlForSummary(totalPnl)} ---`);
+}
+
+// --- END SUMMARY HELPER FUNCTIONS ---
 
 // --- BEGIN NEW PARSING LOGIC ---
 
@@ -141,53 +304,90 @@ export function parseBetDetails(dateOnlyStr: string, timeOnlyStr: string, rawDet
         const parsedLineVal = parseFloat(lineStr);
 
         if (isNaN(parsedLineVal) || parsedLineVal < 0 || parsedLineVal * 10 % 5 !== 0) { // check for divisibility by 0.5
-            console.warn(`[DetailParse WARN] Invalid line value "${lineStr}" (not a non-negative number divisible by 0.5).`);
+            console.warn(`[DetailParse WARN] Invalid line value "${lineStr}" (not a non-negative number divisible by 0.5). Input: ${rawDetailsYg}`);
             return null;
         }
 
-        let teamAndPeriodStr = teamPeriodLineInfo.substring(0, ouMatch.index).trim();
+        // ---- Start of refactored section for team, period, TT, game number ----
+        let baseTeamPeriodString = teamPeriodLineInfo.substring(0, ouMatch.index).trim();
 
         let currentPeriod: Period = defaultPeriodDetails;
-        for (const key in periodStringMap) {
-            if (teamAndPeriodStr.toLowerCase().endsWith(key)) {
-                currentPeriod = periodStringMap[key];
-                teamAndPeriodStr = teamAndPeriodStr.substring(0, teamAndPeriodStr.toLowerCase().lastIndexOf(key)).trim();
-                break;
+        let daySequence: number | undefined = undefined;
+        let team1: string;
+        let team2: string | undefined;
+        let isTeamTotal = false;
+
+        const gameNumberPattern = /(?:\s+(?:GM?|#)([12]))$/i; // Matches " G1", " GM2", " #1" at the end of a segment
+
+        const ttIndex = baseTeamPeriodString.toUpperCase().indexOf(" TT");
+        
+        // Check if " TT" is found and is a standalone marker (followed by space or end of string)
+        if (ttIndex !== -1 && (baseTeamPeriodString.length === ttIndex + 3 || baseTeamPeriodString.charAt(ttIndex + 3) === ' ')) {
+            isTeamTotal = true;
+            let prefixBeforeTT = baseTeamPeriodString.substring(0, ttIndex).trim(); // e.g., "MIA F5", "SEA G2"
+            let teamProcessingString = prefixBeforeTT;
+
+            // 1. Extract Period from the string before TT
+            for (const key in periodStringMap) {
+                if (teamProcessingString.toLowerCase().endsWith(key)) {
+                    currentPeriod = periodStringMap[key];
+                    teamProcessingString = teamProcessingString.substring(0, teamProcessingString.toLowerCase().lastIndexOf(key)).trim();
+                    break;
+                }
             }
-        }
-        
-        let teamPartForProcessing = teamAndPeriodStr;
-        const ttPattern = / TT$/i; // " TT" at the end of the team string, case insensitive
-        const isTeamTotal = ttPattern.test(teamPartForProcessing);
-        
-        if (isTeamTotal) {
-            teamPartForProcessing = teamPartForProcessing.replace(ttPattern, "").trim();
-        }
-        
-        const teams = teamPartForProcessing.split("/").map(t => t.trim()).filter(t => t.length > 0);
-        
-        if (teams.length === 0) {
-            console.warn(`[DetailParse WARN] No teams found in: "${teamPartForProcessing}"`);
-            return null;
-        }
-        const team1 = teams[0];
-        const team2 = teams.length > 1 ? teams[1] : undefined;
 
-        if (isTeamTotal && team2) {
-            console.warn(`[DetailParse WARN] Error: Two teams ("${team1}", "${team2}") specified with TT in "${teamAndPeriodStr}"`);
-            return null;
-        }
-        if (isTeamTotal && teams.length > 1) {
-             console.warn(`[DetailParse WARN] Error: Multiple team segments ("${teams.join(',')}") found before 'TT' designation in "${teamAndPeriodStr}"`);
-            return null;
-        }
+            // 2. Extract Game Number from the remaining string
+            const gameMatch = teamProcessingString.match(gameNumberPattern);
+            if (gameMatch && gameMatch[1]) {
+                daySequence = parseInt(gameMatch[1], 10);
+                teamProcessingString = teamProcessingString.substring(0, gameMatch.index).trim();
+            }
+            
+            // 3. The rest is the team for TT
+            const ttTeams = teamProcessingString.split("/").map(t => t.trim()).filter(t => t.length > 0);
+            if (ttTeams.length === 1) {
+                team1 = ttTeams[0];
+                // team2 remains undefined for TT
+            } else {
+                console.warn(`[DetailParse WARN] Invalid team specification for TT: "${teamProcessingString}" (expected one team). Original: "${baseTeamPeriodString}". Input: ${rawDetailsYg}`);
+                return null;
+            }
+        } else { // Not a Team Total
+            isTeamTotal = false; // Explicitly set
+            let nonTTProcessingStr = baseTeamPeriodString; // e.g., "Padres/Pirates 1st inning", "COL gm2 F5"
 
+            // 1. Extract Period
+            for (const key in periodStringMap) {
+                if (nonTTProcessingStr.toLowerCase().endsWith(key)) {
+                    currentPeriod = periodStringMap[key];
+                    nonTTProcessingStr = nonTTProcessingStr.substring(0, nonTTProcessingStr.toLowerCase().lastIndexOf(key)).trim();
+                    break;
+                }
+            }
 
+            // 2. Extract Game Number
+            const gameMatch = nonTTProcessingStr.match(gameNumberPattern);
+            if (gameMatch && gameMatch[1]) {
+                daySequence = parseInt(gameMatch[1], 10);
+                nonTTProcessingStr = nonTTProcessingStr.substring(0, gameMatch.index).trim();
+            }
+
+            // 3. The rest is team(s)
+            const gameTeams = nonTTProcessingStr.split("/").map(t => t.trim()).filter(t => t.length > 0);
+            if (gameTeams.length === 0) {
+                console.warn(`[DetailParse WARN] No teams found in: "${nonTTProcessingStr}". Original: "${baseTeamPeriodString}". Input: ${rawDetailsYg}`);
+                return null;
+            }
+            team1 = gameTeams[0];
+            team2 = gameTeams.length > 1 ? gameTeams[1] : undefined;
+        }
+        // ---- End of refactored section ----
+        
         const matchInfo: Match = {
             Date: matchDate,
             Team1: team1,
             Team2: team2,
-            DaySequence: 1 // Default
+            DaySequence: daySequence // Use extracted or undefined DaySequence
         };
 
         let contractMatch: Contract_Match;
@@ -269,10 +469,11 @@ export function validateLine(line: string): { date: string; time: string; detail
     return null;
 }
 
-export function processFile(filePath: string) {
+// Modified to be async and accept sql.ConnectionPool
+export async function processFile(filePath: string, pool: import('mssql').ConnectionPool) {
     if (!fs.existsSync(filePath)) {
         console.error(`Error: File not found at ${filePath}`);
-        process.exit(1);
+        return;
     }
 
     const fileContent = fs.readFileSync(filePath, 'utf-8');
@@ -284,6 +485,7 @@ export function processFile(filePath: string) {
     // Define regex patterns for conditions
     const nothingOnRegex = /^["']?(nothing (on|for)|had late)/i; // Case-insensitive, optional leading quote
     const hyphenLineRegex = /^[-]+$/; // Matches one or more hyphens
+    const commentLineRegex = /^#/; // Matches lines starting with #
 
     lines.forEach((line: string) => {
         const trimmedLine = line.trim();
@@ -314,6 +516,9 @@ export function processFile(filePath: string) {
             else if (nothingOnRegex.test(trimmedLine)) {
                 suppressWarning = true;
             }
+            else if (commentLineRegex.test(trimmedLine)) {
+                suppressWarning = true;
+            }
             else {
                 const parts = trimmedLine.split(',').map((part: string) => part.trim());
                 if (parts.length === 3 && nothingOnRegex.test(parts[2])) {
@@ -336,41 +541,193 @@ export function processFile(filePath: string) {
         console.log('\n'); // Separator
     }
 
-    if (parsedBets.length > 0) {
-        console.log("Successfully parsed bets output (JSON format):");
-        parsedBets.forEach((bet, index) => {
-            console.log(`--- Bet ${index + 1} ---`);
-            console.log(JSON.stringify(bet, null, 2));
+    const printFormattedTable = (title: string, headers: string[], rowsData: (string | number | Date | boolean | undefined)[][]) => {
+        if (rowsData.length === 0) {
+            // console.log(`No data for table: ${title}`); // Optional: log if no data for a specific table
+            return;
+        }
+
+        const columnWidths = headers.map((header, colIndex) => {
+            let maxWidth = header.length;
+            for (const row of rowsData) {
+                const cellValue = row[colIndex];
+                const cellLength = String(cellValue ?? '').length;
+                if (cellLength > maxWidth) {
+                    maxWidth = cellLength;
+                }
+            }
+            return maxWidth;
+        });
+
+        const outputTableLines: string[] = [];
+        outputTableLines.push(
+            headers.map((header, i) => header.padEnd(columnWidths[i])).join(', ')
+        );
+
+        rowsData.forEach(row => {
+            outputTableLines.push(
+                row.map((cell, i) => {
+                    return String(cell ?? '').padEnd(columnWidths[i]);
+                }).join(', ')
+            );
         });
         
-        // The original printTable is not suitable for complex Bet objects.
-        // If a table summary is needed, it would require a new function
-        // to extract specific fields from the Bet objects.
-        // console.log("--- Original Table Format (Example if adapted) ---");
-        // const headersForBets = ['Exec DTM', 'Team1', 'Period', 'Line', 'IsOver', 'Price', 'Size'];
-        // const rowsForBets = parsedBets.map(b => [
-        // b.ExecutionDtm.toLocaleString(),
-        // b.ContractMatch.Match.Team1,
-        // `${b.ContractMatch.Period.PeriodTypeCode}${b.ContractMatch.Period.PeriodNumber}`,
-        // b.ContractMatch.Line,
-        // b.ContractMatch.IsOver,
-        // b.Price,
-        // b.Size
-        // ]);
-        // printTable(headersForBets, rowsForBets);
+        const finalStringToPrint = `\n${title}\n${outputTableLines.join('\n')}`;
+        console.log(finalStringToPrint);
+    };
 
+    if (parsedBets.length > 0) {
+        const headers = ['Contract', 'Price', 'Size', 'Grade', 'PNL'];
+        
+        const rowsData = await Promise.all(parsedBets.map(async (bet) => {
+            const contractStr = contractMatchToString(bet.ContractMatch);
+            let grade = 'N/A'; // Default grade
+            const matchDate = bet.ContractMatch.Match.Date; // Common for both types
+            const formattedMatchDate = `${matchDate.getFullYear()}-${String(matchDate.getMonth() + 1).padStart(2, '0')}-${String(matchDate.getDate()).padStart(2, '0')}`;
 
-    } else if (linesToWarnBasicFormat.length === 0) { 
+            try {
+                if ('Team' in bet.ContractMatch) { // It's a Contract_Match_TeamTotal
+                    const contractMatch = bet.ContractMatch as Contract_Match_TeamTotal;
+                    let daySequenceSqlArgument = 'DEFAULT';
+                    const request = pool.request()
+                        .input('MatchScheduledDate', sql.Date, formattedMatchDate)
+                        .input('SelectedTeam', sql.Char(50), contractMatch.Team)
+                        .input('PeriodTypeCode', sql.Char(2), contractMatch.Period.PeriodTypeCode)
+                        .input('PeriodNumber', sql.TinyInt, contractMatch.Period.PeriodNumber)
+                        .input('Line', sql.Decimal(5, 2), contractMatch.Line)
+                        .input('IsOver', sql.Bit, contractMatch.IsOver ? 1 : 0);
+
+                    if (typeof contractMatch.Match.DaySequence === 'number') {
+                        request.input('DaySequenceParam', sql.TinyInt, contractMatch.Match.DaySequence);
+                        daySequenceSqlArgument = '@DaySequenceParam';
+                    }
+
+                    const query = `
+                        SELECT dbo.UserAPICall_Contract_TeamTotal_Grade_fn(
+                            @MatchScheduledDate,
+                            @SelectedTeam,
+                            @PeriodTypeCode,
+                            @PeriodNumber,
+                            @Line,
+                            @IsOver,
+                            ${daySequenceSqlArgument}
+                        ) AS GradeValue;`;
+
+                    const result = await request.query(query);
+                    if (result.recordset && result.recordset.length > 0 && result.recordset[0] && result.recordset[0].GradeValue !== null && result.recordset[0].GradeValue !== undefined) {
+                        grade = String(result.recordset[0].GradeValue).trim();
+                    } else {
+                        console.warn(`[Grade WARN] No grade returned or unexpected SQL result for TeamTotal: ${contractMatch.Team} on ${formattedMatchDate}, Line: ${contractMatch.Line}, Over: ${contractMatch.IsOver}`);
+                    }
+                } else { // It's a Contract_Match_Total
+                    const contractMatch = bet.ContractMatch as Contract_Match_Total;
+                    let daySequenceSqlArgument = 'DEFAULT';
+                    const request = pool.request()
+                        .input('MatchScheduledDate', sql.Date, formattedMatchDate)
+                        .input('Team1', sql.Char(50), contractMatch.Match.Team1)
+                        .input('Team2', sql.Char(50), contractMatch.Match.Team2 ?? null)
+                        .input('PeriodTypeCode', sql.Char(2), contractMatch.Period.PeriodTypeCode)
+                        .input('PeriodNumber', sql.TinyInt, contractMatch.Period.PeriodNumber)
+                        .input('Line', sql.Decimal(5, 2), contractMatch.Line)
+                        .input('IsOver', sql.Bit, contractMatch.IsOver ? 1 : 0);
+
+                    if (typeof contractMatch.Match.DaySequence === 'number') {
+                        request.input('DaySequenceParam', sql.TinyInt, contractMatch.Match.DaySequence);
+                        daySequenceSqlArgument = '@DaySequenceParam';
+                    }
+
+                    const query = `
+                        SELECT dbo.UserAPICall_Contract_MatchTotal_Grade_fn(
+                            @MatchScheduledDate,
+                            @Team1,
+                            @Team2,
+                            @PeriodTypeCode,
+                            @PeriodNumber,
+                            @Line,
+                            @IsOver,
+                            ${daySequenceSqlArgument}
+                        ) AS GradeValue;`;
+                        
+                    const result = await request.query(query);
+                    if (result.recordset && result.recordset.length > 0 && result.recordset[0] && result.recordset[0].GradeValue !== null && result.recordset[0].GradeValue !== undefined) {
+                        grade = String(result.recordset[0].GradeValue).trim();
+                    } else {
+                        console.warn(`[Grade WARN] No grade returned or unexpected SQL result for Total: ${contractMatch.Match.Team1}/${contractMatch.Match.Team2 || 'N/A'} on ${formattedMatchDate}, Line: ${contractMatch.Line}, Over: ${contractMatch.IsOver}`);
+                    }
+                }
+            } catch (err) {
+                const message = err instanceof Error ? err.message : String(err);
+                // Construct a more informative error message using the contract string
+                console.error(`[Grade ERROR] Failed to fetch grade for ${contractMatchToString(bet.ContractMatch)}: ${message}`);
+                grade = 'ERR';
+            }
+
+            let pnlDisplay: string | number = '';
+            const riskAndToWin = calculateRiskAndToWin(bet.Price, bet.Size);
+
+            if (riskAndToWin) {
+                const { risk, toWin } = riskAndToWin;
+                if (grade === 'L') {
+                    pnlDisplay = -risk;
+                } else if (grade === 'W') {
+                    pnlDisplay = toWin;
+                } else if (grade === 'P' || grade === 'C' || grade === 'T') {
+                    pnlDisplay = 0;
+                }
+            }
+            // Format PNL if it's a number
+            if (typeof pnlDisplay === 'number') {
+                pnlDisplay = pnlDisplay.toFixed(2);
+            }
+
+            const formattedSize = bet.Size.toFixed(2); // Format Size to two decimal places
+
+            return [
+                contractMatchToString(bet.ContractMatch),
+                bet.Price,
+                formattedSize, // Use the formatted Size string
+                grade,
+                pnlDisplay
+            ];
+        }));
+        printFormattedTable("--- Processed Bets ---", headers, rowsData);
+
+        // --- BEGIN SUMMARY CALCULATIONS AND PRINTING ---
+        const pnlSummariesData: { date: Date, pnl: number }[] = [];
+        if (rowsData.length === parsedBets.length) { // Ensure rowsData is populated and matches parsedBets
+            for (let i = 0; i < parsedBets.length; i++) {
+                const bet = parsedBets[i];
+                const row = rowsData[i] as (string | number | Date | boolean | undefined)[]; // Type assertion
+                const pnlDisplay = row[4]; // pnlDisplay is the 5th element (string or number)
+
+                let pnlValue: number | undefined = undefined;
+
+                if (typeof pnlDisplay === 'string' && pnlDisplay.trim() !== '') {
+                    const parsedPnl = parseFloat(pnlDisplay);
+                    if (!isNaN(parsedPnl)) {
+                        pnlValue = parsedPnl;
+                    }
+                } else if (typeof pnlDisplay === 'number') {
+                    pnlValue = pnlDisplay;
+                }
+
+                if (pnlValue !== undefined) {
+                    pnlSummariesData.push({
+                        date: new Date(bet.ContractMatch.Match.Date.valueOf()), 
+                        pnl: pnlValue
+                    });
+                }
+            }
+        }
+        
+        printDailySummary(pnlSummariesData);
+        printWeeklySummary(pnlSummariesData);
+        printTotalSummary(pnlSummariesData);
+        // --- END SUMMARY CALCULATIONS AND PRINTING ---
+
+    } else {
         console.log("No processable bets found in the file after detailed parsing.");
     }
-    // Original printTable call block commented out
-    // if (validLines.length > 0) {
-    //     const headers = ['Date', 'Time', 'Details'];
-    //     const rows = validLines.map(vl => [vl.date, vl.time, vl.details]);
-    //     printTable(headers, rows);
-    // } else if (linesToWarn.length === 0) { 
-    //     console.log("No processable content found in the file.");
-    // }
 }
 
 // New async function to manage database operations and subsequent file processing
@@ -381,74 +738,70 @@ async function runOperations() {
         process.exit(1);
     }
 
-    let pool; // Declare pool outside try so it can be used in finally
+    let pool: import('mssql').ConnectionPool | undefined;
     try {
-        // Attempt to connect to the database
         pool = await sql.connect(dbConnectionString);
         console.log("connection succeeded");
 
-        // Execute the query
-        const queryText = "SELECT COUNT(*) FROM dbo.LeagueTeam_V WHERE League = 'MLB'";
-        const result = await pool.request().query(queryText);
+        if (!pool) { // Guard for TypeScript CFA
+            throw new Error("Database pool not initialized after connect call.");
+        }
 
-        // Print the results as a single JSON string
-        console.log(JSON.stringify(result.recordset, null, 2));
+        const args = process.argv.slice(2);
+        if (args.length > 0 && (args[0] === '-h' || args[0] === '--help')) {
+            console.log("Usage: ts-node scripts/mlb_quick_grade.ts <file_path>");
+            console.log("Processes a CSV-like file, parsing lines into Bet objects.");
+            console.log("Connects to DB specified by DB_CONNECTION_STRING and runs a test query before file processing.");
+            process.exit(0);
+        }
+
+        if (args.length !== 1) {
+            console.error("Usage: ./mlb_quick_grade.js <file_path> or node mlb_quick_grade.js <file_path>");
+            process.exit(1);
+        }
+        const filePath = args[0];
+
+        if (!pool) { // Guard for TypeScript CFA before passing to processFile
+            throw new Error("Database pool is not available for file processing due to an unexpected state.");
+        }
+        await processFile(filePath, pool);
 
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
-        console.error('Database connection or query failed:', message);
+        console.error('Operation failed:', message);
         if (err && typeof err === 'object' && 'originalError' in err && err.originalError && typeof err.originalError === 'object' && 'message' in err.originalError) {
              console.error('Original error:', err.originalError.message);
         }
-        process.exit(1);
+        // No explicit process.exit(1) here; error will propagate to main catch
+        // or if not caught, finally will run and then process will exit with error status.
+        // Forcing re-throw to ensure main catch handler is invoked for consistent exit code management.
+        throw err;
     } finally {
-        if (pool) {
+        if (pool && pool.connected) { // Check if pool exists and is connected
             try {
                 await pool.close();
+                console.log("Database connection closed.");
             } catch (closeErr: unknown) {
-                // Log error during close, but don't necessarily exit if main operations succeeded
                 const message = closeErr instanceof Error ? closeErr.message : String(closeErr);
                 console.error('Error closing database connection:', message);
             }
         }
     }
-
-    // Original script's argument parsing and file processing logic
-    // This part will only run if the database operations above did not cause an exit
-    const args = process.argv.slice(2);
-    if (args.length !== 1) {
-        console.error("Usage: ./mlb_quick_grade.js <file_path> or node mlb_quick_grade.js <file_path>");
-        process.exit(1);
-    }
-    const filePath = args[0];
-    processFile(filePath); // Call the original file processing function
 }
 
 if (require.main === module) {
-    // const args = process.argv.slice(2);
-    // if (args.length !== 1) {
-    //     console.error("Usage: node process_log.js <file_path>"); // Original, incorrect usage message
-    //     process.exit(1);
-    // }
-    // const filePath = args[0];
-    // processFile(filePath);
-
-    // Update usage message for TypeScript execution
-    const args = process.argv.slice(2);
-    if (args.length > 0 && (args[0] === '-h' || args[0] === '--help')) {
-        console.log("Usage: ts-node scripts/mlb_quick_grade.ts <file_path>");
-        console.log("Processes a CSV-like file, parsing lines into Bet objects.");
-        console.log("Connects to DB specified by DB_CONNECTION_STRING and runs a test query before file processing.");
-        process.exit(0);
-    }
-    
     runOperations().catch(err => {
         // Catch any unhandled errors from the async runOperations function
-        console.error("Unhandled error during script execution:", err);
+        // Error message is already logged by runOperations' catch block
+        // console.error("Unhandled error during script execution:", err.message || String(err));
         process.exit(1);
     });
 }
 
 // For CommonJS compatibility
-module.exports = { processFile, validateLine, parseBetDetails, parse_usa_price };
+module.exports = {
+    processFile, validateLine, parseBetDetails, parse_usa_price,
+    periodToString, matchToString, contractMatchToString,
+    calculateRiskAndToWin
+};
 // This export ensures compatibility with both ES modules and CommonJS 
