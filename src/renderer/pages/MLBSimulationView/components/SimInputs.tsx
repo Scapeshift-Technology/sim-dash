@@ -30,9 +30,10 @@ const SimInputs: React.FC<SimInputsProps> = ({ simInputs, gameInfo, awayTeamName
           <span>{label}: {formatLean(currentLean)}%</span>
           <Tooltip title={
             <Box>
-              <Typography variant="body2">Final Lean: {formatLean(currentLean)}%</Typography>
               <Typography variant="body2">Automated Lean: {formatLean(automatedLean)}%</Typography>
               <Typography variant="body2">Manual Adjustment: {formatLean(currentLean - automatedLean)}%</Typography>
+              <Divider sx={{ my: 1 }} />
+              <Typography variant="body2">Final Lean: {formatLean(currentLean)}%</Typography>
             </Box>
           }>
             <InfoIcon sx={{ fontSize: 16, color: 'action.active', cursor: 'help' }} />
