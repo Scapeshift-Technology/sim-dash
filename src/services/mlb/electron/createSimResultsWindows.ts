@@ -31,7 +31,6 @@ export function createMLBSimResultsWindow2({
         show: false, // Don't show until ready
         // Make it feel more like a floating window
         frame: true,
-        alwaysOnTop: true,
         resizable: true,
         maximizable: true,
         minimizable: true
