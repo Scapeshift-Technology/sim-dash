@@ -78,6 +78,121 @@ export function contractMatchToString(contract: Contract_Match): string {
 
 // --- END toString UTILITY FUNCTIONS ---
 
+// --- BEGIN NEW HELPER FUNCTION for Risk/ToWin ---
+
+export function calculateRiskAndToWin(price: number, betSize: number): { risk: number; toWin: number } | null {
+    let risk: number;
+    let toWin: number;
+
+    if (price >= 100) {
+        risk = betSize;
+        toWin = betSize * (price / 100);
+    } else if (price <= -100) {
+        // For negative odds, 'betSize' is the 'toWin' amount.
+        // Risk = ToWin / (100 / abs(Price)) = ToWin * (abs(Price) / 100)
+        toWin = betSize;
+        risk = betSize * (Math.abs(price) / 100);
+    } else {
+        // Price is not in the specified ranges (e.g. -99 to 99, excluding 0, or 0 itself).
+        // The user's definition of 'betSize' interpretation doesn't apply.
+        console.warn(`[calculateRiskAndToWin WARN] Price ${price} is not >= 100 or <= -100. Cannot determine Risk/ToWin based on standard American odds interpretation of Size.`);
+        return null;
+    }
+    // Round to 4 decimal places to avoid floating point inaccuracies
+    risk = parseFloat(risk.toFixed(4));
+    toWin = parseFloat(toWin.toFixed(4));
+
+    return { risk, toWin };
+}
+
+// --- END NEW HELPER FUNCTION for Risk/ToWin ---
+
+// --- BEGIN SUMMARY HELPER FUNCTIONS ---
+
+function formatDateForSummary(date: Date): string {
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`;
+}
+
+function formatPnlForSummary(pnl: number): string {
+    const roundedPnl = Math.round(pnl);
+    const sign = roundedPnl >= 0 ? '+' : '-';
+    const absPnlFormatted = Math.abs(roundedPnl).toLocaleString('en-US');
+    // Pad the number string (e.g., "5,230" or "300") to 5 characters for alignment like in examples
+    const paddedNumber = absPnlFormatted.padStart(5, ' ');
+    return `${sign}$${paddedNumber}`;
+}
+
+function getMonday(d: Date): Date {
+    const date = new Date(d.valueOf()); // Clone date
+    const dayOfWeek = date.getDay(); // Sunday = 0, Monday = 1, ..., Saturday = 6
+    const diff = date.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust for Sunday
+    return new Date(date.setDate(diff));
+}
+
+function printDailySummary(pnlSummariesData: { date: Date, pnl: number }[]) {
+    if (pnlSummariesData.length === 0) return;
+
+    console.log("\n--- DAILIES ---");
+    const dailyTotals: Map<string, number> = new Map();
+
+    for (const item of pnlSummariesData) {
+        const dateKey = item.date.toISOString().split('T')[0]; // YYYY-MM-DD for sorting and grouping
+        dailyTotals.set(dateKey, (dailyTotals.get(dateKey) || 0) + item.pnl);
+    }
+
+    const sortedDays = Array.from(dailyTotals.keys()).sort();
+
+    for (const dateKey of sortedDays) {
+        const pnl = dailyTotals.get(dateKey)!;
+        // Create a new Date object from YYYY-MM-DD to ensure correct local date formatting
+        const parts = dateKey.split('-').map(Number);
+        const displayDateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+        console.log(`${formatDateForSummary(displayDateObj)}, ${formatPnlForSummary(pnl)}`);
+    }
+}
+
+function printWeeklySummary(pnlSummariesData: { date: Date, pnl: number }[]) {
+    if (pnlSummariesData.length === 0) return;
+
+    console.log("\n--- WEEKLIES (Monday thru Sunday) ---");
+    const weeklyTotals: Map<string, number> = new Map(); // Key is Monday's YYYY-MM-DD
+
+    for (const item of pnlSummariesData) {
+        const monday = getMonday(item.date);
+        const mondayKey = monday.toISOString().split('T')[0];
+        weeklyTotals.set(mondayKey, (weeklyTotals.get(mondayKey) || 0) + item.pnl);
+    }
+
+    const sortedMondays = Array.from(weeklyTotals.keys()).sort();
+
+    for (const mondayKey of sortedMondays) {
+        const pnl = weeklyTotals.get(mondayKey)!;
+        const parts = mondayKey.split('-').map(Number);
+        const mondayDate = new Date(parts[0], parts[1] - 1, parts[2]);
+        
+        const sundayDate = new Date(mondayDate);
+        sundayDate.setDate(mondayDate.getDate() + 6);
+
+        const dateRangeStr = `${formatDateForSummary(mondayDate)} - ${formatDateForSummary(sundayDate)}`;
+        console.log(`${dateRangeStr}, ${formatPnlForSummary(pnl)}`);
+    }
+}
+
+function printTotalSummary(pnlSummariesData: { date: Date, pnl: number }[]) {
+    if (pnlSummariesData.length === 0) {
+      // Print total as $0 if no PNL data, to match example structure if sections are always shown
+      console.log("\n--- TOTAL: +$    0 ---");
+      return;
+    }
+    const totalPnl = pnlSummariesData.reduce((sum, item) => sum + item.pnl, 0);
+    console.log(`\n--- TOTAL: ${formatPnlForSummary(totalPnl)} ---`);
+}
+
+// --- END SUMMARY HELPER FUNCTIONS ---
+
 // --- BEGIN NEW PARSING LOGIC ---
 
 // Function to parse USA style odds
@@ -404,19 +519,19 @@ export async function processFile(filePath: string, pool: import('mssql').Connec
                     maxWidth = cellLength;
                 }
             }
-            return maxWidth + 1;
+            return maxWidth;
         });
 
         const outputTableLines: string[] = [];
         outputTableLines.push(
-            headers.map((header, i) => header.padEnd(columnWidths[i])).join(',')
+            headers.map((header, i) => header.padEnd(columnWidths[i])).join(', ')
         );
 
         rowsData.forEach(row => {
             outputTableLines.push(
                 row.map((cell, i) => {
                     return String(cell ?? '').padEnd(columnWidths[i]);
-                }).join(',')
+                }).join(', ')
             );
         });
         
@@ -425,7 +540,7 @@ export async function processFile(filePath: string, pool: import('mssql').Connec
     };
 
     if (parsedBets.length > 0) {
-        const headers = ['Contract', 'Price', 'Size', 'Grade'];
+        const headers = ['Contract', 'Price', 'Size', 'Grade', 'PNL'];
         
         const rowsData = await Promise.all(parsedBets.map(async (bet) => {
             const contractStr = contractMatchToString(bet.ContractMatch);
@@ -510,17 +625,68 @@ export async function processFile(filePath: string, pool: import('mssql').Connec
                 grade = 'ERR';
             }
 
+            let pnlDisplay: string | number = '';
+            const riskAndToWin = calculateRiskAndToWin(bet.Price, bet.Size);
+
+            if (riskAndToWin) {
+                const { risk, toWin } = riskAndToWin;
+                if (grade === 'L') {
+                    pnlDisplay = -risk;
+                } else if (grade === 'W') {
+                    pnlDisplay = toWin;
+                } else if (grade === 'P' || grade === 'C' || grade === 'T') {
+                    pnlDisplay = 0;
+                }
+            }
+            // Format PNL if it's a number
+            if (typeof pnlDisplay === 'number') {
+                pnlDisplay = pnlDisplay.toFixed(2);
+            }
+
             return [
                 contractMatchToString(bet.ContractMatch),
                 bet.Price,
                 bet.Size,
-                grade
+                grade,
+                pnlDisplay
             ];
         }));
         printFormattedTable("--- Processed Bets ---", headers, rowsData);
-    }
 
-    if (parsedBets.length === 0 && linesToWarnBasicFormat.length === 0) { 
+        // --- BEGIN SUMMARY CALCULATIONS AND PRINTING ---
+        const pnlSummariesData: { date: Date, pnl: number }[] = [];
+        if (rowsData.length === parsedBets.length) { // Ensure rowsData is populated and matches parsedBets
+            for (let i = 0; i < parsedBets.length; i++) {
+                const bet = parsedBets[i];
+                const row = rowsData[i] as (string | number | Date | boolean | undefined)[]; // Type assertion
+                const pnlDisplay = row[4]; // pnlDisplay is the 5th element (string or number)
+
+                let pnlValue: number | undefined = undefined;
+
+                if (typeof pnlDisplay === 'string' && pnlDisplay.trim() !== '') {
+                    const parsedPnl = parseFloat(pnlDisplay);
+                    if (!isNaN(parsedPnl)) {
+                        pnlValue = parsedPnl;
+                    }
+                } else if (typeof pnlDisplay === 'number') {
+                    pnlValue = pnlDisplay;
+                }
+
+                if (pnlValue !== undefined) {
+                    pnlSummariesData.push({
+                        date: new Date(bet.ContractMatch.Match.Date.valueOf()), 
+                        pnl: pnlValue
+                    });
+                }
+            }
+        }
+        
+        printDailySummary(pnlSummariesData);
+        printWeeklySummary(pnlSummariesData);
+        printTotalSummary(pnlSummariesData);
+        // --- END SUMMARY CALCULATIONS AND PRINTING ---
+
+    } else {
         console.log("No processable bets found in the file after detailed parsing.");
     }
 }
@@ -594,5 +760,9 @@ if (require.main === module) {
 }
 
 // For CommonJS compatibility
-module.exports = { processFile, validateLine, parseBetDetails, parse_usa_price, periodToString, matchToString, contractMatchToString };
+module.exports = {
+    processFile, validateLine, parseBetDetails, parse_usa_price,
+    periodToString, matchToString, contractMatchToString,
+    calculateRiskAndToWin
+};
 // This export ensures compatibility with both ES modules and CommonJS 

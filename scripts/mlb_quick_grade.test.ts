@@ -1,4 +1,4 @@
-import { parseBetDetails, parse_usa_price, Bet, Contract_Match_Total, Contract_Match_TeamTotal, Period, Match as MatchType } from './mlb_quick_grade'; // Adjust path as needed
+import { parseBetDetails, parse_usa_price, Bet, Contract_Match_Total, Contract_Match_TeamTotal, Period, Match as MatchType, calculateRiskAndToWin } from './mlb_quick_grade'; // Adjust path as needed
 import { periodToString, matchToString, contractMatchToString } from './mlb_quick_grade'; // Adjust path as needed
 
 describe('MLB Quick Grade Parsing', () => {
@@ -240,6 +240,47 @@ describe('MLB Quick Grade Parsing', () => {
             expect(cm.Match.DaySequence).toBeUndefined();
         });
 
+    });
+});
+
+describe('calculateRiskAndToWin', () => {
+    test('should correctly calculate for positive odds (price >= 100)', () => {
+        expect(calculateRiskAndToWin(200, 100)).toEqual({ risk: 100, toWin: 200 });
+        expect(calculateRiskAndToWin(100, 50)).toEqual({ risk: 50, toWin: 50 });
+        expect(calculateRiskAndToWin(150.5, 1000)).toEqual({ risk: 1000, toWin: 1505 });
+        // Test with typical betSize from parsing (e.g. rawSize 0.094 -> betSize 94)
+        expect(calculateRiskAndToWin(100, 94)).toEqual({ risk: 94, toWin: 94 }); 
+    });
+
+    test('should correctly calculate for negative odds (price <= -100)', () => {
+        expect(calculateRiskAndToWin(-110, 110)).toEqual({ risk: 121, toWin: 110 });
+        expect(calculateRiskAndToWin(-100, 75)).toEqual({ risk: 75, toWin: 75 });
+        expect(calculateRiskAndToWin(-200, 100)).toEqual({ risk: 200, toWin: 100 });
+        expect(calculateRiskAndToWin(-120.5, 1000)).toEqual({ risk: 1205, toWin: 1000 });
+        // Test with typical betSize from parsing (e.g. rawSize 8.925 -> betSize 8925)
+        // Price -115.5, betSize 8925 -> toWin 8925, risk = 8925 * 1.155 = 10308.375
+        expect(calculateRiskAndToWin(-115.5, 8925)).toEqual({ risk: 10308.375, toWin: 8925 });
+    });
+
+    test('should return null for prices not in specified American odds ranges', () => {
+        const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+        expect(calculateRiskAndToWin(50, 100)).toBeNull();
+        expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('[calculateRiskAndToWin WARN] Price 50 is not >= 100 or <= -100'));
+        
+        expect(calculateRiskAndToWin(-50, 100)).toBeNull();
+        expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('[calculateRiskAndToWin WARN] Price -50 is not >= 100 or <= -100'));
+
+        expect(calculateRiskAndToWin(0, 100)).toBeNull();
+        expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('[calculateRiskAndToWin WARN] Price 0 is not >= 100 or <= -100'));
+
+        expect(calculateRiskAndToWin(99.9, 100)).toBeNull();
+        expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('[calculateRiskAndToWin WARN] Price 99.9 is not >= 100 or <= -100'));
+        
+        expect(calculateRiskAndToWin(-99.9, 100)).toBeNull();
+        expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('[calculateRiskAndToWin WARN] Price -99.9 is not >= 100 or <= -100'));
+
+        consoleWarnSpy.mockRestore();
     });
 });
 
