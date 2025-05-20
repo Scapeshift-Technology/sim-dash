@@ -376,20 +376,60 @@ export async function processFile(filePath: string, pool: import('mssql').Connec
     };
 
     if (totalBets.length > 0) {
-        const headers = ['Date', 'Team1', 'Team2', 'periodTypeCode', 'periodNumber', 'Line', 'IsOver'];
-        const rowsData = totalBets.map(bet => {
+        const headers = ['Date', 'Team1', 'Team2', 'periodTypeCode', 'periodNumber', 'Line', 'IsOver', 'Grade'];
+        
+        // Asynchronously map totalBets to rowsData, fetching grade for each
+        const rowsData = await Promise.all(totalBets.map(async (bet) => {
             const contractMatch = bet.ContractMatch as Contract_Match_Total;
-            // Use toISOString() for date for consistency, or just date part if preferred.
-            const matchDate = contractMatch.Match.Date.toLocaleDateString(); // Or .toISOString().split('T')[0]
-            const team1 = contractMatch.Match.Team1;
-            const team2 = contractMatch.Match.Team2 ?? "";
-            const periodTypeCode = contractMatch.Period.PeriodTypeCode;
-            const periodNumber = contractMatch.Period.PeriodNumber;
-            const line = contractMatch.Line;
-            const totalStatus = contractMatch.IsOver ? "OV" : "UN";
+            const matchDate = contractMatch.Match.Date; // This is a Date object
+            const formattedMatchDate = `${matchDate.getFullYear()}-${String(matchDate.getMonth() + 1).padStart(2, '0')}-${String(matchDate.getDate()).padStart(2, '0')}`;
 
-            return [matchDate, team1, team2, periodTypeCode, periodNumber, line, contractMatch.IsOver];
-        });
+            let grade = 'N/A'; // Default grade
+
+            try {
+                const query = `
+                    SELECT dbo.UserAPICall_Contract_MatchTotal_Grade_fn(
+                        @MatchScheduledDate,
+                        @Team1,
+                        @Team2,
+                        @PeriodTypeCode,
+                        @PeriodNumber,
+                        @Line,
+                        @IsOver
+                    ) AS GradeValue;`;
+
+                const result = await pool.request()
+                    .input('MatchScheduledDate', sql.Date, formattedMatchDate)
+                    .input('Team1', sql.Char(50), contractMatch.Match.Team1)
+                    .input('Team2', sql.Char(50), contractMatch.Match.Team2 ?? null) // Pass null if Team2 is undefined
+                    .input('PeriodTypeCode', sql.Char(2), contractMatch.Period.PeriodTypeCode)
+                    .input('PeriodNumber', sql.TinyInt, contractMatch.Period.PeriodNumber)
+                    .input('Line', sql.Decimal(5, 2), contractMatch.Line)
+                    .input('IsOver', sql.Bit, contractMatch.IsOver ? 1 : 0)
+                    .query(query);
+
+                if (result.recordset && result.recordset.length > 0 && result.recordset[0] && result.recordset[0].GradeValue !== null && result.recordset[0].GradeValue !== undefined) {
+                    grade = String(result.recordset[0].GradeValue).trim();
+                } else {
+                    console.warn(`[Grade WARN] No grade returned or unexpected SQL result for Total: ${contractMatch.Match.Team1}/${contractMatch.Match.Team2 || 'N/A'} on ${formattedMatchDate}, Line: ${contractMatch.Line}, Over: ${contractMatch.IsOver}`);
+                }
+            } catch (err) {
+                const message = err instanceof Error ? err.message : String(err);
+                console.error(`[Grade ERROR] Failed to fetch grade for Total ${contractMatch.Match.Team1}/${contractMatch.Match.Team2 || 'N/A'} on ${formattedMatchDate}, Line: ${contractMatch.Line}, Over: ${contractMatch.IsOver}: ${message}`);
+                grade = 'ERR';
+            }
+
+            return [
+                matchDate.toLocaleDateString(), // For display
+                contractMatch.Match.Team1,
+                contractMatch.Match.Team2 ?? "", // Display as empty string if undefined
+                contractMatch.Period.PeriodTypeCode,
+                contractMatch.Period.PeriodNumber,
+                contractMatch.Line,
+                contractMatch.IsOver, // Will display as true/false
+                grade
+            ];
+        }));
         printFormattedTable("--- Parsed Totals Bets ---", headers, rowsData);
     }
 
