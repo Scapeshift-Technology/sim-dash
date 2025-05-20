@@ -66,6 +66,9 @@
     "react-router-dom": "^7.5.3",
     "sqlite3": "^5.1.7"
   },
+  "optionalDependencies": {
+    "@rollup/rollup-win32-x64-msvc": "^4.19.0"
+  },
   "build": {
     "appId": "tech.scapeshift.simdash",
     "productName": "SimDash",
