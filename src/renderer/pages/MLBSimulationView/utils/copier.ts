@@ -15,6 +15,7 @@ import { formatSeriesData, seriesColumns } from '@/components/SeriesTable';
 import { convertLineupsToTSV } from '@/utils/copyUtils';
 import { MarketLinesMLB } from '@@/types/mlb';
 import { displayAmericanOdds } from '@/utils/display';
+import { MLBGameSimInputs, MLBGameSimInputsTeam } from '@@/types/simInputs';
 
 // ---------- Main function ----------
 
@@ -23,6 +24,7 @@ const copyAllResults = (
     totalsData: TotalsData[],
     propsData: PropsData,
     seriesData: SeriesData[],
+    simInputs: MLBGameSimInputs | null,
     lineups: ReducedMatchupLineups | null,
     gameInfo: SimMetadataMLB | null,
     awayTeamName: string | null,
@@ -42,13 +44,17 @@ const copyAllResults = (
         const boundsTSV = copyBettingBounds(gameInfo.bettingBounds as MarketLinesMLB);
         leftSections.push('', boundsTSV);
     }
+
+    // 3. Leans
+    const leansTSV = copyLeans(simInputs);
+    leftSections.push('', leansTSV);
     
-    // 3. First inning props
+    // 4. First inning props
     const firstInningData = formatFirstInningData(propsData.firstInning);
     const firstInningTSV = convertTableToTSV(firstInningData, firstInningColumns);
     leftSections.push('', firstInningTSV);
     
-    // 4. Series (if exists)
+    // 5. Series (if exists)
     if (seriesData.length > 0) {
         const seriesTSV = copySeries(seriesData);
         leftSections.push('', seriesTSV);
@@ -94,6 +100,17 @@ const copyBettingBounds = (bettingBounds: MarketLinesMLB): string => {
     ];
     return rows.join('\n');
 };
+
+const copyLeans = (simInputs: MLBGameSimInputs | null): string => {
+    const { away, home } = simInputs || {};
+
+    const rows: string[] = [
+        `Team Hitting Leans:\t${(away as MLBGameSimInputsTeam).teamHitterLean}\t${(home as MLBGameSimInputsTeam).teamHitterLean}`,
+        `Team Pitching Leans:\t${(away as MLBGameSimInputsTeam).teamPitcherLean}\t${(home as MLBGameSimInputsTeam).teamPitcherLean}`
+    ]
+
+    return rows.join('\n');
+}
 
 const copyFirstInningProps = (playerProps: FirstInningPropsData[]): string => {
     const formatted = formatFirstInningData(playerProps);

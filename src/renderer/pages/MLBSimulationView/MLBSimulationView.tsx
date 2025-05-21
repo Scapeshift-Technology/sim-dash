@@ -79,7 +79,7 @@ const MLBSimulationView: React.FC = () => {
   };
 
   const handleCopyResults = () => {
-    const results = copyAllResults(sidesData, totalsData, propsData, seriesData, lineups, gameInfo, awayTeamName, homeTeamName);
+    const results = copyAllResults(sidesData, totalsData, propsData, seriesData, simInputs, lineups, gameInfo, awayTeamName, homeTeamName);
     navigator.clipboard.writeText(results).then(() => {
       setShowCopySuccess(true);
     }).catch(err => {
