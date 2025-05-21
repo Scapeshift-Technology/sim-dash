@@ -47,37 +47,40 @@ log.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] {processT
 log.errorHandler.startCatching({
     showDialog: true // Optional: Prevent dialog box on uncaught exception
 });
+log.info('electron-log errorHandler configured.');
 
 console.log = log.log; // Optional: Redirect console.log to electron-log
 Object.assign(console, log.functions); // Optional: Redirect console.error, .warn, etc.
 
-log.info('Main process started.'); // Add an initial log message
+log.info('Main process script started.'); // Add an initial log message
 
 // --- Build Info Handling ---
 let buildInfo = { buildTimeISO: 'N/A' };
-// Only try to read build info if not in explicit development mode
-if (process.env.NODE_ENV !== 'development') {
-    const buildInfoPath = path.join(__dirname, 'build-info.json');
-    try {
-        if (fs.existsSync(buildInfoPath)) {
-            const rawData = fs.readFileSync(buildInfoPath);
-            buildInfo = JSON.parse(rawData);
-            console.log('Loaded build info:', buildInfo);
-        } else {
-            console.warn('Build info file not found:', buildInfoPath);
-            // Keep default 'N/A'
-        }
-    } catch (err) {
-        console.error('Error reading or parsing build info file:', err);
-        log.error('Error reading or parsing build info file:', err); // <-- Log error
-        // Keep default 'N/A' on error
+// Try to read build info in both development and production modes
+const buildInfoPath = path.join(__dirname, 'build-info.json');
+try {
+    if (fs.existsSync(buildInfoPath)) {
+        const rawData = fs.readFileSync(buildInfoPath);
+        buildInfo = JSON.parse(rawData);
+        console.log('Loaded build info:', buildInfo);
+        log.info('Loaded build info:', buildInfo);
+    } else {
+        console.warn('Build info file not found:', buildInfoPath);
+        log.warn('Build info file not found:', buildInfoPath);
+        // Keep default 'N/A'
     }
+} catch (err) {
+    console.error('Error reading or parsing build info file:', err);
+    log.error('Error reading or parsing build info file:', err);
+    // Keep default 'N/A' on error
 }
 
 // --- Development ---
 // Conditionally enable hot-reloading in development mode
+log.info(`Current NODE_ENV for electron-reload check: ${process.env.NODE_ENV}`);
 if (process.env.NODE_ENV === 'development') {
   console.log('Development mode: Enabling electron-reload');
+  log.info('Development mode: Enabling electron-reload');
   try {
     require('electron-reload')(__dirname, {
       // Note: __dirname is src/
@@ -100,6 +103,7 @@ let currentPool = null; // Active SQL Server connection pool
 const viteDevServerUrl = 'http://localhost:5173'; // Default Vite port
 
 async function createMainWindow() {
+    log.info('createMainWindow: Function called');
     mainWindow = new BrowserWindow({
         width: 800,
         height: 600,
@@ -113,12 +117,17 @@ async function createMainWindow() {
     });
 
     // Load the index.html of the app.
+    log.info(`createMainWindow: Checking NODE_ENV: ${process.env.NODE_ENV}`);
     if (process.env.NODE_ENV === 'development') {
         console.log(`Loading Vite dev server: ${viteDevServerUrl}`);
-        // Development: Load from Vite dev server
-        // Make sure the Vite server is running (`npm run dev`)
-        mainWindow.loadURL(viteDevServerUrl).catch(err => {
+        log.info(`createMainWindow: Development mode - attempting to load URL: ${viteDevServerUrl}`);
+        mainWindow.loadURL(viteDevServerUrl)
+        .then(() => {
+            log.info(`createMainWindow: Development mode - successfully loaded URL: ${viteDevServerUrl}`);
+        })
+        .catch(err => {
             console.error('Failed to load Vite dev server URL:', err);
+            log.error(`createMainWindow: Development mode - Failed to load URL ${viteDevServerUrl}:`, err);
             console.error('Did you start the dev server with `npm run dev`?');
             // Optionally, fall back to file loading or quit
             // app.quit();
@@ -128,14 +137,15 @@ async function createMainWindow() {
         // Adjust the path to point to the built output in dist/renderer
         const indexPath = path.join(app.getAppPath(), 'dist', 'renderer', 'index.html');
         console.log(`Loading production build from: ${indexPath}`);
+        log.info(`createMainWindow: Production mode - attempting to load file: ${indexPath}`);
         mainWindow.loadURL(url.format({
             pathname: indexPath,
             protocol: 'file:',
             slashes: true
         })).then(() => {
-            log.info(`Successfully loaded production file: ${indexPath}`);
+            log.info(`createMainWindow: Production mode - Successfully loaded production file: ${indexPath}`);
         }).catch(err => {
-            log.error(`Failed to load production build from ${indexPath}:`, err);
+            log.error(`createMainWindow: Production mode - Failed to load production build from ${indexPath}:`, err);
         });
     }
 
@@ -205,11 +215,14 @@ function createAboutWindow() {
 // --- SQLite Profile Management ---
 
 async function initializeDb() {
+    log.info('initializeDb: Function called.');
     try {
         db = await dbHelper.openDb(path.join(app.getPath('userData'), 'profiles.sqlite'));
         console.log('SQLite database initialized at:', path.join(app.getPath('userData'), 'profiles.sqlite'));
+        log.info(`initializeDb: SQLite database initialized successfully at: ${path.join(app.getPath('userData'), 'profiles.sqlite')}`);
     } catch (err) {
         console.error('Failed to initialize SQLite database:', err);
+        log.error('initializeDb: Failed to initialize SQLite database:', err);
         // Handle error appropriately - maybe show an error dialog
         app.quit();
     }
@@ -277,14 +290,24 @@ ipcMain.handle('get-sim-history', async (event, matchId) => {
 // --- SQL Server Connection Handling ---
 
 ipcMain.handle('test-connection', async (event, config) => {
-    console.log('Attempting test connection with config:', config);
+    // Create a copy with masked password for logging
+    const maskedConfig = { 
+        ...config,
+        password: '********'
+    };
+    console.log('Attempting test connection with config:', maskedConfig);
 
     const result = await testConnection(sql, config);
     return result;
 })
 
 ipcMain.handle('login', async (event, config) => {
-    console.log('Attempting login with config:', config); // Be careful logging sensitive info
+    // Create a copy with masked password for logging
+    const maskedConfig = { 
+        ...config,
+        password: '********'
+    };
+    console.log('Attempting login with config:', maskedConfig);
 
     // Close previous connection if exists
     if (currentPool) {
@@ -669,14 +692,32 @@ const menuTemplate = [
 
 
 app.whenReady().then(async () => {
-    log.info('App is ready, initializing DB and creating main window...'); // <-- Log app ready
-    await initializeDb(); // Initialize SQLite before creating the window
+    log.info("app 'ready' event triggered.");
 
-    // Build and set the application menu
-    const menu = Menu.buildFromTemplate(menuTemplate);
+    // Create custom application menu
+    const menu = Menu.buildFromTemplate(menuTemplate); // Pass app and mainWindow
     Menu.setApplicationMenu(menu);
+    log.info("Application menu created and set.");
 
-    createMainWindow();
+    // Initialize the database before creating the main window
+    try {
+        log.info("app 'ready': Calling initializeDb...");
+        await initializeDb();
+        log.info("app 'ready': initializeDb completed.");
+    } catch (err) {
+        log.error("app 'ready': Error during initializeDb:", err);
+        // Consider app.quit() or other error handling if DB is critical for startup
+        // For now, we log and continue to see if window creation proceeds/fails
+    }
+    
+    try {
+        log.info("app 'ready': Calling createMainWindow...");
+        await createMainWindow(); // Ensure this is awaited if it does async work that needs to complete
+        log.info("app 'ready': createMainWindow completed.");
+    } catch (err) {
+        log.error("app 'ready': Error during createMainWindow:", err);
+        // app.quit(); // Quit if main window fails to create
+    }
 
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {

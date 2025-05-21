@@ -28,20 +28,35 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Echo DB Test username
+      - name: Echo DB Test username / host / db_name
         run: echo "${{ secrets.TEST_DB_USER }} @ ${{ secrets.TEST_DB_HOST }} . ${{ secrets.TEST_DB_NAME }}"
 
       - name: Mask DB Password
         run: echo "::add-mask::${{ secrets.TEST_DB_PASSWORD }}"
 
+      - name: Run Jest tests
+        run: npm run test:jest
+
+      - name: Build Renderer
+        run: npm run build:renderer
+
       - name: Run Playwright tests
-        run: npm run test:e2e
+        run: npm run test:playwright
         env:
           DB_HOST: ${{ secrets.TEST_DB_HOST }}
           DB_PORT: ${{ secrets.TEST_DB_PORT }}
           DB_NAME: ${{ secrets.TEST_DB_NAME }}
           DB_USER: ${{ secrets.TEST_DB_USER }}
           DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
+
+      - name: Upload Electron main log
+        if: always() # Or use failure() if you only want it on failure
+        uses: actions/upload-artifact@v4
+        with:
+          name: electron-main-log
+          path: ${{ runner.temp }}/electron-logs/main.log # Default path might vary, adjust if needed
+          # A common path on Windows is: C:\Users\runneradmin\AppData\Roaming\SimDash\logs\main.log
+          # Or using an environment variable: ${env:USERPROFILE}\AppData\Roaming\SimDash\logs\main.log
 
   # Build job - Calls the reusable build workflow
   build:

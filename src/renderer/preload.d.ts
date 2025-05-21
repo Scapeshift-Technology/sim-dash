@@ -70,6 +70,7 @@ declare global {
       // ---------- About Window Communication ----------
       // About Window Communication (Keep if needed, or remove if about window is refactored/removed)
       onVersion: (callback: (event: any, version: string) => void) => void;
+      onBuildTime: (callback: (event: any, buildTime: string) => void) => void;
       // Add other exposed functions here...
 
       // Logger functions (optional, if directly exposing electron-log functions)

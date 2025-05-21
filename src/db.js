@@ -84,7 +84,12 @@ async function getProfiles(db) {
                 console.error('Error fetching profiles from SQLite:', err.message);
                 reject(err);
             } else {
-                console.log('[db.js] Profiles fetched from DB:', rows); // Log fetched rows
+                // Create a copy with masked passwords for logging
+                const maskedRows = rows.map(row => ({
+                    ...row,
+                    password: '********'
+                }));
+                console.log('[db.js] Profiles fetched from DB:', maskedRows);
                 resolve(rows);
             }
         });

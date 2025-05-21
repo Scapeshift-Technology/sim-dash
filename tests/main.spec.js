@@ -19,7 +19,7 @@ test.describe('SQL Server Connection Flow', () => {
 
     // Optional: Add a small delay or wait for a specific element if needed
     // await mainWindow.waitForSelector('#some-initial-element-id');
-  }, 60000); // Increased timeout from 30 seconds to 60 seconds
+  });
 
   // Close the Electron app after all tests in this suite are done
   test.afterAll(async () => {
