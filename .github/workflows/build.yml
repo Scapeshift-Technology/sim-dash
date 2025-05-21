@@ -127,7 +127,7 @@ jobs:
       - name: Generate Build Info File (macOS)
         run: |
           BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          echo "{"buildTimeISO": "$BUILD_TIME"}" > src/build-info.json
+          echo "{\"buildTimeISO\": \"$BUILD_TIME\"}" > src/build-info.json
           echo "Created src/build-info.json with build time: $BUILD_TIME"
 
       - name: Build macOS application (x64 + arm64)
