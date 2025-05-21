@@ -70,7 +70,8 @@
       "node_modules/**/*",
       "package.json",
       "dist/renderer/**/*",
-      "src/build-info.json"
+      "src/build-info.json",
+      "assets/**/*"
     ],
     "directories": {
       "buildResources": "assets",

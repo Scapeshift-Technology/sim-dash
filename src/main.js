@@ -232,7 +232,6 @@ ipcMain.handle('get-profiles', async () => {
     if (!db) return [];
     try {
         const profiles = await dbHelper.getProfiles(db);
-        console.log('[main.js] Profiles retrieved by dbHelper:', profiles); // Log result from dbHelper
         return profiles;
     } catch (err) {
         console.error('[main.js] Error getting profiles:', err);
