@@ -494,28 +494,8 @@ ipcMain.handle('fetch-mlb-game-player-stats', async (event, { matchupLineups, da
 ipcMain.handle('simulate-matchup-mlb', async (event, { numGames, matchupLineups }) => {
   console.log(`IPC received: simulate-matchup for ${numGames} games`);
   try {
-    // Create a new worker for this simulation using the entry point
-    const worker = new Worker(path.join(__dirname, 'services/mlb/workers/worker-entry.js'));
-    
-    // Return a promise that resolves when the worker completes
-    return new Promise((resolve, reject) => {
-      worker.on('message', (data) => {
-        if (data.success) {
-          resolve(data.results);
-        } else {
-          reject(new Error(data.error));
-        }
-        worker.terminate();
-      });
-
-      worker.on('error', (err) => {
-        reject(err);
-        worker.terminate();
-      });
-
-      // Send the data to the worker
-      worker.postMessage({ matchupLineups, numGames });
-    });
+    const { runParallelSimulation } = require('./services/mlb/workers/workerPool');
+    return await runParallelSimulation(matchupLineups, numGames);
   } catch (err) {
     console.error(`Error simulating matchup:`, err);
     throw err;
