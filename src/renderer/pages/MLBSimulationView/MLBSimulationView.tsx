@@ -8,7 +8,7 @@ import {
   transformSeriesProbsMLB
 } from '@/utils/displayMLB';
 import SidesTable from '@/components/SidesTable';
-import { Box, Typography, CircularProgress, Divider, List, ListItem, ListItemText, Tooltip } from '@mui/material';
+import { Box, Typography, CircularProgress, Button, Snackbar } from '@mui/material';
 import TotalsTable from '@/components/TotalsTable';
 import FirstInningTable from '@/components/FirstInningTable';
 import PlayerPropsTable from '@/components/PlayerPropsTable';
@@ -18,6 +18,7 @@ import { MLBGameSimInputs } from '@/types/simInputs';
 import CollapsibleSection from './components/CollapsibleSection';
 import SimInputs from './components/SimInputs';
 import LineupSection from './components/LineupSection';
+import { copyAllResults } from './utils/copier';
 
 // ---------- Main component ----------
 
@@ -40,6 +41,7 @@ const MLBSimulationView: React.FC = () => {
   const [timestamp, setTimestamp] = useState<string | null>(null);
   const [awayTeamName, setAwayTeamName] = useState<string | null>(null);
   const [homeTeamName, setHomeTeamName] = useState<string | null>(null);
+  const [showCopySuccess, setShowCopySuccess] = useState(false);
   const awayTeamAbbreviation = awayTeamName ? teamNameToAbbreviationMLB(awayTeamName) : '';
   const homeTeamAbbreviation = homeTeamName ? teamNameToAbbreviationMLB(homeTeamName) : '';
 
@@ -74,6 +76,15 @@ const MLBSimulationView: React.FC = () => {
       ...prev,
       [section]: !prev[section]
     }));
+  };
+
+  const handleCopyResults = () => {
+    const results = copyAllResults(sidesData, totalsData, propsData, seriesData, lineups, gameInfo, awayTeamName, homeTeamName);
+    navigator.clipboard.writeText(results).then(() => {
+      setShowCopySuccess(true);
+    }).catch(err => {
+      console.error('Failed to copy results: ', err);
+    });
   };
 
   // ---------- Render ----------
@@ -121,14 +132,32 @@ const MLBSimulationView: React.FC = () => {
 
   return (
     <div style={{ padding: '20px' }}>
-      <Typography variant="h5" component="h2"
-        style={{ marginBottom: '0px', paddingBottom: '0px' }}
-      >
-        {awayTeamName} @ {homeTeamName}
-      </Typography>
-      {timestamp && (
-        <h5 style={{ marginTop: '0px', paddingTop: '0px' }}>Simulated at {new Date(timestamp).toLocaleString()}</h5>
-      )}
+      <Box sx={{ 
+        pb: 2, 
+        mb: 3, 
+        borderBottom: 1, 
+        borderColor: 'divider' 
+      }}>
+        <Typography variant="h5" component="h2"
+          style={{ marginBottom: '0px', paddingBottom: '0px' }}
+        >
+          {awayTeamName} @ {homeTeamName}
+        </Typography>
+        {timestamp && (
+          <h5 style={{ marginTop: '0px', paddingTop: '0px', marginBottom: '8px' }}>Simulated at {new Date(timestamp).toLocaleString()}</h5>
+        )}
+
+        <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
+          <Button 
+            variant="outlined" 
+            color="primary" 
+            onClick={handleCopyResults}
+            disabled={!simData}
+          >
+            Copy All Results
+          </Button>
+        </Box>
+      </Box>
       
       <CollapsibleSection
         title="Team Lineups"
@@ -197,6 +226,13 @@ const MLBSimulationView: React.FC = () => {
       >
         <PlayerPropsTable data={propsData.player} />
       </CollapsibleSection>
+
+      <Snackbar
+        open={showCopySuccess}
+        autoHideDuration={3000}
+        onClose={() => setShowCopySuccess(false)}
+        message="Results copied to clipboard"
+      />
     </div>
   );
 };

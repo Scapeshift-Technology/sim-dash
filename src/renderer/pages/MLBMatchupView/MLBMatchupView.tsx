@@ -57,6 +57,8 @@ import { MLBGameSimInputData } from '@@/types/simHistory';
 import { SimHistoryEntry } from '@@/types/simHistory';
 import { transformMLBGameInputs2ToDB } from '@/utils/transformers';
 import { SimResultsMLB } from '@@/types/bettingResults';
+import { convertLineupsToTSV } from '@/utils/copyUtils';
+
 
 // ---------- Sub-components ----------
 
@@ -304,28 +306,9 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
 
     const handleCopyLineup = () => {
         if (!gameLineups || !gameMetadata) return;
+        const tsvString = convertLineupsToTSV(gameLineups, gameMetadata, participant1, participant2);
 
-        const { away, home } = gameLineups;
-        const awayTeamName = participant1;
-        const homeTeamName = participant2;
-
-        const csvRows = [];
-        csvRows.push(`Lineup Source,${gameMetadata.lineupsSource}`);
-        csvRows.push(`Position,${awayTeamName},${homeTeamName}`);
-
-        const awayStartingPitcher = (away.startingPitcher as any)?.fullName || away.startingPitcher?.name || '';
-        const homeStartingPitcher = (home.startingPitcher as any)?.fullName || home.startingPitcher?.name || '';
-        csvRows.push(`Pitcher,${awayStartingPitcher},${homeStartingPitcher}`);
-
-        const maxBatters = Math.max(away.lineup.length, home.lineup.length);
-        for (let i = 0; i < maxBatters; i++) {
-            const awayBatterName = (away.lineup[i] as any)?.fullName || away.lineup[i]?.name || '';
-            const homeBatterName = (home.lineup[i] as any)?.fullName || home.lineup[i]?.name || '';
-            csvRows.push(`Batter${i + 1},${awayBatterName},${homeBatterName}`);
-        }
-
-        const csvString = csvRows.join('\n');
-        navigator.clipboard.writeText(csvString).then(() => {
+        navigator.clipboard.writeText(tsvString).then(() => {
             setShowCopySuccess(true);
         }).catch(err => {
             console.error('Failed to copy lineup: ', err);
