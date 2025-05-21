@@ -56,8 +56,8 @@ log.info('Main process script started.'); // Add an initial log message
 
 // --- Build Info Handling ---
 let buildInfo = { buildTimeISO: 'N/A' };
-// Try to read build info in both development and production modes
-const buildInfoPath = path.join(__dirname, 'build-info.json');
+// Construct path relative to the app's content root to ensure robustness
+const buildInfoPath = path.join(app.getAppPath(), 'src', 'build-info.json');
 try {
     if (fs.existsSync(buildInfoPath)) {
         const rawData = fs.readFileSync(buildInfoPath);
@@ -175,13 +175,14 @@ function createAboutWindow() {
     aboutWindow = new BrowserWindow({
         width: 400,
         height: 300,
+        frame: true, // Ensure the window has a frame
         resizable: false,
         minimizable: false,
         maximizable: false,
         title: `About ${app.name}`, // Use app.name in about window title
         icon: path.join(__dirname, '..', 'assets', 'icon.png'), // Use the same icon
         parent: mainWindow, // Make it a child of the main window (optional)
-        modal: true, // Make it modal (optional)
+        // modal: true, // Making it non-modal
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'), // Changed to use preload.js
             contextIsolation: true,
