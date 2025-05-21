@@ -52,6 +52,11 @@ import {
     selectTraditionalSimulationError, 
     selectTraditionalSimulationStatus 
 } from '@/store/slices/simulationStatusSlice';
+import { MLBGameInputs2 } from '@@/types/simInputs';
+import { MLBGameSimInputData } from '@@/types/simHistory';
+import { SimHistoryEntry } from '@@/types/simHistory';
+import { transformMLBGameInputs2ToDB } from '@/utils/transformers';
+import { SimResultsMLB } from '@@/types/bettingResults';
 
 // ---------- Sub-components ----------
 
@@ -210,23 +215,48 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         }));
     };
 
+    const saveAndUpdateHistory = async (simResults: SimResultsMLB, inputData: MLBGameInputs2) => {
+        // Transform data to specific DB types
+        const dbInputData: MLBGameSimInputData = transformMLBGameInputs2ToDB(inputData);
+        const timestamp = new Date().toISOString();
+
+        const simHistoryEntry: SimHistoryEntry = {
+            matchId,
+            timestamp,
+            simResults,
+            inputData: dbInputData
+        };
+
+        try {
+            const saveSuccess = await window.electronAPI.saveSimHistory(simHistoryEntry);
+            if (!saveSuccess) {
+                throw new Error('Unknown error');
+            }
+            dispatch(fetchSimResults({ league, matchId }));
+        } catch (error) {
+            throw new Error(`Error while saving simulation results`);
+        }
+    };
+
     const handleRunSimulation = async (isSeries: boolean) => {
         if (!gameContainer || !teamInputs) return;
         
         if (isSeries) {
             if (!gameContainer.seriesGames) return;
-            dispatch(runSeriesSimulationThunk({
+            const result = await dispatch(runSeriesSimulationThunk({
                 league,
                 matchId,
                 gameInputs: gameContainer.seriesGames
-            }));
+            })).unwrap();
+            await saveAndUpdateHistory(result, gameContainer.currentGame as MLBGameInputs2);
         } else {
             if (!gameContainer.currentGame) return;
-            dispatch(runSimulationThunk({
+            const result = await dispatch(runSimulationThunk({
                 league,
                 matchId,
                 gameInputs: gameContainer.currentGame
-            }));
+            })).unwrap();
+            await saveAndUpdateHistory(result, gameContainer.currentGame as MLBGameInputs2);
         }
     };
 
