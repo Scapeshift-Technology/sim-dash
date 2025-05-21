@@ -88,8 +88,18 @@ const scheduleSlice = createSlice({
       })
       .addCase(fetchSchedule.fulfilled, (state, action) => {
         const league = action.meta.arg.league;
+
+        const newSchedule = action.payload.map(newMatch => {
+          const existingMatch = state[league].schedule.find(m => m.Match === newMatch.Match);
+          return {
+              ...newMatch,
+              simResults: existingMatch?.simResults,
+              status: existingMatch?.status
+          };
+        });
+
         state[league].status = 'succeeded';
-        state[league].schedule = action.payload;
+        state[league].schedule = newSchedule;
         state[league].error = null;
       })
       .addCase(fetchSchedule.rejected, (state, action) => {

@@ -27,6 +27,7 @@ import {
     selectMatchSimStatus
 } from '@/store/slices/scheduleSlice';
 import { calculateResultsSummaryDisplayMLB } from '@/utils/oddsUtilsMLB';
+import { usePrevious } from '@dnd-kit/utilities';
 
 interface LeagueScheduleViewProps {
     league: string;
@@ -156,7 +157,6 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
 
     useEffect(() => {
         if (selectedDate && currentDate !== selectedDate) {
-            console.log('LeagueScheduleView: Fetching schedule data');
             dispatch(fetchSchedule({ 
                 league, 
                 date: selectedDate.format('YYYY-MM-DD')
@@ -165,12 +165,14 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
         }
     }, [dispatch, league, selectedDate]);
 
+    const prevStatus = usePrevious(leagueScheduleStatus);
     useEffect(() => {
-      if (leagueScheduleStatus === 'succeeded') {
-        console.log('LeagueScheduleView: Schedule data fetched successfully');
-        for (const match of scheduleData) {
-          dispatch(fetchSimResults({ league, matchId: match.Match }));
-        }
+      if (prevStatus !== 'succeeded' && leagueScheduleStatus === 'succeeded') {
+        const promises = scheduleData.map(match => 
+          dispatch(fetchSimResults({ league, matchId: match.Match }))
+        );
+        Promise.all(promises)
+          .catch(error => console.error('Error fetching sim results:', error));
       }
     }, [leagueScheduleStatus]);
 
@@ -178,7 +180,6 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
 
     const handleDateChange = (newValue: Dayjs | null) => {
         if (newValue) {
-          console.log('handleDateChange', newValue.format('YYYY-MM-DD'));
           dispatch(updateLeagueDate({ 
             league, 
             date: newValue.format('YYYY-MM-DD')
