@@ -82,7 +82,13 @@ const MLBGameBanner = ({ mlbGameId }: MLBGameBannerProps) => {
         <Box sx={{ gridArea: 'away', textAlign: 'right' }}>
           <Typography variant="h6">{awayTeam} {awayScore}</Typography>
         </Box>
-        <Box sx={{ gridArea: 'away-info', textAlign: 'right' }}>
+        <Box sx={{ 
+          gridArea: 'away-info', 
+          textAlign: 'right',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end'
+        }}>
           <Typography>
             {isTopInning ? `AB: ${currentBatter}` : `P: ${currentPitcher}`}
           </Typography>
@@ -107,7 +113,12 @@ const MLBGameBanner = ({ mlbGameId }: MLBGameBannerProps) => {
         <Box sx={{ gridArea: 'home', textAlign: 'left' }}>
           <Typography variant="h6">{homeTeam} {homeScore}</Typography>
         </Box>
-        <Box sx={{ gridArea: 'home-info', textAlign: 'left' }}>
+        <Box sx={{ 
+          gridArea: 'home-info', 
+          textAlign: 'left',
+          display: 'flex',
+          alignItems: 'center'
+        }}>
           <Typography>
             {isTopInning ? `P: ${currentPitcher}` : `AB: ${currentBatter}`}
           </Typography>
