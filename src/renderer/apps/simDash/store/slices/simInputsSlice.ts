@@ -412,6 +412,8 @@ export const selectGameBettingBounds = (state: RootState, league: LeagueName, ma
   state.simDash.simInputs[league]?.[matchId]?.currentGame?.gameInfo?.bettingBounds;
 export const selectGameAutomatedLeans = (state: RootState, league: LeagueName, matchId: number): MLBGameSimInputs | undefined => 
   state.simDash.simInputs[league]?.[matchId]?.currentGame?.gameInfo?.automatedLeans;
+export const selectGameMlbGameId = (state: RootState, league: LeagueName, matchId: number): number | undefined => 
+  state.simDash.simInputs[league]?.[matchId]?.currentGame?.gameInfo?.mlbGameId;
 export const selectGameLineups = (state: RootState, league: LeagueName, matchId: number): MatchupLineups | undefined => 
   state.simDash.simInputs[league]?.[matchId]?.currentGame?.lineups;
 export const selectGameSeriesGames = (state: RootState, league: LeagueName, matchId: number): SeriesInfoMLB | undefined => 

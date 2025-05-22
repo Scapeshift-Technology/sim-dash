@@ -11,6 +11,7 @@ const { createMLBSimResultsWindow2 } = require('./services/mlb/electron/createSi
 const { Worker } = require('worker_threads');
 const { getGameDataMLB } = require('./services/mlb/external/gameData');
 const { testConnection } = require('./services/login/connection');
+const { initializeMLBWebSockets } = require('./services/mlb/external/webSocket');
 
 // Force the app name at the system level for macOS menu
 app.name = 'SimDash'; // Directly set app.name property
@@ -98,6 +99,7 @@ let mainWindow;
 let aboutWindow; // Added reference for the about window
 let db; // Local SQLite database connection
 let currentPool = null; // Active SQL Server connection pool
+let mlbWebSocketManager = null; // MLB WebSocket manager instance
 
 // Define the Vite development server URL
 const viteDevServerUrl = 'http://localhost:5173'; // Default Vite port
@@ -115,6 +117,10 @@ async function createMainWindow() {
             nodeIntegration: false // Important for security
         }
     });
+
+    // Initialize MLB WebSocket manager after window creation
+    mlbWebSocketManager = initializeMLBWebSockets(mainWindow);
+    log.info('MLB WebSocket manager initialized');
 
     // Load the index.html of the app.
     log.info(`createMainWindow: Checking NODE_ENV: ${process.env.NODE_ENV}`);
@@ -450,9 +456,9 @@ ipcMain.handle('fetch-schedule', async (event, { league, date }) => {
         throw err; // Rethrow the error to be handled by the renderer
     }
 });
-// --- End Fetch Schedule Handler ---
 
-// --- Add Fetch MLB Game Data Handler ---
+// ---------- MLB-specific handlers ----------
+// --- Fetch MLB Game Data Handler ---
 ipcMain.handle('fetch-mlb-game-data', async (event, { league, date, participant1, participant2, daySequence }) => {
     console.log(`IPC received: fetch-mlb-data for ${league} ${participant1}@${participant2} on ${date}`);
     if (league !== 'MLB') {
@@ -474,7 +480,6 @@ ipcMain.handle('fetch-mlb-game-data', async (event, { league, date, participant1
         throw err; // Rethrow the error to be handled by the renderer
     }
 });
-// --- End Fetch MLB Game Data Handler ---
 
 ipcMain.handle('fetch-mlb-game-player-stats', async (event, { matchupLineups, date }) => {
   try {
@@ -490,7 +495,42 @@ ipcMain.handle('fetch-mlb-game-player-stats', async (event, { matchupLineups, da
   }
 });
 
-//  --- Add Simulate Matchup Handler ---
+// --- MLB WebSocket Handlers ---
+
+ipcMain.handle('connect-to-web-socket-mlb', async (event, args) => {
+    console.log(`IPC received: connect-to-web-socket-mlb for game ${args.gameId}`);
+    if (!mlbWebSocketManager) {
+        console.error('MLB WebSocket manager not initialized');
+        throw new Error('WebSocket manager not initialized');
+    }
+    try {
+        await mlbWebSocketManager.connectToGame(args.gameId);
+        return { success: true };
+    } catch (err) {
+        console.error('Error connecting to MLB WebSocket:', err);
+        throw err;
+    }
+});
+
+ipcMain.handle('disconnect-from-web-socket-mlb', async (event, args) => {
+    console.log(`IPC received: disconnect-from-web-socket-mlb for game ${args.gameId}`);
+    if (!mlbWebSocketManager) {
+        console.error('MLB WebSocket manager not initialized');
+        throw new Error('WebSocket manager not initialized');
+    }
+    try {
+        await mlbWebSocketManager.disconnectFromGame(args.gameId);
+        return { success: true };
+    } catch (err) {
+        console.error('Error disconnecting from MLB WebSocket:', err);
+        throw err;
+    }
+});
+
+// Note: onMLBGameUpdate is handled by the WebSocket manager itself
+// through mainWindow.webContents.send('mlb-game-update', ...)
+
+// --- Simulate Matchup Handler ---
 ipcMain.handle('simulate-matchup-mlb', async (event, { numGames, matchupLineups }) => {
   console.log(`IPC received: simulate-matchup for ${numGames} games`);
   try {
@@ -707,6 +747,13 @@ app.whenReady().then(async () => {
 });
 
 app.on('window-all-closed', () => {
+    // Clean up MLB WebSocket connections
+    if (mlbWebSocketManager) {
+        mlbWebSocketManager.cleanup();
+        mlbWebSocketManager = null;
+        log.info('MLB WebSocket manager cleaned up');
+    }
+
     if (currentPool) { // Ensure SQL pool is closed on quit
         currentPool.close();
         currentPool = null;

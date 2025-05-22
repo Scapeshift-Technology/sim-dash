@@ -17,6 +17,7 @@ export interface GameMetadataMLB {
   lineupsSource?: LineupsSource;
   bettingBounds?: MarketLinesMLB;
   automatedLeans?: MLBGameSimInputs;
+  mlbGameId?: number;
 }
 
 export interface MLBGameData { // Very similar to MLBGameInputs2(type in simInputs.ts), but with less info
@@ -260,7 +261,64 @@ export interface MlbGameApiResponse {
   gameData: MlbGameApiGameData;
   liveData: {
     boxscore: MlbGameApiBoxscore;
+    linescore: MlbGameApiLinescore;
+    plays: MlbGameApiPlays;
   };
+}
+
+// -- Websocket/linescore types --
+
+interface MlbGameApiPlays {
+  currentPlay: MlbGameApiPlay;
+}
+
+interface MlbGameApiPlay {
+  matchup: MlbGameApiMatchup;
+}
+
+interface MlbGameApiMatchup {
+  pitcher: MlbGameApiLinescorePlayer;
+  batter: MlbGameApiLinescorePlayer;
+}
+
+interface MlbGameApiLinescoreTeam {
+  runs: number;
+  hits: number;
+  errors: number;
+}
+
+interface MlbGameApiLinescorePlayer {
+  id: number;
+  fullName: string;
+}
+
+interface MlbGameApiLinescoreOffense {
+  batter: MlbGameApiLinescorePlayer;
+  first?: MlbGameApiLinescorePlayer;
+  second?: MlbGameApiLinescorePlayer;
+  third?: MlbGameApiLinescorePlayer;
+}
+
+interface MlbGameApiLinescoreDefense {
+  pitcher: MlbGameApiLinescorePlayer;
+}
+
+export interface MlbGameApiLinescore {
+  // Game state
+  balls: number;
+  strikes: number;
+  outs: number;
+  currentInning: number;
+  currentInningOrdinal: string;
+  inningHalf: string;
+  teams: {
+    away: MlbGameApiLinescoreTeam;
+    home: MlbGameApiLinescoreTeam;
+  };
+
+  // Base situation & current players
+  offense: MlbGameApiLinescoreOffense;
+  defense: MlbGameApiLinescoreDefense;
 }
 
 // ----- Schedule endpoint -----

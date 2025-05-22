@@ -33,13 +33,30 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // League/Schedule/Lineup data
     fetchLeagues: () => ipcRenderer.invoke('fetch-leagues'),
     fetchSchedule: (args) => ipcRenderer.invoke('fetch-schedule', args),
+
+    // ---------- MLB-specific functions ----------
+    // fetching data
     fetchMlbGameData: (args) => ipcRenderer.invoke('fetch-mlb-game-data', args),
     fetchMlbGamePlayerStats: (args) => ipcRenderer.invoke('fetch-mlb-game-player-stats', args),
 
     // Simulations
     simulateMatchupMLB: (args) => ipcRenderer.invoke('simulate-matchup-mlb', args),
+
+    // WebSocket
+    connectToWebSocketMLB: (args) => ipcRenderer.invoke('connect-to-web-socket-mlb', args),
+    disconnectFromWebSocketMLB: (args) => ipcRenderer.invoke('disconnect-from-web-socket-mlb', args),
+    onMLBGameUpdate: (callback) => {
+        // Create the event listener
+        const listener = (event, data) => callback(data);
+        ipcRenderer.on('mlb-game-update', listener);
+        
+        // Return cleanup function
+        return () => {
+            ipcRenderer.removeListener('mlb-game-update', listener);
+        };
+    },
     
-    // Simulation Windows
+    // ---------- Simulation Windows ----------
     createSimWindow: (args) => ipcRenderer.invoke('create-sim-window', args),
 
     // Simulation Results Window Communication

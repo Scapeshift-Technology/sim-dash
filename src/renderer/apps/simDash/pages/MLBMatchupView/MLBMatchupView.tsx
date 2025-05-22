@@ -40,7 +40,8 @@ import {
     selectGameSeriesGames,
     selectMLBGameContainer,
     switchCurrentSeriesGame,
-    selectGameMetadata
+    selectGameMetadata,
+    selectGameMlbGameId
 } from '@/simDash/store/slices/simInputsSlice';
 import { LeagueName } from '@@/types/league';
 import { useLeanValidation } from './hooks/leanValidation';
@@ -58,7 +59,7 @@ import { SimHistoryEntry } from '@@/types/simHistory';
 import { transformMLBGameInputs2ToDB } from '@/simDash/utils/transformers';
 import { SimResultsMLB } from '@@/types/bettingResults';
 import { convertLineupsToTSV } from '@/simDash/utils/copyUtils';
-
+import MLBGameBanner from './components/MLBGameBanner';
 
 // ---------- Sub-components ----------
 
@@ -124,6 +125,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const teamInputs = useSelector((state: RootState) => selectTeamInputs(state, league, matchId));
     const seriesGames = useSelector((state: RootState) => selectGameSeriesGames(state, league, matchId));
     const gameMetadata = useSelector((state: RootState) => selectGameMetadata(state, league, matchId));
+    const mlbGameId = useSelector((state: RootState) => selectGameMlbGameId(state, league, matchId));
     const traditionalSimulationStatus = useSelector((state: RootState) => selectTraditionalSimulationStatus(state, league, matchId));
     const traditionalSimulationError = useSelector((state: RootState) => selectTraditionalSimulationError(state, league, matchId));
     const seriesSimulationStatus = useSelector((state: RootState) => selectSeriesSimulationStatus(state, league, matchId));
@@ -323,6 +325,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
 
     return (
         <Box sx={{ flexGrow: 1, p: 2 }}>
+            <MLBGameBanner mlbGameId={mlbGameId} />
             <MLBMatchupHeader
                 participant1={participant1}
                 participant2={participant2}

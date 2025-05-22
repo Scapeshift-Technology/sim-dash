@@ -43,7 +43,8 @@ async function getGameDataMLB(date: string, awayTeam: string, homeTeam: string, 
     const { matchupLineups, lineupsSource } = await getLineupsMLB(formattedDate, awayTeamNameMLB, homeTeamNameMLB, daySequenceNumber, game);
     const gameInfo: GameMetadataMLB = {
       seriesGameNumber: game.seriesGameNumber,
-      lineupsSource
+      lineupsSource,
+      mlbGameId: game.gamePk
     }
 
     // Put it all together
@@ -119,7 +120,8 @@ async function getIndividualGameDataMLB(date: string, awayTeam: string, homeTeam
 
   const gameInfo: GameMetadataMLB = {
     seriesGameNumber: game.seriesGameNumber,
-    lineupsSource
+    lineupsSource,
+    mlbGameId: game.gamePk
   }
 
   return {

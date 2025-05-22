@@ -43,6 +43,11 @@ declare global {
 
       // Simulations
       simulateMatchupMLB: (args: { matchupLineups: MatchupLineups, numGames: number }) => Promise<SimResults>;
+
+      // WebSocket
+      connectToWebSocketMLB: (args: { gameId: number }) => Promise<void>;
+      disconnectFromWebSocketMLB: (args: { gameId: number }) => Promise<void>;
+      onMLBGameUpdate: (callback: (gameData: { data: MlbGameApiResponse }) => void) => () => void; // Returns cleanup function
       
       // ---------- Simulation Windows ----------
       createSimWindow: (args: { 
