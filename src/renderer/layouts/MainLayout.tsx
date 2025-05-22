@@ -6,36 +6,51 @@ import {
     Button,
     AppBar,
     Toolbar,
-    Container,
     CssBaseline,
-    Tabs,
-    Tab as MuiTab,
-    IconButton
+    Menu,
+    MenuItem,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
 import type { AppDispatch } from '@/store/store';
 import { logoutUser, selectUsername } from '@/store/slices/authSlice';
-import { 
-    selectOpenTabs, 
-    selectActiveTabId, 
-    setActiveTab, 
-    closeTab, 
-    selectActiveTabData 
-} from '@/store/slices/tabSlice';
-import type { Tab } from '@/types/league';
-import Sidebar from '@/components/Sidebar';
-import LeagueScheduleView from '@/pages/LeagueScheduleView';
-import MLBMatchupView from '@/pages/MLBMatchupView/MLBMatchupView';
+import { setCurrentApp, selectCurrentApp } from '@/store/slices/appSlice';
 
-const MainLayout: React.FC = () => {
+interface MainLayoutProps {
+    children: React.ReactNode;
+    Sidebar: React.ComponentType<{
+        currentWidth: number;
+        onResize: (newWidth: number) => void;
+    }> | null;
+}
+
+const MainLayout: React.FC<MainLayoutProps> = ({ children, Sidebar }) => {
     const dispatch = useDispatch<AppDispatch>();
+
+    // ---------- State ----------
+    
     const username = useSelector(selectUsername);
-    const openTabs = useSelector(selectOpenTabs);
-    const activeTabId = useSelector(selectActiveTabId);
-    const activeTabData = useSelector(selectActiveTabData);
+    const currentApp = useSelector(selectCurrentApp);
     const [drawerWidth, setDrawerWidth] = useState(240);
     const minDrawerWidth = 150;
     const maxDrawerWidth = 500;
+    // --- Menu state ---
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const open = Boolean(anchorEl);
+
+    // ---------- Handlers ----------
+
+    const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleAppSelect = (app: 'simDash' | 'accounting') => {
+        console.log(`Selected app: ${app}`);
+        dispatch(setCurrentApp(app));
+        handleClose();
+    };
 
     const handleLogout = () => {
         dispatch(logoutUser());
@@ -45,42 +60,14 @@ const MainLayout: React.FC = () => {
         setDrawerWidth(Math.max(minDrawerWidth, Math.min(newWidth, maxDrawerWidth)));
     }, [minDrawerWidth, maxDrawerWidth]);
 
-    const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
-        dispatch(setActiveTab(newValue));
+    // ---------- Helpers ----------
+
+    const formatAppName = (name: string | null): string => {
+        if (!name) return 'SimDash';
+        return name === 'simDash' ? 'SimDash' : name.charAt(0).toUpperCase() + name.slice(1);
     };
 
-    const handleCloseTab = (event: React.MouseEvent, tabIdToClose: string) => {
-        event.stopPropagation();
-        dispatch(closeTab(tabIdToClose));
-    };
-
-    const renderTabContent = (tab: Tab | undefined) => {
-        if (!tab) {
-            return (
-                <Box sx={{ p: 3, textAlign: 'center' }}>
-                    <Typography>Select a league from the sidebar or open a matchup.</Typography>
-                </Box>
-            );
-        }
-
-        switch (tab.type) {
-            case 'league':
-                return <LeagueScheduleView key={tab.id} league={tab.league} />;
-            case 'matchup':
-                return <MLBMatchupView 
-                            key={tab.matchId} 
-                            matchId={tab.matchId}
-                            league={tab.league} 
-                            date={tab.date} 
-                            dateTime={tab.dateTime}
-                            participant1={tab.participant1} 
-                            participant2={tab.participant2} 
-                            daySequence={tab.daySequence} 
-                        />;
-            default:
-                return <Typography>Unknown tab type</Typography>;
-        }
-    };
+    // ---------- Render ----------
 
     return (
         <Box sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -92,16 +79,41 @@ const MainLayout: React.FC = () => {
                 }}
             >
                 <Toolbar>
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                        SimDash
+                    <Typography 
+                        variant="h6" 
+                        component="div" 
+                        onClick={handleClick}
+                        sx={{ 
+                            flexGrow: 1,
+                            cursor: 'pointer',
+                            '&:hover': {
+                                opacity: 0.8
+                            }
+                        }}
+                    >
+                        {formatAppName(currentApp)}
                     </Typography>
+                    <Menu
+                        id="app-menu"
+                        anchorEl={anchorEl}
+                        open={open}
+                        onClose={handleClose}
+                        slotProps={{
+                            list: {
+                                'aria-labelledby': 'app-selector',
+                            }
+                        }}
+                    >
+                        <MenuItem onClick={() => handleAppSelect('simDash')}>SimDash</MenuItem>
+                        <MenuItem onClick={() => handleAppSelect('accounting')}>Accounting</MenuItem>
+                    </Menu>
                     <Typography id="welcome-message" sx={{ mr: 2 }}>Welcome, {username || 'User'}!</Typography>
                     <Button id="logout-button" color="inherit" onClick={handleLogout}>
                         Logout
                     </Button>
                 </Toolbar>
             </AppBar>
-            <Sidebar currentWidth={drawerWidth} onResize={handleResize} />
+            {Sidebar && <Sidebar currentWidth={drawerWidth} onResize={handleResize} />}
             <Box
                 component="main"
                 sx={{
@@ -113,60 +125,7 @@ const MainLayout: React.FC = () => {
                 }}
             >
                 <Toolbar />
-
-                {openTabs.length > 0 && (
-                    <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                        <Tabs
-                            value={activeTabId ?? false}
-                            onChange={handleTabChange}
-                            variant="scrollable"
-                            scrollButtons="auto"
-                            aria-label="Open tabs"
-                        >
-                            {openTabs.map((tab) => (
-                                <MuiTab
-                                    key={tab.id}
-                                    label={
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            {tab.type === 'league' ? tab.league : tab.label}
-                                            <IconButton
-                                                size="small"
-                                                component="div"
-                                                onClick={(e) => handleCloseTab(e, tab.id)}
-                                                sx={{ ml: 1 }}
-                                            >
-                                                <CloseIcon fontSize="inherit" />
-                                            </IconButton>
-                                        </Box>
-                                    }
-                                    value={tab.id}
-                                    id={`tab-${tab.id}`}
-                                    aria-controls={`tabpanel-${tab.id}`}
-                                />
-                            ))}
-                        </Tabs>
-                    </Box>
-                )}
-
-                <Container 
-                    sx={{ 
-                        flexGrow: 1, 
-                        display: 'flex', 
-                        flexDirection: 'column',
-                        mb: '64px'
-                    }} 
-                    maxWidth={false}
-                >
-                    <Box 
-                        role="tabpanel"
-                        hidden={!activeTabData}
-                        id={`tabpanel-${activeTabData?.id ?? ''}`}
-                        aria-labelledby={`tab-${activeTabData?.id ?? ''}`}
-                        sx={{ flexGrow: 1, overflow: 'auto' }}
-                    >
-                       {renderTabContent(activeTabData)}
-                    </Box>
-                </Container>
+                {children}
             </Box>
             
             <Box 

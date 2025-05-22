@@ -20,7 +20,9 @@
       "@/*": ["./renderer/*"],
       "@@/*": ["./*"],
       "@/types/*": ["./types/*"],
-      "@/mlb/*": ["./services/mlb/*"]
+      "@/mlb/*": ["./services/mlb/*"],
+      "@/simDash/*": ["./renderer/apps/simDash/*"],
+      "@/accounting/*": ["./renderer/apps/accounting/*"]
     }
   },
   "include": ["./renderer/**/*", "types", "./**/*.ts", "./**/*.js"],

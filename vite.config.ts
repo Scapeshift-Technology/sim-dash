@@ -12,9 +12,11 @@ export default defineConfig({
   root: path.resolve(__dirname, 'src/renderer'),
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src/renderer'),
+      '@/simDash': path.resolve(__dirname, 'src/renderer/apps/simDash'),
+      '@/accounting': path.resolve(__dirname, 'src/renderer/apps/accounting'),
       '@/types': path.resolve(__dirname, 'types'),
-      '@@': path.resolve(__dirname, 'src')
+      '@@': path.resolve(__dirname, 'src'),
+      '@': path.resolve(__dirname, 'src/renderer'),
     }
   },
   build: {

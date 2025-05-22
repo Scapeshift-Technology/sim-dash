@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import type { RootState } from '../store'; // Import RootState for selector typing
+import type { RootState } from '@/store/store'; // Import RootState for selector typing
 import {
   LoginConfig,
   LoginSuccessResponse,

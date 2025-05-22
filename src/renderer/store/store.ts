@@ -1,31 +1,28 @@
-import { configureStore } from '@reduxjs/toolkit';
-// Import your future slice reducers here
-import authReducer from './slices/authSlice';
-import profilesReducer from './slices/profilesSlice';
-import leagueReducer from './slices/leagueSlice';
-import tabReducer from './slices/tabSlice';
-import scheduleReducer from './slices/scheduleSlice';
-import simInputsReducer from './slices/simInputsSlice';
-import simulationStatusReducer from './slices/simulationStatusSlice';
-import bettingBoundsReducer from './slices/bettingBoundsSlice';
+import { configureStore, combineReducers } from '@reduxjs/toolkit';
 
-export const store = configureStore({
-  reducer: {
-    // Add reducers here as they are created
-    auth: authReducer,
-    profiles: profilesReducer,
-    leagues: leagueReducer,
-    tabs: tabReducer,
-    schedule: scheduleReducer,
-    simInputs: simInputsReducer,
-    simulationStatus: simulationStatusReducer,
-    bettingBounds: bettingBoundsReducer
-  },
-  // Optional: Add middleware here if needed (e.g., for logging)
-  // middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),
+// Import the combined reducers
+import simDashReducer from '@/simDash/store/rootReducer';
+// accounting reducers (future)
+// import accountingReducer from '@/accounting/store/rootReducer';
+// Overall app reducer
+import appReducer from './slices/appSlice';
+import authReducer from './slices/authSlice';
+
+
+const rootReducer = combineReducers({
+  simDash: simDashReducer,
+  // accounting: accountingReducer,
+
+  auth: authReducer,
+  app: appReducer
 });
 
-// Infer the `RootState` and `AppDispatch` types from the store itself
+export const store = configureStore({
+  reducer: rootReducer,
+  // Optional: Add middleware here if needed
+  // middleware: (getDefaultMiddleware) => getDefaultMiddleware(),
+});
+
+// Export types for TypeScript support
 export type RootState = ReturnType<typeof store.getState>;
-// Define a custom hook type for dispatching actions with correct typings
-export type AppDispatch = typeof store.dispatch; 
+export type AppDispatch = typeof store.dispatch;
