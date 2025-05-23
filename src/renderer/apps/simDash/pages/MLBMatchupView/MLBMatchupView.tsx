@@ -60,6 +60,7 @@ import { SimResultsMLB } from '@@/types/bettingResults';
 import { convertLineupsToTSV } from '@/simDash/utils/copyUtils';
 import MLBGameBanner from './components/MLBGameBanner';
 import { useMLBMatchupData } from './hooks/useMLBMatchupData';
+import { SimType } from '@@/types/mlb/mlb-sim';
 
 // ---------- Sub-components ----------
 
@@ -206,27 +207,36 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         }
     };
 
-    const handleRunSimulation = async (isSeries: boolean) => {
+    const handleRunSimulation = async (simType: SimType) => {
         if (!gameContainer || !teamInputs) return;
+
+        let result;
         
-        if (isSeries) {
+        if (simType === 'series') {
             if (!gameContainer.seriesGames) return;
-            const result = await dispatch(runSeriesSimulationThunk({
+            result = await dispatch(runSeriesSimulationThunk({
                 league,
                 matchId,
                 gameInputs: gameContainer.seriesGames
             })).unwrap();
-            await saveAndUpdateHistory(result, gameContainer.currentGame as MLBGameInputs2);
-        } else {
+        } else if (simType === 'live') {
             if (!gameContainer.currentGame) return;
-            const result = await dispatch(runSimulationThunk({
+            result = await dispatch(runSimulationThunk({
                 league,
                 matchId,
                 gameInputs: gameContainer.currentGame,
                 liveGameData: liveGameData
             })).unwrap();
-            await saveAndUpdateHistory(result, gameContainer.currentGame as MLBGameInputs2);
+        } else {
+            if (!gameContainer.currentGame) return;
+            result = await dispatch(runSimulationThunk({
+                league,
+                matchId,
+                gameInputs: gameContainer.currentGame
+            })).unwrap();
         }
+
+        await saveAndUpdateHistory(result, gameContainer.currentGame as MLBGameInputs2);
     };
 
     const handleRefresh = () => {
@@ -302,6 +312,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 lineupData={gameLineups}
                 hasInvalidLeans={hasInvalidLeans}
                 seriesGames={seriesGames}
+                liveGameData={liveGameData}
                 onRefresh={handleRefresh}
                 onRunSimulation={handleRunSimulation}
             />

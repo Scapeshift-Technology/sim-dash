@@ -8,25 +8,29 @@ import {
 } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { MlbLiveDataApiResponse } from '@@/types/mlb';
+import { SimType } from '@@/types/mlb/mlb-sim';
 
 interface SimulationButtonProps {
     isSimulating: boolean;
     disabled: boolean;
     seriesGames?: { [key: string]: any };
-    onRunSimulation: (isSeries: boolean) => void;
+    liveGameData: MlbLiveDataApiResponse | undefined;
+    onRunSimulation: (simType: SimType) => void;
 }
 
 const SimulationButton: React.FC<SimulationButtonProps> = ({
     isSimulating,
     disabled,
     seriesGames,
+    liveGameData,
     onRunSimulation
 }) => {
     // ---------- State ----------
 
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
-    const [seriesSimMode, setSeriesSimMode] = useState<boolean>(false);
+    const [simulationType, setSimulationType] = useState<SimType>('game');
 
     // ---------- Handlers ----------
 
@@ -38,21 +42,23 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
         setAnchorEl(null);
     };
 
-    const handleMenuItemClick = (option: string) => {
-        setSeriesSimMode(option === 'series');
+    const handleMenuItemClick = (option: SimType) => {
+        setSimulationType(option);
         handleClose();
     };
 
     // ---------- Render ----------
 
-    if (!seriesGames) {
+    const showDropdown = seriesGames || liveGameData;
+
+    if (!showDropdown) {
         return (
             <Button
                 variant="contained"
                 color="primary"
                 size="large"
                 startIcon={isSimulating ? <CircularProgress size={20} color="inherit" /> : <PlayArrowIcon />}
-                onClick={() => onRunSimulation(seriesSimMode)}
+                onClick={() => onRunSimulation('game')}
                 disabled={disabled}
                 sx={{ 
                     height: '100%', 
@@ -65,6 +71,19 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
             </Button>
         );
     }
+
+    const getButtonText = () => {
+        if (isSimulating) return 'Running...';
+        switch (simulationType) {
+            case 'series':
+                return 'Simulate Series';
+            case 'live':
+                return 'Simulate Live Game';
+            case 'game':
+            default:
+                return 'Simulate Game';
+        }
+    };
 
     return (
         <>
@@ -79,11 +98,11 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
                 }}
             >
                 <Button
-                    onClick={() => onRunSimulation(seriesSimMode)}
+                    onClick={() => onRunSimulation(simulationType)}
                     startIcon={isSimulating ? <CircularProgress size={20} color="inherit" /> : <PlayArrowIcon />}
                     sx={{ width: '100%' }}
                 >
-                    {isSimulating ? 'Running...' : seriesSimMode ? 'Simulate Series' : 'Simulate Game'}
+                    {getButtonText()}
                 </Button>
                 <Button
                     size="small"
@@ -99,7 +118,8 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
                 onClose={handleClose}
             >
                 <MenuItem onClick={() => handleMenuItemClick('game')}>Simulate Game</MenuItem>
-                <MenuItem onClick={() => handleMenuItemClick('series')}>Simulate Series</MenuItem>
+                {seriesGames && <MenuItem onClick={() => handleMenuItemClick('series')}>Simulate Series</MenuItem>}
+                {liveGameData && <MenuItem onClick={() => handleMenuItemClick('live')}>Sim From Live Startpoint</MenuItem>}
             </Menu>
         </>
     );

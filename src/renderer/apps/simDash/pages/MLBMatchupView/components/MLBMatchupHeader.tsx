@@ -11,6 +11,8 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import MLBSimulationResultsSummary from '@/simDash/components/simulation/MLBSimulationResultsSummary';
 import type { SimHistoryEntry } from '@/types/simHistory';
 import SimulationButton from './SimulationButton';
+import { MlbLiveDataApiResponse } from '@@/types/mlb';
+import { SimType } from '@@/types/mlb/mlb-sim';
 
 interface MLBMatchupHeaderProps {
     participant1: string;
@@ -23,8 +25,9 @@ interface MLBMatchupHeaderProps {
     lineupData: any; // TODO: Add proper type
     hasInvalidLeans: boolean;
     seriesGames?: { [key: string]: any };
+    liveGameData: MlbLiveDataApiResponse | undefined;
     onRefresh: () => void;
-    onRunSimulation: (isSeries: boolean) => void;
+    onRunSimulation: (simType: SimType) => void;
 }
 
 const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
@@ -38,6 +41,7 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
     lineupData,
     hasInvalidLeans,
     seriesGames,
+    liveGameData,
     onRefresh,
     onRunSimulation
 }) => {
@@ -98,6 +102,7 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
                         isSimulating={isSimulating}
                         disabled={isSimulating || !lineupData || hasInvalidLeans}
                         seriesGames={seriesGames}
+                        liveGameData={liveGameData}
                         onRunSimulation={onRunSimulation}
                     />
                 </Box>
