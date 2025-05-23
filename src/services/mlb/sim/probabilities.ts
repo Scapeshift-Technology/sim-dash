@@ -39,7 +39,9 @@ function getTeamMatchupProbabilities(teamLineup: TeamLineup, opponentLineup: Tea
   };
 
   // Calculate for each batter-pitcher matchup
-  for (const batter of teamLineup.lineup) {
+  const allBatters = [...teamLineup.lineup, ...teamLineup.bench];
+  
+  for (const batter of allBatters) {
     teamBatterMatchupProbabilities.batter[batter.id] = {};
     // Calculate vs starting pitcher
     const startingPitcherProbs = getBatterPitcherMatchupProbabilities(batter, opponentLineup.startingPitcher, leagueAvgStats, teamType);
