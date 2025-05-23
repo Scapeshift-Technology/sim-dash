@@ -3,40 +3,40 @@ import { MatchupLineups, Player, TeamLineup, LeagueAvgStats } from "@/types/mlb"
 // ---------- League Avg Stats ----------
 const leagueAvgStats: LeagueAvgStats = {
   RhitLpitch: {
-    adj_perc_K: 0.2190944062,
-    adj_perc_BB: 0.09261766254,
-    adj_perc_1B: 0.1451620454,
-    adj_perc_2B: 0.04720188273,
-    adj_perc_3B: 0.00276747716,
-    adj_perc_HR: 0.03344016655,
-    adj_perc_OUT: 0.4597163594
+    adj_perc_K: 0.2192909389,
+    adj_perc_BB: 0.09210804101,
+    adj_perc_1B: 0.1459611614,
+    adj_perc_2B: 0.04707925519,
+    adj_perc_3B: 0.00269577449,
+    adj_perc_HR: 0.03250879703,
+    adj_perc_OUT: 0.460356032
   },
   RhitRpitch: {
-    adj_perc_K: 0.2347982981, 
-    adj_perc_BB: 0.08075117622,
-    adj_perc_1B: 0.1462158568,
-    adj_perc_2B: 0.04237045084,
-    adj_perc_3B: 0.003556149551,
-    adj_perc_HR: 0.03118351821,
-    adj_perc_OUT: 0.4611245503
+    adj_perc_K: 0.2341275392,
+    adj_perc_BB: 0.08017509304,
+    adj_perc_1B: 0.1472215406,
+    adj_perc_2B: 0.04228704224,
+    adj_perc_3B: 0.003511320875,
+    adj_perc_HR: 0.03034535687,
+    adj_perc_OUT: 0.4623321072
   },
   LhitLpitch: {
-    adj_perc_K: 0.2364642937,
-    adj_perc_BB: 0.08727466555,
-    adj_perc_1B: 0.1493930002,
-    adj_perc_2B: 0.03823530677,
-    adj_perc_3B: 0.002631548058,
-    adj_perc_HR: 0.02428463653,
-    adj_perc_OUT: 0.4617165492
+    adj_perc_K: 0.2371765415,
+    adj_perc_BB: 0.08656344197,
+    adj_perc_1B: 0.1500749104,
+    adj_perc_2B: 0.03812488174,
+    adj_perc_3B: 0.002712289941,
+    adj_perc_HR: 0.02371730435,
+    adj_perc_OUT: 0.4616306301
   },
   LhitRpitch: {
-    adj_perc_K: 0.220251764,
-    adj_perc_BB: 0.1034090297,
-    adj_perc_1B: 0.1412790864,
-    adj_perc_2B: 0.04451635698,
-    adj_perc_3B: 0.004986956744,
-    adj_perc_HR: 0.03390436854,
-    adj_perc_OUT: 0.4516524376
+    adj_perc_K: 0.2208222828,
+    adj_perc_BB: 0.1019879002,
+    adj_perc_1B: 0.1421335943,
+    adj_perc_2B: 0.04425268348,
+    adj_perc_3B: 0.005110791463,
+    adj_perc_HR: 0.03339695318,
+    adj_perc_OUT: 0.4522957945
   }
 }
 
