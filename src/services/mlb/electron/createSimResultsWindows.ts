@@ -1,5 +1,6 @@
 import { BrowserWindow, app } from 'electron';
 import path from 'path';
+import { teamNameToAbbreviationMLB } from '../utils/teamName';
 
 interface CreateMLBSimResultsWindowOptions {
     matchupId: number;
@@ -32,8 +33,7 @@ export function createMLBSimResultsWindow2({
         // Make it feel more like a floating window
         frame: true,
         resizable: true,
-        maximizable: true,
-        minimizable: true
+        maximizable: true
     });
 
     // Load the appropriate content with simple route
@@ -48,9 +48,14 @@ export function createMLBSimResultsWindow2({
         );
     }
 
+    const awayTeamAbbrev = teamNameToAbbreviationMLB(awayTeamName);
+    const homeTeamAbbrev = teamNameToAbbreviationMLB(homeTeamName);
+    const dateString = new Date(timestamp).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
     // When the window is ready to show
     simWindow.once('ready-to-show', () => {
         simWindow.show();
+        simWindow.setTitle(`${awayTeamAbbrev}@${homeTeamAbbrev} - ${dateString}`);
     });
 
     // Add properties to BrowserWindow
