@@ -50,7 +50,7 @@ const MLBSimulationView: React.FC = () => {
     const fetchSimData = async () => {
       try {
         setLoading(true);
-        const data = await window.electronAPI.getSimData();
+        const data = await window.electronAPI.getMLBSimData();
         console.log('Sim data received:', data);
         if (data) {
           setSimData(data.simData);

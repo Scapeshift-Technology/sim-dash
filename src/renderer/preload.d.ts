@@ -59,7 +59,7 @@ declare global {
       }) => Promise<{ success: boolean }>;
       
       // Simulation Results Window Communication
-      getSimData: () => Promise<{
+      getMLBSimData: () => Promise<{
         matchId: number;
         simData: SimResultsMLB;
         inputData: MLBGameSimInputData;

@@ -60,7 +60,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     createSimWindow: (args) => ipcRenderer.invoke('create-sim-window', args),
 
     // Simulation Results Window Communication
-    getSimData: (args) => ipcRenderer.invoke('get-sim-data', args),
+    getMLBSimData: (args) => ipcRenderer.invoke('get-mlb-sim-data', args),
 
     // Sim history
     saveSimHistory: (args) => ipcRenderer.invoke('save-sim-history', args),

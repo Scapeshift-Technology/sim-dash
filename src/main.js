@@ -6,13 +6,12 @@ const url = require('url'); // Import url module
 const log = require('electron-log/main'); // <-- Import electron-log
 const dbHelper = require('./db'); // Local SQLite helper
 const sql = require('mssql'); // SQL Server driver
-const { getPlayerStatsMLB } = require('./services/mlb/db/playerStats');
 const { createMLBSimResultsWindow2 } = require('./services/mlb/electron/createSimResultsWindows');
-const { Worker } = require('worker_threads');
-const { getGameDataMLB } = require('./services/mlb/external/gameData');
 const { testConnection } = require('./services/login/connection');
 const { initializeMLBWebSockets } = require('./services/mlb/external/webSocket');
-const { initializeGameState } = require('./services/mlb/sim/gameState');
+const { registerMLBHandlers } = require('./app/ipc/mlbHandlers');
+const { registerSharedLeagueHandlers } = require('./app/ipc/sharedLeagueHandlers');
+const { registerProfileHandlers } = require('./app/ipc/profileHandlers');
 
 // Force the app name at the system level for macOS menu
 app.name = 'SimDash'; // Directly set app.name property
@@ -236,39 +235,6 @@ async function initializeDb() {
     }
 }
 
-ipcMain.handle('get-profiles', async () => {
-    if (!db) return [];
-    try {
-        const profiles = await dbHelper.getProfiles(db);
-        return profiles;
-    } catch (err) {
-        console.error('[main.js] Error getting profiles:', err);
-        return []; // Return empty on error
-    }
-});
-
-ipcMain.handle('save-profile', async (event, profile) => {
-    if (!db) return false;
-    try {
-        await dbHelper.saveProfile(db, profile);
-        return true;
-    } catch (err) {
-        console.error('Error saving profile:', err);
-        return false;
-    }
-});
-
-ipcMain.handle('delete-profile', async (event, profileName) => {
-    if (!db) return false;
-    try {
-        await dbHelper.deleteProfile(db, profileName);
-        return true;
-    } catch (err) {
-        console.error('Error deleting profile:', err);
-        return false;
-    }
-});
-
 // --- SQLite sim history ---
 // Save a sim history entry
 ipcMain.handle('save-sim-history', async (event, simHistory) => {
@@ -392,156 +358,6 @@ ipcMain.handle('logout', async () => {
     }
 });
 
-// --- Add Fetch Leagues Handler ---
-ipcMain.handle('fetch-leagues', async () => {
-    console.log('IPC received: fetch-leagues'); // Add logging
-    if (!currentPool) {
-        console.error('fetch-leagues: No active SQL Server connection.');
-        // Optionally throw an error instead of returning empty
-        // throw new Error('Not connected to database.');
-        return []; // Return empty array if not connected
-    }
-    try {
-        // Ensure the query matches the actual view/table and columns
-        const result = await currentPool.request().query(`SELECT League FROM dbo.League_V WHERE League IN ('MLB', 'NBA') ORDER BY League`);
-
-        console.log('Leagues fetched:', result.recordset); // Log success
-        return result.recordset; // Return the array of leagues
-    } catch (err) {
-        console.error('Error fetching leagues from SQL Server:', err);
-        // Optionally throw the error to be caught by the renderer
-        // throw err;
-        return []; // Return empty array on error
-    }
-});
-// --- End Fetch Leagues Handler ---
-
-// --- Add Fetch Schedule Handler ---
-ipcMain.handle('fetch-schedule', async (event, { league, date }) => {
-    console.log(`IPC received: fetch-schedule for ${league} on ${date}`);
-    if (!currentPool) {
-        console.error('fetch-schedule: No active SQL Server connection.');
-        throw new Error('Not connected to database.'); // Throw error to be caught by renderer
-    }
-    if (!league || !date) {
-        console.error('fetch-schedule: Missing league or date parameter.');
-        throw new Error('League and date are required.');
-    }
-
-    try {
-        // Basic columns common to all leagues
-        let columns = 'Match,PostDtmUTC, Participant1, Participant2';
-        // Add MLB-specific columns
-        if (league === 'MLB') {
-            columns += ', DaySequence';
-        }
-
-        const query = `
-            SELECT ${columns}
-            FROM dbo.Match_V
-            WHERE League = @league
-            AND ScheduledDate = @date -- Assuming PostDtmUTC should be compared date-wise
-            ORDER BY PostDtmUTC ASC -- Or DaySequence for MLB if needed? TBD
-        `; // Note: Using CAST(... AS DATE) might impact performance. Consider dedicated ScheduledDate column if available.
-
-        const request = currentPool.request();
-        request.input('league', sql.VarChar, league);
-        request.input('date', sql.Date, date); // Send date as Date type
-
-        const result = await request.query(query);
-
-        console.log(`Schedule fetched for ${league} on ${date}:`, result.recordset.length, 'matches');
-        return result.recordset; // Return the array of matches
-    } catch (err) {
-        console.error(`Error fetching schedule for ${league} on ${date}:`, err);
-        throw err; // Rethrow the error to be handled by the renderer
-    }
-});
-
-// ---------- MLB-specific handlers ----------
-// --- Fetch MLB Game Data Handler ---
-ipcMain.handle('fetch-mlb-game-data', async (event, { league, date, participant1, participant2, daySequence }) => {
-    console.log(`IPC received: fetch-mlb-data for ${league} ${participant1}@${participant2} on ${date}`);
-    if (league !== 'MLB') {
-        console.error('fetch-mlb-data: Called for non-MLB league:', league);
-        throw new Error('Game data is only available for MLB at this time.');
-    }
-    if (!date || !participant1 || !participant2) {
-        console.error('fetch-mlb-data: Missing required parameters.');
-        throw new Error('Date, participant1, and participant2 are required for MLB game data.');
-    }
-
-    try {
-        // In the future, this would call an external API or query a different DB table
-        const gameData = await getGameDataMLB(date, participant1, participant2, daySequence);
-        console.log(`Game data generated for ${participant1}@${participant2} ${daySequence ? `#${daySequence}` : ''} on ${date}`);
-        return gameData; 
-    } catch (err) {
-        console.error(`Error fetching/generating MLB game data for ${participant1}@${participant2} on ${date}:`, err);
-        throw err; // Rethrow the error to be handled by the renderer
-    }
-});
-
-ipcMain.handle('fetch-mlb-game-player-stats', async (event, { matchupLineups, date }) => {
-  try {
-    console.log('IPC received: fetch-mlb-game-player-stats');
-    if (!currentPool) {
-      throw new Error('Not connected to database.');
-    }
-    const refinedMatchupLineups = await getPlayerStatsMLB(matchupLineups, date, currentPool);
-    return refinedMatchupLineups;
-  } catch (err) {
-    console.error(`Error fetching/generating MLB game player stats for matchupLineups:`, err);
-    throw err;
-  }
-});
-
-// --- MLB WebSocket Handlers ---
-
-ipcMain.handle('connect-to-web-socket-mlb', async (event, args) => {
-    console.log(`IPC received: connect-to-web-socket-mlb for game ${args.gameId}`);
-    if (!mlbWebSocketManager) {
-        console.error('MLB WebSocket manager not initialized');
-        throw new Error('WebSocket manager not initialized');
-    }
-    try {
-        await mlbWebSocketManager.connectToGame(args.gameId);
-        return { success: true };
-    } catch (err) {
-        console.error('Error connecting to MLB WebSocket:', err);
-        throw err;
-    }
-});
-
-ipcMain.handle('disconnect-from-web-socket-mlb', async (event, args) => {
-    console.log(`IPC received: disconnect-from-web-socket-mlb for game ${args.gameId}`);
-    if (!mlbWebSocketManager) {
-        console.error('MLB WebSocket manager not initialized');
-        throw new Error('WebSocket manager not initialized');
-    }
-    try {
-        await mlbWebSocketManager.disconnectFromGame(args.gameId);
-        return { success: true };
-    } catch (err) {
-        console.error('Error disconnecting from MLB WebSocket:', err);
-        throw err;
-    }
-});
-
-// Note: onMLBGameUpdate is handled by the WebSocket manager itself
-// through mainWindow.webContents.send('mlb-game-update', ...)
-
-// --- Simulate Matchup Handler ---
-ipcMain.handle('simulate-matchup-mlb', async (event, { numGames, matchupLineups, liveGameData }) => {
-  console.log(`IPC received: simulate-matchup for ${numGames} games`);
-  try {
-    const { runParallelSimulation } = require('./services/mlb/workers/workerPool');
-    return await runParallelSimulation(matchupLineups, numGames, liveGameData);
-  } catch (err) {
-    console.error(`Error simulating matchup:`, err);
-    throw err;
-  }
-});
 
 // --- Create Simulation Window ---
 ipcMain.handle('create-sim-window', async (event, { league, matchupId, timestamp, awayTeamName, homeTeamName }) => {
@@ -564,41 +380,6 @@ ipcMain.handle('create-sim-window', async (event, { league, matchupId, timestamp
     }
   } catch (err) {
     console.error('Error creating simulation window:', err);
-    throw err;
-  }
-});
-
-// --- Access Simulation Data ---
-ipcMain.handle('get-sim-data', async (event) => {
-  console.log('IPC received: get-sim-data');
-  
-  // Get the BrowserWindow instance that sent the request
-  const window = BrowserWindow.fromWebContents(event.sender);
-  
-  if (!window) {
-    console.error('Could not find window that sent the request');
-    throw new Error('Window not found');
-  }
-
-  const properties = window.simProperties;
-  const matchupId = properties.simMatchupId;
-  const timestamp = properties.simTimestamp;
-  const awayTeamName = properties.simAwayTeamName;
-  const homeTeamName = properties.simHomeTeamName;
-
-  if (!db) return [];
-  try {
-    const simData = await dbHelper.getSimData(db, matchupId, timestamp);
-    return {
-      simData: simData.simData,
-      inputData: simData.inputData,
-      matchId: matchupId,
-      timestamp,
-      awayTeamName,
-      homeTeamName
-    };
-  } catch (err) {
-    console.error('Error getting sim data:', err);
     throw err;
   }
 });
@@ -715,11 +496,6 @@ const menuTemplate = [
 app.whenReady().then(async () => {
     log.info("app 'ready' event triggered.");
 
-    // Create custom application menu
-    const menu = Menu.buildFromTemplate(menuTemplate); // Pass app and mainWindow
-    Menu.setApplicationMenu(menu);
-    log.info("Application menu created and set.");
-
     // Initialize the database before creating the main window
     try {
         log.info("app 'ready': Calling initializeDb...");
@@ -730,6 +506,35 @@ app.whenReady().then(async () => {
         // Consider app.quit() or other error handling if DB is critical for startup
         // For now, we log and continue to see if window creation proceeds/fails
     }
+
+    // Register shared handlers
+    registerSharedLeagueHandlers({
+        getCurrentPool: () => currentPool
+    });
+    log.info("Shared league IPC handlers registered.");
+
+    // Register profile handlers
+    registerProfileHandlers({
+        getDbHelper: () => dbHelper,
+        getDb: () => db
+    });
+    log.info("Profile IPC handlers registered.");
+
+    // Register MLB handlers with required dependencies
+    registerMLBHandlers({
+        getMlbWebSocketManager: () => mlbWebSocketManager,
+        viteDevServerUrl,
+        isDevelopment: process.env.NODE_ENV === 'development',
+        getDbHelper: () => dbHelper,
+        getDb: () => db,
+        getCurrentPool: () => currentPool
+    });
+    log.info("MLB IPC handlers registered.");
+
+    // Create custom application menu
+    const menu = Menu.buildFromTemplate(menuTemplate); // Pass app and mainWindow
+    Menu.setApplicationMenu(menu);
+    log.info("Application menu created and set.");
     
     try {
         log.info("app 'ready': Calling createMainWindow...");
