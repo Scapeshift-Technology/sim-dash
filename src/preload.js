@@ -35,14 +35,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     fetchSchedule: (args) => ipcRenderer.invoke('fetch-schedule', args),
 
     // ---------- MLB-specific functions ----------
-    // fetching data
+    // Fetching data
     fetchMlbGameData: (args) => ipcRenderer.invoke('fetch-mlb-game-data', args),
     fetchMlbGamePlayerStats: (args) => ipcRenderer.invoke('fetch-mlb-game-player-stats', args),
 
     // Simulations
     simulateMatchupMLB: (args) => ipcRenderer.invoke('simulate-matchup-mlb', args),
 
-    // WebSocket
+    // Live data (MLB)
     connectToWebSocketMLB: (args) => ipcRenderer.invoke('connect-to-web-socket-mlb', args),
     disconnectFromWebSocketMLB: (args) => ipcRenderer.invoke('disconnect-from-web-socket-mlb', args),
     onMLBGameUpdate: (callback) => {
@@ -55,6 +55,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
             ipcRenderer.removeListener('mlb-game-update', listener);
         };
     },
+    fetchInitialMLBLiveData: (args) => ipcRenderer.invoke('fetch-initial-mlb-live-data', args),
     
     // ---------- Simulation Windows ----------
     createSimWindow: (args) => ipcRenderer.invoke('create-sim-window', args),

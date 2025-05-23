@@ -132,6 +132,8 @@ function createGameStateFromLiveData(matchup: MatchupLineups, liveGameData: MlbL
     !!liveGameData.liveData.linescore.offense.third,
   ];
 
+  const isTopInning = liveGameData.liveData.linescore.inningHalf.toLowerCase().startsWith('t');
+
   const awayLineup = createCurrentLineup(matchup.away, liveGameData.liveData.boxscore.teams.away.battingOrder);
   const homeLineup = createCurrentLineup(matchup.home, liveGameData.liveData.boxscore.teams.home.battingOrder);
 
@@ -143,7 +145,7 @@ function createGameStateFromLiveData(matchup: MatchupLineups, liveGameData: MlbL
 
   const gameState = {
     inning: liveGameData.liveData.linescore.currentInning,
-    topInning: liveGameData.liveData.linescore.inningHalf.toLowerCase().startsWith('t'),
+    topInning: isTopInning,
     outs: liveGameData.liveData.linescore.outs,
     bases: bases,
     awayScore: liveGameData.liveData.linescore.teams.away.runs,
@@ -152,8 +154,8 @@ function createGameStateFromLiveData(matchup: MatchupLineups, liveGameData: MlbL
     // Batting order and current position
     awayLineup: awayLineup,
     homeLineup: homeLineup,
-    awayLineupPos: 0,
-    homeLineupPos: 0,
+    awayLineupPos: isTopInning ? liveGameData.liveData.linescore.offense.battingOrder - 1 : liveGameData.liveData.linescore.defense.battingOrder - 1,
+    homeLineupPos: isTopInning ? liveGameData.liveData.linescore.defense.battingOrder - 1 : liveGameData.liveData.linescore.offense.battingOrder - 1,
 
     // Bullpens
     awayBullpen: awayBullpen,

@@ -44,10 +44,11 @@ declare global {
       // Simulations
       simulateMatchupMLB: (args: { matchupLineups: MatchupLineups, numGames: number, liveGameData?: MlbLiveDataApiResponse }) => Promise<SimResults>;
 
-      // WebSocket
+      // Live data (MLB)
       connectToWebSocketMLB: (args: { gameId: number }) => Promise<void>;
       disconnectFromWebSocketMLB: (args: { gameId: number }) => Promise<void>;
       onMLBGameUpdate: (callback: (gameData: { data: MlbLiveDataApiResponse }) => void) => () => void; // Returns cleanup function
+      fetchInitialMLBLiveData: (args: { gameId: number }) => Promise<MlbGameApiResponse>; // Used before websockets for quick data infusion
       
       // ---------- Simulation Windows ----------
       createSimWindow: (args: { 

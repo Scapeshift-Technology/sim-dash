@@ -2,12 +2,15 @@ const { ipcMain, BrowserWindow } = require('electron');
 const { getGameDataMLB } = require('../../services/mlb/external/gameData');
 const { getPlayerStatsMLB } = require('../../services/mlb/db/playerStats');
 const { runParallelSimulation } = require('../../services/mlb/workers/workerPool');
+const { getMlbGameApiGame } = require('../../services/mlb/external/mlbApi');
 const log = require('electron-log/main');
 
 /**
  * MLB Game Data Handlers
  * Handlers for fetching and managing MLB game data
  */
+
+// ---------- Fetching data ----------
 
 // Handler for fetching MLB game data
 const handleFetchMLBGameData = async (event, { league, date, participant1, participant2, daySequence }) => {
@@ -49,10 +52,7 @@ const handleFetchMLBPlayerStats = async (event, { matchupLineups, date }, getCur
     }
 };
 
-/**
- * MLB WebSocket Handlers
- * Handlers for managing WebSocket connections for live MLB games
- */
+// ---------- Live data (MLB) ----------
 
 // Handler for connecting to MLB WebSocket
 const handleConnectToWebSocket = async (event, { gameId }, getMlbWebSocketManager) => {
@@ -90,10 +90,18 @@ const handleDisconnectFromWebSocket = async (event, { gameId }, getMlbWebSocketM
     }
 };
 
-/**
- * MLB Simulation Handlers
- * Handlers for managing MLB game simulations
- */
+// Handler for fetching initial MLB live data
+const handleFetchInitialMLBLiveData = async (event, { gameId }) => {
+    log.info(`Fetching initial MLB live data for game ${gameId}`);
+    try {
+        return await getMlbGameApiGame(gameId);
+    } catch (err) {
+        log.error('Error fetching initial MLB live data:', err);
+        throw err;
+    }
+};
+
+// ---------- Simulations ----------
 
 // Handler for simulating MLB matchups
 const handleSimulateMatchup = async (event, { numGames, matchupLineups, liveGameData }) => {
@@ -143,17 +151,17 @@ const handleGetMLBSimData = async (event, getDbHelper, getDb) => {
     }
 };
 
+// ---------- Main registration function ----------
+
 /**
  * Register all MLB-related IPC handlers
  * @param {Object} params - Parameters needed for handler registration
  * @param {Function} params.getMlbWebSocketManager - Function to get MLB WebSocket manager instance
- * @param {string} params.viteDevServerUrl - Vite dev server URL
- * @param {boolean} params.isDevelopment - Whether app is in development mode
  * @param {Function} params.getDbHelper - Function to get database helper instance
  * @param {Function} params.getDb - Function to get database instance
  * @param {Function} params.getCurrentPool - Function to get current SQL Server connection pool
  */
-const registerMLBHandlers = ({ getMlbWebSocketManager, viteDevServerUrl, isDevelopment, getDbHelper, getDb, getCurrentPool }) => {
+const registerMLBHandlers = ({ getMlbWebSocketManager, getDbHelper, getDb, getCurrentPool }) => {
     // Game Data Handlers
     ipcMain.handle('fetch-mlb-game-data', handleFetchMLBGameData);
     ipcMain.handle('fetch-mlb-game-player-stats', (event, args) => handleFetchMLBPlayerStats(event, args, getCurrentPool));
@@ -163,6 +171,8 @@ const registerMLBHandlers = ({ getMlbWebSocketManager, viteDevServerUrl, isDevel
         handleConnectToWebSocket(event, args, getMlbWebSocketManager));
     ipcMain.handle('disconnect-from-web-socket-mlb', (event, args) => 
         handleDisconnectFromWebSocket(event, args, getMlbWebSocketManager));
+    ipcMain.handle('fetch-initial-mlb-live-data', (event, args) => 
+        handleFetchInitialMLBLiveData(event, args));
 
     // Simulation Handlers
     ipcMain.handle('simulate-matchup-mlb', handleSimulateMatchup);

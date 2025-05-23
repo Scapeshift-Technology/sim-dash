@@ -82,6 +82,8 @@ export interface MlbGameApiResponse {
   
 // -- Websocket/linescore types --
 
+// -- I'm not confident that the MlbLiveDataApi___ and MlbGameApi___ types shouldn't be one and the same. -- 
+
 interface MlbLiveDataApiTeam {
   name: string;
 }
@@ -90,6 +92,9 @@ interface MlbLiveDataApiGameData {
   teams: {
     away: MlbLiveDataApiTeam;
     home: MlbLiveDataApiTeam;
+  }
+  status: {
+    abstractGameState: "Preview" | "Live" | "Final" | "Postponed" | "Delayed" | "Suspended" | "Cancelled";
   }
 };
 
@@ -130,7 +135,7 @@ interface MlbLiveDataApiBoxscore {
   }
 }
 
-export interface MlbLiveDataApiResponse {
+export interface MlbLiveDataApiResponse {  // Similar to MlbGameApiResponse, but different liveData
   gameData: MlbLiveDataApiGameData;
   liveData: {
     boxscore: MlbLiveDataApiBoxscore;
@@ -180,10 +185,12 @@ interface MlbLiveDataApiLinescoreOffense {
   third?: MlbLiveDataApiLinescorePlayer;
 
   pitcher: MlbLiveDataApiLinescorePlayer;
+  battingOrder: number;
 }
 
 interface MlbLiveDataApiLinescoreDefense {
   pitcher: MlbLiveDataApiLinescorePlayer;
+  battingOrder: number;
 }
 
 export interface MlbLiveDataApiLinescore {

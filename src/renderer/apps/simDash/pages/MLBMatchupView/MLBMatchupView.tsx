@@ -21,7 +21,6 @@ import BettingBoundsSection from './components/BettingBoundsSection';
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchSimResults, selectMatchSimResults, selectMatchSimStatus } from '@/simDash/store/slices/scheduleSlice';
 import {
-    fetchMlbGamePlayerStats,
     fetchMlbGameData,
     selectGameDataStatus, 
     selectGameDataError,
@@ -60,6 +59,7 @@ import { transformMLBGameInputs2ToDB } from '@/simDash/utils/transformers';
 import { SimResultsMLB } from '@@/types/bettingResults';
 import { convertLineupsToTSV } from '@/simDash/utils/copyUtils';
 import MLBGameBanner from './components/MLBGameBanner';
+import { useMLBMatchupData } from './hooks/useMLBMatchupData';
 
 // ---------- Sub-components ----------
 
@@ -144,80 +144,22 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     } = useLeanValidation({ league, matchId });
 
     // ---------- Effect ----------
-    useEffect(() => { // Fetch game data
-        if (dataStatus === 'idle') {
-            dispatch(fetchMlbGameData({
-                league,
-                date,
-                participant1,
-                participant2,
-                daySequence,
-                matchId
-            }));
-        }
-    }, [dispatch, league, date, participant1, participant2, daySequence, matchId]);
 
-    useEffect(() => { // Fetch player stats
-        if (dataStatus === 'succeeded' && playerStatsStatus === 'idle' && gameLineups) {
-            dispatch(fetchMlbGamePlayerStats({
-                matchId: matchId,
-                matchupLineups: (gameLineups),
-                date: date,
-                seriesGames: gameContainer?.seriesGames
-            }));
-        }
-    }, [dispatch, dataStatus, playerStatsStatus, gameLineups, matchId]);
-
-    useEffect(() => { // Fetch sim history
-        if (!matchId) return;
-        if (simHistoryStatus === 'idle') {
-            dispatch(fetchSimResults({ league, matchId }));
-        }
-    }, [dispatch, matchId, league, simHistoryStatus]);
-
-    useEffect(() => {
-        if (!gameLineups) return;
-        
-        const checkHistoricalStats = () => {
-            const allPlayers = [
-                ...gameLineups.away.lineup,
-                ...gameLineups.away.bench,
-                ...gameLineups.away.bullpen,
-                gameLineups.away.startingPitcher,
-                ...gameLineups.home.lineup,
-                ...gameLineups.home.bench,
-                ...gameLineups.home.bullpen,
-                gameLineups.home.startingPitcher
-            ];
-    
-            return allPlayers.some(player => 
-                player.stats?.statsDate && player.stats.statsDate !== date
-            );
-        };
-    
-        setHasHistoricalStats(checkHistoricalStats());
-    }, [gameLineups, date]);
-
-    useEffect(() => {
-        if (!mlbGameId) return;
-    
-        // Connect to WebSocket
-        console.log('Connecting to WebSocket for game:', mlbGameId);
-        window.electronAPI.connectToWebSocketMLB({ gameId: mlbGameId });
-    
-        // Set up update listener
-        const cleanup = window.electronAPI.onMLBGameUpdate((gameData: { data: MlbLiveDataApiResponse }) => {
-          console.log('Received game update:', gameData);
-          setLiveGameData(gameData.data);
-        });
-    
-        // Cleanup function
-        return () => {
-          console.log('Disconnecting from WebSocket');
-          cleanup(); // Remove the update listener
-          window.electronAPI.disconnectFromWebSocketMLB({ gameId: mlbGameId });
-        };
-      }, [mlbGameId]);
+    useMLBMatchupData({
+        matchId,
+        league,
+        date,
+        participant1,
+        participant2,
+        daySequence,
+        playerStatsStatus,
+        gameLineups,
+        gameContainer,
+        simHistoryStatus,
+        setHasHistoricalStats,
+        mlbGameId,
+        setLiveGameData
+    });
 
     // ---------- Handlers ----------
     const handleTeamLeanUpdate = (teamType: 'home' | 'away', leanType: 'offense' | 'defense', value: number) => {

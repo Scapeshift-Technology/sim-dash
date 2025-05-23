@@ -523,8 +523,6 @@ app.whenReady().then(async () => {
     // Register MLB handlers with required dependencies
     registerMLBHandlers({
         getMlbWebSocketManager: () => mlbWebSocketManager,
-        viteDevServerUrl,
-        isDevelopment: process.env.NODE_ENV === 'development',
         getDbHelper: () => dbHelper,
         getDb: () => db,
         getCurrentPool: () => currentPool
