@@ -17,7 +17,7 @@ function pastPlaysToSimPlays(liveGameData: MlbLiveDataApiResponse): PlayResult[]
 
   for (const play of liveGameData.liveData.plays.allPlays) {
     simPlays.push(pastPlayToSimPlay(play));
-  }
+  };
 
   return simPlays;
 }
@@ -28,7 +28,7 @@ export { pastPlaysToSimPlays };
 
 function pastPlayToSimPlay(pastPlay: MlbGameApiPlay): PlayResult {
   // Get bases before play
-  const runnerOriginBases = new Set(pastPlay.result.runners.map(runner => runner.movement.originBase || null).filter(base => base !== null));
+  const runnerOriginBases = new Set(pastPlay.runners.map(runner => runner.movement.originBase || null).filter(base => base !== null));
   const basesBefore = [
     runnerOriginBases.has('1B'),
     runnerOriginBases.has('2B'),

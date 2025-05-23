@@ -149,7 +149,7 @@ interface MlbGameApiPlays {
   allPlays: MlbGameApiPlay[];
 }
 
-interface MlbGameApiPlayResultRunner {
+interface MlbGameApiPlayRunner {
   movement: {
     originBase: string | null; // '1B', '2B', '3B', null
   }
@@ -160,8 +160,6 @@ interface MlbGameApiPlayResult {
   rbi: number;
   awayScore: number;
   homeScore: number;
-  runnerIndex: number[];
-  runners: MlbGameApiPlayResultRunner[];
 }
 
 export type MlbGameApiPlayResultEvent = "single" | "double" | "triple" | "home_run" | "walk" | "hit_by_pitch" | 
@@ -186,6 +184,7 @@ export interface MlbGameApiPlay {
   result: MlbGameApiPlayResult;
   about: MlbGameApiPlayAbout;
   count: MlbGameApiPlayCount;
+  runners: MlbGameApiPlayRunner[];
 }
 
 interface MlbGameApiMatchup {
