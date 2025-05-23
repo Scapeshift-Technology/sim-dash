@@ -12,6 +12,7 @@ const { Worker } = require('worker_threads');
 const { getGameDataMLB } = require('./services/mlb/external/gameData');
 const { testConnection } = require('./services/login/connection');
 const { initializeMLBWebSockets } = require('./services/mlb/external/webSocket');
+const { initializeGameState } = require('./services/mlb/sim/gameState');
 
 // Force the app name at the system level for macOS menu
 app.name = 'SimDash'; // Directly set app.name property
@@ -531,11 +532,11 @@ ipcMain.handle('disconnect-from-web-socket-mlb', async (event, args) => {
 // through mainWindow.webContents.send('mlb-game-update', ...)
 
 // --- Simulate Matchup Handler ---
-ipcMain.handle('simulate-matchup-mlb', async (event, { numGames, matchupLineups }) => {
+ipcMain.handle('simulate-matchup-mlb', async (event, { numGames, matchupLineups, liveGameData }) => {
   console.log(`IPC received: simulate-matchup for ${numGames} games`);
   try {
     const { runParallelSimulation } = require('./services/mlb/workers/workerPool');
-    return await runParallelSimulation(matchupLineups, numGames);
+    return await runParallelSimulation(matchupLineups, numGames, liveGameData);
   } catch (err) {
     console.error(`Error simulating matchup:`, err);
     throw err;

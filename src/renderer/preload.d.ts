@@ -42,12 +42,12 @@ declare global {
       fetchMlbGamePlayerStats: (args: { matchupLineups: MatchupLineups, date: string }) => Promise<MatchupLineups>;
 
       // Simulations
-      simulateMatchupMLB: (args: { matchupLineups: MatchupLineups, numGames: number }) => Promise<SimResults>;
+      simulateMatchupMLB: (args: { matchupLineups: MatchupLineups, numGames: number, liveGameData?: MlbLiveDataApiResponse }) => Promise<SimResults>;
 
       // WebSocket
       connectToWebSocketMLB: (args: { gameId: number }) => Promise<void>;
       disconnectFromWebSocketMLB: (args: { gameId: number }) => Promise<void>;
-      onMLBGameUpdate: (callback: (gameData: { data: MlbGameApiResponse }) => void) => () => void; // Returns cleanup function
+      onMLBGameUpdate: (callback: (gameData: { data: MlbLiveDataApiResponse }) => void) => () => void; // Returns cleanup function
       
       // ---------- Simulation Windows ----------
       createSimWindow: (args: { 

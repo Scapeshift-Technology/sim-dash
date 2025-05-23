@@ -14,7 +14,7 @@ import {
     Tooltip
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import type { Player, Position } from '@/types/mlb';
+import type { MlbLiveDataApiResponse, Player, Position } from '@/types/mlb';
 import DraggableLineup from './components/DraggableLineup';
 import MLBMatchupHeader from './components/MLBMatchupHeader';
 import BettingBoundsSection from './components/BettingBoundsSection';
@@ -134,6 +134,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const [selectedGameTab, setSelectedGameTab] = useState(0);
     const [showCopySuccess, setShowCopySuccess] = useState(false);
     const [hasHistoricalStats, setHasHistoricalStats] = useState(false);
+    const [liveGameData, setLiveGameData] = useState<MlbLiveDataApiResponse | undefined>(undefined);
 
     const {
         hasInvalidLeans,
@@ -197,6 +198,27 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         setHasHistoricalStats(checkHistoricalStats());
     }, [gameLineups, date]);
 
+    useEffect(() => {
+        if (!mlbGameId) return;
+    
+        // Connect to WebSocket
+        console.log('Connecting to WebSocket for game:', mlbGameId);
+        window.electronAPI.connectToWebSocketMLB({ gameId: mlbGameId });
+    
+        // Set up update listener
+        const cleanup = window.electronAPI.onMLBGameUpdate((gameData: { data: MlbLiveDataApiResponse }) => {
+          console.log('Received game update:', gameData);
+          setLiveGameData(gameData.data);
+        });
+    
+        // Cleanup function
+        return () => {
+          console.log('Disconnecting from WebSocket');
+          cleanup(); // Remove the update listener
+          window.electronAPI.disconnectFromWebSocketMLB({ gameId: mlbGameId });
+        };
+      }, [mlbGameId]);
+
     // ---------- Handlers ----------
     const handleTeamLeanUpdate = (teamType: 'home' | 'away', leanType: 'offense' | 'defense', value: number) => {
         dispatch(updateTeamLean({
@@ -258,7 +280,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             const result = await dispatch(runSimulationThunk({
                 league,
                 matchId,
-                gameInputs: gameContainer.currentGame
+                gameInputs: gameContainer.currentGame,
+                liveGameData: liveGameData
             })).unwrap();
             await saveAndUpdateHistory(result, gameContainer.currentGame as MLBGameInputs2);
         }
@@ -325,7 +348,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
 
     return (
         <Box sx={{ flexGrow: 1, p: 2 }}>
-            <MLBGameBanner mlbGameId={mlbGameId} />
+            <MLBGameBanner liveGameData={liveGameData} />
             <MLBMatchupHeader
                 participant1={participant1}
                 participant2={participant2}

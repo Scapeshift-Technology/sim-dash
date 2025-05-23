@@ -5,7 +5,7 @@ import { MLBGameInputs2, SeriesGameInputs } from "@/types/simInputs";
 import { runSeriesSimulation, runSimulation } from "@/simDash/pages/MLBMatchupView/functions/simulation";
 import { findOptimalLeans } from "@/simDash/pages/MLBMatchupView/functions/optimalLeans";
 import { MatchupLineups } from "@/preload";
-import { MarketLinesMLB } from "@@/types/mlb";
+import { MarketLinesMLB, MlbLiveDataApiResponse } from "@@/types/mlb";
 
 // --------------------
 // This slice contains data that is used to display the status of a simulation in the UI
@@ -72,14 +72,16 @@ export const runSimulationThunk = createAsyncThunk(
     league, // These inputs are necessary for the thunk reducers
     matchId,
     gameInputs,
-    numGames = 50000
+    numGames = 50000,
+    liveGameData
   }: {
     league: LeagueName;
     matchId: number;
     gameInputs: MLBGameInputs2;
     numGames?: number;
+    liveGameData?: MlbLiveDataApiResponse;
   }) => {
-    const results = await runSimulation(gameInputs, numGames);
+    const results = await runSimulation(gameInputs, numGames, liveGameData);
     return results;
   }
 );

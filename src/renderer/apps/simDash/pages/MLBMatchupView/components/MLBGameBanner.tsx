@@ -1,63 +1,35 @@
-import { useEffect, useState } from 'react';
-import { MlbGameApiResponse } from '@@/types/mlb';
 import { Paper, Box, Typography } from '@mui/material';
 import { teamNameToAbbreviationMLB } from '@@/services/mlb/utils/teamName';
 import BasesAndCountDisplay from './BasesAndCountDisplay';
+import { MlbLiveDataApiResponse } from '@@/types/mlb';
 
 // ---------- Main components ----------
 
 type MLBGameBannerProps = {
-  mlbGameId: number | undefined;
+  liveGameData: MlbLiveDataApiResponse | undefined;
 };
 
-const MLBGameBanner = ({ mlbGameId }: MLBGameBannerProps) => {
-
-  // ---------- State ----------
-
-  const [gameData, setGameData] = useState<MlbGameApiResponse | null>(null);
-
-  // ---------- useEffect ----------
-
-  useEffect(() => {
-    if (!mlbGameId) return;
-
-    // Connect to WebSocket
-    console.log('Connecting to WebSocket for game:', mlbGameId);
-    window.electronAPI.connectToWebSocketMLB({ gameId: mlbGameId });
-
-    // Set up update listener
-    const cleanup = window.electronAPI.onMLBGameUpdate((gameData: any) => {
-      console.log('Received game update:', gameData);
-      setGameData(gameData.data);
-    });
-
-    // Cleanup function
-    return () => {
-      console.log('Disconnecting from WebSocket');
-      cleanup(); // Remove the update listener
-      window.electronAPI.disconnectFromWebSocketMLB({ gameId: mlbGameId });
-    };
-  }, [mlbGameId]);
+const MLBGameBanner = ({ liveGameData }: MLBGameBannerProps) => {
 
   // ---------- Render ----------
-  if (!mlbGameId || !gameData) return null;
+  if (!liveGameData) return null;
 
-  const awayTeam = teamNameToAbbreviationMLB(gameData.gameData.teams.away.name);
-  const homeTeam = teamNameToAbbreviationMLB(gameData.gameData.teams.home.name);
-  const awayScore = gameData.liveData.linescore.teams.away.runs;
-  const homeScore = gameData.liveData.linescore.teams.home.runs;
-  const inningStr = `${gameData.liveData.linescore.inningHalf.slice(0, 3).toUpperCase()} ${gameData.liveData.linescore.currentInningOrdinal}`;
+  const awayTeam = teamNameToAbbreviationMLB(liveGameData.gameData.teams.away.name);
+  const homeTeam = teamNameToAbbreviationMLB(liveGameData.gameData.teams.home.name);
+  const awayScore = liveGameData.liveData.linescore.teams.away.runs;
+  const homeScore = liveGameData.liveData.linescore.teams.home.runs;
+  const inningStr = `${liveGameData.liveData.linescore.inningHalf.slice(0, 3).toUpperCase()} ${liveGameData.liveData.linescore.currentInningOrdinal}`;
   
   const isTopInning = inningStr.includes("TOP");
-  const currentPitcher = gameData.liveData.plays.currentPlay.matchup.pitcher.fullName;
-  const currentBatter = gameData.liveData.plays.currentPlay.matchup.batter.fullName;
+  const currentPitcher = liveGameData.liveData.plays.currentPlay.matchup.pitcher.fullName;
+  const currentBatter = liveGameData.liveData.plays.currentPlay.matchup.batter.fullName;
 
-  const balls = gameData.liveData.linescore.balls;
-  const strikes = gameData.liveData.linescore.strikes;
-  const outs = gameData.liveData.linescore.outs;
-  const firstBase = gameData.liveData.linescore.offense.first?.fullName;
-  const secondBase = gameData.liveData.linescore.offense.second?.fullName;
-  const thirdBase = gameData.liveData.linescore.offense.third?.fullName;
+  const balls = liveGameData.liveData.linescore.balls;
+  const strikes = liveGameData.liveData.linescore.strikes;
+  const outs = liveGameData.liveData.linescore.outs;
+  const firstBase = liveGameData.liveData.linescore.offense.first?.fullName;
+  const secondBase = liveGameData.liveData.linescore.offense.second?.fullName;
+  const thirdBase = liveGameData.liveData.linescore.offense.third?.fullName;
 
   return (
     <Paper 

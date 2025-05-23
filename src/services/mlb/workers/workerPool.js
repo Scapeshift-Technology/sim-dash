@@ -3,7 +3,7 @@ const path = require('path');
 
 // ---------- Main function ----------
 
-async function runParallelSimulation(matchupLineups, numGames) {
+async function runParallelSimulation(matchupLineups, numGames, liveGameData) {
   const workerPool = createWorkerPool(numGames);
     
   const workerPromises = workerPool.map(({ worker, games }) => 
@@ -16,7 +16,7 @@ async function runParallelSimulation(matchupLineups, numGames) {
         worker.terminate();
         reject(err);
       });
-      worker.postMessage({ matchupLineups, numGames: games });
+      worker.postMessage({ matchupLineups, numGames: games, liveGameData });
     })
   );
   

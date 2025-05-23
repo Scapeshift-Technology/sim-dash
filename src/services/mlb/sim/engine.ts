@@ -6,7 +6,8 @@ import {
   GameStateMLB, 
   Player, 
   Stats, 
-  EventType
+  EventType,
+  MlbLiveDataApiResponse
 } from "@/types/mlb";
 import { leagueAvgStats } from "./exampleMatchup";
 import { getMatchupProbabilities } from "./probabilities";
@@ -15,6 +16,7 @@ import { calculateSimCounts } from "./analysis/analyzeResults";
 import { SimResultsMLB } from "@/types/bettingResults";
 import { evaluatePitchingSubstitution } from "./pitcherSubstitution";
 import { processEvent } from "./baserunning2";
+import { initializeGameState } from "./gameState";
 
 // ---------- MLB sim engine ----------
 /**
@@ -25,12 +27,13 @@ import { processEvent } from "./baserunning2";
 async function simulateMatchupMLB(
   matchup: MatchupLineups,
 //   leagueAvgStats: LeagueAvgStats,
-  num_games: number = 50000
+  num_games: number = 50000,
+  liveGameData?: MlbLiveDataApiResponse
 ) {
   // Matchup probabilities
   await initializeHomeFieldMultipliers();
 
-  const simPlays = simulateGames(matchup, leagueAvgStats, num_games);
+  const simPlays = simulateGames(matchup, leagueAvgStats, num_games, liveGameData);
 
   // Get results
   const outputResults: SimResultsMLB = calculateSimCounts(simPlays, matchup);
@@ -38,12 +41,12 @@ async function simulateMatchupMLB(
   return outputResults;
 }
 
-function simulateGames(matchup: MatchupLineups, leagueAvgStats: LeagueAvgStats, num_games: number): PlayResult[][] {
+function simulateGames(matchup: MatchupLineups, leagueAvgStats: LeagueAvgStats, num_games: number, liveGameData?: MlbLiveDataApiResponse): PlayResult[][] {
   const matchupProbabilities: GameMatchupProbabilities = getMatchupProbabilities(matchup, leagueAvgStats);
   const allPlays: PlayResult[][] = [];
 
   for (let i = 0; i < num_games; i++) {
-    const gamePlays = simulateGame(matchup, matchupProbabilities);
+    const gamePlays = simulateGame(matchup, matchupProbabilities, liveGameData);
     allPlays.push(gamePlays);
   }
 
@@ -56,9 +59,9 @@ function simulateGames(matchup: MatchupLineups, leagueAvgStats: LeagueAvgStats, 
  * @param matchupProbabilities 
  * @returns {PlayResult[]} An array of plays that happened during the game
  */
-function simulateGame(matchup: MatchupLineups, matchupProbabilities: GameMatchupProbabilities): PlayResult[] {
+function simulateGame(matchup: MatchupLineups, matchupProbabilities: GameMatchupProbabilities, liveGameData?: MlbLiveDataApiResponse): PlayResult[] {
   const plays: PlayResult[] = [];
-  const gameState = initializeGameState(matchup);
+  const gameState = initializeGameState(matchup, liveGameData);
 
   while (true) {
     const playResult = simulatePlay(gameState, matchupProbabilities);
@@ -179,51 +182,6 @@ function simulatePlayResult(atBatMatchupProbabilities: Stats): EventType {
   
   // Default to OUT if somehow we get here
   return 'OUT';
-}
-
-function initializeGameState(matchup: MatchupLineups): GameStateMLB {
-  const { away, home } = matchup;
-
-  const awayLineup = away.lineup;
-  const homeLineup = home.lineup;
-
-  const awayData = matchup.away;
-  const homeData = matchup.home;
-
-  return {
-    inning: 1,
-    topInning: true,
-    outs: 0,
-    bases: [false, false, false],  // [first, second, third]
-    awayScore: 0,
-    homeScore: 0,
-    
-    // Track batting order and current position
-    awayLineup: awayLineup,
-    homeLineup: homeLineup,
-    awayLineupPos: 0,
-    homeLineupPos: 0,
-
-    // Bullpens
-    awayBullpen: [...awayData.bullpen],
-    homeBullpen: [...homeData.bullpen], 
-
-    // Pitcher tracking
-    awayPitcher: {
-      id: awayData.startingPitcher.id,
-      battersFaced: 0,
-      recentResults: [],
-    //   avgBF: awayData.startingPitcher.stats['avgBF'],
-      position: 'SP'
-    },
-    homePitcher: {
-      id: homeData.startingPitcher.id,
-      battersFaced: 0,
-      recentResults: [],
-    //   avgBF: homeData.startingPitcher.stats['avgBF'],
-      position: 'SP'
-    }
-  }
 }
 
 export { simulateMatchupMLB };
