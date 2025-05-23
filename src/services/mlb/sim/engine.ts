@@ -33,10 +33,11 @@ async function simulateMatchupMLB(
   // Matchup probabilities
   await initializeHomeFieldMultipliers();
 
+  // Simulate games
   const simPlays = simulateGames(matchup, leagueAvgStats, num_games, liveGameData);
 
   // Get results
-  const outputResults: SimResultsMLB = calculateSimCounts(simPlays, matchup);
+  const outputResults: SimResultsMLB = calculateSimCounts(simPlays, matchup, liveGameData);
 
   return outputResults;
 }

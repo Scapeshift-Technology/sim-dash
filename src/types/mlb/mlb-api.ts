@@ -149,22 +149,51 @@ interface MlbGameApiPlays {
   allPlays: MlbGameApiPlay[];
 }
 
+interface MlbGameApiPlayResultRunner {
+  movement: {
+    originBase: string | null; // '1B', '2B', '3B', null
+  }
+}
+
 interface MlbGameApiPlayResult {
   eventType: MlbGameApiPlayResultEvent;
+  rbi: number;
+  awayScore: number;
+  homeScore: number;
+  runnerIndex: number[];
+  runners: MlbGameApiPlayResultRunner[];
 }
 
 export type MlbGameApiPlayResultEvent = "single" | "double" | "triple" | "home_run" | "walk" | "hit_by_pitch" | 
   "strikeout" | "field_out" | 'force_out' | 'fielders_choice' | 'fielders_choice_out' | 'grounded_into_double_play' |
   'sac_fly' | 'double_play' | 'triple_play' | 'sac_fly_double_play' | 'field_error';
 
-interface MlbGameApiPlay {
+interface MlbGameApiPlayAbout {
+  inning: number;
+  halfInning: string;
+  isTopInning: boolean;
+  outs: number;
+}
+
+interface MlbGameApiPlayCount {
+  outs: number;
+  strikes: number;
+  balls: number;
+}
+
+export interface MlbGameApiPlay {
   matchup: MlbGameApiMatchup;
   result: MlbGameApiPlayResult;
+  about: MlbGameApiPlayAbout;
+  count: MlbGameApiPlayCount;
 }
 
 interface MlbGameApiMatchup {
   pitcher: MlbLiveDataApiLinescorePlayer;
   batter: MlbLiveDataApiLinescorePlayer;
+  postOnFirst?: MlbLiveDataApiLinescorePlayer;
+  postOnSecond?: MlbLiveDataApiLinescorePlayer;
+  postOnThird?: MlbLiveDataApiLinescorePlayer;
 }
 
 interface MlbLiveDataApiLinescoreTeam {

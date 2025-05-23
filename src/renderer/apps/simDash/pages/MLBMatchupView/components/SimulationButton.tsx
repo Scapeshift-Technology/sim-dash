@@ -49,7 +49,8 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
 
     // ---------- Render ----------
 
-    const showDropdown = seriesGames || liveGameData;
+    const isGameLive = liveGameData && liveGameData.gameData.status.abstractGameState === 'Live';
+    const showDropdown = seriesGames || isGameLive;
 
     if (!showDropdown) {
         return (
@@ -119,7 +120,7 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
             >
                 <MenuItem onClick={() => handleMenuItemClick('game')}>Simulate Game</MenuItem>
                 {seriesGames && <MenuItem onClick={() => handleMenuItemClick('series')}>Simulate Series</MenuItem>}
-                {liveGameData && <MenuItem onClick={() => handleMenuItemClick('live')}>Sim From Live Startpoint</MenuItem>}
+                {isGameLive && <MenuItem onClick={() => handleMenuItemClick('live')}>Simulate Live Game</MenuItem>}
             </Menu>
         </>
     );
