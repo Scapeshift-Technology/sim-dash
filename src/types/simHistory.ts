@@ -24,6 +24,7 @@ export interface SimMetadataMLB { // Much like GameMetadataMLB from ./mlb.ts, bu
     lineupsSource: LineupsSource;
     bettingBounds?: MarketLinesMLB;
     automatedLeans?: MLBGameSimInputs;
+    gameTimestamp?: string;
 }
 
 export interface ReducedMatchupLineups { // Like MatchupLineups from ./mlb.ts with less info

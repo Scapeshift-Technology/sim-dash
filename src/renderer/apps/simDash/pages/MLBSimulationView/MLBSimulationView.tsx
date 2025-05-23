@@ -38,7 +38,7 @@ const MLBSimulationView: React.FC = () => {
     firstInningProps: true,
     playerProps: true
   });
-  const [timestamp, setTimestamp] = useState<string | null>(null);
+  const [simTimestamp, setSimTimestamp] = useState<string | null>(null);
   const [awayTeamName, setAwayTeamName] = useState<string | null>(null);
   const [homeTeamName, setHomeTeamName] = useState<string | null>(null);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
@@ -57,7 +57,7 @@ const MLBSimulationView: React.FC = () => {
           setSimInputs(data.inputData.simInputs);
           setLineups(data.inputData.lineups);
           setGameInfo(data.inputData.gameInfo);
-          setTimestamp(data.timestamp);
+          setSimTimestamp(data.timestamp);
           setAwayTeamName(data.awayTeamName);
           setHomeTeamName(data.homeTeamName);
         }
@@ -79,7 +79,7 @@ const MLBSimulationView: React.FC = () => {
   };
 
   const handleCopyResults = () => {
-    const results = copyAllResults(sidesData, totalsData, propsData, seriesData, simInputs, lineups, gameInfo, awayTeamName, homeTeamName);
+    const results = copyAllResults(sidesData, totalsData, propsData, seriesData, simInputs, lineups, gameInfo, awayTeamName, homeTeamName, simTimestamp);
     navigator.clipboard.writeText(results).then(() => {
       setShowCopySuccess(true);
     }).catch(err => {
@@ -143,8 +143,8 @@ const MLBSimulationView: React.FC = () => {
         >
           {awayTeamName} @ {homeTeamName}
         </Typography>
-        {timestamp && (
-          <h5 style={{ marginTop: '0px', paddingTop: '0px', marginBottom: '8px' }}>Simulated at {new Date(timestamp).toLocaleString()}</h5>
+        {simTimestamp && (
+          <h5 style={{ marginTop: '0px', paddingTop: '0px', marginBottom: '8px' }}>Simulated at {new Date(simTimestamp).toLocaleString()}</h5>
         )}
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>

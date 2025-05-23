@@ -18,6 +18,7 @@ export interface GameMetadataMLB {
   bettingBounds?: MarketLinesMLB;
   automatedLeans?: MLBGameSimInputs;
   mlbGameId?: number;
+  gameTimestamp?: string;
 }
 
 export interface MLBGameData { // Very similar to MLBGameInputs2(type in simInputs.ts), but with less info

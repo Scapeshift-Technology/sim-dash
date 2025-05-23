@@ -16,6 +16,7 @@ import { convertLineupsToTSV } from '@/simDash/utils/copyUtils';
 import { MarketLinesMLB } from '@@/types/mlb';
 import { displayAmericanOdds } from '@/simDash/utils/display';
 import { MLBGameSimInputs, MLBGameSimInputsTeam } from '@@/types/simInputs';
+import { teamNameToAbbreviationMLB } from '@@/services/mlb/utils/teamName';
 
 // ---------- Main function ----------
 
@@ -28,33 +29,38 @@ const copyAllResults = (
     lineups: ReducedMatchupLineups | null,
     gameInfo: SimMetadataMLB | null,
     awayTeamName: string | null,
-    homeTeamName: string | null
+    homeTeamName: string | null,
+    simTimestamp: string | null
 ): string => {
     if (!sidesData || !totalsData || !propsData || !lineups || !gameInfo || !awayTeamName || !homeTeamName) return '';
 
     // Get left column content
     const leftSections: string[] = [];
-    
-    // 1. Lineups
-    const lineupsTSV = convertLineupsToTSV(lineups, gameInfo, awayTeamName, homeTeamName);
-    leftSections.push(lineupsTSV);
 
-    // 2. Betting bounds
+    // 1. Game & sim info
+    const gameAndSimInfoTSV = copyGameAndSimInfo(awayTeamName, homeTeamName, simTimestamp, gameInfo.gameTimestamp);
+    leftSections.push(gameAndSimInfoTSV);
+    
+    // 2. Lineups
+    const lineupsTSV = convertLineupsToTSV(lineups, gameInfo, awayTeamName, homeTeamName);
+    leftSections.push('', lineupsTSV);
+
+    // 3. Betting bounds
     if (gameInfo.bettingBounds) {
         const boundsTSV = copyBettingBounds(gameInfo.bettingBounds as MarketLinesMLB);
         leftSections.push('', boundsTSV);
     }
 
-    // 3. Leans
+    // 4. Leans
     const leansTSV = copyLeans(simInputs);
     leftSections.push('', leansTSV);
     
-    // 4. First inning props
+    // 5. First inning props
     const firstInningData = formatFirstInningData(propsData.firstInning);
     const firstInningTSV = convertTableToTSV(firstInningData, firstInningColumns);
     leftSections.push('', firstInningTSV);
     
-    // 5. Series (if exists)
+    // 6. Series (if exists)
     if (seriesData.length > 0) {
         const seriesTSV = copySeries(seriesData);
         leftSections.push('', seriesTSV);
@@ -91,6 +97,20 @@ export { copyAllResults };
 
 // ---------- Helper functions ----------
 // ----- Copy functions -----
+
+const copyGameAndSimInfo = (awayTeamName: string, homeTeamName: string, simTimestamp: string | null, gameTimestamp: string | undefined): string => {
+    const awayTeamAbbrev = teamNameToAbbreviationMLB(awayTeamName);
+    const homeTeamAbbrev = teamNameToAbbreviationMLB(homeTeamName);
+    const simTime = simTimestamp ? new Date(simTimestamp).toLocaleString() : 'unknown time';
+    const gameDate = gameTimestamp ? new Date(gameTimestamp).toLocaleString() : null;
+
+    const rows: string[] = [
+        `Game:\t${awayTeamAbbrev} @ ${homeTeamAbbrev}${gameDate ? ` ${gameDate}` : ''}`,
+        `Simulated at:\t${simTime}`,
+    ]
+
+    return rows.join('\n');
+}
 
 const copyBettingBounds = (bettingBounds: MarketLinesMLB): string => {
     const { awayML, homeML, over, under } = bettingBounds;

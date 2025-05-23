@@ -219,7 +219,7 @@ export interface MlbScheduleApiTeam {
 export interface MlbScheduleApiGame {
   gamePk: number;
   officialDate: string;
-  gameDate: string;
+  gameDate: string; // Timestamp string
   gameNumber: number;
   gamesInSeries: number;
   teams: {

@@ -1,10 +1,10 @@
-import { GameMetadataMLB, MatchupLineups, MLBGameDataResponse, MlbScheduleApiGame, MlbScheduleApiResponse, SeriesInfoMLB } from '@/types/mlb'
+import { GameMetadataMLB, MLBGameDataResponse, MlbScheduleApiGame, MlbScheduleApiResponse, SeriesInfoMLB } from '@/types/mlb'
 import { getLineupsMLB } from './lineups';
 import { teamNameToMLBApiTeamName } from '../utils/teamName';
 
 import { MLBGameData } from "@/types/mlb";
 
-import { extractTeamIdsSchedule, formatDateMlbApi, getMlbScheduleApiGame, getMlbScheduleApiGames, getMlbTeamId } from './mlbApi';
+import { formatDateMlbApi, getMlbScheduleApiGame, getMlbScheduleApiGames, getMlbTeamId } from './mlbApi';
 
 // ---------- Main function ----------
 /**
@@ -39,23 +39,11 @@ async function getGameDataMLB(date: string, awayTeam: string, homeTeam: string, 
       }
     }
 
-    // Get matchup lineups and source
-    const { matchupLineups, lineupsSource } = await getLineupsMLB(formattedDate, awayTeamNameMLB, homeTeamNameMLB, daySequenceNumber, game);
-    const gameInfo: GameMetadataMLB = {
-      seriesGameNumber: game.seriesGameNumber,
-      lineupsSource,
-      mlbGameId: game.gamePk
-    }
+    const gameData = await fetchBasicGameData(formattedDate, awayTeamNameMLB, homeTeamNameMLB, daySequenceNumber, game);
 
-    // Put it all together
-    const gameData: MLBGameDataResponse = {
-      currentGame: {
-        lineups: matchupLineups,
-        gameInfo
-      }
-    }
-
-    return gameData;
+    return {
+      currentGame: gameData
+    };
   } catch (error) {
     console.error('Error getting game data:', error);
     throw error;
@@ -65,6 +53,32 @@ async function getGameDataMLB(date: string, awayTeam: string, homeTeam: string, 
 export { getGameDataMLB };
 
 // ---------- Helper functions ----------
+
+/**
+ * Fetches the basic game data shared between different game data functions.
+ * @private
+ */
+async function fetchBasicGameData(
+  date: string,
+  awayTeam: string,
+  homeTeam: string,
+  daySequenceNumber: number,
+  game: MlbScheduleApiGame
+): Promise<MLBGameData> {
+  const { matchupLineups, lineupsSource } = await getLineupsMLB(date, awayTeam, homeTeam, daySequenceNumber, game);
+
+  const gameInfo: GameMetadataMLB = {
+    seriesGameNumber: game.seriesGameNumber,
+    lineupsSource,
+    mlbGameId: game.gamePk,
+    gameTimestamp: game.gameDate
+  }
+
+  return {
+    lineups: matchupLineups,
+    gameInfo
+  };
+}
 
 /**
  * Gets the series info for a given matchup.
@@ -115,19 +129,7 @@ async function getSeriesInfoMLB(date: string, awayTeamName: string, homeTeamName
  */
 async function getIndividualGameDataMLB(date: string, awayTeam: string, homeTeam: string, daySequenceNumber: number): Promise<MLBGameData> {
   const game: MlbScheduleApiGame = await getMlbScheduleApiGame(date, awayTeam, homeTeam, daySequenceNumber);
-
-  const { matchupLineups, lineupsSource } = await getLineupsMLB(date, awayTeam, homeTeam, daySequenceNumber, game);
-
-  const gameInfo: GameMetadataMLB = {
-    seriesGameNumber: game.seriesGameNumber,
-    lineupsSource,
-    mlbGameId: game.gamePk
-  }
-
-  return {
-    lineups: matchupLineups,
-    gameInfo
-  }
+  return fetchBasicGameData(date, awayTeam, homeTeam, daySequenceNumber, game);
 }
   
 /**
