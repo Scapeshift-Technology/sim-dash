@@ -47,7 +47,7 @@ declare global {
       // Live data (MLB)
       connectToWebSocketMLB: (args: { gameId: number }) => Promise<void>;
       disconnectFromWebSocketMLB: (args: { gameId: number }) => Promise<void>;
-      onMLBGameUpdate: (callback: (gameData: { data: MlbLiveDataApiResponse }) => void) => () => void; // Returns cleanup function
+      onMLBGameUpdate: (callback: (gameData: { data: MlbLiveDataApiResponse, gameId: number }) => void) => () => void; // Returns cleanup function
       fetchInitialMLBLiveData: (args: { gameId: number }) => Promise<MlbGameApiResponse>; // Used before websockets for quick data infusion
       
       // ---------- Simulation Windows ----------

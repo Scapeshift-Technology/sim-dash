@@ -103,7 +103,6 @@ export const useMLBMatchupData = (props: UseMLBMatchupDataProps) => {
         async function fetchInitialLiveData() {
             try {
                 const liveData = await window.electronAPI.fetchInitialMLBLiveData({ gameId: mlbGameId as number });
-                console.log('INITIAL LIVE DATA:', liveData);
                 setLiveGameData(liveData); // Slight type mismatch here
             } catch (error) {
                 console.error('Error fetching initial live data:', error);
@@ -116,9 +115,10 @@ export const useMLBMatchupData = (props: UseMLBMatchupDataProps) => {
         window.electronAPI.connectToWebSocketMLB({ gameId: mlbGameId });
     
         // Set up update listener
-        const cleanup = window.electronAPI.onMLBGameUpdate((gameData: { data: MlbLiveDataApiResponse }) => {
-          console.log('Received game update:', gameData);
-          setLiveGameData(gameData.data);
+        const cleanup = window.electronAPI.onMLBGameUpdate((gameData: { data: MlbLiveDataApiResponse, gameId: number }) => {
+          if (mlbGameId === gameData.gameId) {
+            setLiveGameData(gameData.data);
+          }
         });
     
         // Cleanup function
