@@ -71,11 +71,11 @@ function getLines(type: 'combined' | 'home' | 'away', period: 'fullGame' | 'firs
     if (period === 'fullGame') {
       return [6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 10.5, 11, 11.5, 12];
     } else {
-      return [2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5];
+      return [2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5];
     }
   } else {
     if (period === 'fullGame') {
-      return [2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6];
+      return [2.0, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7.5, 8, 8.5];
     } else {
       return [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4];
     }
