@@ -11,7 +11,8 @@ import {
   getMlbRosterApiRoster, 
   getMlbTeamId,
   getProbablePitchers,
-  extractBenchFromMlbRoster
+  extractBenchFromMlbRoster,
+  extractUnavailablePitchersFromMlbRoster
 } from "./mlbApi";
 import { createTargetMatchup } from "../utils/teamName";
 
@@ -65,6 +66,7 @@ async function extractTeamLineupFromSwishLineupCard(lineupCard: string, date: st
   
   // Get the team's starting pitcher
   const startingPitcher = await extractStartingPitcherFromSwishLineupCard(lineupCard, rosterInfo, teamId, teamType);
+  const unavailablePitchers = extractUnavailablePitchersFromMlbRoster(rosterInfo, probablePitchers, startingPitcher.id);
 
   // Get the lineup
   const lineup = await getLineupFromSwishLineupCard(lineupCard, rosterInfo, teamId, teamType);
@@ -80,6 +82,8 @@ async function extractTeamLineupFromSwishLineupCard(lineupCard: string, date: st
     startingPitcher: startingPitcher,
     bullpen: bullpen,
     bench: bench,
+    unavailableHitters: [],
+    unavailablePitchers: unavailablePitchers,
     teamName: teamName
   };
 }

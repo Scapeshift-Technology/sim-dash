@@ -91,6 +91,11 @@ export interface TeamLineup {
     startingPitcher: Player;
     bullpen: Player[]; // Relief pitchers available
     bench: Player[]; // Position players sitting
+
+    // Ex: A starter who threw yesterday, a player already taken out of the game in a mid-game sim, etc.
+    unavailableHitters: Player[]; // Hitters who are not in the lineup and will not be used in the sim.
+    unavailablePitchers: Player[]; // Pitchers who are not in the lineup and will not be used in the sim.
+    
     teamName: string;
 }
 
