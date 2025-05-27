@@ -1,15 +1,23 @@
-import { MatchupLineups, Player, TeamLineup, LineupsSource } from '@/types/mlb';
-import { MLBGameSimInputData, ReducedMatchupLineups, ReducedPlayer, ReducedTeamLineup, SimMetadataMLB } from '@/types/simHistory';
+import { MatchupLineups, Player, TeamLineup, LineupsSource, MlbLiveDataApiResponse } from '@/types/mlb';
+import { MLBGameSimInputData, ReducedGameStateMLB, ReducedMatchupLineups, ReducedPlayer, ReducedTeamLineup, SimMetadataMLB } from '@/types/simHistory';
 import { MLBGameInputs2, MLBGameSimInputs } from '@/types/simInputs';
+import { createReducedGameStateFromLiveData } from '@/mlb/utils/gameState';
 
-// ---------- Matchup Lineups ----------\
+// ---------- Main function ----------
 
-function transformMLBGameInputs2ToDB(gameInputs: MLBGameInputs2): MLBGameSimInputData {
+function transformMLBGameInputs2ToDB(gameInputs: MLBGameInputs2, liveGameData?: MlbLiveDataApiResponse): MLBGameSimInputData {
     const simInputs: MLBGameSimInputs = gameInputs.simInputs;
     const lineups: ReducedMatchupLineups = transformMatchupLineupsToReduced(gameInputs.lineups);
+    let gameState: ReducedGameStateMLB | undefined;
+    if (liveGameData) {
+        gameState = createReducedGameStateFromLiveData(lineups, liveGameData);
+    }
+
+    // const gameState: ReducedGameStateMLB = transformGameStateToReduced(gameInputs.liveGameData);
     const gameInfo: SimMetadataMLB = {
         ...gameInputs.gameInfo,
         lineupsSource: gameInputs.gameInfo.lineupsSource as LineupsSource,
+        gameState
     }
 
     return {
@@ -18,6 +26,14 @@ function transformMLBGameInputs2ToDB(gameInputs: MLBGameInputs2): MLBGameSimInpu
         gameInfo
     }
 }
+
+// ---------- Game State ----------
+
+
+
+
+
+// ---------- Matchup Lineups ----------
 
 function transformMatchupLineupsToReduced(matchupLineups: MatchupLineups): ReducedMatchupLineups {
     return {

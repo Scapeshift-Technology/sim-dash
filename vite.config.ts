@@ -12,11 +12,12 @@ export default defineConfig({
   root: path.resolve(__dirname, 'src/renderer'),
   resolve: {
     alias: {
+      '@/mlb': path.resolve(__dirname, 'src/services/mlb'),
       '@/simDash': path.resolve(__dirname, 'src/renderer/apps/simDash'),
       '@/accounting': path.resolve(__dirname, 'src/renderer/apps/accounting'),
       '@/types': path.resolve(__dirname, 'types'),
       '@@': path.resolve(__dirname, 'src'),
-      '@': path.resolve(__dirname, 'src/renderer'),
+      '@': path.resolve(__dirname, 'src/renderer') // MUST BE LAST(If ahead of others, will override and cause errors)
     }
   },
   build: {
