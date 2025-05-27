@@ -30,16 +30,19 @@ async function simulateMatchupMLB(
   num_games: number = 50000,
   liveGameData?: MlbLiveDataApiResponse
 ) {
-  // Matchup probabilities
-  await initializeHomeFieldMultipliers();
+  try {
+    // Matchup probabilities
+    await initializeHomeFieldMultipliers();
 
-  // Simulate games
-  const simPlays = simulateGames(matchup, leagueAvgStats, num_games, liveGameData);
+    // Simulate games
+    const simPlays = simulateGames(matchup, leagueAvgStats, num_games, liveGameData);
+    // Get results
+    const outputResults: SimResultsMLB = calculateSimCounts(simPlays, matchup, liveGameData);
 
-  // Get results
-  const outputResults: SimResultsMLB = calculateSimCounts(simPlays, matchup, liveGameData);
-
-  return outputResults;
+    return outputResults;
+  } catch (error) {
+    console.error('Error simulating games:', error);
+  }
 }
 
 function simulateGames(matchup: MatchupLineups, leagueAvgStats: LeagueAvgStats, num_games: number, liveGameData?: MlbLiveDataApiResponse): PlayResult[][] {
