@@ -39,9 +39,12 @@ const ProfilePage: React.FC = () => {
     const [copySuccess, setCopySuccess] = useState(false);
 
     useEffect(() => {
-        // Initialize party data when component mounts
-        dispatch(loadAuthState());
-    }, [dispatch]);
+        // Only initialize auth data if we haven't checked the party role yet
+        // This prevents re-fetching when switching between apps
+        if (hasPartyRole === null) {
+            dispatch(loadAuthState());
+        }
+    }, [dispatch, hasPartyRole]);
 
     const handleClose = () => {
         navigate('/');
