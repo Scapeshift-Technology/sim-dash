@@ -43,7 +43,7 @@ const DEFAULT_FORM_STATE: LoginFormState = {
 
 export function useLoginForm(): UseLoginFormReturn {
     const dispatch = useDispatch<AppDispatch>();
-    const { isLoading } = useSelector(selectAuthState);
+    const { isRegistrationLoading } = useSelector(selectAuthState);
     const { error, setError, clearError } = useStatusMessages({ errorDuration: 5000 });
 
     // Form state
@@ -105,7 +105,7 @@ export function useLoginForm(): UseLoginFormReturn {
         handleSubmit,
         resetForm,
         populateFromProfile,
-        isLoading,
+        isLoading: isRegistrationLoading,
         error
     };
 }

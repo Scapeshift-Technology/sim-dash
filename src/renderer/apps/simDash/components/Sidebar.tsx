@@ -9,7 +9,7 @@ import { openLeagueTab } from '@/simDash/store/slices/tabSlice';
 import { initializeLeague } from '@/simDash/store/slices/scheduleSlice';
 import { initializeLeagueSimInputs } from '@/simDash/store/slices/simInputsSlice';
 import { League, LeagueName } from '@@/types/league';
-import GenericSidebar from '@/components/GenericSidebar';
+import GenericSidebar from '@/layouts/components/GenericSidebar';
 
 interface SidebarProps {
     currentWidth: number;

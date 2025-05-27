@@ -30,6 +30,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     login: (config) => ipcRenderer.invoke('login', config),
     logout: () => ipcRenderer.invoke('logout'),
 
+    // SQL execution
+    executeSqlQuery: (query) => ipcRenderer.invoke('execute-sql-query', query),
+
     // League/Schedule/Lineup data
     fetchLeagues: () => ipcRenderer.invoke('fetch-leagues'),
     fetchSchedule: (args) => ipcRenderer.invoke('fetch-schedule', args),
