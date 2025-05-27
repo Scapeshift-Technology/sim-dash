@@ -10,7 +10,6 @@ export function createReducedGameStateFromLiveData(lineups: ReducedMatchupLineup
   return createGameStateFromLiveDataHelper(lineups.away, lineups.home, liveGameData, true) as ReducedGameStateMLB;
 }
 
-
 export function createGameStateFromLiveDataHelper<T extends TeamLineup | ReducedTeamLineup>(
   awayTeam: T, 
   homeTeam: T, 
@@ -23,17 +22,21 @@ export function createGameStateFromLiveDataHelper<T extends TeamLineup | Reduced
     !!liveGameData.liveData.linescore.offense.third,
   ];
 
-  const isTopInning = liveGameData.liveData.linescore.inningHalf.toLowerCase().startsWith('t');
-
   const awayPitcher = findCurrentPitcher(awayTeam, liveGameData, false);
   const homePitcher = findCurrentPitcher(homeTeam, liveGameData, true);
 
   // Base game state that both full and reduced versions need
+  const isTopInning = liveGameData.liveData.linescore.inningHalf.toLowerCase().startsWith('t');
+  const inningOver = liveGameData.liveData.linescore.outs === 3;
+  const isTopInningAdjusted = inningOver ? !isTopInning : isTopInning;
+  
+  const inning = inningOver && isTopInningAdjusted ? liveGameData.liveData.linescore.currentInning + 1 : liveGameData.liveData.linescore.currentInning;
+
   const baseGameState = {
-    inning: liveGameData.liveData.linescore.currentInning,
-    topInning: isTopInning,
-    outs: liveGameData.liveData.linescore.outs,
-    bases: bases,
+    inning: inning,
+    topInning: isTopInningAdjusted,
+    outs: inningOver ? 0 : liveGameData.liveData.linescore.outs,
+    bases: inningOver ? [false, false, false] : bases,
     awayScore: liveGameData.liveData.linescore.teams.away.runs,
     homeScore: liveGameData.liveData.linescore.teams.home.runs,
     awayPitcher: awayPitcher,
@@ -92,9 +95,12 @@ export function createCurrentBullpen(teamData: TeamLineup | ReducedTeamLineup, b
 }
 
 export function findCurrentPitcher(lineups: TeamLineup | ReducedTeamLineup, liveGameData: MlbLiveDataApiResponse, isHome: boolean): GameStatePitcher {
-  const isTopInning = liveGameData.liveData.linescore.inningHalf.toLowerCase().startsWith('t');
+  const inningOver = liveGameData.liveData.linescore.outs === 3;
+  const isTopInning = liveGameData.liveData.linescore.inningHalf.toLowerCase().startsWith('t')
+  const isTopInningAdjusted = inningOver ? !isTopInning : isTopInning;
+  
   let pitcherId: number;
-  if ((isHome && isTopInning) || (!isHome && !isTopInning)) {
+  if ((isHome && isTopInningAdjusted) || (!isHome && !isTopInningAdjusted)) {
     pitcherId = liveGameData.liveData.linescore.defense.pitcher.id;
   } else {
     pitcherId = liveGameData.liveData.linescore.offense.pitcher.id;
