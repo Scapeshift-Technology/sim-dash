@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { Drawer, Box, Toolbar } from '@mui/material';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface GenericSidebarProps {
     currentWidth: number;
@@ -12,6 +13,8 @@ const GenericSidebar: React.FC<GenericSidebarProps> = ({ currentWidth, onResize,
 
     const sidebarRef = useRef<HTMLDivElement>(null);
     const isResizing = useRef(false);
+    const navigate = useNavigate();
+    const location = useLocation();
 
     // ---------- Handlers ----------
 
@@ -38,6 +41,13 @@ const GenericSidebar: React.FC<GenericSidebarProps> = ({ currentWidth, onResize,
         document.body.style.cursor = 'col-resize';
     }, [handleMouseMove, handleMouseUp]);
 
+    const handleSidebarClick = useCallback((e: React.MouseEvent) => {
+        // Only navigate if we're currently on profile or settings page
+        if (location.pathname === '/profile' || location.pathname === '/settings') {
+            navigate('/');
+        }
+    }, [navigate, location.pathname]);
+
     // ---------- useEffect ----------
 
     useEffect(() => {
@@ -60,7 +70,10 @@ const GenericSidebar: React.FC<GenericSidebarProps> = ({ currentWidth, onResize,
             ref={sidebarRef}
         >
             <Toolbar />
-            <Box sx={{ overflow: 'auto', flexGrow: 1, position: 'relative' }}>
+            <Box 
+                sx={{ overflow: 'auto', flexGrow: 1, position: 'relative' }}
+                onClick={handleSidebarClick}
+            >
                 {children}
             </Box>
             <Box
