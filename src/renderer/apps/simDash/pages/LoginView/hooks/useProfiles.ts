@@ -27,6 +27,7 @@ export interface UseProfilesReturn {
     deleteProfileError: string | null;
     saveProfileStatus: string | null;
     saveProfileError: string | null;
+    testConnectionStatus: string | null;
 
     // Profile actions
     handleProfileChange: (event: SelectChangeEvent<string>) => void;
@@ -36,7 +37,11 @@ export interface UseProfilesReturn {
 }
 
 export function useProfiles(): UseProfilesReturn {
+
     const dispatch = useDispatch<AppDispatch>();
+
+    // ---------- State ----------
+
     const {
         profiles,
         selectedProfileName,
@@ -45,6 +50,7 @@ export function useProfiles(): UseProfilesReturn {
         deleteProfileError,
         saveProfileStatus,
         saveProfileError,
+        testConnectionStatus
     } = useSelector(selectProfilesState);
     const selectedProfile = useSelector(selectProfileByName(selectedProfileName));
 
@@ -56,10 +62,14 @@ export function useProfiles(): UseProfilesReturn {
         clearAll: clearMessages
     } = useStatusMessages();
 
+    // ---------- useEffects ----------
+
     // Fetch profiles on mount
     useEffect(() => {
         dispatch(fetchProfiles());
     }, [dispatch]);
+
+    // ---------- Handlers ----------
 
     const handleProfileChange = (event: SelectChangeEvent<string>) => {
         const name = event.target.value;
@@ -127,6 +137,8 @@ export function useProfiles(): UseProfilesReturn {
             });
     };
 
+    // ---------- Return ----------
+
     return {
         profiles,
         selectedProfileName,
@@ -138,6 +150,7 @@ export function useProfiles(): UseProfilesReturn {
         deleteProfileError,
         saveProfileStatus,
         saveProfileError,
+        testConnectionStatus,
         handleProfileChange,
         handleSaveProfile,
         handleDeleteProfile,

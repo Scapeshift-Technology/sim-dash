@@ -9,7 +9,6 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
-import NetworkCheckIcon from '@mui/icons-material/NetworkCheck';
 
 interface ProfileManagerProps {
     profileNameToSave: string;
@@ -80,16 +79,6 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({
                         )}
                     </IconButton>
                 </Box>
-                {/* <Box>
-                    <IconButton
-                        aria-label="test connection"
-                        color="secondary"
-                        onClick={onTestConnection}
-                        disabled={isLoading || deleteProfileStatus === 'pending' || saveProfileStatus === 'pending'}
-                    >
-                        <NetworkCheckIcon />
-                    </IconButton>
-                </Box> */}
                 <Box>
                     <IconButton
                         aria-label="delete profile"
