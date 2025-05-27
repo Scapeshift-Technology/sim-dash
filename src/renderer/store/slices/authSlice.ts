@@ -12,9 +12,12 @@ import {
 const initialState: AuthState = {
   isAuthenticated: false,
   username: null,
-  isLoading: false,
+  isRegistrationLoading: false,
   error: null,
   hasPartyRole: null,
+  telegramToken: null,
+  telegramTokenExpiration: null,
+  isTelegramTokenLoading: false,
 };
 
 // Async thunk for handling login
@@ -130,6 +133,34 @@ export const unregisterUserParty = createAsyncThunk<
     }
 );
 
+// Async thunk for generating telegram token
+export const generateTelegramToken = createAsyncThunk<
+    { token: string; expirationDtm: string }, // Return type on success
+    void, // No arguments needed
+    { rejectValue: string }
+>(
+    'auth/generateTelegramToken',
+    async (_, { rejectWithValue }) => {
+        try {
+            if (!window.electronAPI?.executeSqlQuery) {
+                throw new Error('SQL execution API is not available.');
+            }
+            const result = await window.electronAPI.executeSqlQuery('EXEC dbo.PartyTelegramRegistrationToken_CREATE_tr');
+            const record = result.recordset[0];
+            if (record && record.Token && record.ExpirationDtm) {
+                return {
+                    token: record.Token,
+                    expirationDtm: record.ExpirationDtm
+                };
+            } else {
+                throw new Error('Invalid response from token generation procedure');
+            }
+        } catch (err: any) {
+            return rejectWithValue(err.message || 'An unexpected error occurred while generating telegram token.');
+        }
+    }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -143,18 +174,18 @@ const authSlice = createSlice({
     builder
       // Login actions
       .addCase(loginUser.pending, (state) => {
-        state.isLoading = true;
+        state.isRegistrationLoading = true;
         state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action: PayloadAction<LoginResult>) => {
-        state.isLoading = false;
+        state.isRegistrationLoading = false;
         state.isAuthenticated = true;
         state.username = action.payload.username || null;
         state.error = null;
         // Role membership will be checked separately by the component
       })
       .addCase(loginUser.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isRegistrationLoading = false;
         state.isAuthenticated = false;
         state.username = null;
         state.error = action.payload ?? 'Login failed'; // Use payload from rejectWithValue
@@ -167,15 +198,18 @@ const authSlice = createSlice({
       })
       .addCase(logoutUser.fulfilled, (state) => {
         // Reset state regardless of backend success, as user initiated logout
-        state.isLoading = false;
+        state.isRegistrationLoading = false;
         state.isAuthenticated = false;
         state.username = null;
         state.error = null;
         state.hasPartyRole = null; // Reset role status on logout
+        state.telegramToken = null;
+        state.telegramTokenExpiration = null;
+        state.isTelegramTokenLoading = false;
       })
       .addCase(logoutUser.rejected, (state, action) => {
          // Even on rejection, typically reset auth state as user intended to logout
-        state.isLoading = false;
+        state.isRegistrationLoading = false;
         state.isAuthenticated = false;
         state.username = null;
         // Optionally store the logout error, but might confuse user
@@ -195,29 +229,44 @@ const authSlice = createSlice({
       })
       // Registration actions
       .addCase(registerUserParty.pending, (state) => {
-        state.isLoading = true;
+        state.isRegistrationLoading = true;
         state.error = null;
       })
       .addCase(registerUserParty.fulfilled, (state) => {
-        state.isLoading = false;
+        state.isRegistrationLoading = false;
         // Role status will be updated by subsequent checkRoleMembership call
       })
       .addCase(registerUserParty.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isRegistrationLoading = false;
         state.error = action.payload ?? 'Registration failed';
       })
       // Unregistration actions
       .addCase(unregisterUserParty.pending, (state) => {
-        state.isLoading = true;
+        state.isRegistrationLoading = true;
         state.error = null;
       })
       .addCase(unregisterUserParty.fulfilled, (state) => {
-        state.isLoading = false;
+        state.isRegistrationLoading = false;
         // Role status will be updated by subsequent checkRoleMembership call
       })
       .addCase(unregisterUserParty.rejected, (state, action) => {
-        state.isLoading = false;
+        state.isRegistrationLoading = false;
         state.error = action.payload ?? 'Unregistration failed';
+      })
+      // Telegram token generation actions
+      .addCase(generateTelegramToken.pending, (state) => {
+        state.isTelegramTokenLoading = true;
+        state.error = null;
+      })
+      .addCase(generateTelegramToken.fulfilled, (state, action: PayloadAction<{ token: string; expirationDtm: string }>) => {
+        state.isTelegramTokenLoading = false;
+        state.error = null;
+        state.telegramToken = action.payload.token;
+        state.telegramTokenExpiration = action.payload.expirationDtm;
+      })
+      .addCase(generateTelegramToken.rejected, (state, action) => {
+        state.isTelegramTokenLoading = false;
+        state.error = action.payload ?? 'Telegram token generation failed';
       });
   },
 });
@@ -230,11 +279,17 @@ export const selectAuthState = (state: RootState) => state.auth;
 export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated;
 // Selector for username
 export const selectUsername = (state: RootState) => state.auth.username;
-// Selector for loading state
-export const selectAuthLoading = (state: RootState) => state.auth.isLoading;
+// Selector for registration loading state
+export const selectRegistrationLoading = (state: RootState) => state.auth.isRegistrationLoading;
 // Selector for error message
 export const selectAuthError = (state: RootState) => state.auth.error;
 // Selector for party role membership
 export const selectHasPartyRole = (state: RootState) => state.auth.hasPartyRole;
+// Selector for telegram token
+export const selectTelegramToken = (state: RootState) => state.auth.telegramToken;
+// Selector for telegram token expiration
+export const selectTelegramTokenExpiration = (state: RootState) => state.auth.telegramTokenExpiration;
+// Selector for telegram token loading state
+export const selectTelegramTokenLoading = (state: RootState) => state.auth.isTelegramTokenLoading;
 
 export default authSlice.reducer; 

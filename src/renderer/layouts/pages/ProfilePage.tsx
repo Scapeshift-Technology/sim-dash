@@ -1,29 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Paper, IconButton, Button, TextField, Alert, CircularProgress } from '@mui/material';
-import { Close } from '@mui/icons-material';
+import { Box, Typography, Paper, IconButton, Button, TextField, Alert, CircularProgress, Divider, Card, CardContent } from '@mui/material';
+import { Close, ContentCopy } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { 
     selectUsername, 
     selectHasPartyRole, 
-    selectAuthLoading, 
+    selectRegistrationLoading, 
     selectAuthError,
+    selectTelegramToken,
+    selectTelegramTokenExpiration,
+    selectTelegramTokenLoading,
     checkRoleMembership,
     registerUserParty,
-    unregisterUserParty
+    unregisterUserParty,
+    generateTelegramToken
 } from '@/store/slices/authSlice';
 import type { AppDispatch } from '@/store/store';
 
 const ProfilePage: React.FC = () => {
     const username = useSelector(selectUsername);
     const hasPartyRole = useSelector(selectHasPartyRole);
-    const isLoading = useSelector(selectAuthLoading);
+    const isRegistrationLoading = useSelector(selectRegistrationLoading);
     const error = useSelector(selectAuthError);
+    const telegramToken = useSelector(selectTelegramToken);
+    const telegramTokenExpiration = useSelector(selectTelegramTokenExpiration);
+    const isTelegramTokenLoading = useSelector(selectTelegramTokenLoading);
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
     
     const [partyName, setPartyName] = useState('');
     const [showRegistration, setShowRegistration] = useState(false);
+    const [copySuccess, setCopySuccess] = useState(false);
 
     useEffect(() => {
         // Check role membership when component mounts
@@ -60,6 +68,31 @@ const ProfilePage: React.FC = () => {
         setPartyName('');
     };
 
+    const handleGenerateTelegramToken = async () => {
+        await dispatch(generateTelegramToken());
+    };
+
+    const handleCopyToken = async () => {
+        if (telegramToken) {
+            try {
+                await navigator.clipboard.writeText(telegramToken);
+                setCopySuccess(true);
+                setTimeout(() => setCopySuccess(false), 2000);
+            } catch (err) {
+                console.error('Failed to copy token:', err);
+            }
+        }
+    };
+
+    const formatExpirationDate = (dateString: string) => {
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleString();
+        } catch (err) {
+            return dateString;
+        }
+    };
+
     const renderRegistrationSection = () => {
         if (hasPartyRole === null) {
             return (
@@ -82,9 +115,9 @@ const ProfilePage: React.FC = () => {
                         variant="outlined" 
                         color="error"
                         onClick={handleUnregister}
-                        disabled={isLoading}
+                        disabled={isRegistrationLoading}
                     >
-                        {isLoading ? 'Unregistering...' : 'Unregister'}
+                        {isRegistrationLoading ? 'Unregistering...' : 'Unregister'}
                     </Button>
                 </Box>
             );
@@ -109,14 +142,14 @@ const ProfilePage: React.FC = () => {
                         <Button 
                             variant="contained" 
                             onClick={handleRegisterSubmit}
-                            disabled={!partyName.trim() || isLoading}
+                            disabled={!partyName.trim() || isRegistrationLoading}
                         >
-                            {isLoading ? 'Registering...' : 'Register'}
+                            {isRegistrationLoading ? 'Registering...' : 'Register'}
                         </Button>
                         <Button 
                             variant="outlined" 
                             onClick={handleCancelRegistration}
-                            disabled={isLoading}
+                            disabled={isRegistrationLoading}
                         >
                             Cancel
                         </Button>
@@ -133,10 +166,69 @@ const ProfilePage: React.FC = () => {
                 <Button 
                     variant="contained" 
                     onClick={handleRegisterClick}
-                    disabled={isLoading}
+                    disabled={isRegistrationLoading}
                 >
                     Register
                 </Button>
+            </Box>
+        );
+    };
+
+    const renderTelegramTokenSection = () => {
+        return (
+            <Box>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                    Telegram Token
+                </Typography>
+                
+                <Button 
+                    variant="contained" 
+                    onClick={handleGenerateTelegramToken}
+                    disabled={isTelegramTokenLoading}
+                    sx={{ mb: 2 }}
+                >
+                    {isTelegramTokenLoading ? 'Generating...' : 'Generate Telegram Token'}
+                </Button>
+
+                {telegramToken && (
+                    <Card variant="outlined" sx={{ mt: 2 }}>
+                        <CardContent>
+                            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                                Current Token:
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                                <TextField
+                                    fullWidth
+                                    value={telegramToken}
+                                    InputProps={{
+                                        readOnly: true,
+                                        style: { fontFamily: 'monospace', fontSize: '0.875rem' }
+                                    }}
+                                    size="small"
+                                />
+                                <IconButton 
+                                    onClick={handleCopyToken}
+                                    color={copySuccess ? 'success' : 'default'}
+                                    title="Copy token"
+                                >
+                                    <ContentCopy />
+                                </IconButton>
+                            </Box>
+                            
+                            {copySuccess && (
+                                <Alert severity="success" sx={{ mb: 2 }}>
+                                    Token copied to clipboard!
+                                </Alert>
+                            )}
+                            
+                            {telegramTokenExpiration && (
+                                <Typography variant="body2" color="text.secondary">
+                                    Expires: {formatExpirationDate(telegramTokenExpiration)}
+                                </Typography>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
             </Box>
         );
     };
@@ -177,6 +269,10 @@ const ProfilePage: React.FC = () => {
                 )}
                 
                 {renderRegistrationSection()}
+                
+                <Divider sx={{ my: 3 }} />
+                
+                {renderTelegramTokenSection()}
             </Paper>
         </Box>
     );

@@ -29,7 +29,10 @@ export interface LogoutResponse {
 export interface AuthState {
   isAuthenticated: boolean;
   username: string | null;
-  isLoading: boolean;
+  isRegistrationLoading: boolean;
   error: string | null;
   hasPartyRole: boolean | null; // null = unknown, true/false = known status
+  telegramToken: string | null;
+  telegramTokenExpiration: string | null;
+  isTelegramTokenLoading: boolean;
 }
