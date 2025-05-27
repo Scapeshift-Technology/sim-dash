@@ -12,13 +12,21 @@ import {
     PointerSensor,
     useSensor,
     useSensors,
-    DragEndEvent
+    DragEndEvent,
+    DragOverEvent
 } from '@dnd-kit/core';
 import {
     SortableContext,
     sortableKeyboardCoordinates,
     rectSwappingStrategy
 } from '@dnd-kit/sortable';
+
+// ---------- Strategies ----------
+
+// Custom strategy that provides no visual feedback
+const noOpSortingStrategy = () => {
+    return null; // No transforms applied
+};
 
 // ---------- Main component ----------
 
@@ -27,8 +35,10 @@ interface TeamSectionCardProps {
     adjustmentValue: number;
     onAdjustmentChange: (value: number) => void;
     children: React.ReactNode;
+    currentOperation: 'swap' | 'move' | 'reorder' | null;
     isDraggable?: boolean;
     sortableItems?: number[];
+    onDragOver?: (event: DragOverEvent) => void;
     onDragEnd?: (event: DragEndEvent) => void;
 }
 
@@ -37,8 +47,10 @@ const TeamSectionCard: React.FC<TeamSectionCardProps> = ({
     adjustmentValue,
     onAdjustmentChange,
     children,
+    currentOperation,
     isDraggable = false,
     sortableItems = [],
+    onDragOver,
     onDragEnd
 }) => {
     const sensors = useSensors(
@@ -102,15 +114,21 @@ const TeamSectionCard: React.FC<TeamSectionCardProps> = ({
         </Box>
     );
 
+    const getSortingStrategy = () => {
+        if (currentOperation === 'swap') return rectSwappingStrategy;
+        return noOpSortingStrategy; // Includes 'move', 'reorder', and null for now
+    };
+
     const content = (isDraggable && sortableItems.length > 0) && onDragEnd ? (
         <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
+            onDragOver={onDragOver}
             onDragEnd={onDragEnd}
         >
             <SortableContext
                 items={sortableItems}
-                strategy={rectSwappingStrategy}
+                strategy={getSortingStrategy()}
             >
                 {children}
             </SortableContext>

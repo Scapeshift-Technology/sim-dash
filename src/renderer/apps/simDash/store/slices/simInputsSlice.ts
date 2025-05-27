@@ -178,10 +178,25 @@ const simInputsSlice = createSlice({
         team: 'home' | 'away';
         newBullpen: Player[];
       }
-    }) => {
+    }
+    ) => {
       const { matchId, team, newBullpen } = action.payload;
       if (state['MLB']?.[matchId]?.currentGame) {
         state['MLB'][matchId].currentGame.lineups[team].bullpen = newBullpen;
+        syncCurrentGameEdit(state, matchId);
+        state['MLB'][matchId].currentGame.gameInfo.lineupsSource = 'Manual';
+      }
+    },
+    editMLBUnavailablePitchers: (state, action: {
+      payload: {
+        matchId: number;
+        team: 'home' | 'away';
+        newUnavailablePitchers: Player[];
+      }
+    }) => {
+      const { matchId, team, newUnavailablePitchers } = action.payload;
+      if (state['MLB']?.[matchId]?.currentGame) {
+        state['MLB'][matchId].currentGame.lineups[team].unavailablePitchers = newUnavailablePitchers;
         syncCurrentGameEdit(state, matchId);
         state['MLB'][matchId].currentGame.gameInfo.lineupsSource = 'Manual';
       }
@@ -395,6 +410,7 @@ export const {
   updatePlayerLean,
   editMLBStartingPitcher,
   editMLBBullpen,
+  editMLBUnavailablePitchers,
   switchCurrentSeriesGame,
   updateMLBMarketLines,
   updateMLBAutomatedLeans

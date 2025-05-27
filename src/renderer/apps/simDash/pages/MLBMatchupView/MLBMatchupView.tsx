@@ -35,6 +35,7 @@ import {
     editMLBBench,
     editMLBStartingPitcher,
     editMLBBullpen,
+    editMLBUnavailablePitchers,
     selectGamePlayerStatsError,
     selectGameSeriesGames,
     selectMLBGameContainer,
@@ -261,11 +262,14 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         }
     };
 
-    const handlePitcherReorder = (team: 'home' | 'away', newStartingPitcher: Player | null, newBullpen: Player[]) => {
+    const handlePitcherReorder = (team: 'home' | 'away', newStartingPitcher: Player | null, newBullpen: Player[], newUnavailablePitchers: Player[] | undefined) => {
         if (newStartingPitcher) {
             dispatch(editMLBStartingPitcher({ matchId, team, newStartingPitcher }));
         }
         dispatch(editMLBBullpen({ matchId, team, newBullpen }));
+        if (newUnavailablePitchers) {
+            dispatch(editMLBUnavailablePitchers({ matchId, team, newUnavailablePitchers }));
+        }
     }
 
     const handlePositionChange = (team: 'home' | 'away', playerId: number, position: Position) => {
