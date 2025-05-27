@@ -96,4 +96,4 @@ const GenericSidebar: React.FC<GenericSidebarProps> = ({ currentWidth, onResize,
     );
 };
 
-export default GenericSidebar;
+export default GenericSidebar; 

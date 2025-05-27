@@ -1,6 +1,6 @@
 import React from 'react';
 import { List, ListItemButton, ListItemText } from '@mui/material';
-import GenericSidebar from '@/components/GenericSidebar';
+import GenericSidebar from '@/layouts/components/GenericSidebar';
 
 interface AccountingSidebarProps {
     currentWidth: number;
