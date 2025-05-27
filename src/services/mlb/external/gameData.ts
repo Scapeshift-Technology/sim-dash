@@ -105,15 +105,25 @@ async function getSeriesInfoMLB(date: string, awayTeamName: string, homeTeamName
 
   // Find all games in this series
   const seriesGames: SeriesInfoMLB = {};
+  const seriesGamesPromises: Promise<{ gameNumber: number, data: MLBGameData }>[] = [];
 
   if (scheduleData.dates) {
     for (const scheduleDate of scheduleData.dates) {
       for (const game of scheduleDate.games) {
         if (game.teams.away.team.name === awayTeamName && game.teams.home.team.name === homeTeamName && game.teams.away.seriesNumber === currentAwaySeriesNumber) {
-          seriesGames[game.seriesGameNumber] = await getIndividualGameDataMLB(game.officialDate, awayTeamName, homeTeamName, game.gameNumber);
+          // seriesGames[game.seriesGameNumber] = await getIndividualGameDataMLB(game.officialDate, awayTeamName, homeTeamName, game.gameNumber);
+          seriesGamesPromises.push(
+            getIndividualGameDataMLB(game.officialDate, awayTeamName, homeTeamName, game.gameNumber)
+              .then(data => ({ gameNumber: game.seriesGameNumber, data }))
+          );
         }
       }
     }
+
+    const resolvedGames = await Promise.all(seriesGamesPromises);
+    resolvedGames.forEach(resolvedGame => {
+      seriesGames[resolvedGame.gameNumber] = resolvedGame.data;
+    });
   }
 
   return seriesGames;
