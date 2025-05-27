@@ -9,8 +9,9 @@ import {
     MenuItem,
     IconButton,
     Box,
+    Button,
 } from '@mui/material';
-import { AccountCircle } from '@mui/icons-material';
+import { AccountCircle, ArrowDropDown } from '@mui/icons-material';
 import type { AppDispatch } from '@/store/store';
 import { selectUsername, selectCurrentParty } from '@/store/slices/authSlice';
 import { setCurrentApp, selectCurrentApp } from '@/store/slices/appSlice';
@@ -61,6 +62,8 @@ const NavBar: React.FC = () => {
 
     const formatAppName = (name: string | null): string => {
         if (!name) return '[AppName]';
+        if (name === 'simDash') return 'SimDash';
+        if (name === 'accounting') return 'AccountingDash';
         return name.charAt(0).toUpperCase() + name.slice(1);
     };
 
@@ -75,21 +78,37 @@ const NavBar: React.FC = () => {
         >
             <Toolbar>
                 {/* App Selector */}
-                <Typography 
-                    variant="h6" 
-                    component="div" 
+                <Button
                     onClick={handleAppMenuClick}
+                    endIcon={<ArrowDropDown />}
                     sx={{ 
-                        flexGrow: 1,
-                        cursor: 'pointer',
+                        justifyContent: 'flex-start',
+                        color: 'inherit',
+                        textTransform: 'none',
+                        fontSize: '1.25rem',
+                        fontWeight: 500,
+                        padding: '6px 8px',
+                        minHeight: '40px',
+                        width: 'auto',
+                        minWidth: 'auto',
                         '&:hover': {
-                            opacity: 0.8
+                            backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                        },
+                        '& .MuiButton-endIcon': {
+                            marginLeft: '4px',
+                            marginRight: 0,
                         }
                     }}
+                    aria-label="Select application"
+                    aria-haspopup="true"
+                    aria-expanded={appMenuOpen}
                 >
                     {formatAppName(currentApp)}
-                </Typography>
+                </Button>
                 
+                {/* Spacer to push user profile to the right */}
+                <Box sx={{ flexGrow: 1 }} />
+
                 {/* App Selector Menu */}
                 <Menu
                     id="app-menu"
@@ -103,7 +122,7 @@ const NavBar: React.FC = () => {
                     }}
                 >
                     <MenuItem onClick={() => handleAppSelect('simDash')}>SimDash</MenuItem>
-                    <MenuItem onClick={() => handleAppSelect('accounting')}>Accounting</MenuItem>
+                    <MenuItem onClick={() => handleAppSelect('accounting')}>AccountingDash</MenuItem>
                 </Menu>
 
                 {/* User Profile Section */}
