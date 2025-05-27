@@ -59,10 +59,6 @@ const tabSlice = createSlice({
                     label = `${details.participant1}@${details.participant2} ${formattedDate}${details.daySequence ? ` #${details.daySequence}` : ''}`;
                 }
 
-                if (!details.daySequence) {
-                  details.daySequence = 1;
-                }
-
                 const newTab: MatchupTab = {
                     ...details,
                     id: tabId,

@@ -29,13 +29,25 @@ import {
 import { calculateResultsSummaryDisplayMLB } from '@/simDash/utils/oddsUtilsMLB';
 import { usePrevious } from '@dnd-kit/utilities';
 
+// ---------- Helper functions ----------
+
+function getTodayMatchups(scheduleData: ScheduleItem[], item: ScheduleItem): ScheduleItem[] {
+    return scheduleData.filter((match: ScheduleItem) => {
+        const team1 = match.Participant1 === item.Participant1;
+        const team2 = match.Participant2 === item.Participant2;
+        return team1 && team2;
+    });
+}
+
+// ---------- Types ----------
+
 interface LeagueScheduleViewProps {
     league: string;
 }
 
 // --- Column and Sort Definitions ---
 
-const createSimResultsColumn = (league: string): ColumnDefinition => ({
+const createSimResultsColumn = (scheduleData: ScheduleItem[], league: string): ColumnDefinition => ({
     key: 'simResults',
     label: 'Sim Results',
     align: 'center',
@@ -84,12 +96,16 @@ const createSimResultsColumn = (league: string): ColumnDefinition => ({
                     event.preventDefault();
                     event.stopPropagation();
                     try {
+                        const todayMatchups = getTodayMatchups(scheduleData, item);
+                        const daySequence = todayMatchups.length > 1 ? item.DaySequence : undefined;
+
                         await window.electronAPI.createSimWindow({ 
                             league,
                             matchupId: item.Match,
                             timestamp: simResults[0].timestamp,
                             awayTeamName: item.Participant1,
-                            homeTeamName: item.Participant2
+                            homeTeamName: item.Participant2,
+                            daySequence: daySequence
                         });
                     } catch (error) {
                         console.error('Failed to create simulation window:', error);
@@ -111,22 +127,24 @@ const commonColumns: ColumnDefinition[] = [
     {
         key: 'PostDtmUTC',
         label: 'Date/Time (Local)',
-        render: (item) => dayjs(item.PostDtmUTC).format('YYYY-MM-DD HH:mm')
+        render: (item: ScheduleItem) => dayjs(item.PostDtmUTC).format('YYYY-MM-DD HH:mm')
     },
     { key: 'Participant1', label: 'Away' },
     { key: 'Participant2', label: 'Home' },
 ];
 
-const mlbColumns: ColumnDefinition[] = [
-    ...commonColumns,
-    {
-        key: 'DaySequence',
-        label: 'Day Seq.',
-        align: 'right',
-        render: (item) => item.DaySequence ?? 'N/A'
-    },
-    createSimResultsColumn('MLB')
-];
+const getColumns = (scheduleData: ScheduleItem[], league: string): ColumnDefinition[] => {
+    if (league === 'MLB') {
+        const daySeqCol: ColumnDefinition = {
+            key: 'DaySequence',
+            label: 'Day Seq.',
+            align: 'right',
+            render: (item: ScheduleItem) => item.DaySequence ?? 'N/A'
+        };
+        return [...commonColumns, daySeqCol, createSimResultsColumn(scheduleData, league)];
+    }
+    return commonColumns;
+};
 
 const mlbSortFunction = (a: ScheduleItem, b: ScheduleItem): number => {
     if (a.DaySequence !== undefined && b.DaySequence !== undefined) {
@@ -189,7 +207,7 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
 
     // Determine configuration based on league
     const isMLB = league === 'MLB';
-    const columns = isMLB ? [...mlbColumns] : [...commonColumns];
+    const columns = useMemo(() => getColumns(scheduleData, league), [scheduleData, league]);
     const sortFunction = isMLB ? mlbSortFunction : genericSortFunction;
     const emptyMessage = `No ${league} schedule data available for this date.`;
     const ariaLabel = `${league.toLowerCase()} schedule table`;
@@ -198,11 +216,7 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
     const handleRowClick = (item: ScheduleItem) => {
         if (league === 'MLB' && selectedDate) {
             // Find all matchups between these teams today
-            const todayMatchups = scheduleData.filter((match: ScheduleItem) => {
-                const team1 = match.Participant1 === item.Participant1;
-                const team2 = match.Participant2 === item.Participant2;
-                return team1 && team2;
-            });
+            const todayMatchups = getTodayMatchups(scheduleData, item);
 
             dispatch(openMatchupTab({
                 matchId: item.Match,

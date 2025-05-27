@@ -304,6 +304,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             <MLBMatchupHeader
                 participant1={participant1}
                 participant2={participant2}
+                daySequence={daySequence}
                 dateTime={dateTime}
                 isSimulating={traditionalSimulationStatus === 'loading' || seriesSimulationStatus === 'loading'}
                 simError={traditionalSimulationError || seriesSimulationError}

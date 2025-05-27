@@ -360,7 +360,7 @@ ipcMain.handle('logout', async () => {
 
 
 // --- Create Simulation Window ---
-ipcMain.handle('create-sim-window', async (event, { league, matchupId, timestamp, awayTeamName, homeTeamName }) => {
+ipcMain.handle('create-sim-window', async (event, { league, matchupId, timestamp, awayTeamName, homeTeamName, daySequence }) => {
   console.log('IPC received: create-sim-window');
   try {
     if (league === 'MLB') {
@@ -369,6 +369,7 @@ ipcMain.handle('create-sim-window', async (event, { league, matchupId, timestamp
         timestamp,
         awayTeamName,
         homeTeamName,
+        daySequence,
         viteDevServerUrl,
         isDevelopment: process.env.NODE_ENV === 'development'
       });
