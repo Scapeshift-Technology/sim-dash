@@ -125,6 +125,7 @@ const LoginView: React.FC = () => {
                     onUserChange={(e) => setUser(e.target.value)}
                     onPasswordChange={(e) => setPassword(e.target.value)}
                     onSubmit={handleSubmit}
+                    onTestConnection={handleTestConnectionClick}
                     isLoading={isAuthLoading || isProfilesLoading}
                     error={authError}
                 />
@@ -142,7 +143,6 @@ const LoginView: React.FC = () => {
                     deleteProfileError={deleteProfileError}
                     saveProfileStatus={saveProfileStatus}
                     saveProfileError={saveProfileError}
-                    onTestConnection={handleTestConnectionClick}
                 />
             </Paper>
         </Box>

@@ -17,7 +17,6 @@ interface ProfileManagerProps {
     selectedProfileName: string | null;
     onSaveProfile: () => void;
     onDeleteProfile: () => void;
-    onTestConnection: () => void;
     isLoading: boolean;
     statusMessage: string | null;
     error: string | null;
@@ -38,7 +37,6 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({
     selectedProfileName,
     onSaveProfile,
     onDeleteProfile,
-    onTestConnection,
     isLoading,
     statusMessage,
     error,
@@ -82,7 +80,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({
                         )}
                     </IconButton>
                 </Box>
-                <Box>
+                {/* <Box>
                     <IconButton
                         aria-label="test connection"
                         color="secondary"
@@ -91,7 +89,7 @@ const ProfileManager: React.FC<ProfileManagerProps> = ({
                     >
                         <NetworkCheckIcon />
                     </IconButton>
-                </Box>
+                </Box> */}
                 <Box>
                     <IconButton
                         aria-label="delete profile"

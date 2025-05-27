@@ -19,6 +19,7 @@ interface LoginFormProps {
     onUserChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onPasswordChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+    onTestConnection: () => void;
     isLoading: boolean;
     error: string | null;
 }
@@ -40,6 +41,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
     onUserChange,
     onPasswordChange,
     onSubmit,
+    onTestConnection,
     isLoading,
     error
 }) => {
@@ -104,6 +106,19 @@ const LoginForm: React.FC<LoginFormProps> = ({
                         }}
                     />
                 )}
+            </Box>
+
+            <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center' }}>
+                <Button
+                    fullWidth
+                    variant="outlined"
+                    id="test-connection-button"
+                    onClick={onTestConnection}
+                    disabled={isLoading}
+                    sx={{ py: 0.5, fontSize: '0.8rem', width: '50%' }} // Smaller button
+                >
+                    Test Connection
+                </Button>
             </Box>
 
             {error && (
