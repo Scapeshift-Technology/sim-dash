@@ -1,0 +1,137 @@
+import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import {
+    AppBar,
+    Toolbar,
+    Typography,
+    Menu,
+    MenuItem,
+    IconButton,
+    Box,
+} from '@mui/material';
+import { AccountCircle } from '@mui/icons-material';
+import type { AppDispatch } from '@/store/store';
+import { selectUsername } from '@/store/slices/authSlice';
+import { setCurrentApp, selectCurrentApp } from '@/store/slices/appSlice';
+import UserProfileMenu from './UserProfileMenu';
+
+const NavBar: React.FC = () => {
+    const dispatch = useDispatch<AppDispatch>();
+    const navigate = useNavigate();
+    
+    // ---------- State ----------
+    const username = useSelector(selectUsername);
+    const currentApp = useSelector(selectCurrentApp);
+    
+    // App selector menu state
+    const [appMenuAnchorEl, setAppMenuAnchorEl] = useState<null | HTMLElement>(null);
+    const appMenuOpen = Boolean(appMenuAnchorEl);
+    
+    // User profile menu state
+    const [profileMenuAnchorEl, setProfileMenuAnchorEl] = useState<null | HTMLElement>(null);
+    const profileMenuOpen = Boolean(profileMenuAnchorEl);
+
+    // ---------- Handlers ----------
+    
+    const handleAppMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+        setAppMenuAnchorEl(event.currentTarget);
+    };
+
+    const handleAppMenuClose = () => {
+        setAppMenuAnchorEl(null);
+    };
+
+    const handleAppSelect = (app: 'simDash' | 'accounting') => {
+        console.log(`Selected app: ${app}`);
+        dispatch(setCurrentApp(app));
+        handleAppMenuClose();
+    };
+
+    const handleProfileMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+        setProfileMenuAnchorEl(event.currentTarget);
+    };
+
+    const handleProfileMenuClose = () => {
+        setProfileMenuAnchorEl(null);
+    };
+
+    // ---------- Helpers ----------
+
+    const formatAppName = (name: string | null): string => {
+        if (!name) return '[AppName]';
+        return name.charAt(0).toUpperCase() + name.slice(1);
+    };
+
+    // ---------- Render ----------
+
+    return (
+        <AppBar
+            position="fixed"
+            sx={{
+                zIndex: (theme) => theme.zIndex.drawer + 1
+            }}
+        >
+            <Toolbar>
+                {/* App Selector */}
+                <Typography 
+                    variant="h6" 
+                    component="div" 
+                    onClick={handleAppMenuClick}
+                    sx={{ 
+                        flexGrow: 1,
+                        cursor: 'pointer',
+                        '&:hover': {
+                            opacity: 0.8
+                        }
+                    }}
+                >
+                    {formatAppName(currentApp)}
+                </Typography>
+                
+                {/* App Selector Menu */}
+                <Menu
+                    id="app-menu"
+                    anchorEl={appMenuAnchorEl}
+                    open={appMenuOpen}
+                    onClose={handleAppMenuClose}
+                    slotProps={{
+                        list: {
+                            'aria-labelledby': 'app-selector',
+                        }
+                    }}
+                >
+                    <MenuItem onClick={() => handleAppSelect('simDash')}>SimDash</MenuItem>
+                    <MenuItem onClick={() => handleAppSelect('accounting')}>Accounting</MenuItem>
+                </Menu>
+
+                {/* User Profile Section */}
+                <Box sx={{ display: 'flex', alignItems: 'center', mr: 1 }}>
+                    <Typography sx={{ mr: 1 }}>
+                        {username || 'User'}
+                    </Typography>
+                    <IconButton
+                        id="user-profile-button"
+                        size="large"
+                        aria-label="account of current user"
+                        aria-controls="user-profile-menu"
+                        aria-haspopup="true"
+                        onClick={handleProfileMenuClick}
+                        color="inherit"
+                    >
+                        <AccountCircle />
+                    </IconButton>
+                </Box>
+
+                {/* User Profile Menu */}
+                <UserProfileMenu 
+                    anchorEl={profileMenuAnchorEl}
+                    open={profileMenuOpen}
+                    onClose={handleProfileMenuClose}
+                />
+            </Toolbar>
+        </AppBar>
+    );
+};
+
+export default NavBar; 

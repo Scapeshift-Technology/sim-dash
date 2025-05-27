@@ -29,7 +29,7 @@ test.describe('SQL Server Connection Flow', () => {
   });
 
   // The main test case
-  test('should connect, display welcome message, disconnect, and return to initial state', async () => {
+  test('should connect, display user profile menu, disconnect, and return to initial state', async () => {
     // --- 1. Fill Credentials and Connect ---
 
     // Use actual IDs from src/index.html
@@ -60,22 +60,25 @@ test.describe('SQL Server Connection Flow', () => {
 
     await connectButton.click();
 
-    // --- 2. Verify Welcome Message and Disconnect Button ---
+    // --- 2. Verify User Profile Button and Open Profile Menu ---
 
-    // Use actual IDs from src/index.html
-    const welcomeMessage = mainWindow.locator('#welcome-message');
-    const disconnectButton = mainWindow.locator('#logout-button');
+    // Wait for the user profile button to appear
+    const userProfileButton = mainWindow.locator('#user-profile-button');
+    await expect(userProfileButton).toBeVisible({ timeout: 45000 }); // Increased timeout for connection
 
-    // Wait for the welcome message to appear and contain the username
-    // Use a reasonable timeout. Default is 30 seconds.
-    await expect(welcomeMessage).toBeVisible({ timeout: 45000 }); // Increased timeout for connection
-    await expect(welcomeMessage).toContainText(`Welcome, ${dbUser}!`, {ignoreCase: true});
+    // Click the user profile button to open the menu
+    await userProfileButton.click();
 
-    // Verify the disconnect button is visible
-    await expect(disconnectButton).toBeVisible();
+    // Verify the user profile menu is visible
+    const userProfileMenu = mainWindow.locator('#user-profile-menu');
+    await expect(userProfileMenu).toBeVisible();
 
-    // --- 3. Disconnect ---
-    await disconnectButton.click();
+    // --- 3. Disconnect via Profile Menu ---
+
+    // Find and click the logout button in the profile menu
+    const logoutMenuItem = mainWindow.locator('#logout-menu-item');
+    await expect(logoutMenuItem).toBeVisible();
+    await logoutMenuItem.click();
 
     // --- 4. Verify Return to Initial State ---
 

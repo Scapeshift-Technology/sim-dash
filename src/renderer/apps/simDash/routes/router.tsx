@@ -4,6 +4,8 @@ import MLBSimulationView from '@/simDash/pages/MLBSimulationView/MLBSimulationVi
 import MainLayout from '@/layouts/MainLayout';
 import TabViewContainers from '@/simDash/containers/TabViewContainers';
 import Sidebar from '@/simDash/components/Sidebar';
+import ProfilePage from '@/layouts/pages/ProfilePage';
+import SettingsPage from '@/layouts/pages/SettingsPage';
 
 const SimDashRouter: React.FC = () => {
   const isSimulationWindow = window.location.hash.includes('sim-results');
@@ -16,7 +18,10 @@ const SimDashRouter: React.FC = () => {
 
   return (
     <Routes>
-      <Route path="/*" element={<MainLayout Sidebar={Sidebar} children={<TabViewContainers />} />} />
+      <Route path="/profile" element={<MainLayout Sidebar={Sidebar} children={<ProfilePage />} />} />
+      <Route path="/settings" element={<MainLayout Sidebar={Sidebar} children={<SettingsPage />} />} />
+      <Route path="/" element={<MainLayout Sidebar={Sidebar} children={<TabViewContainers />} />} />
+      <Route path="*" element={<MainLayout Sidebar={Sidebar} children={<TabViewContainers />} />} />
     </Routes>
   )
 };
