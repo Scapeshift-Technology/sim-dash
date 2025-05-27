@@ -79,7 +79,7 @@ async function initializeSchema(db) {
 // Get all saved profiles
 async function getProfiles(db) {
     return new Promise((resolve, reject) => {
-        db.all("SELECT * FROM profiles ORDER BY name", [], (err, rows) => {
+        db.all("SELECT name, host, port, database, user, password FROM profiles ORDER BY name", [], (err, rows) => {
             if (err) {
                 console.error('Error fetching profiles from SQLite:', err.message);
                 reject(err);
@@ -174,7 +174,7 @@ async function getSimHistory(db, matchId) {
 // Get sim data
 async function getSimData(db, matchupId, timestamp) {
   return new Promise((resolve, reject) => {
-    const query = "SELECT * FROM sim_history WHERE match_id = ? AND timestamp = ?";
+    const query = "SELECT match_id, timestamp, sim_results, input_data FROM sim_history WHERE match_id = ? AND timestamp = ?";
     db.get(query, [matchupId, timestamp], (err, row) => {
       if (err) {
         reject(err);

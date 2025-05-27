@@ -7,6 +7,7 @@ import simDashReducer from '@/simDash/store/rootReducer';
 // Overall app reducer
 import appReducer from './slices/appSlice';
 import authReducer from './slices/authSlice';
+import counterpartiesReducer from './slices/counterpartiesSlice';
 
 
 const rootReducer = combineReducers({
@@ -14,7 +15,8 @@ const rootReducer = combineReducers({
   // accounting: accountingReducer,
 
   auth: authReducer,
-  app: appReducer
+  app: appReducer,
+  counterparties: counterpartiesReducer,
 });
 
 export const store = configureStore({

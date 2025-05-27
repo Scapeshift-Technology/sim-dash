@@ -1,5 +1,6 @@
 import React from 'react';
 import { List, ListItemButton, ListItemText } from '@mui/material';
+import { useNavigate, useLocation } from 'react-router-dom';
 import GenericSidebar from '@/layouts/components/GenericSidebar';
 
 interface AccountingSidebarProps {
@@ -8,26 +9,53 @@ interface AccountingSidebarProps {
 }
 
 const AccountingSidebar: React.FC<AccountingSidebarProps> = ({ currentWidth, onResize }) => {
+    const navigate = useNavigate();
+    const location = useLocation();
+
     // ---------- Handlers ----------
 
-    const handleCategoryClick = (category: string) => {
+    const handleCategoryClick = (category: string, path: string) => {
         console.log(`Category clicked: ${category}`);
+        navigate(path);
     };
+
+    // ---------- Menu Configuration ----------
+
+    const menuItems = [
+        { 
+            label: 'Quick grader', 
+            path: '/quick-grader',
+            key: 'quick-grader' 
+        },
+        { 
+            label: 'Accounts', 
+            path: '/accounts',
+            key: 'accounts' 
+        },
+        { 
+            label: 'Counterparties', 
+            path: '/counterparties',
+            key: 'counterparties' 
+        },
+    ];
 
     // ---------- Render content ----------
 
-    const categories = ['Quick grader', 'Accounts'];
-
     const content = (
         <List>
-            {categories.map((category) => (
-                <ListItemButton
-                    key={category}
-                    onClick={() => handleCategoryClick(category)}
-                >
-                    <ListItemText primary={category} />
-                </ListItemButton>
-            ))}
+            {menuItems.map((item) => {
+                const isActive = location.pathname.startsWith(item.path);
+                
+                return (
+                    <ListItemButton
+                        key={item.key}
+                        selected={isActive}
+                        onClick={() => handleCategoryClick(item.label, item.path)}
+                    >
+                        <ListItemText primary={item.label} />
+                    </ListItemButton>
+                );
+            })}
         </List>
     );
 

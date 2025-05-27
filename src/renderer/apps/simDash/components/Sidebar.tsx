@@ -92,7 +92,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentWidth, onResize }) => {
     }
 
     return (
-        <GenericSidebar currentWidth={currentWidth} onResize={onResize}>
+        <GenericSidebar currentWidth={currentWidth} onResize={onResize} navigateToRootOnClick={true}>
             {content}
         </GenericSidebar>
     );

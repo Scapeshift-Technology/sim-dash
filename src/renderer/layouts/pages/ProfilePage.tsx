@@ -12,14 +12,10 @@ import {
     selectTelegramTokenExpiration,
     selectTelegramTokenLoading,
     selectUserDefaultParty,
-    checkRoleMembership,
     registerUserParty,
     unregisterUserParty,
     generateTelegramToken,
-    fetchUserDefaultParty,
-    fetchPermissions,
-    fetchRoleTypes,
-    initializePartyData
+    loadAuthState
 } from '@/store/slices/authSlice';
 import type { AppDispatch } from '@/store/store';
 import PartySelector from '@/layouts/components/profile/PartySelector';
@@ -44,7 +40,7 @@ const ProfilePage: React.FC = () => {
 
     useEffect(() => {
         // Initialize party data when component mounts
-        dispatch(initializePartyData());
+        dispatch(loadAuthState());
     }, [dispatch]);
 
     const handleClose = () => {
@@ -61,7 +57,7 @@ const ProfilePage: React.FC = () => {
             const result = await dispatch(registerUserParty(partyName.trim()));
             if (registerUserParty.fulfilled.match(result)) {
                 // Refresh all party data after registration
-                dispatch(initializePartyData());
+                dispatch(loadAuthState());
                 setShowRegistration(false);
                 setPartyName('');
             }
@@ -71,7 +67,7 @@ const ProfilePage: React.FC = () => {
     const handleUnregister = async () => {
         await dispatch(unregisterUserParty());
         // Refresh all party data after unregistration
-        dispatch(initializePartyData());
+        dispatch(loadAuthState());
     };
 
     const handleCancelRegistration = () => {
