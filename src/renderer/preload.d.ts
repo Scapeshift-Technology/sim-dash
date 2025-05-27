@@ -32,6 +32,9 @@ declare global {
       login: (config: LoginConfig) => Promise<LoginResult>;
       logout: () => Promise<LogoutResult>;
 
+      // SQL execution
+      executeSqlQuery: (query: string) => Promise<{ recordset: any[] }>;
+
       // League data
       fetchLeagues: () => Promise<FetchedLeague[]>;
       fetchSchedule: (args: { league: string; date: string }) => Promise<ScheduleItem[]>;

@@ -31,4 +31,5 @@ export interface AuthState {
   username: string | null;
   isLoading: boolean;
   error: string | null;
+  hasPartyRole: boolean | null; // null = unknown, true/false = known status
 }
