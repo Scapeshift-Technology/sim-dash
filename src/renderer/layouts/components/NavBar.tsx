@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { AccountCircle } from '@mui/icons-material';
 import type { AppDispatch } from '@/store/store';
-import { selectUsername } from '@/store/slices/authSlice';
+import { selectUsername, selectCurrentParty } from '@/store/slices/authSlice';
 import { setCurrentApp, selectCurrentApp } from '@/store/slices/appSlice';
 import UserProfileMenu from './UserProfileMenu';
 
@@ -23,6 +23,7 @@ const NavBar: React.FC = () => {
     // ---------- State ----------
     const username = useSelector(selectUsername);
     const currentApp = useSelector(selectCurrentApp);
+    const currentParty = useSelector(selectCurrentParty);
     
     // App selector menu state
     const [appMenuAnchorEl, setAppMenuAnchorEl] = useState<null | HTMLElement>(null);
@@ -107,9 +108,23 @@ const NavBar: React.FC = () => {
 
                 {/* User Profile Section */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mr: 1 }}>
-                    <Typography sx={{ mr: 1 }}>
-                        {username || 'User'}
-                    </Typography>
+                    <Box sx={{ mr: 1, textAlign: 'right' }}>
+                        <Typography sx={{ lineHeight: 1.2 }}>
+                            {username || 'User'}
+                        </Typography>
+                        {currentParty && (
+                            <Typography 
+                                variant="caption" 
+                                sx={{ 
+                                    color: 'rgba(255, 255, 255, 0.7)',
+                                    lineHeight: 1,
+                                    display: 'block'
+                                }}
+                            >
+                                Acting as: {currentParty}
+                            </Typography>
+                        )}
+                    </Box>
                     <IconButton
                         id="user-profile-button"
                         size="large"

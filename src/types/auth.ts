@@ -25,6 +25,27 @@ export interface LogoutResponse {
   error?: string;
 }
 
+// Party and Agent Management Types
+export interface GranteeResult {
+  Grantor: string;
+  PartyAgentRoleType: string;
+}
+
+export interface GrantorResult {
+  Grantee: string;
+  PartyAgentRoleType: string;
+}
+
+export interface AddUserPermissionRequest {
+  granteeUsername: string;
+  partyAgentRoleType: string;
+}
+
+export interface RemoveUserPermissionRequest {
+  granteeUsername: string;
+  partyAgentRoleType: string;
+}
+
 // Define the state structure for authentication
 export interface AuthState {
   isAuthenticated: boolean;
@@ -35,4 +56,29 @@ export interface AuthState {
   telegramToken: string | null;
   telegramTokenExpiration: string | null;
   isTelegramTokenLoading: boolean;
+  
+  // Party Management
+  userDefaultParty: string | null;
+  currentParty: string | null;
+  
+  // Permissions
+  granteePermissions: GranteeResult[];
+  grantorPermissions: GrantorResult[];
+  
+  // Role Types
+  roleTypes: string[];
+  roleTypesError: string | null;
+  roleTypesLoading: boolean;
+  
+  // Add User Permission
+  addUserPermissionError: string | null;
+  addUserPermissionLoading: boolean;
+  
+  // Remove User Permission
+  removeUserPermissionError: string | null;
+  removeUserPermissionLoading: boolean;
+  
+  // Fetch Permissions
+  fetchPermissionsError: string | null;
+  fetchPermissionsLoading: boolean;
 }

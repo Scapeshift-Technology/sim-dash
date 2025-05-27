@@ -11,12 +11,20 @@ import {
     selectTelegramToken,
     selectTelegramTokenExpiration,
     selectTelegramTokenLoading,
+    selectUserDefaultParty,
     checkRoleMembership,
     registerUserParty,
     unregisterUserParty,
-    generateTelegramToken
+    generateTelegramToken,
+    fetchUserDefaultParty,
+    fetchPermissions,
+    fetchRoleTypes,
+    initializePartyData
 } from '@/store/slices/authSlice';
 import type { AppDispatch } from '@/store/store';
+import PartySelector from '@/layouts/components/profile/PartySelector';
+import GrantAgentPermission from '@/layouts/components/profile/GrantAgentPermission';
+import ManageAgents from '@/layouts/components/profile/ManageAgents';
 
 const ProfilePage: React.FC = () => {
     const username = useSelector(selectUsername);
@@ -26,6 +34,7 @@ const ProfilePage: React.FC = () => {
     const telegramToken = useSelector(selectTelegramToken);
     const telegramTokenExpiration = useSelector(selectTelegramTokenExpiration);
     const isTelegramTokenLoading = useSelector(selectTelegramTokenLoading);
+    const userDefaultParty = useSelector(selectUserDefaultParty);
     const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
     
@@ -34,8 +43,8 @@ const ProfilePage: React.FC = () => {
     const [copySuccess, setCopySuccess] = useState(false);
 
     useEffect(() => {
-        // Check role membership when component mounts
-        dispatch(checkRoleMembership());
+        // Initialize party data when component mounts
+        dispatch(initializePartyData());
     }, [dispatch]);
 
     const handleClose = () => {
@@ -49,18 +58,20 @@ const ProfilePage: React.FC = () => {
 
     const handleRegisterSubmit = async () => {
         if (partyName.trim() && partyName.length <= 16) {
-            await dispatch(registerUserParty(partyName.trim()));
-            // Refresh role status after registration
-            dispatch(checkRoleMembership());
-            setShowRegistration(false);
-            setPartyName('');
+            const result = await dispatch(registerUserParty(partyName.trim()));
+            if (registerUserParty.fulfilled.match(result)) {
+                // Refresh all party data after registration
+                dispatch(initializePartyData());
+                setShowRegistration(false);
+                setPartyName('');
+            }
         }
     };
 
     const handleUnregister = async () => {
         await dispatch(unregisterUserParty());
-        // Refresh role status after unregistration
-        dispatch(checkRoleMembership());
+        // Refresh all party data after unregistration
+        dispatch(initializePartyData());
     };
 
     const handleCancelRegistration = () => {
@@ -109,7 +120,12 @@ const ProfilePage: React.FC = () => {
             return (
                 <Box>
                     <Typography variant="body1" sx={{ mb: 2 }}>
-                        You are currently registered for party functionality.
+                        You are currently registered for party functionality as:
+                        {userDefaultParty && (
+                            <Typography component="span" sx={{ fontWeight: 'bold', ml: 1 }}>
+                                {userDefaultParty}
+                            </Typography>
+                        )}
                     </Typography>
                     <Button 
                         variant="outlined" 
@@ -269,6 +285,19 @@ const ProfilePage: React.FC = () => {
                 )}
                 
                 {renderRegistrationSection()}
+                
+                {/* Party Management Section - Only show if user has party role */}
+                {hasPartyRole && (
+                    <>
+                        <Divider sx={{ my: 3 }} />
+                        <PartySelector />
+                        <Divider sx={{ my: 3 }} />
+                        <GrantAgentPermission />
+                        <Divider sx={{ my: 3 }} />
+                        <ManageAgents />
+                        <Divider sx={{ my: 3 }} />
+                    </>
+                )}
                 
                 <Divider sx={{ my: 3 }} />
                 

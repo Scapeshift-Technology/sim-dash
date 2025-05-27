@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { Settings, Logout, Person } from '@mui/icons-material';
 import type { AppDispatch } from '@/store/store';
-import { logoutUser, selectUsername } from '@/store/slices/authSlice';
+import { logoutUser, selectUsername, selectCurrentParty } from '@/store/slices/authSlice';
 
 interface UserProfileMenuProps {
     anchorEl: null | HTMLElement;
@@ -24,6 +24,7 @@ const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ anchorEl, open, onClo
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
     const username = useSelector(selectUsername);
+    const currentParty = useSelector(selectCurrentParty);
     const displayName: string = username ?? 'User';
 
     // ---------- Event handlers ----------
@@ -89,7 +90,7 @@ const UserProfileMenu: React.FC<UserProfileMenuProps> = ({ anchorEl, open, onClo
                 </Avatar>
                 <Box>
                     <Typography>{displayName}</Typography>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                         View Profile
                     </Typography>
                 </Box>

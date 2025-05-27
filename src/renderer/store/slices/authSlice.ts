@@ -6,7 +6,11 @@ import {
   LogoutResult
 } from '@/types/sqlite';
 import {
-  AuthState
+  AuthState,
+  GranteeResult,
+  GrantorResult,
+  AddUserPermissionRequest,
+  RemoveUserPermissionRequest
 } from '@/types/auth';
 
 const initialState: AuthState = {
@@ -18,6 +22,31 @@ const initialState: AuthState = {
   telegramToken: null,
   telegramTokenExpiration: null,
   isTelegramTokenLoading: false,
+  
+  // Party Management
+  userDefaultParty: null,
+  currentParty: null,
+  
+  // Permissions
+  granteePermissions: [],
+  grantorPermissions: [],
+  
+  // Role Types
+  roleTypes: [],
+  roleTypesError: null,
+  roleTypesLoading: false,
+  
+  // Add User Permission
+  addUserPermissionError: null,
+  addUserPermissionLoading: false,
+  
+  // Remove User Permission
+  removeUserPermissionError: null,
+  removeUserPermissionLoading: false,
+  
+  // Fetch Permissions
+  fetchPermissionsError: null,
+  fetchPermissionsLoading: false,
 };
 
 // Async thunk for handling login
@@ -161,6 +190,164 @@ export const generateTelegramToken = createAsyncThunk<
     }
 );
 
+// Async thunk for fetching user default party
+export const fetchUserDefaultParty = createAsyncThunk<
+    string | null, // Return type on success
+    void, // No arguments needed
+    { rejectValue: string }
+>(
+    'auth/fetchUserDefaultParty',
+    async (_, { rejectWithValue }) => {
+        try {
+            if (!window.electronAPI?.executeSqlQuery) {
+                throw new Error('SQL execution API is not available.');
+            }
+            const result = await window.electronAPI.executeSqlQuery('SELECT dbo.User_GET_Party_fn() as defaultParty');
+            return result.recordset[0]?.defaultParty || null;
+        } catch (err: any) {
+            return rejectWithValue(err.message || 'An unexpected error occurred while fetching default party.');
+        }
+    }
+);
+
+// Async thunk for fetching permissions (grantee and grantor)
+export const fetchPermissions = createAsyncThunk<
+    { granteePermissions: GranteeResult[]; grantorPermissions: GrantorResult[] }, // Return type on success
+    void, // No arguments needed
+    { rejectValue: string }
+>(
+    'auth/fetchPermissions',
+    async (_, { rejectWithValue }) => {
+        try {
+            if (!window.electronAPI?.executeSqlQuery) {
+                throw new Error('SQL execution API is not available.');
+            }
+            
+            // GranteeResult - lists parties that have granted permission to you
+            const granteeResult = await window.electronAPI.executeSqlQuery(`
+                IF IS_ROLEMEMBER('ss_party') = 1
+                    SELECT Grantor, PartyAgentRoleType
+                    FROM dbo.PartyAgentRole_V
+                    WHERE Grantor <> dbo.User_GET_Party_fn()
+                ELSE
+                    SELECT NULL as Grantor, NULL as PartyAgentRoleType WHERE 1=0
+            `);
+
+            // GrantorResult - lists parties that you have granted permissions to
+            const grantorResult = await window.electronAPI.executeSqlQuery(`
+                IF IS_ROLEMEMBER('ss_party') = 1
+                    SELECT Grantee, PartyAgentRoleType
+                    FROM dbo.PartyAgentRole_V
+                    WHERE Grantor = dbo.User_GET_Party_fn()
+                ELSE
+                    SELECT NULL as Grantee, NULL as PartyAgentRoleType WHERE 1=0
+            `);
+
+            return {
+                granteePermissions: granteeResult.recordset.filter(row => row.Grantor !== null),
+                grantorPermissions: grantorResult.recordset.filter(row => row.Grantee !== null)
+            };
+        } catch (err: any) {
+            return rejectWithValue(err.message || 'An unexpected error occurred while fetching permissions.');
+        }
+    }
+);
+
+// Async thunk for fetching role types
+export const fetchRoleTypes = createAsyncThunk<
+    string[], // Return type on success
+    void, // No arguments needed
+    { rejectValue: string }
+>(
+    'auth/fetchRoleTypes',
+    async (_, { rejectWithValue }) => {
+        try {
+            if (!window.electronAPI?.executeSqlQuery) {
+                throw new Error('SQL execution API is not available.');
+            }
+            const result = await window.electronAPI.executeSqlQuery(`
+                SELECT DISTINCT PartyAgentRoleType
+                FROM dbo.PartyAgentRoleType
+            `);
+            return result.recordset.map((row: any) => row.PartyAgentRoleType);
+        } catch (err: any) {
+            return rejectWithValue(err.message || 'An unexpected error occurred while fetching role types.');
+        }
+    }
+);
+
+// Async thunk for adding user permission
+export const addUserPermission = createAsyncThunk<
+    void, // Return type on success
+    AddUserPermissionRequest, // Argument type
+    { rejectValue: string }
+>(
+    'auth/addUserPermission',
+    async ({ granteeUsername, partyAgentRoleType }, { rejectWithValue }) => {
+        try {
+            if (!window.electronAPI?.executeSqlQuery) {
+                throw new Error('SQL execution API is not available.');
+            }
+            await window.electronAPI.executeSqlQuery(`
+                EXEC dbo.PartyAgentRole_ADD_tr 
+                @GranteeUsr = '${granteeUsername.replace(/'/g, "''")}', 
+                @PartyAgentRoleType = '${partyAgentRoleType.replace(/'/g, "''")}'
+            `);
+        } catch (err: any) {
+            return rejectWithValue(err.message || 'An unexpected error occurred while adding user permission.');
+        }
+    }
+);
+
+// Async thunk for removing user permission
+export const removeUserPermission = createAsyncThunk<
+    void, // Return type on success
+    RemoveUserPermissionRequest, // Argument type
+    { rejectValue: string }
+>(
+    'auth/removeUserPermission',
+    async ({ granteeUsername, partyAgentRoleType }, { rejectWithValue }) => {
+        try {
+            if (!window.electronAPI?.executeSqlQuery) {
+                throw new Error('SQL execution API is not available.');
+            }
+            await window.electronAPI.executeSqlQuery(`
+                EXEC dbo.PartyAgentRole_DELETE_tr 
+                @GranteeUsr = '${granteeUsername.replace(/'/g, "''")}', 
+                @PartyAgentRoleType = '${partyAgentRoleType.replace(/'/g, "''")}'
+            `);
+        } catch (err: any) {
+            return rejectWithValue(err.message || 'An unexpected error occurred while removing user permission.');
+        }
+    }
+);
+
+// Comprehensive initialization thunk that fetches all party data
+export const initializePartyData = createAsyncThunk<
+    void, // Return type on success
+    void, // No arguments needed
+    { rejectValue: string }
+>(
+    'auth/initializePartyData',
+    async (_, { dispatch, rejectWithValue }) => {
+        try {
+            // First check role membership
+            const roleResult = await dispatch(checkRoleMembership());
+            
+            if (checkRoleMembership.fulfilled.match(roleResult) && roleResult.payload) {
+                // If user has party role, fetch all party-related data
+                await Promise.all([
+                    dispatch(fetchUserDefaultParty()),
+                    dispatch(fetchPermissions()),
+                    dispatch(fetchRoleTypes())
+                ]);
+            }
+        } catch (err: any) {
+            return rejectWithValue(err.message || 'An unexpected error occurred while initializing party data.');
+        }
+    }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -168,6 +355,23 @@ const authSlice = createSlice({
     // Optional: a synchronous action to clear errors if needed
     clearAuthError: (state) => {
       state.error = null;
+    },
+    // Set the current party
+    setCurrentParty: (state, action: PayloadAction<string>) => {
+      state.currentParty = action.payload;
+    },
+    // Clear specific error states
+    clearAddUserPermissionError: (state) => {
+      state.addUserPermissionError = null;
+    },
+    clearRemoveUserPermissionError: (state) => {
+      state.removeUserPermissionError = null;
+    },
+    clearRoleTypesError: (state) => {
+      state.roleTypesError = null;
+    },
+    clearFetchPermissionsError: (state) => {
+      state.fetchPermissionsError = null;
     },
   },
   extraReducers: (builder) => {
@@ -182,7 +386,7 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.username = action.payload.username || null;
         state.error = null;
-        // Role membership will be checked separately by the component
+        // Role membership and party data will be checked by subsequent dispatches
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isRegistrationLoading = false;
@@ -206,6 +410,21 @@ const authSlice = createSlice({
         state.telegramToken = null;
         state.telegramTokenExpiration = null;
         state.isTelegramTokenLoading = false;
+        
+        // Reset party and agent state
+        state.userDefaultParty = null;
+        state.currentParty = null;
+        state.granteePermissions = [];
+        state.grantorPermissions = [];
+        state.roleTypes = [];
+        state.roleTypesError = null;
+        state.roleTypesLoading = false;
+        state.addUserPermissionError = null;
+        state.addUserPermissionLoading = false;
+        state.removeUserPermissionError = null;
+        state.removeUserPermissionLoading = false;
+        state.fetchPermissionsError = null;
+        state.fetchPermissionsLoading = false;
       })
       .addCase(logoutUser.rejected, (state, action) => {
          // Even on rejection, typically reset auth state as user intended to logout
@@ -267,11 +486,76 @@ const authSlice = createSlice({
       .addCase(generateTelegramToken.rejected, (state, action) => {
         state.isTelegramTokenLoading = false;
         state.error = action.payload ?? 'Telegram token generation failed';
+      })
+      // Fetch user default party actions
+      .addCase(fetchUserDefaultParty.pending, (state) => {
+        // Could add loading state if needed
+      })
+      .addCase(fetchUserDefaultParty.fulfilled, (state, action: PayloadAction<string | null>) => {
+        state.userDefaultParty = action.payload;
+        // Set current party to default party if not already set
+        if (!state.currentParty && action.payload) {
+          state.currentParty = action.payload;
+        }
+      })
+      .addCase(fetchUserDefaultParty.rejected, (state, action) => {
+        console.error("Fetch user default party failed:", action.payload);
+      })
+      // Fetch permissions actions
+      .addCase(fetchPermissions.pending, (state) => {
+        state.fetchPermissionsLoading = true;
+        state.fetchPermissionsError = null;
+      })
+      .addCase(fetchPermissions.fulfilled, (state, action: PayloadAction<{ granteePermissions: GranteeResult[]; grantorPermissions: GrantorResult[] }>) => {
+        state.fetchPermissionsLoading = false;
+        state.granteePermissions = action.payload.granteePermissions;
+        state.grantorPermissions = action.payload.grantorPermissions;
+      })
+      .addCase(fetchPermissions.rejected, (state, action) => {
+        state.fetchPermissionsLoading = false;
+        state.fetchPermissionsError = action.payload ?? 'Failed to fetch permissions';
+      })
+      // Fetch role types actions
+      .addCase(fetchRoleTypes.pending, (state) => {
+        state.roleTypesLoading = true;
+        state.roleTypesError = null;
+      })
+      .addCase(fetchRoleTypes.fulfilled, (state, action: PayloadAction<string[]>) => {
+        state.roleTypesLoading = false;
+        state.roleTypes = action.payload;
+      })
+      .addCase(fetchRoleTypes.rejected, (state, action) => {
+        state.roleTypesLoading = false;
+        state.roleTypesError = action.payload ?? 'Failed to fetch role types';
+      })
+      // Add user permission actions
+      .addCase(addUserPermission.pending, (state) => {
+        state.addUserPermissionLoading = true;
+        state.addUserPermissionError = null;
+      })
+      .addCase(addUserPermission.fulfilled, (state) => {
+        state.addUserPermissionLoading = false;
+      })
+      .addCase(addUserPermission.rejected, (state, action) => {
+        state.addUserPermissionLoading = false;
+        state.addUserPermissionError = action.payload ?? 'Failed to add user permission';
+      })
+      // Remove user permission actions
+      .addCase(removeUserPermission.pending, (state) => {
+        state.removeUserPermissionLoading = true;
+        state.removeUserPermissionError = null;
+      })
+      .addCase(removeUserPermission.fulfilled, (state) => {
+        state.removeUserPermissionLoading = false;
+      })
+      .addCase(removeUserPermission.rejected, (state, action) => {
+        state.removeUserPermissionLoading = false;
+        state.removeUserPermissionError = action.payload ?? 'Failed to remove user permission';
       });
   },
 });
 
-export const { clearAuthError } = authSlice.actions;
+export const { clearAuthError, setCurrentParty, clearAddUserPermissionError, clearRemoveUserPermissionError, clearRoleTypesError, clearFetchPermissionsError } = authSlice.actions;
 
 // Selector to get the entire auth state
 export const selectAuthState = (state: RootState) => state.auth;
@@ -291,5 +575,51 @@ export const selectTelegramToken = (state: RootState) => state.auth.telegramToke
 export const selectTelegramTokenExpiration = (state: RootState) => state.auth.telegramTokenExpiration;
 // Selector for telegram token loading state
 export const selectTelegramTokenLoading = (state: RootState) => state.auth.isTelegramTokenLoading;
+
+// Party Management Selectors
+export const selectUserDefaultParty = (state: RootState) => state.auth.userDefaultParty;
+export const selectCurrentParty = (state: RootState) => state.auth.currentParty;
+
+// Permissions Selectors
+export const selectGranteePermissions = (state: RootState) => state.auth.granteePermissions;
+export const selectGrantorPermissions = (state: RootState) => state.auth.grantorPermissions;
+export const selectFetchPermissionsLoading = (state: RootState) => state.auth.fetchPermissionsLoading;
+export const selectFetchPermissionsError = (state: RootState) => state.auth.fetchPermissionsError;
+
+// Role Types Selectors
+export const selectRoleTypes = (state: RootState) => state.auth.roleTypes;
+export const selectRoleTypesLoading = (state: RootState) => state.auth.roleTypesLoading;
+export const selectRoleTypesError = (state: RootState) => state.auth.roleTypesError;
+
+// Add User Permission Selectors
+export const selectAddUserPermissionLoading = (state: RootState) => state.auth.addUserPermissionLoading;
+export const selectAddUserPermissionError = (state: RootState) => state.auth.addUserPermissionError;
+
+// Remove User Permission Selectors
+export const selectRemoveUserPermissionLoading = (state: RootState) => state.auth.removeUserPermissionLoading;
+export const selectRemoveUserPermissionError = (state: RootState) => state.auth.removeUserPermissionError;
+
+// Computed Selectors
+// Get available parties for dropdown (user's default party + parties that granted permissions)
+export const selectAvailableParties = (state: RootState) => {
+  const defaultParty = state.auth.userDefaultParty;
+  const granteePermissions = state.auth.granteePermissions;
+  
+  const parties = new Set<string>();
+  
+  // Add default party if it exists
+  if (defaultParty) {
+    parties.add(defaultParty);
+  }
+  
+  // Add parties that have granted permissions
+  granteePermissions.forEach(permission => {
+    if (permission.Grantor) {
+      parties.add(permission.Grantor);
+    }
+  });
+  
+  return Array.from(parties);
+};
 
 export default authSlice.reducer; 
