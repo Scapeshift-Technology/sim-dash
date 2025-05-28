@@ -229,13 +229,15 @@ const MLBSimulationView: React.FC = () => {
         <PlayerPropsTable data={propsData.player} />
       </CollapsibleSection>
 
-      <CollapsibleSection
-        title="Simulated Scoring Order Props Results"
-        isOpen={sectionVisibility.scoringOrderProps}
-        onToggle={() => toggleSection('scoringOrderProps')}
-      >
-        <ScoringOrderPropsTable data={propsData.scoringOrder} />
-      </CollapsibleSection>
+      {propsData.scoringOrder && (
+        <CollapsibleSection
+          title="Simulated Scoring Order Props Results"
+          isOpen={sectionVisibility.scoringOrderProps}
+          onToggle={() => toggleSection('scoringOrderProps')}
+        >
+          <ScoringOrderPropsTable data={propsData.scoringOrder} />
+        </CollapsibleSection>
+      )}
 
       <Snackbar
         open={showCopySuccess}

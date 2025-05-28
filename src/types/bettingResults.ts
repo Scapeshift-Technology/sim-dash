@@ -42,7 +42,7 @@ export interface TotalsData {
 export interface PropsData {
   firstInning: FirstInningPropsData[];
   player: PlayerPropsData[];
-  scoringOrder: ScoringOrderPropsData[];
+  scoringOrder?: ScoringOrderPropsData[];
 }
 
 export interface FirstInningPropsData {
@@ -115,7 +115,7 @@ export interface SidesCountsMLB {
 export interface PropsCountsMLB {
   firstInning: FirstInningScoreCountsMLB;
   player: AllPlayersPropsCountsMLB;
-  scoringOrder: ScoringOrderCountsMLB;
+  scoringOrder?: ScoringOrderCountsMLB;
 }
 
 // -- First inning scores --

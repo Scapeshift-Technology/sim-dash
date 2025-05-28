@@ -191,7 +191,7 @@ export { transformSeriesProbsMLB };
 function transformPropsCountsMLB(propsCounts: PropsCountsMLB, awayTeamName: string, homeTeamName: string): PropsData {
   const firstInningPropData = transformFirstInningCountsMLB(propsCounts.firstInning, awayTeamName, homeTeamName);
   const playerPropData = transformAllPlayerCountsMLB(propsCounts.player, awayTeamName, homeTeamName);
-  const scoringOrderPropData = transformScoringOrderCountsMLB(propsCounts.scoringOrder, awayTeamName, homeTeamName);
+  const scoringOrderPropData = propsCounts.scoringOrder ? transformScoringOrderCountsMLB(propsCounts.scoringOrder, awayTeamName, homeTeamName) : undefined;
 
   return {
     firstInning: firstInningPropData,
@@ -204,11 +204,11 @@ function transformPropsCountsMLB(propsCounts: PropsCountsMLB, awayTeamName: stri
 
 function transformScoringOrderCountsMLB(scoringOrderCounts: ScoringOrderCountsMLB, awayTeamName: string, homeTeamName: string): ScoringOrderPropsData[] {
   const awayFirstData = transformScoringOrderTeamCountsMLB(scoringOrderCounts.away.first, awayTeamName, 'first');
-  const awayLastData = transformScoringOrderTeamCountsMLB(scoringOrderCounts.away.last, awayTeamName, 'last');
   const homeFirstData = transformScoringOrderTeamCountsMLB(scoringOrderCounts.home.first, homeTeamName, 'first');
+  const awayLastData = transformScoringOrderTeamCountsMLB(scoringOrderCounts.away.last, awayTeamName, 'last');
   const homeLastData = transformScoringOrderTeamCountsMLB(scoringOrderCounts.home.last, homeTeamName, 'last');
 
-  return [awayFirstData, awayLastData, homeFirstData, homeLastData];
+  return [awayFirstData, homeFirstData, awayLastData, homeLastData];
 }
 
 function transformScoringOrderTeamCountsMLB(outcomeCounts: OutcomeCounts, teamName: string, propType: 'first' | 'last'): ScoringOrderPropsData {
