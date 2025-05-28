@@ -1,6 +1,6 @@
 import { SimResultsMLB } from "./bettingResults";
 import { MLBGameSimInputs } from "./simInputs";
-import { LineupsSource, MarketLinesMLB } from "./mlb";
+import { GameStatePitcher, LineupsSource, MarketLinesMLB } from "./mlb";
 
 // ---------- Main type ----------
 // This will be the type for the sim history entry that is saved to the database.
@@ -15,8 +15,8 @@ export interface SimHistoryEntry {
 // ---------- Sub-types ----------
 
 export interface MLBGameSimInputData { // Much like MLBGameInputs2 from ./simInputs.ts, but with data specific to what should be stored in the db
-    simInputs: MLBGameSimInputs;
     lineups: ReducedMatchupLineups;
+    simInputs: MLBGameSimInputs;
     gameInfo: SimMetadataMLB;
 }
 
@@ -25,6 +25,22 @@ export interface SimMetadataMLB { // Much like GameMetadataMLB from ./mlb.ts, bu
     bettingBounds?: MarketLinesMLB;
     automatedLeans?: MLBGameSimInputs;
     gameTimestamp?: string;
+
+    gameState?: ReducedGameStateMLB; // For games not starting from the beginning
+}
+
+// ----- Reduced types for storage in db -----
+
+export interface ReducedGameStateMLB {
+    inning: number;
+    topInning: boolean;
+    outs: number;
+    bases: boolean[];
+    awayScore: number;
+    homeScore: number;
+  
+    awayPitcher: GameStatePitcher;
+    homePitcher: GameStatePitcher;
 }
 
 export interface ReducedMatchupLineups { // Like MatchupLineups from ./mlb.ts with less info

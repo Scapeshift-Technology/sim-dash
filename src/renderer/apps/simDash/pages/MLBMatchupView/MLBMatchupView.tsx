@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
     Box, 
@@ -35,6 +35,7 @@ import {
     editMLBBench,
     editMLBStartingPitcher,
     editMLBBullpen,
+    editMLBUnavailablePitchers,
     selectGamePlayerStatsError,
     selectGameSeriesGames,
     selectMLBGameContainer,
@@ -184,9 +185,9 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         }));
     };
 
-    const saveAndUpdateHistory = async (simResults: SimResultsMLB, inputData: MLBGameInputs2) => {
+    const saveAndUpdateHistory = async (simResults: SimResultsMLB, inputData: MLBGameInputs2, liveGameData?: MlbLiveDataApiResponse) => {
         // Transform data to specific DB types
-        const dbInputData: MLBGameSimInputData = transformMLBGameInputs2ToDB(inputData);
+        const dbInputData: MLBGameSimInputData = transformMLBGameInputs2ToDB(inputData, liveGameData);
         const timestamp = new Date().toISOString();
 
         const simHistoryEntry: SimHistoryEntry = {
@@ -227,6 +228,9 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 gameInputs: gameContainer.currentGame,
                 liveGameData: liveGameData
             })).unwrap();
+
+            await saveAndUpdateHistory(result, gameContainer.currentGame as MLBGameInputs2, liveGameData);
+            return;
         } else {
             if (!gameContainer.currentGame) return;
             result = await dispatch(runSimulationThunk({
@@ -261,11 +265,14 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         }
     };
 
-    const handlePitcherReorder = (team: 'home' | 'away', newStartingPitcher: Player | null, newBullpen: Player[]) => {
+    const handlePitcherReorder = (team: 'home' | 'away', newStartingPitcher: Player | null, newBullpen: Player[], newUnavailablePitchers: Player[] | undefined) => {
         if (newStartingPitcher) {
             dispatch(editMLBStartingPitcher({ matchId, team, newStartingPitcher }));
         }
         dispatch(editMLBBullpen({ matchId, team, newBullpen }));
+        if (newUnavailablePitchers) {
+            dispatch(editMLBUnavailablePitchers({ matchId, team, newUnavailablePitchers }));
+        }
     }
 
     const handlePositionChange = (team: 'home' | 'away', playerId: number, position: Position) => {
@@ -304,6 +311,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             <MLBMatchupHeader
                 participant1={participant1}
                 participant2={participant2}
+                daySequence={daySequence}
                 dateTime={dateTime}
                 isSimulating={traditionalSimulationStatus === 'loading' || seriesSimulationStatus === 'loading'}
                 simError={traditionalSimulationError || seriesSimulationError}

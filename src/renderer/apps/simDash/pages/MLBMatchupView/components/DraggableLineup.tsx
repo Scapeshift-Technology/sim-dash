@@ -24,7 +24,7 @@ interface DraggableLineupProps {
     matchId: number;
     league: LeagueName;
     onLineupReorder: (teamType: TeamType, newLineup: Player[], newBench: Player[] | null) => void;
-    onPitcherReorder: (teamType: TeamType, newStartingPitcher: Player | null, newBullpen: Player[]) => void;
+    onPitcherReorder: (teamType: TeamType, newStartingPitcher: Player | null, newBullpen: Player[], newUnavailablePitchers?: Player[]) => void;
     onPositionChange?: (teamType: TeamType, playerId: number, position: Position) => void;
 }
 
@@ -44,7 +44,7 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
     const pitcherAdjustment = useSelector((state: RootState) => selectTeamInputs(state, league, matchId))?.[teamType].teamPitcherLean || 0;
     console.log('teamData', teamData);
 
-    const { handleDragEnd } = useDragAndDrop({
+    const { handleDragOver, handleDragEnd, currentOperation, targetSection } = useDragAndDrop({
         teamData,
         teamType,
         onLineupReorder,
@@ -101,6 +101,16 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
 
     // ---------- Render functions ----------
 
+    const getTargetSectionStyle = (sectionName: string) => ({
+        border: targetSection === sectionName && currentOperation === 'move' 
+            ? '2px dashed #2196f3' 
+            : '2px solid transparent',
+        backgroundColor: targetSection === sectionName && currentOperation === 'move'
+            ? 'rgba(33, 150, 243, 0.1)'
+            : 'transparent',
+        transition: 'all 0.2s ease-in-out'
+    });
+
     const renderPlayerList = (players: Player[], isDraggable: boolean = false, isPitcher: boolean = false, isStarter: boolean = false) => (
         <List
             dense
@@ -145,12 +155,14 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                 title="Pitcher"
                 adjustmentValue={pitcherAdjustment}
                 onAdjustmentChange={handlePitcherAdjustmentChange}
+                currentOperation={currentOperation}
                 isDraggable={true}
-                sortableItems={[teamData.startingPitcher.id, ...teamData.bullpen.map(p => p.id)]}
+                sortableItems={[teamData.startingPitcher.id, ...teamData.bullpen.map(p => p.id), ...teamData.unavailablePitchers.map(p => p.id)]}
+                onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
             >
                 {/* Starting Pitcher */}
-                <Box sx={{ mb: 1 }}>
+                <Box sx={{...getTargetSectionStyle('starter'), mb: 1}}>
                     <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                         Starting Pitcher
                     </Typography>
@@ -158,11 +170,19 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                 </Box>
 
                 {/* Bullpen */}
-                <Box>
+                <Box sx={{...getTargetSectionStyle('bullpen'), mb: 1}}>
                     <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                         Bullpen
                     </Typography>
                     {renderPlayerList(teamData.bullpen, true, true)}
+                </Box>
+
+                {/* Unavailable Pitchers */}
+                <Box sx={getTargetSectionStyle('unavailablePitchers')}>
+                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                        Unavailable
+                    </Typography>
+                    {renderPlayerList(teamData.unavailablePitchers, true, true)}
                 </Box>
             </TeamSectionCard>
 
@@ -171,8 +191,10 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                 title="Hitter"
                 adjustmentValue={hitterAdjustment}
                 onAdjustmentChange={handleHitterAdjustmentChange}
+                currentOperation={currentOperation}
                 isDraggable={true}
-                sortableItems={[...teamData.lineup.map(p => p.id), ...teamData.bench.map(p => p.id)]}
+                sortableItems={[...teamData.lineup.map(p => p.id), ...teamData.bench.map(p => p.id), ...teamData.unavailableHitters.map(p => p.id)]}
+                onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
             >
                 <Box sx={{ mb: 1 }}>

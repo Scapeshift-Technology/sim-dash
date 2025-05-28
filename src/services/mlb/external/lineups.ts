@@ -20,7 +20,8 @@ import {
   getMlbRosterApiRoster,
   enrichPlayerWithHandedness,
   getProbablePitchers,
-  extractBenchFromMlbRoster
+  extractBenchFromMlbRoster,
+  extractUnavailablePitchersFromMlbRoster
 } from './mlbApi';
 
 import { getSwishLineups } from './swish';
@@ -133,6 +134,7 @@ function extractCompleteTeamLineup(
 
   // Get starting pitcher
   const startingPitcher = extractStartingPitcherFromMlbGameApiGame(gameInfo, teamType);
+  const unavailablePitchers = extractUnavailablePitchersFromMlbRoster(rosterInfo, probablePitchers, startingPitcher.id);
 
   // Get bullpen
   const bullpen = extractBullPenFromMlbRoster(rosterInfo, teamType, probablePitchers);
@@ -142,6 +144,8 @@ function extractCompleteTeamLineup(
     startingPitcher: startingPitcher,
     bullpen: bullpen,
     bench: bench,
+    unavailableHitters: [],
+    unavailablePitchers: unavailablePitchers,
     teamName: teamType === 'away' ? gameInfo.gameData.teams.away.name : gameInfo.gameData.teams.home.name
   };
 }

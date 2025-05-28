@@ -617,6 +617,8 @@ const sanFranciscoGiants: TeamLineup = {
   startingPitcher: giantsStartingPitcher,
   bullpen: giantsBullpen,
   bench: [],
+  unavailableHitters: [],
+  unavailablePitchers: [],
   teamName: "San Francisco Giants"
 };
 
@@ -1196,6 +1198,8 @@ const chicagoCubs: TeamLineup = {
   startingPitcher: chicagoCubsStartingPitcher,
   bullpen: chicagoCubsBullpen,
   bench: [],
+  unavailableHitters: [],
+  unavailablePitchers: [],
   teamName: "Chicago Cubs"
 };
 

@@ -10,6 +10,7 @@ interface MLBSimulationResultsSummaryProps {
   isLoading?: boolean;
   awayTeamName: string;
   homeTeamName: string;
+  daySequence: number | undefined;
   sx?: SxProps<Theme>;
   className?: string;
   size?: 'small' | 'medium' | 'large';
@@ -21,6 +22,7 @@ const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = 
   isLoading = false,
   awayTeamName,
   homeTeamName,
+  daySequence,
   sx = {},
   className,
   size = 'medium',
@@ -76,7 +78,8 @@ const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = 
           matchupId: selectedSim.matchId,
           timestamp: selectedSim.timestamp,
           awayTeamName, 
-          homeTeamName 
+          homeTeamName,
+          daySequence
         });
       } catch (error) {
         console.error('Failed to create simulation window:', error);

@@ -102,7 +102,8 @@ function countsToProbability(successCounts: number, failureCounts: number, pushC
   }
 }
 
-function marginOfError(total: number, proportion: number, confidenceLevel: number = 0.95): number {
+function marginOfError(total: number, proportion: number): number {
+  // Always assumes 95% confidence level
   const z = 1.96;
   const p = proportion;
   const n = total;

@@ -354,7 +354,24 @@ function extractBullPenFromMlbRoster(roster: MlbRosterApiResponse, teamType: Tea
   });
 }
 
-export { extractBullpenFromMlbRosterAndGame, extractBullPenFromMlbRoster }
+function extractUnavailablePitchersFromMlbRoster(roster: MlbRosterApiResponse, probablePitchers: number[], startingPitcherId: number): Player[] {
+  const unavailablePitchers = roster.roster.filter((player: any) => 
+    (player.position.abbreviation === 'P' || player.position.abbreviation === 'TWP') && 
+    player.status.code === 'A' && 
+    probablePitchers.includes(player.person.id) && 
+    player.person.id !== startingPitcherId
+  );
+  
+  return unavailablePitchers.map((player: any) => {
+    return {
+      id: player.person.id,
+      name: player.person.fullName,
+      position: 'RP'
+    };
+  });
+}
+
+export { extractBullpenFromMlbRosterAndGame, extractBullPenFromMlbRoster, extractUnavailablePitchersFromMlbRoster }
 
 // ---------- Util type functions used with MLB API ----------
 

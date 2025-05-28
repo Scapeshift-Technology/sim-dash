@@ -60,6 +60,7 @@ declare global {
         timestamp: string;
         awayTeamName: string;
         homeTeamName: string;
+        daySequence: number | undefined;
       }) => Promise<{ success: boolean }>;
       
       // Simulation Results Window Communication

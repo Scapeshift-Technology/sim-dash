@@ -17,6 +17,7 @@ import { SimType } from '@@/types/mlb/mlb-sim';
 interface MLBMatchupHeaderProps {
     participant1: string;
     participant2: string;
+    daySequence: number | undefined;
     dateTime: string;
     isSimulating: boolean;
     simError: string | null;
@@ -33,6 +34,7 @@ interface MLBMatchupHeaderProps {
 const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
     participant1,
     participant2,
+    daySequence,
     dateTime,
     isSimulating,
     simError,
@@ -113,6 +115,7 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
                     <MLBSimulationResultsSummary
                         awayTeamName={participant1}
                         homeTeamName={participant2}
+                        daySequence={daySequence}
                         displayHistory={true}
                         simHistory={simResults || []}
                         isLoading={simStatus === 'loading'}

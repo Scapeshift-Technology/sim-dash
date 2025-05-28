@@ -31,7 +31,7 @@ export interface SeriesGameInputs { // Very similar to SeriesInfoMLB(type in mlb
   [gameNumber: number]: MLBGameInputs2;
 }
 
-export interface MLBGameInputs2 { // Very similar to MLBGameDataResponse(type in mlb.ts), but with extra info
+export interface MLBGameInputs2 { // Very similar to MLBGameData(type in mlb.ts), but with extra info. Also like MLBGameSimInputData(type in simHistory.ts)
   lineups: MatchupLineups;
   simInputs: MLBGameSimInputs;
   gameInfo: GameMetadataMLB;
