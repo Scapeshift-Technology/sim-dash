@@ -208,6 +208,7 @@ interface MlbLiveDataApiLinescorePlayer {
   
 interface MlbLiveDataApiLinescoreOffense {
   batter: MlbLiveDataApiLinescorePlayer;
+  onDeck: MlbLiveDataApiLinescorePlayer;
   first?: MlbLiveDataApiLinescorePlayer;
   second?: MlbLiveDataApiLinescorePlayer;
   third?: MlbLiveDataApiLinescorePlayer;

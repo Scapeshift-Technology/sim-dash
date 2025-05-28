@@ -35,6 +35,7 @@ const MLBGameBanner = ({ liveGameData }: MLBGameBannerProps) => {
   let isTopInning: boolean | undefined;
   let currentPitcher: string | undefined;
   let currentBatter: string | undefined;
+  let onDeck: string | undefined
   let balls: number | undefined;
   let strikes: number | undefined;
   let outs: number | undefined;
@@ -47,6 +48,7 @@ const MLBGameBanner = ({ liveGameData }: MLBGameBannerProps) => {
     isTopInning = inningStr.includes("TOP");
     currentPitcher = liveGameData.liveData.plays.currentPlay.matchup.pitcher.fullName;
     currentBatter = liveGameData.liveData.plays.currentPlay.matchup.batter.fullName;
+    onDeck = liveGameData.liveData.linescore.offense.onDeck.fullName;
     balls = liveGameData.liveData.linescore.balls;
     strikes = liveGameData.liveData.linescore.strikes;
     outs = liveGameData.liveData.linescore.outs;
@@ -106,12 +108,18 @@ const MLBGameBanner = ({ liveGameData }: MLBGameBannerProps) => {
               gridArea: 'away-info', 
               textAlign: 'right',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end'
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              justifyContent: 'center'
             }}>
               <Typography>
                 {isTopInning ? `AB: ${currentBatter}` : `P: ${currentPitcher}`}
               </Typography>
+              {isTopInning && onDeck && (
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
+                  On Deck: {onDeck}
+                </Typography>
+              )}
             </Box>
 
             {/* Center Info */}
@@ -131,11 +139,18 @@ const MLBGameBanner = ({ liveGameData }: MLBGameBannerProps) => {
               gridArea: 'home-info', 
               textAlign: 'left',
               display: 'flex',
-              alignItems: 'center'
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              justifyContent: 'center'
             }}>
               <Typography>
                 {isTopInning ? `P: ${currentPitcher}` : `AB: ${currentBatter}`}
               </Typography>
+              {!isTopInning && onDeck && (
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
+                  On Deck: {onDeck}
+                </Typography>
+              )}
             </Box>
           </>
         )}
