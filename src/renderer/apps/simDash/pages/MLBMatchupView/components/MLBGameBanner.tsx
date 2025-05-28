@@ -1,7 +1,10 @@
 import { Paper, Box, Typography } from '@mui/material';
 import { teamNameToAbbreviationMLB } from '@@/services/mlb/utils/teamName';
 import BasesAndCountDisplay from './BasesAndCountDisplay';
+import Linescore from './Linescore';
+
 import { MlbLiveDataApiResponse } from '@@/types/mlb';
+import { MlbLiveDataApiLinescoreInning } from '@@/types/mlb/mlb-api';
 
 // ---------- Main components ----------
 
@@ -21,6 +24,11 @@ const MLBGameBanner = ({ liveGameData }: MLBGameBannerProps) => {
   const homeTeam = teamNameToAbbreviationMLB(liveGameData.gameData.teams.home.name);
   const awayScore = liveGameData.liveData.linescore.teams.away.runs;
   const homeScore = liveGameData.liveData.linescore.teams.home.runs;
+  const awayHits = liveGameData.liveData.linescore.teams.away.hits;
+  const homeHits = liveGameData.liveData.linescore.teams.home.hits;
+  const awayErrors = liveGameData.liveData.linescore.teams.away.errors;
+  const homeErrors = liveGameData.liveData.linescore.teams.home.errors;
+  const lineScoreInnings: MlbLiveDataApiLinescoreInning[] = liveGameData.liveData.linescore.innings;
   
   // Variables that are conditional on gameStatus === "Live"
   let inningStr: string | undefined;
@@ -132,6 +140,19 @@ const MLBGameBanner = ({ liveGameData }: MLBGameBannerProps) => {
           </>
         )}
       </Box>
+      
+      {/* Linescore */}
+      <Linescore
+        innings={lineScoreInnings}
+        awayTeam={awayTeam}
+        homeTeam={homeTeam}
+        awayScore={awayScore}
+        homeScore={homeScore}
+        awayHits={awayHits}
+        homeHits={homeHits}
+        awayErrors={awayErrors}
+        homeErrors={homeErrors}
+      />
     </Paper>
   );
 };
