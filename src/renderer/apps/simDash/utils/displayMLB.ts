@@ -215,7 +215,6 @@ function transformScoringOrderTeamCountsMLB(outcomeCounts: OutcomeCounts, teamNa
   const { success, failure, push, total } = outcomeCounts;
   
   const teamAbbrev = teamNameToAbbreviationMLB(teamName);
-  console.log(`Abbreviation for the ${teamName} is ${teamAbbrev}`);
 
   const pushCt = push || 0;
   const percent = countsToProbability(success, failure, pushCt);

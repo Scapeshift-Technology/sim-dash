@@ -96,9 +96,7 @@ function formatScoringOrderPropsData(data: ScoringOrderPropsData[]): FormattedSc
 // ---------- Component ----------
 
 const ScoringOrderPropsTable: React.FC<ScoringOrderTableProps> = ({ data }) => {
-  console.log(data);
   const formattedData = formatScoringOrderPropsData(data);
-  console.log(formattedData);
 
   return (
     <Inline 
