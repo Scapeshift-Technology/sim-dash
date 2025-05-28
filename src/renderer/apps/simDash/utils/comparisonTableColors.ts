@@ -1,11 +1,11 @@
 // ---------- Color coding configuration ----------
 
 const COLOR_MAX_VALUES = {
-  coverPercent: 0.5,    // 50% change reaches max intensity
-  usaFair: 100,         // change of 100 reaches max intensity
-  overPercent: 0.5,     // 50% change reaches max intensity
-  scorePercent: 0.5,    // 50% change reaches max intensity
-  percent: 0.5          // 50% change reaches max intensity
+  coverPercent: 0.25,    // 25% change reaches max intensity
+  usaFair: 80,           // change of 80 reaches max intensity
+  overPercent: 0.25,     // 25% change reaches max intensity
+  scorePercent: 0.25,    // 25% change reaches max intensity
+  percent: 0.25          // 25% change reaches max intensity
 };
 
 // ---------- Helper functions ----------
