@@ -8,9 +8,11 @@ import {
   Typography,
   ListItem,
   ListItemText,
-  TextField
+  TextField,
+  Tooltip
 } from '@mui/material';
 import type { Player, Position } from '@/types/mlb';
+import PlayerStatsTooltip from './PlayerStatsTooltip';
 
 // ---------- Main component ----------
 
@@ -35,6 +37,9 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
   dragId,
   isCurrentPlayer
 }) => {
+
+  // ---------- Hooks ----------
+
   const {
     attributes,
     listeners,
@@ -43,6 +48,8 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
     transition,
     isDragging
   } = useSortable({ id: dragId || player.id });
+
+  // ---------- Constants ----------
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -54,6 +61,8 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
     width: '100%'
   };
 
+  // ---------- Helper functions ----------
+
   const getLeanColor = (value: number) => {
     if (value > 10 || value < -10) return 'error.main';
     if (value > 0) return 'success.main';
@@ -62,6 +71,8 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
   };
 
   const isLeanValid = (value: number) => value >= -10 && value <= 10;
+
+  // ---------- Render ----------
 
   return (
     <ListItem
@@ -93,29 +104,42 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
         </Typography>
       )}
         <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-          <ListItemText
-            primary={
-              <Typography 
-                variant="body1" 
-                sx={{ 
-                  fontWeight: isCurrentPlayer ? 'bold' : 'normal' 
-                }}
-              >
-                {player.name}
-              </Typography>
-            }
-            sx={{ flex: '1 1 auto' }}
-          />
-            {/* <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
-              <Typography variant="body2" sx={{ mr: 1, color: 'text.secondary' }}>
-                Pos:
-              </Typography>
-              <PositionSelector
-                value={player.position || ''}
-                onChange={(position) => onPositionChange?.(player.id, position)}
-                disabled={!isDraggable}
-              />
-            </Box> */}
+          <Tooltip
+            title={<PlayerStatsTooltip player={player} />}
+            placement="top"
+            arrow
+            enterDelay={700}
+            leaveDelay={200}
+            slotProps={{
+              tooltip: {
+                sx: {
+                  bgcolor: 'transparent',
+                  '& .MuiTooltip-arrow': {
+                    color: 'background.paper',
+                  },
+                },
+              },
+            }}
+          >
+            <ListItemText
+              primary={
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    fontWeight: isCurrentPlayer ? 'bold' : 'normal',
+                    cursor: 'help',
+                    '&:hover': {
+                      color: 'primary.main',
+                      transition: 'color 0.2s ease-in-out'
+                    }
+                  }}
+                >
+                  {player.name}
+                </Typography>
+              }
+              sx={{ flex: '1 1 auto' }}
+            />
+          </Tooltip>
             <TextField
               type="number"
               size="small"
