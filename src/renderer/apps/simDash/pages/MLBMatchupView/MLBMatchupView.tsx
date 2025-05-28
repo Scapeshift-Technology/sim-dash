@@ -185,9 +185,9 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         }));
     };
 
-    const saveAndUpdateHistory = async (simResults: SimResultsMLB, inputData: MLBGameInputs2) => {
+    const saveAndUpdateHistory = async (simResults: SimResultsMLB, inputData: MLBGameInputs2, liveGameData?: MlbLiveDataApiResponse) => {
         // Transform data to specific DB types
-        const dbInputData: MLBGameSimInputData = transformMLBGameInputs2ToDB(inputData);
+        const dbInputData: MLBGameSimInputData = transformMLBGameInputs2ToDB(inputData, liveGameData);
         const timestamp = new Date().toISOString();
 
         const simHistoryEntry: SimHistoryEntry = {
@@ -228,6 +228,9 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 gameInputs: gameContainer.currentGame,
                 liveGameData: liveGameData
             })).unwrap();
+
+            await saveAndUpdateHistory(result, gameContainer.currentGame as MLBGameInputs2, liveGameData);
+            return;
         } else {
             if (!gameContainer.currentGame) return;
             result = await dispatch(runSimulationThunk({
