@@ -21,6 +21,7 @@ interface SortablePlayerItemProps {
   lineupPosition?: number;
   onLeanChange?: (playerId: number, value: number) => void;
   leanValue?: number;
+  dragId?: string;
 }
 
 const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({ 
@@ -29,7 +30,8 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
   onPositionChange,
   lineupPosition,
   onLeanChange,
-  leanValue = 0
+  leanValue = 0,
+  dragId
 }) => {
   const {
     attributes,
@@ -38,7 +40,7 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
     transform,
     transition,
     isDragging
-  } = useSortable({ id: player.id });
+  } = useSortable({ id: dragId || player.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),

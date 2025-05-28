@@ -44,7 +44,7 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
     const pitcherAdjustment = useSelector((state: RootState) => selectTeamInputs(state, league, matchId))?.[teamType].teamPitcherLean || 0;
     console.log('teamData', teamData);
 
-    const { handleDragOver, handleDragEnd, currentOperation, targetSection } = useDragAndDrop({
+    const { handleDragOver, handleDragEnd, currentOperation, targetSection, createDragId } = useDragAndDrop({
         teamData,
         teamType,
         onLineupReorder,
@@ -128,6 +128,7 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                         teamInputs?.individualPitcherLeans?.[player.id] || 0 :
                         teamInputs?.individualHitterLeans?.[player.id] || 0
                     }
+                    dragId={isDraggable ? createDragId(player) : undefined}
                 />
             ))}
         </List>
@@ -157,7 +158,7 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                 onAdjustmentChange={handlePitcherAdjustmentChange}
                 currentOperation={currentOperation}
                 isDraggable={true}
-                sortableItems={[teamData.startingPitcher.id, ...teamData.bullpen.map(p => p.id), ...teamData.unavailablePitchers.map(p => p.id)]}
+                sortableItems={[createDragId(teamData.startingPitcher), ...teamData.bullpen.map(p => createDragId(p)), ...teamData.unavailablePitchers.map(p => createDragId(p))]}
                 onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
             >
@@ -193,7 +194,7 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                 onAdjustmentChange={handleHitterAdjustmentChange}
                 currentOperation={currentOperation}
                 isDraggable={true}
-                sortableItems={[...teamData.lineup.map(p => p.id), ...teamData.bench.map(p => p.id), ...teamData.unavailableHitters.map(p => p.id)]}
+                sortableItems={[...teamData.lineup.map(p => createDragId(p)), ...teamData.bench.map(p => createDragId(p)), ...teamData.unavailableHitters.map(p => createDragId(p))]}
                 onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
             >
