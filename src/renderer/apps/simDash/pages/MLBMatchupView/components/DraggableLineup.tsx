@@ -7,7 +7,7 @@ import {
     List,
     Divider
 } from '@mui/material';
-import type { TeamLineup, Player, Position, TeamType } from '@/types/mlb';
+import type { TeamLineup, Player, Position, TeamType, MlbLiveDataApiResponse } from '@/types/mlb';
 import { updateTeamLean, updatePlayerLean, selectTeamInputs } from '@/simDash/store/slices/simInputsSlice';
 import type { LeagueName } from '@@/types/league';
 import type { RootState } from '@/store/store';
@@ -23,6 +23,7 @@ interface DraggableLineupProps {
     teamType: TeamType;
     matchId: number;
     league: LeagueName;
+    liveGameData: MlbLiveDataApiResponse | undefined;
     onLineupReorder: (teamType: TeamType, newLineup: Player[], newBench: Player[] | null) => void;
     onPitcherReorder: (teamType: TeamType, newStartingPitcher: Player | null, newBullpen: Player[], newUnavailablePitchers?: Player[]) => void;
     onPositionChange?: (teamType: TeamType, playerId: number, position: Position) => void;
@@ -34,15 +35,29 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
     teamType,
     matchId,
     league,
+    liveGameData,
     onLineupReorder,
     onPitcherReorder,
     onPositionChange
 }) => {
     const dispatch = useDispatch();
+
+    // ---------- Selectors ----------
+
     const teamInputs = useSelector((state: RootState) => selectTeamInputs(state, league, matchId))?.[teamType];
     const hitterAdjustment = useSelector((state: RootState) => selectTeamInputs(state, league, matchId))?.[teamType].teamHitterLean || 0;
     const pitcherAdjustment = useSelector((state: RootState) => selectTeamInputs(state, league, matchId))?.[teamType].teamPitcherLean || 0;
     console.log('teamData', teamData);
+
+    // ---------- Variables ----------
+
+    const currentPitcherId = liveGameData?.gameData.status.abstractGameState === "Live" ? 
+        liveGameData?.liveData.plays.currentPlay.matchup.pitcher.id : undefined;
+    const currentBatterId = liveGameData?.gameData.status.abstractGameState === "Live" ? 
+        liveGameData?.liveData.plays.currentPlay.matchup.batter.id : undefined;
+
+
+    // ---------- Hooks ----------
 
     const { handleDragOver, handleDragEnd, currentOperation, targetSection, createDragId } = useDragAndDrop({
         teamData,
@@ -111,7 +126,7 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
         transition: 'all 0.2s ease-in-out'
     });
 
-    const renderPlayerList = (players: Player[], isDraggable: boolean = false, isPitcher: boolean = false, isStarter: boolean = false) => (
+    const renderPlayerList = (players: Player[], isDraggable: boolean = false, isPitcher: boolean = false, isStarter: boolean = false, currentPlayerId: number | undefined = undefined) => (
         <List
             dense
             sx={{ pt: 0, pb: 0 }}
@@ -129,6 +144,7 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                         teamInputs?.individualHitterLeans?.[player.id] || 0
                     }
                     dragId={isDraggable ? createDragId(player) : undefined}
+                    isCurrentPlayer={currentPlayerId === player.id}
                 />
             ))}
         </List>
@@ -167,7 +183,7 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                     <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                         Starting Pitcher
                     </Typography>
-                    {renderPlayerList([teamData.startingPitcher], true, true, true)}
+                    {renderPlayerList([teamData.startingPitcher], true, true, true, currentPitcherId)}
                 </Box>
 
                 {/* Bullpen */}
@@ -175,7 +191,7 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                     <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                         Bullpen
                     </Typography>
-                    {renderPlayerList(teamData.bullpen, true, true)}
+                    {renderPlayerList(teamData.bullpen, true, true, false, currentPitcherId)}
                 </Box>
 
                 {/* Unavailable Pitchers */}
@@ -183,7 +199,7 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                     <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                         Unavailable
                     </Typography>
-                    {renderPlayerList(teamData.unavailablePitchers, true, true)}
+                    {renderPlayerList(teamData.unavailablePitchers, true, true, false, currentPitcherId)}
                 </Box>
             </TeamSectionCard>
 
@@ -202,14 +218,14 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
                     <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                         Batting Order
                     </Typography>
-                    {renderPlayerList(teamData.lineup, true, false, true)}
+                    {renderPlayerList(teamData.lineup, true, false, true, currentBatterId)}
                 </Box>
 
                 <Box>
                     <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                         Bench
                     </Typography>
-                    {renderPlayerList(teamData.bench, true, false)}
+                    {renderPlayerList(teamData.bench, true, false, false, currentBatterId)}
                 </Box>
             </TeamSectionCard>
         </Paper>

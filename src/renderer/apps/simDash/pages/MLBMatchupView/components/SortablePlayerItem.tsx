@@ -22,6 +22,7 @@ interface SortablePlayerItemProps {
   onLeanChange?: (playerId: number, value: number) => void;
   leanValue?: number;
   dragId?: string;
+  isCurrentPlayer?: boolean;
 }
 
 const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({ 
@@ -31,7 +32,8 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
   lineupPosition,
   onLeanChange,
   leanValue = 0,
-  dragId
+  dragId,
+  isCurrentPlayer
 }) => {
   const {
     attributes,
@@ -65,7 +67,19 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
     <ListItem
       ref={setNodeRef}
       style={style}
-      sx={{ py: 0, px: .5 }}
+      sx={{ 
+        py: 0, 
+        px: .5,
+        ...(isCurrentPlayer && {
+          animation: 'pulse 2s infinite',
+          backgroundColor: 'rgba(25, 118, 210, 0.05)',
+          boxShadow: 'inset 2px 0 0 #1976d2',
+          '@keyframes pulse': {
+            '0%, 100%': { opacity: 1 },
+            '50%': { opacity: 0.7 }
+          }
+        })
+      }}
     >
       {lineupPosition && (
         <Typography 
@@ -80,7 +94,16 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
       )}
         <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
           <ListItemText
-            primary={player.name}
+            primary={
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  fontWeight: isCurrentPlayer ? 'bold' : 'normal' 
+                }}
+              >
+                {player.name}
+              </Typography>
+            }
             sx={{ flex: '1 1 auto' }}
           />
             {/* <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
