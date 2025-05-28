@@ -12,6 +12,7 @@ import { formatFirstInningData, firstInningColumns } from '@/simDash/components/
 import { formatSidesData, sidesColumns } from '@/simDash/components/SidesTable';
 import { formatTotalsData, totalsColumns } from '@/simDash/components/TotalsTable';
 import { formatSeriesData, seriesColumns } from '@/simDash/components/SeriesTable';
+import { formatScoringOrderPropsData, scoringOrderPropsColumns } from '@/simDash/components/ScoringOrderPropsTable';
 import { convertLineupsToTSV } from '@/simDash/utils/copyUtils';
 import { MarketLinesMLB } from '@@/types/mlb';
 import { displayAmericanOdds } from '@/simDash/utils/display';
@@ -59,8 +60,15 @@ const copyAllResults = (
     const firstInningData = formatFirstInningData(propsData.firstInning);
     const firstInningTSV = convertTableToTSV(firstInningData, firstInningColumns);
     leftSections.push('', firstInningTSV);
+
+    // 6. Scoring order props
+    if (propsData.scoringOrder) {
+        const scoringOrderData = formatScoringOrderPropsData(propsData.scoringOrder);
+        const scoringOrderTSV = convertTableToTSV(scoringOrderData, scoringOrderPropsColumns);
+        leftSections.push('', scoringOrderTSV);
+    }
     
-    // 6. Series (if exists)
+    // 7. Series (if exists)
     if (seriesData.length > 0) {
         const seriesTSV = copySeries(seriesData);
         leftSections.push('', seriesTSV);
