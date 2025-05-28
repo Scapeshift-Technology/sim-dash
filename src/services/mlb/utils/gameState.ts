@@ -71,7 +71,8 @@ export function createGameStateFromLiveDataHelper<T extends TeamLineup | Reduced
 
 function findHitterById(teamData: TeamLineup | ReducedTeamLineup, playerId: number): Player | undefined {
   return teamData.lineup.find(p => p.id === playerId) || 
-    teamData.bench.find(p => p.id === playerId);
+    teamData.bench.find(p => p.id === playerId) ||
+    teamData.unavailableHitters.find(p => p.id === playerId);
 }
 
 // Helper function to create lineup for either team
@@ -87,7 +88,8 @@ export function createCurrentLineup(teamData: TeamLineup | ReducedTeamLineup, ba
 
 function findPitcherById(teamData: TeamLineup | ReducedTeamLineup, playerId: number): Player | undefined {
   return teamData.bullpen.find(p => p.id === playerId) || 
-         (teamData.startingPitcher.id === playerId ? teamData.startingPitcher : undefined);
+         (teamData.startingPitcher.id === playerId ? teamData.startingPitcher : undefined) ||
+         (teamData.unavailablePitchers.find(p => p.id === playerId) ? teamData.unavailablePitchers.find(p => p.id === playerId) : undefined);
 }
 
 export function createCurrentBullpen(teamData: TeamLineup | ReducedTeamLineup, bullpen: number[]): Player[] | ReducedPlayer[] {

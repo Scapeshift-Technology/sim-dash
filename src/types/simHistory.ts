@@ -53,6 +53,9 @@ export interface ReducedTeamLineup { // Like TeamLineup from ./mlb.ts with less 
     startingPitcher: ReducedPlayer;
     bullpen: ReducedPlayer[];
     bench: ReducedPlayer[];
+
+    unavailablePitchers: ReducedPlayer[];
+    unavailableHitters: ReducedPlayer[];
 }
 
 export interface ReducedPlayer { // Like Player from ./mlb.ts with less info
