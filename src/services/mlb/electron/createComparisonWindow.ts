@@ -2,7 +2,7 @@ import { BrowserWindow, app } from 'electron';
 import path from 'path';
 import { teamNameToAbbreviationMLB } from '../utils/teamName';
 
-interface CreateMLBSimResultsWindowOptions {
+interface CreateMLBComparisonWindowOptions {
     matchupId: number;
     timestamp: string;
     awayTeamName: string;
@@ -12,7 +12,7 @@ interface CreateMLBSimResultsWindowOptions {
     isDevelopment?: boolean;
 }
 
-export function createMLBSimResultsWindow2({
+export function createMLBComparisonWindow({
     matchupId,
     timestamp,
     awayTeamName,
@@ -20,12 +20,12 @@ export function createMLBSimResultsWindow2({
     daySequence,
     viteDevServerUrl = 'http://localhost:5173',
     isDevelopment = process.env.NODE_ENV === 'development'
-}: CreateMLBSimResultsWindowOptions): BrowserWindow {
+}: CreateMLBComparisonWindowOptions): BrowserWindow {
     // Create a new window instance
-    const simWindow = new BrowserWindow({
+    const comparisonWindow = new BrowserWindow({
         width: 600,
         height: 550,
-        title: 'MLB Simulation Results',
+        title: 'MLB Simulation Comparison',
         webPreferences: {
             preload: path.join(__dirname, '..', '..', '..', 'preload.js'),
             contextIsolation: true,
@@ -38,15 +38,23 @@ export function createMLBSimResultsWindow2({
         maximizable: true
     });
 
-    // Load the appropriate content with simple route
+    // Load the appropriate content with route and parameters
+    const urlParams = new URLSearchParams({
+        matchupId: matchupId.toString(),
+        awayTeamName: awayTeamName,
+        homeTeamName: homeTeamName,
+        timestamp: timestamp,
+        ...(daySequence && { daySequence: daySequence.toString() })
+    });
+
     if (isDevelopment) {
         const url = new URL(viteDevServerUrl);
-        url.hash = '#/sim-results';
-        simWindow.loadURL(url.toString());
+        url.hash = `#/sim-comparison?${urlParams.toString()}`;
+        comparisonWindow.loadURL(url.toString());
     } else {
-        simWindow.loadFile(
+        comparisonWindow.loadFile(
             path.join(app.getAppPath(), 'dist', 'renderer', 'index.html'),
-            { hash: '/sim-results' }
+            { hash: `/sim-comparison?${urlParams.toString()}` }
         );
     }
 
@@ -56,20 +64,18 @@ export function createMLBSimResultsWindow2({
     const dateString = new Date(timestamp).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
     // When the window is ready to show
-    simWindow.once('ready-to-show', () => {
-        simWindow.show();
-        simWindow.setTitle(`${awayTeamAbbrev}@${homeTeamAbbrev}${daySeqStr} - ${dateString}`);
+    comparisonWindow.once('ready-to-show', () => {
+        comparisonWindow.show();
+        comparisonWindow.setTitle(`${awayTeamAbbrev}@${homeTeamAbbrev}${daySeqStr} - ${dateString} - Comparison`);
     });
 
     // Add properties to BrowserWindow
-    (simWindow as any).simProperties = {
+    (comparisonWindow as any).simProperties = {
         simMatchupId: matchupId,
-        simTimestamp: timestamp,
         simAwayTeamName: awayTeamName,
-        simHomeTeamName: homeTeamName,
-        simDaySequence: daySequence
+        simHomeTeamName: homeTeamName
     };
 
-    return simWindow;
+    return comparisonWindow;
 }
 

@@ -11,13 +11,17 @@ const AppContent: React.FC = () => {
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const currentApp = useSelector(selectCurrentApp);
   const isSimulationWindow = window.location.hash.includes('sim-results');
+  const isComparisonWindow = window.location.hash.includes('sim-comparison');
 
+  // Distinct window types
   if (isSimulationWindow) return <SimDashRouter />;
+  if (isComparisonWindow) return <SimDashRouter />;
 
+  // Default window
   if (!isAuthenticated) return <LoginView />;
 
+  // Apps
   if (currentApp === 'simDash') return <SimDashRouter />;
-
   if (currentApp === 'accounting') return <AccountingRouter />;
 }
 

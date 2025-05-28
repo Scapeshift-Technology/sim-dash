@@ -62,6 +62,15 @@ declare global {
         homeTeamName: string;
         daySequence: number | undefined;
       }) => Promise<{ success: boolean }>;
+
+      createComparisonWindow: (args: { 
+        league: string;
+        matchupId: number;
+        timestamp: string;
+        awayTeamName: string;
+        homeTeamName: string;
+        daySequence: number | undefined;
+      }) => Promise<{ success: boolean }>;
       
       // Simulation Results Window Communication
       getMLBSimData: () => Promise<{
@@ -71,6 +80,7 @@ declare global {
         timestamp: string;
         awayTeamName: string;
         homeTeamName: string;
+        daySequence: number | undefined;
       }>;
 
       // Sim history

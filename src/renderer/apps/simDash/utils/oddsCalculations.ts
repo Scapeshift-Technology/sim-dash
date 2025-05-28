@@ -120,3 +120,24 @@ export {
   countsToProbability,
   marginOfError
 };
+
+// ---------- Comparison functions ----------
+
+function calculateUsaDiff(usa1: number, usa2: number): number {
+  const isPositive1 = usa1 > 0;
+  const isPositive2 = usa2 > 0;
+
+  if (isPositive1 == isPositive2) {
+    return usa2 - usa1;
+  } else {
+    if (isPositive1) {
+      return (usa2 + 100) - (usa1 - 100);
+    } else {
+      return (usa2 - 100) - (usa1 + 100);
+    }
+  }
+}
+
+export {
+  calculateUsaDiff
+}

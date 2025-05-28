@@ -15,7 +15,7 @@ import PlayerPropsTable from '@/simDash/components/PlayerPropsTable';
 import SeriesTable from '@/simDash/components/SeriesTable';
 import { ReducedMatchupLineups, SimMetadataMLB } from '@@/types/simHistory';
 import { MLBGameSimInputs } from '@/types/simInputs';
-import CollapsibleSection from './components/CollapsibleSection';
+import CollapsibleSection from '@/simDash/components/CollapsibleSection';
 import SimInputs from './components/SimInputs';
 import LineupSection from './components/LineupSection';
 import { copyAllResults } from './utils/copier';
@@ -43,6 +43,8 @@ const MLBSimulationView: React.FC = () => {
   const [simTimestamp, setSimTimestamp] = useState<string | null>(null);
   const [awayTeamName, setAwayTeamName] = useState<string | null>(null);
   const [homeTeamName, setHomeTeamName] = useState<string | null>(null);
+  const [daySequence, setDaySequence] = useState<number | null>(null);
+  const [matchupId, setMatchupId] = useState<number | null>(null);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
   const awayTeamAbbreviation = awayTeamName ? teamNameToAbbreviationMLB(awayTeamName) : '';
   const homeTeamAbbreviation = homeTeamName ? teamNameToAbbreviationMLB(homeTeamName) : '';
@@ -62,6 +64,8 @@ const MLBSimulationView: React.FC = () => {
           setSimTimestamp(data.timestamp);
           setAwayTeamName(data.awayTeamName);
           setHomeTeamName(data.homeTeamName);
+          setMatchupId(data.matchId);
+          setDaySequence(data.daySequence ? data.daySequence : null);
         }
       } catch (error) {
         console.error('Error fetching sim data:', error);
@@ -72,6 +76,23 @@ const MLBSimulationView: React.FC = () => {
 
     fetchSimData();
   }, []);
+
+  // ---------- Handlers ----------
+
+  const handleCreateComparisonWindow = async () => {
+    try {
+      await window.electronAPI.createComparisonWindow({ 
+        league: 'MLB',
+        matchupId: matchupId as number,
+        timestamp: simTimestamp as string,
+        awayTeamName: awayTeamName as string, 
+        homeTeamName: homeTeamName as string,
+        daySequence: daySequence as number
+      });
+    } catch (error) {
+      console.error('Failed to create simulation window:', error);
+    }
+  }
 
   const toggleSection = (section: keyof typeof sectionVisibility) => {
     setSectionVisibility(prev => ({
@@ -149,7 +170,7 @@ const MLBSimulationView: React.FC = () => {
           <h5 style={{ marginTop: '0px', paddingTop: '0px', marginBottom: '8px' }}>Simulated at {new Date(simTimestamp).toLocaleString()}</h5>
         )}
 
-        <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 2 }}>
           <Button 
             variant="outlined" 
             color="primary" 
@@ -157,6 +178,14 @@ const MLBSimulationView: React.FC = () => {
             disabled={!simData}
           >
             Copy All Results
+          </Button>
+          <Button 
+            variant="contained" 
+            color="secondary" 
+            onClick={handleCreateComparisonWindow}
+            disabled={!simData}
+          >
+            Compare Simulations
           </Button>
         </Box>
       </Box>

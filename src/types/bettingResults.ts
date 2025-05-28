@@ -73,6 +73,53 @@ export interface ScoringOrderPropsData {
   varianceOdds: number;
 }
 
+export interface ComparisonSidesData {
+  team: string;
+  period: string;
+  line: number;
+  coverPercent: number;
+  usaFair: number;
+}
+
+export interface ComparisonTotalsData {
+  team: string;
+  period: string;
+  line: number;
+  overPercent: number;
+  underPercent: number;
+  pushPercent: number;
+  usaFairOver: number;
+  usaFairUnder: number;
+}
+
+export interface ComparisonPropsData {
+  firstInning: ComparisonFirstInningPropsData[];
+  player: ComparisonPlayerPropsData[];
+  scoringOrder?: ComparisonScoringOrderPropsData[];
+}
+
+export interface ComparisonFirstInningPropsData {
+  team: string;
+  scorePercent: number;
+  usaFair: number;
+}
+
+export interface ComparisonPlayerPropsData {
+  playerName: string;
+  teamName: string;
+  statName: string;
+  line: number;
+  overPercent: number;
+  usaFair: number;
+}
+
+export interface ComparisonScoringOrderPropsData {
+  team: string;
+  propType: 'first' | 'last';
+  percent: number;
+  usaFair: number;
+}
+
 // ---------- MLB ----------
 
 export interface SimResultsMLB {
