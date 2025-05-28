@@ -387,16 +387,24 @@ ipcMain.handle('create-sim-window', async (event, { league, matchupId, timestamp
 
 // --- Execute SQL Query Handler ---
 ipcMain.handle('execute-sql-query', async (event, query) => {
-    console.log('IPC received: execute-sql-query');
+    console.log('IPC received: execute-sql-query: ', query);
+    
     if (!currentPool) {
         console.error('execute-sql-query: No active SQL Server connection.');
         throw new Error('Not connected to database.');
     }
     try {
+        console.log('Executing SQL query...');
         const result = await currentPool.request().query(query);
+        console.log('SQL query completed successfully');
+        console.log('Result recordset length:', result.recordset ? result.recordset.length : 'No recordset');
+        if (result.recordset && result.recordset.length > 0) {
+            console.log('First record:', result.recordset[0]);
+        }
         return result;
     } catch (err) {
         console.error('Error executing SQL query:', err);
+        console.error('Failed query was:', query);
         throw err;
     }
 });

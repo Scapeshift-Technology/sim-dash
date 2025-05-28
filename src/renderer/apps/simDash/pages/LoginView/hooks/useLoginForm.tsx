@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch } from '@/store/store';
-import { loginUser, selectAuthState } from '@/store/slices/authSlice';
+import { loginUser, loadAuthState, selectAuthState } from '@/store/slices/authSlice';
 import { resetProfileOperationStates } from '@/simDash/store/slices/profilesSlice';
 import type { Profile } from '@/types/profiles';
 import { useStatusMessages } from './useStatusMessages';
@@ -71,6 +71,10 @@ export function useLoginForm(): UseLoginFormReturn {
             password: formState.password
         }))
         .unwrap()
+        .then(() => {
+            // Load complete auth state after successful login
+            return dispatch(loadAuthState()).unwrap();
+        })
         .catch((err) => {
             setError(err.message || 'Login failed');
         });

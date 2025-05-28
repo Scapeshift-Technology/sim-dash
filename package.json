@@ -11,6 +11,8 @@
     "build": "npm run build:electron && npm run build:renderer",
     "preview": "vite preview src/renderer",
     "electron:dev": "npm run build:electron && cross-env NODE_ENV=development electron .",
+    "electron:debug": "npm run build:electron && cross-env NODE_ENV=development electron . --inspect=5858 --remote-debugging-port=9223",
+    "debug": "npm run electron:debug",
     "test:playwright": "playwright test",
     "test:jest": "jest --config scripts/jest.config.js scripts/",
     "package": "npm run build && electron-builder --publish never",

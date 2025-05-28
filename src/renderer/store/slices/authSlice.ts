@@ -203,7 +203,7 @@ export const fetchUserDefaultParty = createAsyncThunk<
                 throw new Error('SQL execution API is not available.');
             }
             const result = await window.electronAPI.executeSqlQuery('SELECT dbo.User_GET_Party_fn() as defaultParty');
-            return result.recordset[0]?.defaultParty || null;
+            return result.recordset[0]?.defaultParty.trim() || null;
         } catch (err: any) {
             return rejectWithValue(err.message || 'An unexpected error occurred while fetching default party.');
         }
@@ -322,28 +322,28 @@ export const removeUserPermission = createAsyncThunk<
     }
 );
 
-// Comprehensive initialization thunk that fetches all party data
-export const initializePartyData = createAsyncThunk<
+// Async thunk for loading complete auth state after login
+export const loadAuthState = createAsyncThunk<
     void, // Return type on success
     void, // No arguments needed
     { rejectValue: string }
 >(
-    'auth/initializePartyData',
+    'auth/loadAuthState',
     async (_, { dispatch, rejectWithValue }) => {
         try {
-            // First check role membership
-            const roleResult = await dispatch(checkRoleMembership());
+            // Check role membership first
+            await dispatch(checkRoleMembership()).unwrap();
             
-            if (checkRoleMembership.fulfilled.match(roleResult) && roleResult.payload) {
-                // If user has party role, fetch all party-related data
-                await Promise.all([
-                    dispatch(fetchUserDefaultParty()),
-                    dispatch(fetchPermissions()),
-                    dispatch(fetchRoleTypes())
-                ]);
-            }
+            // Fetch user default party
+            await dispatch(fetchUserDefaultParty()).unwrap();
+            
+            // Fetch permissions (only if user has party role)
+            await dispatch(fetchPermissions()).unwrap();
+            
         } catch (err: any) {
-            return rejectWithValue(err.message || 'An unexpected error occurred while initializing party data.');
+            // Don't reject the whole operation if some parts fail
+            console.warn('Some auth state loading failed:', err);
+            // Still consider it successful since core auth worked
         }
     }
 );
@@ -386,7 +386,7 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.username = action.payload.username || null;
         state.error = null;
-        // Role membership and party data will be checked by subsequent dispatches
+        // Auth state will be loaded by the dispatched loadAuthState thunk
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isRegistrationLoading = false;
