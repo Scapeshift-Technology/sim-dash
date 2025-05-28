@@ -222,6 +222,17 @@ function mapPlayersToMatchupLineups(matchupLineups: MatchupLineups, hitterPlayer
     if (awayBullpenIndex !== -1) {
       updatedMatchupLineups.away.bullpen[awayBullpenIndex] = player;
     }
+
+    // Update unavailable pitchers
+    const homeUnavailablePitchersIndex = updatedMatchupLineups.home.unavailablePitchers.findIndex(p => p.id === player.id);
+    if (homeUnavailablePitchersIndex !== -1) {
+      updatedMatchupLineups.home.unavailablePitchers[homeUnavailablePitchersIndex] = player;
+    }
+
+    const awayUnavailablePitchersIndex = updatedMatchupLineups.away.unavailablePitchers.findIndex(p => p.id === player.id);
+    if (awayUnavailablePitchersIndex !== -1) {
+      updatedMatchupLineups.away.unavailablePitchers[awayUnavailablePitchersIndex] = player;
+    }
   });
 
   return updatedMatchupLineups;
@@ -248,9 +259,11 @@ function extractPitchersFromMatchupLineups(matchupLineups: MatchupLineups): Play
   // Extract pitchers from both home and away lineups
   const homeRelievers = matchupLineups.home.bullpen;
   const awayRelievers = matchupLineups.away.bullpen;
+  const homeUnavailablePitchers = matchupLineups.home.unavailablePitchers;
+  const awayUnavailablePitchers = matchupLineups.away.unavailablePitchers;
 
   // Combine and return all pitchers
-  return [homeStarter, awayStarter, ...homeRelievers, ...awayRelievers];
+  return [homeStarter, awayStarter, ...homeRelievers, ...awayRelievers, ...homeUnavailablePitchers, ...awayUnavailablePitchers];
 }
 
 function mapStatsToPlayer<T extends StatType>(

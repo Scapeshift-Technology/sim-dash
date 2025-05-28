@@ -230,31 +230,36 @@ async function enrichMatchupLineupsWithHandedness(matchupLineups: MatchupLineups
   };
 
   // Enrich all players in parallel
-  const [enrichedHomeLineup, enrichedHomeSP, enrichedHomeBullpen, enrichedHomeBench,
-         enrichedAwayLineup, enrichedAwaySP, enrichedAwayBullpen, enrichedAwayBench] = await Promise.all([
-    Promise.all(matchupLineups.home.lineup.map(enrichPlayer)),
+  const [enrichedHomeSP, enrichedHomeBullpen, enrichedHomeUnavailablePitchers, enrichedHomeLineup, enrichedHomeBench,
+         enrichedAwaySP, enrichedAwayBullpen, enrichedAwayUnavailablePitchers, enrichedAwayLineup, enrichedAwayBench] = await Promise.all([
     enrichPlayer(matchupLineups.home.startingPitcher),
     Promise.all(matchupLineups.home.bullpen.map(enrichPlayer)),
+    Promise.all(matchupLineups.home.unavailablePitchers.map(enrichPlayer)),
+    Promise.all(matchupLineups.home.lineup.map(enrichPlayer)),
     Promise.all(matchupLineups.home.bench.map(enrichPlayer)),
-    Promise.all(matchupLineups.away.lineup.map(enrichPlayer)),
+    
     enrichPlayer(matchupLineups.away.startingPitcher),
     Promise.all(matchupLineups.away.bullpen.map(enrichPlayer)),
+    Promise.all(matchupLineups.away.unavailablePitchers.map(enrichPlayer)),
+    Promise.all(matchupLineups.away.lineup.map(enrichPlayer)),
     Promise.all(matchupLineups.away.bench.map(enrichPlayer))
   ]);
 
   return {
     home: {
       ...matchupLineups.home,
-      lineup: enrichedHomeLineup,
       startingPitcher: enrichedHomeSP,
       bullpen: enrichedHomeBullpen,
+      unavailablePitchers: enrichedHomeUnavailablePitchers,
+      lineup: enrichedHomeLineup,
       bench: enrichedHomeBench
     },
     away: {
       ...matchupLineups.away,
-      lineup: enrichedAwayLineup,
       startingPitcher: enrichedAwaySP,
       bullpen: enrichedAwayBullpen,
+      unavailablePitchers: enrichedAwayUnavailablePitchers,
+      lineup: enrichedAwayLineup,
       bench: enrichedAwayBench
     }
   };
