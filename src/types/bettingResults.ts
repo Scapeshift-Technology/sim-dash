@@ -42,6 +42,7 @@ export interface TotalsData {
 export interface PropsData {
   firstInning: FirstInningPropsData[];
   player: PlayerPropsData[];
+  scoringOrder: ScoringOrderPropsData[];
 }
 
 export interface FirstInningPropsData {
@@ -58,6 +59,15 @@ export interface PlayerPropsData {
   statName: string;
   line: number;
   overPercent: number;
+  marginOfError: number;
+  usaFair: number;
+  varianceOdds: number;
+}
+
+export interface ScoringOrderPropsData {
+  team: string;
+  propType: 'first' | 'last';
+  percent: number;
   marginOfError: number;
   usaFair: number;
   varianceOdds: number;
@@ -105,13 +115,18 @@ export interface SidesCountsMLB {
 export interface PropsCountsMLB {
   firstInning: FirstInningScoreCountsMLB;
   player: AllPlayersPropsCountsMLB;
+  scoringOrder: ScoringOrderCountsMLB;
 }
+
+// -- First inning scores --
 
 export interface FirstInningScoreCountsMLB {
   away: OutcomeCounts;
   home: OutcomeCounts;
   overall: OutcomeCounts;
 }
+
+// -- Player props --
 
 export interface AllPlayersPropsCountsMLB {
     // Each key is a player id
@@ -129,6 +144,17 @@ export interface PlayerPropsCountsMLB {
 export interface PlayerStatPropsCountsMLB {
   // Each key is a line
   [key: number]: OutcomeCounts;
+}
+
+// -- Scoring order --
+export interface ScoringOrderCountsMLB {
+  away: ScoringOrderTeamCountsMLB;
+  home: ScoringOrderTeamCountsMLB;
+}
+
+export interface ScoringOrderTeamCountsMLB {
+  first: OutcomeCounts;
+  last: OutcomeCounts;
 }
 
 // ----- Totals -----

@@ -19,6 +19,7 @@ import CollapsibleSection from './components/CollapsibleSection';
 import SimInputs from './components/SimInputs';
 import LineupSection from './components/LineupSection';
 import { copyAllResults } from './utils/copier';
+import ScoringOrderPropsTable from '../../components/ScoringOrderPropsTable';
 
 // ---------- Main component ----------
 
@@ -36,7 +37,8 @@ const MLBSimulationView: React.FC = () => {
     sides: true,
     totals: true,
     firstInningProps: true,
-    playerProps: true
+    playerProps: true,
+    scoringOrderProps: true
   });
   const [simTimestamp, setSimTimestamp] = useState<string | null>(null);
   const [awayTeamName, setAwayTeamName] = useState<string | null>(null);
@@ -225,6 +227,14 @@ const MLBSimulationView: React.FC = () => {
         onToggle={() => toggleSection('playerProps')}
       >
         <PlayerPropsTable data={propsData.player} />
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        title="Simulated Scoring Order Props Results"
+        isOpen={sectionVisibility.scoringOrderProps}
+        onToggle={() => toggleSection('scoringOrderProps')}
+      >
+        <ScoringOrderPropsTable data={propsData.scoringOrder} />
       </CollapsibleSection>
 
       <Snackbar

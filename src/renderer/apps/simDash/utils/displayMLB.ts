@@ -14,9 +14,12 @@ import {
   FirstInningScoreCountsMLB,
   PropsData,
   PlayerPropsData,
+  ScoringOrderPropsData,
+  ScoringOrderCountsMLB,
   AllPlayersPropsCountsMLB,
   SeriesProbsMLB,
-  TeamSeriesProbsMLB
+  TeamSeriesProbsMLB,
+  ScoringOrderTeamCountsMLB
 } from "@/types/bettingResults";
 import { countsToAmericanOdds, countsToProbability, marginOfError, proportionToAmericanOdds } from "./oddsCalculations";
 import {
@@ -188,11 +191,47 @@ export { transformSeriesProbsMLB };
 function transformPropsCountsMLB(propsCounts: PropsCountsMLB, awayTeamName: string, homeTeamName: string): PropsData {
   const firstInningPropData = transformFirstInningCountsMLB(propsCounts.firstInning, awayTeamName, homeTeamName);
   const playerPropData = transformAllPlayerCountsMLB(propsCounts.player, awayTeamName, homeTeamName);
+  const scoringOrderPropData = transformScoringOrderCountsMLB(propsCounts.scoringOrder, awayTeamName, homeTeamName);
 
   return {
     firstInning: firstInningPropData,
-    player: playerPropData
+    player: playerPropData,
+    scoringOrder: scoringOrderPropData
   }
+}
+
+// -- Scoring order props --
+
+function transformScoringOrderCountsMLB(scoringOrderCounts: ScoringOrderCountsMLB, awayTeamName: string, homeTeamName: string): ScoringOrderPropsData[] {
+  const awayFirstData = transformScoringOrderTeamCountsMLB(scoringOrderCounts.away.first, awayTeamName, 'first');
+  const awayLastData = transformScoringOrderTeamCountsMLB(scoringOrderCounts.away.last, awayTeamName, 'last');
+  const homeFirstData = transformScoringOrderTeamCountsMLB(scoringOrderCounts.home.first, homeTeamName, 'first');
+  const homeLastData = transformScoringOrderTeamCountsMLB(scoringOrderCounts.home.last, homeTeamName, 'last');
+
+  return [awayFirstData, awayLastData, homeFirstData, homeLastData];
+}
+
+function transformScoringOrderTeamCountsMLB(outcomeCounts: OutcomeCounts, teamName: string, propType: 'first' | 'last'): ScoringOrderPropsData {
+  const { success, failure, push, total } = outcomeCounts;
+  
+  const teamAbbrev = teamNameToAbbreviationMLB(teamName);
+  console.log(`Abbreviation for the ${teamName} is ${teamAbbrev}`);
+
+  const pushCt = push || 0;
+  const percent = countsToProbability(success, failure, pushCt);
+  const moe = marginOfError(total - pushCt, percent);
+  const usaFair = proportionToAmericanOdds(percent);
+  const varianceProportion = Math.min(Math.max(percent - moe, 0), 1);
+  const varianceOdds = proportionToAmericanOdds(varianceProportion);
+
+  return {
+    team: teamAbbrev,
+    propType: propType,
+    percent: percent,
+    marginOfError: moe,
+    usaFair: usaFair,
+    varianceOdds: varianceOdds
+  };
 }
 
 // -- Player props --
@@ -242,6 +281,7 @@ function transformPlayerStatLinesPropsCountsMLB(playerName: string, statName: st
 }
 
 // -- First inning props --
+
 function transformFirstInningCountsMLB(propsCounts: FirstInningScoreCountsMLB, awayTeamName: string, homeTeamName: string): FirstInningPropsData[] {
   const awayData = transformFirstInningScoreCountsMLB(propsCounts.away, awayTeamName);
   const homeData = transformFirstInningScoreCountsMLB(propsCounts.home, homeTeamName);
