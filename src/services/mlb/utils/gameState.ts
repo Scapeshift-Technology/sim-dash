@@ -1,6 +1,6 @@
 import { 
   MlbLiveDataApiTeamBoxscorePlayerStatsPitching, TeamLineup, MlbLiveDataApiResponse, Player, GameStatePitcher, 
-  Position 
+  Position, TeamType
 } from "@/types/mlb";
 import { ReducedGameStateMLB, ReducedMatchupLineups, ReducedPlayer, ReducedTeamLineup } from "@/types/simHistory";
 
@@ -51,8 +51,8 @@ export function createGameStateFromLiveDataHelper<T extends TeamLineup | Reduced
   const awayLineup = createCurrentLineup(awayTeam, liveGameData.liveData.boxscore.teams.away.battingOrder);
   const homeLineup = createCurrentLineup(homeTeam, liveGameData.liveData.boxscore.teams.home.battingOrder);
 
-  const awayBullpen = createCurrentBullpen(awayTeam, liveGameData.liveData.boxscore.teams.away.bullpen);
-  const homeBullpen = createCurrentBullpen(homeTeam, liveGameData.liveData.boxscore.teams.home.bullpen);
+  const awayBullpen = createCurrentBullpen(awayTeam, liveGameData.liveData.boxscore.teams.away.bullpen, liveGameData.liveData.boxscore.teams.away.pitchers);
+  const homeBullpen = createCurrentBullpen(homeTeam, liveGameData.liveData.boxscore.teams.home.bullpen, liveGameData.liveData.boxscore.teams.home.pitchers);
 
   return {
     ...baseGameState,
@@ -75,25 +75,50 @@ function findHitterById(teamData: TeamLineup | ReducedTeamLineup, playerId: numb
     teamData.unavailableHitters.find(p => p.id === playerId);
 }
 
-// Helper function to create lineup for either team
-export function createCurrentLineup(teamData: TeamLineup | ReducedTeamLineup, battingOrder: number[]): Player[] | ReducedPlayer[] {
-  return battingOrder.map(id => {
-    const player = findHitterById(teamData, id);
-    if (!player) {
-      throw new Error(`Could not find player with ID ${id} in either lineup or bench`);
-    }
-    return player;
-  });
-}
-
 function findPitcherById(teamData: TeamLineup | ReducedTeamLineup, playerId: number): Player | undefined {
   return teamData.bullpen.find(p => p.id === playerId) || 
          (teamData.startingPitcher.id === playerId ? teamData.startingPitcher : undefined) ||
          (teamData.unavailablePitchers.find(p => p.id === playerId) ? teamData.unavailablePitchers.find(p => p.id === playerId) : undefined);
 }
 
-export function createCurrentBullpen(teamData: TeamLineup | ReducedTeamLineup, bullpen: number[]): Player[] | ReducedPlayer[] {
-  return teamData.bullpen.filter(player => bullpen.includes(player.id));
+export function createCurrentLineup(teamData: TeamLineup | ReducedTeamLineup, battingOrder: number[]): Player[] | ReducedPlayer[] {
+  return battingOrder.map(id => {
+    const player = findHitterById(teamData, id);
+    if (!player) {
+      throw new Error(`Could not find hitter with ID ${id} on this team's TeamLineup`);
+    }
+    return player;
+  });
+}
+
+export function createCurrentBench(teamData: TeamLineup, bench: number[]): Player[] {
+  return bench.map(id => {
+    const player = findHitterById(teamData, id);
+    if (!player) {
+      throw new Error(`Could not find hitter with ID ${id} on this team's TeamLineup`);
+    }
+    return player;
+  });
+}
+
+export function createCurrentUnavailableHitters(teamData: TeamLineup, liveGameData: MlbLiveDataApiResponse, teamType: TeamType): Player[] {
+  // Our user's unavailable hitters(filtered to make sure they are still out of game)
+  const allBatters = liveGameData.liveData.boxscore.teams[teamType].batters;
+  const filteredUnavailableHitters = teamData.unavailableHitters.filter(player => !allBatters.includes(player.id));
+
+  // Batters taken out already
+  const battingOrder = liveGameData.liveData.boxscore.teams[teamType].battingOrder;
+  const allPitchers = liveGameData.liveData.boxscore.teams[teamType].pitchers;
+  const usedBatters = allBatters.filter(id => !battingOrder.includes(id) && !allPitchers.includes(id));
+  const usedUnavailableHitters = usedBatters.map(id => {
+    const player = findHitterById(teamData, id);
+    if (!player) {
+      throw new Error(`Could not find hitter with ID ${id} on this team's TeamLineup`);
+    }
+    return player;
+  });
+
+  return [...filteredUnavailableHitters, ...usedUnavailableHitters];
 }
 
 export function findCurrentPitcher(lineups: TeamLineup | ReducedTeamLineup, liveGameData: MlbLiveDataApiResponse, isHome: boolean): GameStatePitcher {
@@ -131,4 +156,41 @@ export function findCurrentPitcher(lineups: TeamLineup | ReducedTeamLineup, live
   }
 };
 
+export function createCurrentStartingPitcher(teamData: TeamLineup, liveGameData: MlbLiveDataApiResponse, teamType: TeamType): Player {
+  const pitcherId = liveGameData.liveData.boxscore.teams[teamType].pitchers[0];
+  const startingPitcher = findPitcherById(teamData, pitcherId);
+  if (!startingPitcher) {
+    throw new Error(`Could not find starting pitcher with ID ${pitcherId} on this team's TeamLineup`);
+  }
+  return startingPitcher;
+}
+
+export function createCurrentBullpen(teamData: TeamLineup | ReducedTeamLineup, bullpen: number[], usedPitchers: number[]): Player[] | ReducedPlayer[] {
+  const startingPitcherId = usedPitchers[0];
+  const mostRecentPitcherId = usedPitchers[usedPitchers.length - 1];
+  const usedBullpen = teamData.bullpen.filter(player => bullpen.includes(player.id) || (player.id !== startingPitcherId && player.id === mostRecentPitcherId)); // Overlap of our user's bullpen and the gamedata's bullpen
+  return usedBullpen;
+}
+
+export function createCurrentUnavailablePitchers(teamData: TeamLineup, liveGameData: MlbLiveDataApiResponse, teamType: TeamType): Player[] {
+  // Unavailable from game usage
+  const usedPitchers = liveGameData.liveData.boxscore.teams[teamType].pitchers;
+  const startingPitcherId = usedPitchers[0];
+  const currentPitcherId = usedPitchers[usedPitchers.length - 1];
+  const usedUnavailablePitchers = usedPitchers.filter(id => id !== startingPitcherId && id !== currentPitcherId);
+  const usedUnavailablePitchersPlayersList = usedUnavailablePitchers.map(id => {
+    const player = findPitcherById(teamData, id);
+    if (!player) {
+      throw new Error(`Could not find pitcher with ID ${id} on this team's TeamLineup`);
+    }
+    return player;
+  });
+
+  // Unavailable by designation
+  const teamUnavailablePitchers = teamData.unavailablePitchers;
+  const filteredTeamUnavailablePitchers = teamUnavailablePitchers.filter(player => !usedUnavailablePitchers.includes(player.id));
+
+  // Return
+  return [...filteredTeamUnavailablePitchers, ...usedUnavailablePitchersPlayersList];
+}
 

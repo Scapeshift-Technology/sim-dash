@@ -9,6 +9,7 @@ import type {
 } from '@/types/simInputs';
 import { LeagueName } from '@@/types/league';
 import { RootState } from '@/store/store';
+import { SimType } from '@@/types/mlb/mlb-sim';
 
 // ---------- Initial States ----------
 // ----- MLB -----
@@ -27,10 +28,13 @@ const initialMLBSimInputs: MLBGameSimInputs = {
 
 const initialMLBGameContainer: MLBGameContainer = {
   currentGame: null,
+
   gameDataStatus: 'idle',
   gameDataError: null,
   statsStatus: 'idle',
-  statsError: null
+  statsError: null,
+
+  simMode: 'game'
 }
 
 // ---------- Helpers ----------
@@ -311,6 +315,18 @@ const simInputsSlice = createSlice({
         state[league][matchId].currentGame.gameInfo.automatedLeans = automatedLeans;
         syncCurrentGameEdit(state, matchId);
       }
+    },
+    updateSimMode: (state, action: {
+      payload: {
+        league: LeagueName;
+        matchId: number;
+        simType: SimType;
+      }
+    }) => {
+      const { league, matchId, simType } = action.payload;
+      if (league === 'MLB' && state[league]?.[matchId]) {
+        state[league][matchId].simMode = simType;
+      }
     }
   },
   extraReducers: (builder) => {
@@ -413,7 +429,8 @@ export const {
   editMLBUnavailablePitchers,
   switchCurrentSeriesGame,
   updateMLBMarketLines,
-  updateMLBAutomatedLeans
+  updateMLBAutomatedLeans,
+  updateSimMode
 } = simInputsSlice.actions;
 
 // ---------- Selectors ----------
@@ -434,6 +451,8 @@ export const selectGameLineups = (state: RootState, league: LeagueName, matchId:
   state.simDash.simInputs[league]?.[matchId]?.currentGame?.lineups;
 export const selectGameSeriesGames = (state: RootState, league: LeagueName, matchId: number): SeriesInfoMLB | undefined => 
   state.simDash.simInputs[league]?.[matchId]?.seriesGames;
+export const selectGameSimMode = (state: RootState, league: LeagueName, matchId: number): SimType | undefined => 
+  state.simDash.simInputs[league]?.[matchId]?.simMode;
 
 export const selectGameDataStatus = (state: RootState, league: LeagueName, matchId: number): 'idle' | 'loading' | 'succeeded' | 'failed' => 
   state.simDash.simInputs[league]?.[matchId]?.gameDataStatus ?? 'idle';

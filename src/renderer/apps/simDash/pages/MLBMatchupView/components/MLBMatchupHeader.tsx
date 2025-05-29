@@ -23,12 +23,14 @@ interface MLBMatchupHeaderProps {
     simError: string | null;
     simResults: SimHistoryEntry[] | undefined;
     simStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
+    simType: SimType | undefined;
     lineupData: any; // TODO: Add proper type
     hasInvalidLeans: boolean;
     seriesGames?: { [key: string]: any };
     liveGameData: MlbLiveDataApiResponse | undefined;
     onRefresh: () => void;
     onRunSimulation: (simType: SimType) => void;
+    onChangeSimType: (simType: SimType) => void;
 }
 
 const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
@@ -40,12 +42,14 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
     simError,
     simResults,
     simStatus,
+    simType,
     lineupData,
     hasInvalidLeans,
     seriesGames,
     liveGameData,
     onRefresh,
-    onRunSimulation
+    onRunSimulation,
+    onChangeSimType
 }) => {
     // Convert UTC datetime to local time
     const localDateTime = new Date(dateTime);
@@ -101,11 +105,13 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
                     maxWidth: '200px'
                 }}>
                     <SimulationButton
+                        simType={simType}
                         isSimulating={isSimulating}
                         disabled={isSimulating || !lineupData || hasInvalidLeans}
                         seriesGames={seriesGames}
                         liveGameData={liveGameData}
                         onRunSimulation={onRunSimulation}
+                        onChangeSimType={onChangeSimType}
                     />
                 </Box>
                 <Box sx={{ 

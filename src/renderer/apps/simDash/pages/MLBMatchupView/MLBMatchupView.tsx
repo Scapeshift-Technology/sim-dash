@@ -14,7 +14,7 @@ import {
     Tooltip
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import type { MlbLiveDataApiResponse, Player, Position } from '@/types/mlb';
+import type { MatchupLineups, MlbLiveDataApiResponse, Player, Position, TeamLineup } from '@/types/mlb';
 import DraggableLineup from './components/DraggableLineup';
 import MLBMatchupHeader from './components/MLBMatchupHeader';
 import BettingBoundsSection from './components/BettingBoundsSection';
@@ -41,7 +41,9 @@ import {
     selectMLBGameContainer,
     switchCurrentSeriesGame,
     selectGameMetadata,
-    selectGameMlbGameId
+    selectGameMlbGameId,
+    selectGameSimMode,
+    updateSimMode
 } from '@/simDash/store/slices/simInputsSlice';
 import { LeagueName } from '@@/types/league';
 import { useLeanValidation } from './hooks/leanValidation';
@@ -62,6 +64,7 @@ import { convertLineupsToTSV } from '@/simDash/utils/copyUtils';
 import MLBGameBanner from './components/MLBGameBanner';
 import { useMLBMatchupData } from './hooks/useMLBMatchupData';
 import { SimType } from '@@/types/mlb/mlb-sim';
+import { useLineupFinder } from './hooks/useLineupFinder';
 
 // ---------- Sub-components ----------
 
@@ -126,6 +129,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const playerStatsError = useSelector((state: RootState) => selectGamePlayerStatsError(state, league, matchId));
     const teamInputs = useSelector((state: RootState) => selectTeamInputs(state, league, matchId));
     const seriesGames = useSelector((state: RootState) => selectGameSeriesGames(state, league, matchId));
+    const simType = useSelector((state: RootState) => selectGameSimMode(state, league, matchId));
     const gameMetadata = useSelector((state: RootState) => selectGameMetadata(state, league, matchId));
     const mlbGameId = useSelector((state: RootState) => selectGameMlbGameId(state, league, matchId));
     const traditionalSimulationStatus = useSelector((state: RootState) => selectTraditionalSimulationStatus(state, league, matchId));
@@ -137,6 +141,13 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const [showCopySuccess, setShowCopySuccess] = useState(false);
     const [hasHistoricalStats, setHasHistoricalStats] = useState(false);
     const [liveGameData, setLiveGameData] = useState<MlbLiveDataApiResponse | undefined>(undefined);
+
+    const { usedLineups } = useLineupFinder({
+        standardGameLineups: gameLineups,
+        liveGameData,
+        customGameLineups: undefined,
+        simType
+    });
 
     const {
         hasInvalidLeans,
@@ -212,6 +223,11 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         if (!gameContainer || !teamInputs) return;
 
         let result;
+
+        const gameInputs: MLBGameInputs2 = {
+            ...gameContainer.currentGame,
+            lineups: usedLineups as MatchupLineups
+        } as MLBGameInputs2;
         
         if (simType === 'series') {
             if (!gameContainer.seriesGames) return;
@@ -225,11 +241,21 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             result = await dispatch(runSimulationThunk({
                 league,
                 matchId,
-                gameInputs: gameContainer.currentGame,
+                gameInputs: gameInputs,
                 liveGameData: liveGameData
             })).unwrap();
 
             await saveAndUpdateHistory(result, gameContainer.currentGame as MLBGameInputs2, liveGameData);
+            return;
+        } else if (simType === 'custom') {
+            if (!gameContainer.customModeData) return;
+            result = await dispatch(runSimulationThunk({
+                league,
+                matchId,
+                gameInputs: gameInputs
+            })).unwrap();
+
+            await saveAndUpdateHistory(result, gameInputs);
             return;
         } else {
             if (!gameContainer.currentGame) return;
@@ -289,8 +315,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     };
 
     const handleCopyLineup = () => {
-        if (!gameLineups || !gameMetadata) return;
-        const tsvString = convertLineupsToTSV(gameLineups, gameMetadata, participant1, participant2);
+        if (!usedLineups || !gameMetadata) return;
+        const tsvString = convertLineupsToTSV(usedLineups, gameMetadata, participant1, participant2);
 
         navigator.clipboard.writeText(tsvString).then(() => {
             setShowCopySuccess(true);
@@ -299,11 +325,15 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         });
     };
 
+    const handleChangeSimType = (simType: SimType) => {
+        dispatch(updateSimMode({ league, matchId, simType }));
+    };
+
     // ---------- Render ----------
     if (dataStatus === 'loading' || playerStatsStatus === 'loading' || (dataStatus === 'succeeded' && playerStatsStatus === 'idle')) return <CircularProgress />;
     if (dataError) return <ErrorAlert message="Error fetching game data. Please try again." onRetry={handleRefresh} />;
     if (playerStatsError) return <ErrorAlert message="Error fetching player stats. Please try again." onRetry={handleRefresh} />;
-    if (!gameLineups) return <Alert severity="info">No lineup data found.</Alert>;
+    if (!usedLineups) return <Alert severity="info">No lineup data found.</Alert>;
 
     return (
         <Box sx={{ flexGrow: 1, p: 2 }}>
@@ -317,12 +347,14 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 simError={traditionalSimulationError || seriesSimulationError}
                 simResults={simResults}
                 simStatus={simHistoryStatus}
-                lineupData={gameLineups}
+                simType={simType}
+                lineupData={usedLineups}
                 hasInvalidLeans={hasInvalidLeans}
                 seriesGames={seriesGames}
                 liveGameData={liveGameData}
                 onRefresh={handleRefresh}
                 onRunSimulation={handleRunSimulation}
+                onChangeSimType={handleChangeSimType}
             />
             <BettingBoundsSection
                 awayTeamName={participant1}
@@ -378,7 +410,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                     <TeamCard>
                         <DraggableLineup
                             teamName={`${participant1} (Away)`}
-                            teamData={gameLineups.away}
+                            teamData={usedLineups.away}
                             teamType="away"
                             matchId={matchId}
                             league={league}
@@ -391,7 +423,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                     <TeamCard>
                         <DraggableLineup
                             teamName={`${participant2} (Home)`}
-                            teamData={gameLineups.home}
+                            teamData={usedLineups.home}
                             teamType="home"
                             matchId={matchId}
                             league={league}

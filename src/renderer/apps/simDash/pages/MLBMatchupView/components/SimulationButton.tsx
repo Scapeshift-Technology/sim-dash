@@ -12,25 +12,30 @@ import { MlbLiveDataApiResponse } from '@@/types/mlb';
 import { SimType } from '@@/types/mlb/mlb-sim';
 
 interface SimulationButtonProps {
+    simType: SimType | undefined;
     isSimulating: boolean;
     disabled: boolean;
     seriesGames?: { [key: string]: any };
     liveGameData: MlbLiveDataApiResponse | undefined;
     onRunSimulation: (simType: SimType) => void;
+    onChangeSimType: (simType: SimType) => void;
 }
 
 const SimulationButton: React.FC<SimulationButtonProps> = ({
+    simType,
     isSimulating,
     disabled,
     seriesGames,
     liveGameData,
-    onRunSimulation
+    onRunSimulation,
+    onChangeSimType
 }) => {
+    simType = simType ?? 'game'; // Default mode if simType is not provided
+
     // ---------- State ----------
 
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
-    const [simulationType, setSimulationType] = useState<SimType>('game');
 
     // ---------- Handlers ----------
 
@@ -43,7 +48,7 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
     };
 
     const handleMenuItemClick = (option: SimType) => {
-        setSimulationType(option);
+        onChangeSimType(option);
         handleClose();
     };
 
@@ -75,7 +80,7 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
 
     const getButtonText = () => {
         if (isSimulating) return 'Running...';
-        switch (simulationType) {
+        switch (simType) {
             case 'series':
                 return 'Simulate Series';
             case 'live':
@@ -99,7 +104,7 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
                 }}
             >
                 <Button
-                    onClick={() => onRunSimulation(simulationType)}
+                    onClick={() => onRunSimulation(simType)}
                     startIcon={isSimulating ? <CircularProgress size={20} color="inherit" /> : <PlayArrowIcon />}
                     sx={{ width: '100%' }}
                 >

@@ -39,7 +39,7 @@ function getTeamMatchupProbabilities(teamLineup: TeamLineup, opponentLineup: Tea
   };
 
   // Calculate for each batter-pitcher matchup
-  const allBatters = [...teamLineup.lineup, ...teamLineup.bench];
+  const allBatters = [...teamLineup.lineup, ...teamLineup.bench, ...teamLineup.unavailableHitters];
   
   for (const batter of allBatters) {
     teamBatterMatchupProbabilities.batter[batter.id] = {};
@@ -49,6 +49,12 @@ function getTeamMatchupProbabilities(teamLineup: TeamLineup, opponentLineup: Tea
     
     // Calculate vs bullpen
     for (const pitcher of opponentLineup.bullpen) {
+      const matchupProbabilities = getBatterPitcherMatchupProbabilities(batter, pitcher, leagueAvgStats, teamType);
+      teamBatterMatchupProbabilities.batter[batter.id][pitcher.id] = matchupProbabilities;
+    }
+
+    // Calculate vs unavailable pitchers(as a fallback for lineup creation failure)
+    for (const pitcher of opponentLineup.unavailablePitchers) {
       const matchupProbabilities = getBatterPitcherMatchupProbabilities(batter, pitcher, leagueAvgStats, teamType);
       teamBatterMatchupProbabilities.batter[batter.id][pitcher.id] = matchupProbabilities;
     }

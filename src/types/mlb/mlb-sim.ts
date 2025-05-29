@@ -1,6 +1,6 @@
 // ---------- MLB sim types ----------
 
-export type SimType = 'game' | 'series' | 'live';
+export type SimType = 'game' | 'series' | 'live' | 'custom';
 
 export type Position = 'C' | '1B' | '2B' | '3B' | 'SS' | 'LF' | 'CF' | 'RF' | 'DH' | 'SP' | 'RP' | 'TBD';
 

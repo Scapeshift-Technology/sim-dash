@@ -123,7 +123,9 @@ export interface MlbLiveDataApiTeamBoxscoreData {
   players: {
     [key: `ID${number}`]: MlbLiveDataApiTeamBoxscorePlayer;
   }
+  pitchers: number[]; // List of player ids. All used pitchers are listed here for a team
   bullpen: number[]; // List of player ids. Updates in-game, so pitchers will be removed when used. 
+  batters: number[]; // List of player ids. Has used batters + pitchers.
   battingOrder: number[]; // List of player ids. Updates in-game, so pinch hitters can be in here.
   bench: number[]; // List of player ids. Updates in-game, so pinch hitters will be removed.
 }
