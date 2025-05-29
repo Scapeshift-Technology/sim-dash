@@ -4,9 +4,11 @@ import { ConnectionPool } from "@/types/sql";
 // ---------- Types ----------
 
 interface StatsResult {
-  Player: number,
+  Projector: string,
   Date: string,
+  Player: number,
   SplitType: string,
+  ParkNeutralType: number,
   PitcherType?: string,
   Statistic: string,
   Value: number
@@ -33,104 +35,56 @@ export { getPlayerStatsMLB };
 
 // ---------- Helper functions ----------
 
-async function fetchPlayerBatchStatsMLB(
+/**
+ * Fetches baseball player projections using SQL table construction for table-valued parameters
+ * @param players - Array of players to fetch stats for
+ * @param pool - Database connection pool
+ * @param date - The target date for projections
+ * @param playerType - 'Hitters' or 'Pitchers'
+ * @returns Array of player stats
+ */
+async function fetchPlayerProjectionsMLB(
   players: Player[], 
   pool: ConnectionPool, 
   date: string,
-  tableName: 'BaseballHitterProjectionStatistic' | 'BaseballPitcherProjectionStatistic',
-  columns: string[],
-  errorMessage: string
+  playerType: 'Hitters' | 'Pitchers'
 ): Promise<StatsResult[]> {
-  // Create batches of player IDs
-  const playerIds = players.map(player => player.id);
-  const batchSize = 30;
-  
-  const batches: number[][] = [];
-  for (let i = 0; i < playerIds.length; i += batchSize) {
-    batches.push(playerIds.slice(i, i + batchSize));
-  }
-
-  // Execute batch queries
-  const statsPromises = batches.map(async batch => {
-    const playerIdsString = batch.join(',');
-
-    const query = `
-      SELECT ${columns.join(', ')}
-      FROM ${tableName} s
-      WHERE s.Player IN (${playerIdsString})
-      AND s.Date = '${date}'
-    `;
-    try {
-      const result = await pool.request().query(query);
-      
-      // Check for missing players in this batch
-      const foundPlayerIds = new Set(result.recordset.map(record => record.Player));
-      const missingPlayerIds = batch.filter(id => !foundPlayerIds.has(id));
-      
-      if (missingPlayerIds.length > 0) {
-        const historicalStats = await fetchHistoricalPlayerStats(
-          missingPlayerIds,
-          pool,
-          date,
-          tableName,
-          columns
-        );
-
-        const allStats: StatsResult[] = [...result.recordset, ...historicalStats];
-        
-        return allStats
-      }
-      
-      return result.recordset;
-    } catch (error) {
-      console.error(`Error executing ${errorMessage}:`, error);
+  try {
+    const playerIds = players.map(player => player.id);
+    
+    if (playerIds.length === 0) {
       return [];
     }
-  });
-
-  // Wait for all queries to complete
-  const allStats: StatsResult[] = await Promise.all(statsPromises).then(results => results.flat());
-
-  return allStats;
-}
-
-/**
- * Fetches the most recent historical stats for players before a given date
- * @param playerIds - Array of player IDs to fetch historical stats for
- * @param pool - Database connection pool
- * @param date - The target date to look back from
- * @param tableName - The table to query from
- * @param columns - The columns to select
- * @returns Array of player stats from their most recent available date
- */
-async function fetchHistoricalPlayerStats(
-  playerIds: number[],
-  pool: ConnectionPool,
-  date: string,
-  tableName: 'BaseballHitterProjectionStatistic' | 'BaseballPitcherProjectionStatistic',
-  columns: string[]
-): Promise<StatsResult[]> {
-  const playerIdsString = playerIds.join(',');
-  
-  const query = `
-    WITH LatestStats AS (
-      SELECT ${columns.join(', ')}, 
-             ROW_NUMBER() OVER (PARTITION BY Player, SplitType, Statistic 
-                               ORDER BY Date DESC) as row_num
-      FROM ${tableName}
-      WHERE Player IN (${playerIdsString})
-      AND Date <= '${date}'
-    )
-    SELECT ${columns.join(', ')}
-    FROM LatestStats 
-    WHERE row_num = 1
-  `;
-
-  try {
-    const result = await pool.request().query(query);
+    
+    const request = pool.request();
+    
+    // Add parameters for the stored procedure call
+    request.input('Date', date);
+    request.input('PlayerType', playerType);
+    
+    // Build SQL to manually construct table-valued parameter
+    // Following the pattern from the Python example provided by the user
+    let callSql = 'DECLARE @Players MLBPlayerTableType;\n';
+    
+    // Insert player IDs into the table variable
+    for (const playerId of playerIds) {
+      callSql += `INSERT INTO @Players (MLBPlayer) VALUES (${playerId});\n`;
+    }
+    
+    // Call the stored procedure with the table variable using named parameters
+    callSql += `
+      EXEC dbo.UserAPICall_BaseballPlayerProjections_sp
+        @Date = @Date,
+        @PlayerType = @PlayerType,
+        @Players = @Players;
+    `;
+    
+    // Execute the constructed SQL
+    const result = await request.query(callSql);
+    
     return result.recordset;
   } catch (error) {
-    console.error(`Error executing historical stats query:`, error);
+    console.error(`Error executing ${playerType} projections query:`, error);
     return [];
   }
 }
@@ -138,13 +92,18 @@ async function fetchHistoricalPlayerStats(
 async function fetchHitterStatsMLB(matchupLineups: MatchupLineups, pool: ConnectionPool, date: string): Promise<Player[]> {
   // Get all hitters
   const hitterPlayers = extractHittersFromMatchupLineups(matchupLineups);
-  const allStats: StatsResult[] = await fetchPlayerBatchStatsMLB(
+  
+  // Return empty array if no hitters
+  if (hitterPlayers.length === 0) {
+    return [];
+  }
+  
+  // Fetch hitter projections using the new stored procedure
+  const allStats: StatsResult[] = await fetchPlayerProjectionsMLB(
     hitterPlayers, 
     pool,
     date,
-    'BaseballHitterProjectionStatistic',
-    ['Player', 'Date', 'SplitType', 'Statistic', 'Value'],
-    'hitter stats query'
+    'Hitters'
   );
 
   // Map stats back to players
@@ -155,13 +114,18 @@ async function fetchHitterStatsMLB(matchupLineups: MatchupLineups, pool: Connect
 async function fetchPitcherStatsMLB(matchupLineups: MatchupLineups, pool: ConnectionPool, date: string): Promise<Player[]> {
   // Get all pitchers
   const pitcherPlayers = extractPitchersFromMatchupLineups(matchupLineups);
-  const allStats: StatsResult[] = await fetchPlayerBatchStatsMLB(
+  
+  // Return empty array if no pitchers
+  if (pitcherPlayers.length === 0) {
+    return [];
+  }
+  
+  // Fetch pitcher projections using the new stored procedure
+  const allStats: StatsResult[] = await fetchPlayerProjectionsMLB(
     pitcherPlayers, 
     pool,
     date,
-    'BaseballPitcherProjectionStatistic',
-    ['Player', 'Date', 'SplitType', 'PitcherType', 'Statistic', 'Value'],
-    'pitcher stats query'
+    'Pitchers'
   );
   
   // Map stats back to players
@@ -173,6 +137,7 @@ function mapPlayersToMatchupLineups(matchupLineups: MatchupLineups, hitterPlayer
   // Create a deep copy of the matchupLineups
   // const updatedMatchupLineups = JSON.parse(JSON.stringify(matchupLineups)) as MatchupLineups;
   const updatedMatchupLineups = matchupLineups;
+  
   // Map hitters to lineup
   hitterPlayers.forEach(player => {
     // Find and update player in home lineup
@@ -232,7 +197,7 @@ function extractHittersFromMatchupLineups(matchupLineups: MatchupLineups): Playe
   const homeHitters = matchupLineups.home.lineup;
   const awayHitters = matchupLineups.away.lineup;
 
-  // Bench in future
+  // Bench players
   const homeBench = matchupLineups.home.bench;
   const awayBench = matchupLineups.away.bench;
   
@@ -324,5 +289,3 @@ function mapStatValue(targetStats: Stats, statName: string, value: number) {
   else if (statName === 'adj_perc_HR') targetStats.adj_perc_HR = value;
   else if (statName === 'adj_perc_OUT') targetStats.adj_perc_OUT = value;
 }
-
-
