@@ -208,6 +208,7 @@ interface MlbLiveDataApiLinescorePlayer {
   
 interface MlbLiveDataApiLinescoreOffense {
   batter: MlbLiveDataApiLinescorePlayer;
+  onDeck: MlbLiveDataApiLinescorePlayer;
   first?: MlbLiveDataApiLinescorePlayer;
   second?: MlbLiveDataApiLinescorePlayer;
   third?: MlbLiveDataApiLinescorePlayer;
@@ -221,6 +222,16 @@ interface MlbLiveDataApiLinescoreDefense {
   battingOrder: number;
 }
 
+interface MlbLiveDataApiLinescoreInningTeam {
+  runs: number;
+}
+
+export interface MlbLiveDataApiLinescoreInning {
+  num: number;
+  home: MlbLiveDataApiLinescoreInningTeam;
+  away: MlbLiveDataApiLinescoreInningTeam;
+}
+
 export interface MlbLiveDataApiLinescore {
   // Game state
   balls: number;
@@ -229,6 +240,7 @@ export interface MlbLiveDataApiLinescore {
   currentInning: number;
   currentInningOrdinal: string;
   inningHalf: string;
+  innings: MlbLiveDataApiLinescoreInning[];
   teams: {
     away: MlbLiveDataApiLinescoreTeam;
     home: MlbLiveDataApiLinescoreTeam;

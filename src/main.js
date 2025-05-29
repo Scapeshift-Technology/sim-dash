@@ -7,6 +7,7 @@ const log = require('electron-log/main'); // <-- Import electron-log
 const dbHelper = require('./db'); // Local SQLite helper
 const sql = require('mssql'); // SQL Server driver
 const { createMLBSimResultsWindow2 } = require('./services/mlb/electron/createSimResultsWindows');
+const { createMLBComparisonWindow } = require('./services/mlb/electron/createComparisonWindow');
 const { testConnection } = require('./services/login/connection');
 const { initializeMLBWebSockets } = require('./services/mlb/external/webSocket');
 const { registerMLBHandlers } = require('./app/ipc/mlbHandlers');
@@ -384,6 +385,33 @@ ipcMain.handle('create-sim-window', async (event, { league, matchupId, timestamp
     throw err;
   }
 });
+
+// --- Create sim comparison window ---
+
+ipcMain.handle('create-comparison-window', async (event, {league, matchupId, timestamp, awayTeamName, homeTeamName, daySequence }) => {
+  console.log('IPC received: create-comparison-window');
+  try {
+    if (league === 'MLB') {
+      const window = createMLBComparisonWindow({
+        matchupId,
+        timestamp,
+        awayTeamName,
+        homeTeamName,
+        daySequence,
+        viteDevServerUrl,
+        isDevelopment: process.env.NODE_ENV === 'development'
+      });
+
+      return { success: true };
+    } else {
+      console.error('create-comparison-window: Invalid league:', league);
+      throw new Error('Invalid league for comparison window creation.');
+    }
+  } catch (err) {
+    console.error('Error creating comparison window:', err);
+    throw err;
+  }
+})
 
 // --- Execute SQL Query Handler ---
 ipcMain.handle('execute-sql-query', async (event, query) => {

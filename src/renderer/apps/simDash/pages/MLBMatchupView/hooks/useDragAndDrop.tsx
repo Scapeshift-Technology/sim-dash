@@ -27,7 +27,29 @@ const useDragAndDrop = ({
     const [currentOperation, setCurrentOperation] = useState<OperationType>(null);
     const [targetSection, setTargetSection] = useState<TargetSection>(null);
 
-    const getPlayerListType = (playerId: number): PlayerListType => {
+    // Helper function to create compound drag identifier
+    const createDragId = (player: Player): string => {
+        return `${player.id}-${player.position}`;
+    };
+
+    const getPlayerListType = (dragId: string): PlayerListType => {
+        const [playerIdStr, position] = dragId.split('-');
+        const playerId = parseInt(playerIdStr);
+        
+        // For pitchers (SP/RP), check pitcher lists first
+        if (position === 'SP' || position === 'RP') {
+            if (teamData.startingPitcher.id === playerId) {
+                return 'starter';
+            }
+            if (teamData.bullpen.some(player => player.id === playerId)) {
+                return 'bullpen';
+            }
+            if (teamData.unavailablePitchers.some(player => player.id === playerId)) {
+                return 'unavailablePitchers';
+            }
+        }
+        
+        // For hitters, check hitter lists
         if (teamData.lineup.some(player => player.id === playerId)) {
             return 'lineup';
         }
@@ -37,28 +59,27 @@ const useDragAndDrop = ({
         if (teamData.unavailableHitters.some(player => player.id === playerId)) {
             return 'unavailableHitters';
         }
-        if (teamData.startingPitcher.id === playerId) {
-            return 'starter';
-        }
-        if (teamData.bullpen.some(player => player.id === playerId)) {
-            return 'bullpen';
-        }
-        if (teamData.unavailablePitchers.some(player => player.id === playerId)) {
-            return 'unavailablePitchers';
-        }
-        throw new Error(`Player ${playerId} not found in any list`);
+        
+        throw new Error(`Player ${playerId} with position ${position} not found in any list`);
     };
 
     const getOperationType = (sourceList: PlayerListType, targetList: PlayerListType): OperationType => {        
         // Swap operations
-        if ((sourceList === targetList) ||
+        if (
             (sourceList === 'starter' && targetList === 'bullpen') || 
             (sourceList === 'bullpen' && targetList === 'starter') ||
+            (sourceList === 'starter' && targetList === 'unavailablePitchers') ||
+            (sourceList === 'unavailablePitchers' && targetList === 'starter') ||
+
             (sourceList === 'lineup' && targetList === 'bench') ||
             (sourceList === 'bench' && targetList === 'lineup') ||
-            (sourceList === 'unavailablePitchers' && targetList === 'starter') ||
-            (sourceList === 'starter' && targetList === 'unavailablePitchers')
+            (sourceList === 'lineup' && targetList === 'unavailableHitters') ||
+            (sourceList === 'unavailableHitters' && targetList === 'lineup')
         ) { return 'swap' }
+
+        if (sourceList === targetList) {
+            return 'reorder';
+        }
         
         return 'move';
     };
@@ -194,8 +215,8 @@ const useDragAndDrop = ({
             return;
         }
 
-        const sourceListType = getPlayerListType(active.id as number);
-        const targetListType = getPlayerListType(over.id as number);
+        const sourceListType = getPlayerListType(active.id as string);
+        const targetListType = getPlayerListType(over.id as string);
         const operationType = getOperationType(sourceListType, targetListType);
         
         setCurrentOperation(operationType);
@@ -210,36 +231,37 @@ const useDragAndDrop = ({
             return;
         }
 
-        const sourceListType = getPlayerListType(active.id as number);
-        const targetListType = getPlayerListType(over.id as number);
+        const sourceListType = getPlayerListType(active.id as string);
+        const targetListType = getPlayerListType(over.id as string);
         const operationType = getOperationType(sourceListType, targetListType);
         
-        const getIndex = (id: number, listType: PlayerListType): number => {
+        const getIndex = (dragId: string, listType: PlayerListType): number => {
+            const playerId = parseInt(dragId.split('-')[0]);
             switch (listType) {
                 case 'lineup':
-                    return teamData.lineup.findIndex(p => p.id === id);
+                    return teamData.lineup.findIndex(p => p.id === playerId);
                 case 'bench':
-                    return teamData.bench.findIndex(p => p.id === id);
+                    return teamData.bench.findIndex(p => p.id === playerId);
                 case 'unavailableHitters':
-                    return teamData.unavailableHitters.findIndex(p => p.id === id);
+                    return teamData.unavailableHitters.findIndex(p => p.id === playerId);
                 case 'bullpen':
-                    return teamData.bullpen.findIndex(p => p.id === id);
+                    return teamData.bullpen.findIndex(p => p.id === playerId);
                 case 'starter':
                     return 0;
                 case 'unavailablePitchers':
-                    return teamData.unavailablePitchers.findIndex(p => p.id === id);
+                    return teamData.unavailablePitchers.findIndex(p => p.id === playerId);
                 default:
                     return -1;
             }
         };
 
-        const sourceIndex = getIndex(active.id as number, sourceListType);
-        const targetIndex = getIndex(over.id as number, targetListType);
+        const sourceIndex = getIndex(active.id as string, sourceListType);
+        const targetIndex = getIndex(over.id as string, targetListType);
 
-        if (sourceListType === targetListType) {
-            handleReorder(sourceListType, sourceIndex, targetIndex);
-        } else {
+        if (operationType === 'swap' || operationType === 'move') {
             handleSwap(sourceListType, targetListType, sourceIndex, targetIndex);
+        } else {
+            handleReorder(sourceListType, sourceIndex, targetIndex);
         }
         
         // Reset operation after handling
@@ -251,6 +273,7 @@ const useDragAndDrop = ({
         handleDragOver,
         handleDragEnd,
         getPlayerListType,
+        createDragId,
         currentOperation,
         targetSection
     };

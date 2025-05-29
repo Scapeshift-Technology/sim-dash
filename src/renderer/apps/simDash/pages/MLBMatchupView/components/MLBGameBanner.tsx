@@ -1,7 +1,10 @@
 import { Paper, Box, Typography } from '@mui/material';
 import { teamNameToAbbreviationMLB } from '@@/services/mlb/utils/teamName';
 import BasesAndCountDisplay from './BasesAndCountDisplay';
+import Linescore from './Linescore';
+
 import { MlbLiveDataApiResponse } from '@@/types/mlb';
+import { MlbLiveDataApiLinescoreInning } from '@@/types/mlb/mlb-api';
 
 // ---------- Main components ----------
 
@@ -21,12 +24,18 @@ const MLBGameBanner = ({ liveGameData }: MLBGameBannerProps) => {
   const homeTeam = teamNameToAbbreviationMLB(liveGameData.gameData.teams.home.name);
   const awayScore = liveGameData.liveData.linescore.teams.away.runs;
   const homeScore = liveGameData.liveData.linescore.teams.home.runs;
+  const awayHits = liveGameData.liveData.linescore.teams.away.hits;
+  const homeHits = liveGameData.liveData.linescore.teams.home.hits;
+  const awayErrors = liveGameData.liveData.linescore.teams.away.errors;
+  const homeErrors = liveGameData.liveData.linescore.teams.home.errors;
+  const lineScoreInnings: MlbLiveDataApiLinescoreInning[] = liveGameData.liveData.linescore.innings;
   
   // Variables that are conditional on gameStatus === "Live"
   let inningStr: string | undefined;
   let isTopInning: boolean | undefined;
   let currentPitcher: string | undefined;
   let currentBatter: string | undefined;
+  let onDeck: string | undefined
   let balls: number | undefined;
   let strikes: number | undefined;
   let outs: number | undefined;
@@ -39,6 +48,7 @@ const MLBGameBanner = ({ liveGameData }: MLBGameBannerProps) => {
     isTopInning = inningStr.includes("TOP");
     currentPitcher = liveGameData.liveData.plays.currentPlay.matchup.pitcher.fullName;
     currentBatter = liveGameData.liveData.plays.currentPlay.matchup.batter.fullName;
+    onDeck = liveGameData.liveData.linescore.offense.onDeck.fullName;
     balls = liveGameData.liveData.linescore.balls;
     strikes = liveGameData.liveData.linescore.strikes;
     outs = liveGameData.liveData.linescore.outs;
@@ -98,12 +108,18 @@ const MLBGameBanner = ({ liveGameData }: MLBGameBannerProps) => {
               gridArea: 'away-info', 
               textAlign: 'right',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end'
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              justifyContent: 'center'
             }}>
               <Typography>
                 {isTopInning ? `AB: ${currentBatter}` : `P: ${currentPitcher}`}
               </Typography>
+              {isTopInning && onDeck && (
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
+                  On Deck: {onDeck}
+                </Typography>
+              )}
             </Box>
 
             {/* Center Info */}
@@ -123,15 +139,35 @@ const MLBGameBanner = ({ liveGameData }: MLBGameBannerProps) => {
               gridArea: 'home-info', 
               textAlign: 'left',
               display: 'flex',
-              alignItems: 'center'
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              justifyContent: 'center'
             }}>
               <Typography>
                 {isTopInning ? `P: ${currentPitcher}` : `AB: ${currentBatter}`}
               </Typography>
+              {!isTopInning && onDeck && (
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
+                  On Deck: {onDeck}
+                </Typography>
+              )}
             </Box>
           </>
         )}
       </Box>
+      
+      {/* Linescore */}
+      <Linescore
+        innings={lineScoreInnings}
+        awayTeam={awayTeam}
+        homeTeam={homeTeam}
+        awayScore={awayScore}
+        homeScore={homeScore}
+        awayHits={awayHits}
+        homeHits={homeHits}
+        awayErrors={awayErrors}
+        homeErrors={homeErrors}
+      />
     </Paper>
   );
 };

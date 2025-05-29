@@ -18,7 +18,8 @@ import {
 import {
     SortableContext,
     sortableKeyboardCoordinates,
-    rectSwappingStrategy
+    rectSwappingStrategy,
+    rectSortingStrategy
 } from '@dnd-kit/sortable';
 
 // ---------- Strategies ----------
@@ -37,7 +38,7 @@ interface TeamSectionCardProps {
     children: React.ReactNode;
     currentOperation: 'swap' | 'move' | 'reorder' | null;
     isDraggable?: boolean;
-    sortableItems?: number[];
+    sortableItems?: string[];
     onDragOver?: (event: DragOverEvent) => void;
     onDragEnd?: (event: DragEndEvent) => void;
 }
@@ -116,7 +117,8 @@ const TeamSectionCard: React.FC<TeamSectionCardProps> = ({
 
     const getSortingStrategy = () => {
         if (currentOperation === 'swap') return rectSwappingStrategy;
-        return noOpSortingStrategy; // Includes 'move', 'reorder', and null for now
+        if (currentOperation === 'reorder') return rectSortingStrategy;
+        return noOpSortingStrategy; // Includes 'move' and null for now
     };
 
     const content = (isDraggable && sortableItems.length > 0) && onDragEnd ? (

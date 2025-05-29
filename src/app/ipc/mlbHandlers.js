@@ -132,6 +132,7 @@ const handleGetMLBSimData = async (event, getDbHelper, getDb) => {
         const timestamp = properties.simTimestamp;
         const awayTeamName = properties.simAwayTeamName;
         const homeTeamName = properties.simHomeTeamName;
+        const daySequence = properties.simDaySequence; // number | undefined
 
         const dbHelper = getDbHelper();
         const db = getDb();
@@ -143,7 +144,8 @@ const handleGetMLBSimData = async (event, getDbHelper, getDb) => {
             matchId: matchupId,
             timestamp,
             awayTeamName,
-            homeTeamName
+            homeTeamName,
+            daySequence
         };
     } catch (err) {
         log.error('Error getting MLB simulation data:', err);

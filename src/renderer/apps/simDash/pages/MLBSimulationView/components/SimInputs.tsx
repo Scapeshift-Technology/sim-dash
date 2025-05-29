@@ -4,6 +4,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import { MLBGameSimInputs } from '@/types/simInputs';
 import { SimMetadataMLB } from '@@/types/simHistory';
 import BettingBounds from './BettingBounds';
+import GameState from './GameState';
 
 interface SimInputsProps {
   simInputs: MLBGameSimInputs | null;
@@ -117,8 +118,24 @@ const SimInputs: React.FC<SimInputsProps> = ({ simInputs, gameInfo, awayTeamName
       border: 1,
       borderColor: 'divider'
     }}>
-      <BettingBounds gameInfo={gameInfo} awayTeamName={awayTeamName} homeTeamName={homeTeamName} />
-      <Divider sx={{ my: 3 }} />
+      {gameInfo?.gameState && (
+        <>
+          <GameState 
+            gameState={gameInfo.gameState}
+            awayTeamName={awayTeamName}
+            homeTeamName={homeTeamName}
+          />
+          <Divider sx={{ my: 3 }} />
+        </>
+      )}
+
+      {gameInfo?.bettingBounds && (
+        <>
+          <BettingBounds gameInfo={gameInfo} awayTeamName={awayTeamName} homeTeamName={homeTeamName} />
+          <Divider sx={{ my: 3 }} />
+        </>
+      )}
+      
       <Typography variant="h6" component="h3" sx={{ mb: 2 }}>
         Team Leans
       </Typography>

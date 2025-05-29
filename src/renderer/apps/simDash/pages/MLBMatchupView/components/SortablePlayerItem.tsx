@@ -8,9 +8,11 @@ import {
   Typography,
   ListItem,
   ListItemText,
-  TextField
+  TextField,
+  Tooltip
 } from '@mui/material';
 import type { Player, Position } from '@/types/mlb';
+import PlayerStatsTooltip from './PlayerStatsTooltip';
 
 // ---------- Main component ----------
 
@@ -21,6 +23,8 @@ interface SortablePlayerItemProps {
   lineupPosition?: number;
   onLeanChange?: (playerId: number, value: number) => void;
   leanValue?: number;
+  dragId?: string;
+  isCurrentPlayer?: boolean;
 }
 
 const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({ 
@@ -29,8 +33,13 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
   onPositionChange,
   lineupPosition,
   onLeanChange,
-  leanValue = 0
+  leanValue = 0,
+  dragId,
+  isCurrentPlayer
 }) => {
+
+  // ---------- Hooks ----------
+
   const {
     attributes,
     listeners,
@@ -38,7 +47,9 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
     transform,
     transition,
     isDragging
-  } = useSortable({ id: player.id });
+  } = useSortable({ id: dragId || player.id });
+
+  // ---------- Constants ----------
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -50,6 +61,8 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
     width: '100%'
   };
 
+  // ---------- Helper functions ----------
+
   const getLeanColor = (value: number) => {
     if (value > 10 || value < -10) return 'error.main';
     if (value > 0) return 'success.main';
@@ -59,11 +72,25 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
 
   const isLeanValid = (value: number) => value >= -10 && value <= 10;
 
+  // ---------- Render ----------
+
   return (
     <ListItem
       ref={setNodeRef}
       style={style}
-      sx={{ py: 0, px: .5 }}
+      sx={{ 
+        py: 0, 
+        px: .5,
+        ...(isCurrentPlayer && {
+          animation: 'pulse 2s infinite',
+          backgroundColor: 'rgba(25, 118, 210, 0.05)',
+          boxShadow: 'inset 2px 0 0 #1976d2',
+          '@keyframes pulse': {
+            '0%, 100%': { opacity: 1 },
+            '50%': { opacity: 0.7 }
+          }
+        })
+      }}
     >
       {lineupPosition && (
         <Typography 
@@ -77,20 +104,42 @@ const SortablePlayerItem: React.FC<SortablePlayerItemProps> = ({
         </Typography>
       )}
         <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-          <ListItemText
-            primary={player.name}
-            sx={{ flex: '1 1 auto' }}
-          />
-            {/* <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
-              <Typography variant="body2" sx={{ mr: 1, color: 'text.secondary' }}>
-                Pos:
-              </Typography>
-              <PositionSelector
-                value={player.position || ''}
-                onChange={(position) => onPositionChange?.(player.id, position)}
-                disabled={!isDraggable}
-              />
-            </Box> */}
+          <Tooltip
+            title={<PlayerStatsTooltip player={player} />}
+            placement="top"
+            arrow
+            enterDelay={700}
+            leaveDelay={200}
+            slotProps={{
+              tooltip: {
+                sx: {
+                  bgcolor: 'transparent',
+                  '& .MuiTooltip-arrow': {
+                    color: 'background.paper',
+                  },
+                },
+              },
+            }}
+          >
+            <ListItemText
+              primary={
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    fontWeight: isCurrentPlayer ? 'bold' : 'normal',
+                    cursor: 'help',
+                    '&:hover': {
+                      color: 'primary.main',
+                      transition: 'color 0.2s ease-in-out'
+                    }
+                  }}
+                >
+                  {player.name}
+                </Typography>
+              }
+              sx={{ flex: '1 1 auto' }}
+            />
+          </Tooltip>
             <TextField
               type="number"
               size="small"
