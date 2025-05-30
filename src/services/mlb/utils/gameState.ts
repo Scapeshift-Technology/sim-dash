@@ -285,6 +285,7 @@ export function convertGameStateWithLineupsToLiveData(
   const battingPos = isTopInningAdjusted ? gameState.awayLineupPos : gameState.homeLineupPos;
   const currentBatter = battingTeam[battingPos];
   const onDeckBatter = battingTeam[(battingPos + 1) % 9];
+  const sittingBatterPos = isTopInningAdjusted ? gameState.homeLineupPos : gameState.awayLineupPos;
 
   // Get all available players for batters/bench arrays
   const awayAllBatters = [
@@ -452,7 +453,7 @@ export function convertGameStateWithLineupsToLiveData(
           } : undefined
         },
         defense: {
-          battingOrder: (gameState.topInning ? gameState.homeLineupPos : gameState.awayLineupPos) + 1,
+          battingOrder: sittingBatterPos + 1,
           pitcher: {
             id: currentPitcher.id,
             fullName: findPlayerName(currentPitcher.id)
