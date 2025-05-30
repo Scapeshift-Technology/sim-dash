@@ -36,6 +36,10 @@ import {
   selectCounterpartiesByParty, 
   fetchCounterparties 
 } from '@/store/slices/counterpartiesSlice';
+import { 
+  selectLedgerItems,
+  fetchLedgerItems 
+} from '@/store/slices/ledgerSlice';
 import { LedgerFormProps, FieldConfig, ValidationRule } from '../types';
 import { getLedgerTypeConfig } from '../config';
 
@@ -64,6 +68,14 @@ export const LedgerForm: React.FC<LedgerFormProps> = ({
   const currentParty = useSelector(selectCurrentParty);
   const counterparties = useSelector(selectCounterpartiesByParty(currentParty || ''));
   
+  // Fetch Asset Counterparties and Equity Partnerships for dropdown options
+  const assetCounterparties = useSelector((state: any) => 
+    selectLedgerItems(state, 'Asset', 'Counterparty')
+  );
+  const equityPartnerships = useSelector((state: any) => 
+    selectLedgerItems(state, 'Equity', 'Partnership')
+  );
+  
   // ---------- Configuration ----------
   const config = getLedgerTypeConfig(type, subtype);
   
@@ -75,14 +87,55 @@ export const LedgerForm: React.FC<LedgerFormProps> = ({
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
+  // ---------- State for Loan Status Types ----------
+  const [loanStatusTypes, setLoanStatusTypes] = useState<string[]>([]);
+  const [loanStatusLoading, setLoanStatusLoading] = useState(false);
+
   // ---------- Effects ----------
   
   // Fetch counterparties when component mounts or party changes
   useEffect(() => {
     if (currentParty) {
       dispatch(fetchCounterparties(currentParty));
+      // Fetch Asset Counterparties and Equity Partnerships for dropdown options
+      dispatch(fetchLedgerItems({ party: currentParty, type: 'Asset', subtype: 'Counterparty' }));
+      dispatch(fetchLedgerItems({ party: currentParty, type: 'Equity', subtype: 'Partnership' }));
     }
   }, [dispatch, currentParty]);
+
+  // Fetch loan status types when component mounts
+  useEffect(() => {
+    const fetchLoanStatusTypes = async () => {
+      if (!window.electronAPI?.executeSqlQuery) return;
+      
+      setLoanStatusLoading(true);
+      try {
+        const query = 'SELECT LoanStatusType FROM dev_satya.dbo.LoanStatusType ORDER BY LoanStatusType';
+        const result = await window.electronAPI.executeSqlQuery(query);
+        const statusTypes = (result.recordset || []).map((row: any) => row.LoanStatusType?.trim()).filter(Boolean);
+        setLoanStatusTypes(statusTypes);
+        console.log('Fetched loan status types:', statusTypes);
+      } catch (error) {
+        console.error('Failed to fetch loan status types:', error);
+        // Fallback to database values if schema query fails, try without schema
+        try {
+          const fallbackQuery = 'SELECT LoanStatusType FROM dbo.LoanStatusType ORDER BY LoanStatusType';
+          const fallbackResult = await window.electronAPI.executeSqlQuery(fallbackQuery);
+          const fallbackStatusTypes = (fallbackResult.recordset || []).map((row: any) => row.LoanStatusType?.trim()).filter(Boolean);
+          setLoanStatusTypes(fallbackStatusTypes);
+          console.log('Fetched loan status types (fallback):', fallbackStatusTypes);
+        } catch (fallbackError) {
+          console.error('Fallback query also failed:', fallbackError);
+          // Last resort: use the actual values we know exist
+          setLoanStatusTypes(['Closed', 'Default', 'Open']);
+        }
+      } finally {
+        setLoanStatusLoading(false);
+      }
+    };
+
+    fetchLoanStatusTypes();
+  }, []);
 
   // ---------- Computed Values ----------
   
@@ -94,6 +147,27 @@ export const LedgerForm: React.FC<LedgerFormProps> = ({
     ];
     return options;
   }, [counterparties]);
+
+  // Ledger options for Creditor and Borrower dropdowns (union of Asset Counterparties and Equity Partnerships)
+  const ledgerDropdownOptions = useMemo(() => {
+    const options: { value: string; label: string }[] = [];
+    
+    // Add Asset Counterparties
+    if (assetCounterparties) {
+      assetCounterparties.forEach((ledger: any) => {
+        options.push({ value: ledger.Ledger, label: `${ledger.Ledger} (Asset Counterparty)` });
+      });
+    }
+    
+    // Add Equity Partnerships
+    if (equityPartnerships) {
+      equityPartnerships.forEach((ledger: any) => {
+        options.push({ value: ledger.Ledger, label: `${ledger.Ledger} (Equity Partnership)` });
+      });
+    }
+    
+    return options.sort((a, b) => a.label.localeCompare(b.label));
+  }, [assetCounterparties, equityPartnerships]);
 
   // Get available counterparty options for a specific row (excluding already selected ones)
   const getAvailableCounterpartyOptions = useCallback((currentRowIndex: number, fieldKey: string) => {
@@ -133,8 +207,13 @@ export const LedgerForm: React.FC<LedgerFormProps> = ({
       },
     ];
     
-    return [...baseFields, ...(config?.additionalFields || [])];
-  }, [config]);
+    // For Asset Maker Account ledgers, exclude the Ledger field since it's auto-generated
+    const fieldsToShow = (type === 'Asset' && subtype === 'MakerAccount') 
+      ? [] // No base Ledger field for Maker Accounts
+      : baseFields;
+    
+    return [...fieldsToShow, ...(config?.additionalFields || [])];
+  }, [config, type, subtype]);
 
   // Check if form is valid
   const isFormValid = useMemo(() => {
@@ -461,10 +540,72 @@ export const LedgerForm: React.FC<LedgerFormProps> = ({
     );
   }, [formData, touched, errors, handleFieldBlur, handleTableAdd, handleTableRemove, handleTableCellChange]);
 
+  // Render dropdown field (for Creditor and Borrower dropdowns)
+  const renderDropdownField = useCallback((field: FieldConfig) => {
+    const value = formData[field.key] || '';
+    const hasError = touched[field.key] && errors[field.key];
+    
+    // Get dropdown options based on field type
+    let options: { value: string; label: string }[] = [];
+    
+    if (field.key === 'Creditor' || field.key === 'Borrower') {
+      // Use ledgerDropdownOptions for Creditor/Borrower fields
+      options = ledgerDropdownOptions;
+    } else if (field.key === 'Status') {
+      // Use dynamic loan status types from database
+      options = loanStatusTypes.map(status => ({ value: status, label: status }));
+    } else {
+      // Use configured options for other dropdown fields
+      options = field.editor?.options || [];
+    }
+    
+    // Filter options for cross-field validation (prevent same selection)
+    const availableOptions = (field.key === 'Creditor' || field.key === 'Borrower')
+      ? options.filter(option => {
+          if (field.key === 'Creditor') {
+            return !formData.Borrower || option.value !== formData.Borrower;
+          } else if (field.key === 'Borrower') {
+            return !formData.Creditor || option.value !== formData.Creditor;
+          }
+          return true;
+        })
+      : options;
+
+    return (
+      <FormControl fullWidth error={!!hasError}>
+        <FormLabel required={field.required}>{field.label}</FormLabel>
+        <Select
+          value={value}
+          onChange={(e) => handleFieldChange(field.key, e.target.value)}
+          onBlur={() => handleFieldBlur(field)}
+          displayEmpty
+          disabled={field.key === 'Status' && loanStatusLoading}
+        >
+          <MenuItem value="">
+            <em>
+              {field.key === 'Status' && loanStatusLoading 
+                ? 'Loading status options...' 
+                : field.editor?.placeholder || `Select ${field.label}`
+              }
+            </em>
+          </MenuItem>
+          {availableOptions.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
+            </MenuItem>
+          ))}
+        </Select>
+        {hasError && <FormHelperText>{hasError}</FormHelperText>}
+      </FormControl>
+    );
+  }, [formData, touched, errors, handleFieldChange, handleFieldBlur, ledgerDropdownOptions, loanStatusTypes, loanStatusLoading]);
+
   const renderField = useCallback((field: FieldConfig) => {
     switch (field.type) {
       case 'string':
         return renderTextField(field);
+      case 'dropdown':
+        return renderDropdownField(field);
       case 'number':
       case 'money':
         return renderNumberField(field);
@@ -473,7 +614,7 @@ export const LedgerForm: React.FC<LedgerFormProps> = ({
       default:
         return renderTextField(field);
     }
-  }, [renderTextField, renderNumberField, renderTableField]);
+  }, [renderTextField, renderDropdownField, renderNumberField, renderTableField]);
 
   // ---------- Main Render ----------
 
@@ -505,19 +646,48 @@ export const LedgerForm: React.FC<LedgerFormProps> = ({
         )}
 
         <form onSubmit={handleSubmit}>
-          <Grid container spacing={3}>
-            {allFields.map((field) => (
-              <Grid item xs={12} key={field.key}>
-                {renderField(field)}
+          <Grid container spacing={4}>
+            {/* Main Ledger Name - Full Width (only if present) */}
+            {allFields.find(f => f.key === 'Ledger') && (
+              <Grid size={{ xs: 12 }} key="Ledger">
+                {renderField(allFields.find(f => f.key === 'Ledger')!)}
               </Grid>
-            ))}
+            )}
+            
+            {/* Additional Fields in Smart Layout */}
+            {allFields.filter(f => f.key !== 'Ledger').map((field) => {
+              // Table fields get full width, others get 2-column layout
+              const isTableField = field.type === 'table';
+              const isStatusField = field.key === 'Status';
+              
+              return (
+                <Grid 
+                  size={{ 
+                    xs: 12, 
+                    sm: isTableField ? 12 : 6,
+                    md: isTableField ? 12 : isStatusField ? 4 : 6
+                  }} 
+                  key={field.key}
+                >
+                  {renderField(field)}
+                </Grid>
+              );
+            })}
           </Grid>
 
-          <Box sx={{ display: 'flex', gap: 2, mt: 4, justifyContent: 'flex-end' }}>
+          <Divider sx={{ my: 4 }} />
+
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 2, 
+            justifyContent: 'flex-end',
+            alignItems: 'center'
+          }}>
             <Button
               variant="outlined"
               onClick={handleCancel}
               disabled={loading}
+              size="large"
             >
               <CancelIcon sx={{ mr: 1 }} />
               Cancel
@@ -527,6 +697,7 @@ export const LedgerForm: React.FC<LedgerFormProps> = ({
               variant="contained"
               disabled={!isFormValid || loading}
               startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
+              size="large"
             >
               {loading ? 'Saving...' : mode === 'create' ? 'Create' : 'Save'}
             </Button>

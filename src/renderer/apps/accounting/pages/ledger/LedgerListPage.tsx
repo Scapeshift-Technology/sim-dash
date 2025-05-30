@@ -136,8 +136,22 @@ export const LedgerListPage: React.FC = () => {
 
   // Check if current ledger type should allow deletion
   const isDeletable = useCallback(() => {
-    // Asset Counterparty ledgers should not be deletable
-    return !(ledgerType === 'Asset' && ledgerSubtype === 'Counterparty');
+    // Asset Counterparty and Asset Maker Account ledgers should not be deletable
+    return !(
+      (ledgerType === 'Asset' && ledgerSubtype === 'Counterparty') ||
+      (ledgerType === 'Asset' && ledgerSubtype === 'MakerAccount')
+    );
+  }, [ledgerType, ledgerSubtype]);
+
+  // Check if current ledger type should allow adding new items
+  const isAddable = useCallback(() => {
+    // Asset Counterparty and Asset Maker Account ledgers should not be manually addable
+    // - Asset Counterparty: Auto-generated when adding counterparties via PartyCounterparty_ADD_tr
+    // - Asset Maker Account: Handled implicitly by the system
+    return !(
+      (ledgerType === 'Asset' && ledgerSubtype === 'Counterparty') ||
+      (ledgerType === 'Asset' && ledgerSubtype === 'MakerAccount')
+    );
   }, [ledgerType, ledgerSubtype]);
 
   // ---------- Render ----------
@@ -183,7 +197,7 @@ export const LedgerListPage: React.FC = () => {
         loading={loading}
         error={error}
         onRefresh={handleRefresh}
-        onAddNew={handleAddNew}
+        onAddNew={isAddable() ? handleAddNew : undefined}
         onDelete={isDeletable() ? handleDelete : undefined}
       />
     </Container>

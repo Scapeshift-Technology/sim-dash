@@ -1,15 +1,62 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 import { Box, Typography, Grid, Container, Alert } from '@mui/material';
+import { AppDispatch, RootState } from '@/store/store';
+import { selectCurrentParty } from '@/store/slices/authSlice';
+import { selectLedgerItemCount, fetchLedgerItems } from '@/store/slices/ledgerSlice';
 import { HierarchicalNavigation, buildLedgerBreadcrumbs } from '@/accounting/components/entity/ledger/components/HierarchicalNavigation';
 import { LedgerSubtypeCard } from '@/accounting/components/entity/ledger/components/LedgerSubtypeCard';
 import { getImplementedSubtypes, getLedgerTypeConfig } from '@/accounting/components/entity/ledger/config';
-import { LedgerType, LedgerSubtype } from '@/accounting/components/entity/ledger/types';
+import { LedgerType, LedgerSubtype, LedgerTypeConfig } from '@/accounting/components/entity/ledger/types';
 import { validateLedgerType } from '@/accounting/components/entity/ledger/utils/urlValidation';
+
+// Helper component that uses hooks properly for each subtype card
+const LedgerSubtypeCardWrapper: React.FC<{
+  type: LedgerType;
+  subtype: LedgerSubtype;
+  config: LedgerTypeConfig;
+  currentParty: string | null;
+  onSubtypeClick: (type: LedgerType, subtype: LedgerSubtype) => void;
+}> = ({ type, subtype, config, currentParty, onSubtypeClick }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  
+  // Get the count for this specific subtype
+  const itemCount = useSelector((state: RootState) => 
+    currentParty ? selectLedgerItemCount(state, type, subtype) : 0
+  );
+
+  // Fetch items for this subtype if we have a current party but no items loaded
+  useEffect(() => {
+    if (currentParty && itemCount === 0) {
+      dispatch(fetchLedgerItems({ 
+        party: currentParty, 
+        type, 
+        subtype 
+      }));
+    }
+  }, [dispatch, currentParty, type, subtype, itemCount]);
+
+  return (
+    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+      <LedgerSubtypeCard
+        type={type}
+        subtype={subtype}
+        config={config}
+        itemCount={itemCount}
+        onSubtypeClick={onSubtypeClick}
+      />
+    </Grid>
+  );
+};
 
 export const LedgerTypePage: React.FC = () => {
   const navigate = useNavigate();
   const { type } = useParams<{ type: string }>();
+
+  // ---------- Selectors ----------
+  
+  const currentParty = useSelector(selectCurrentParty);
 
   // ---------- Validation ----------
   
@@ -85,15 +132,14 @@ export const LedgerTypePage: React.FC = () => {
 
       <Grid container spacing={3}>
         {subtypeConfigs.map(({ subtype, config }) => (
-          <Grid item xs={12} sm={6} md={4} key={subtype}>
-            <LedgerSubtypeCard
-              type={ledgerType}
-              subtype={subtype}
-              config={config}
-              itemCount={0} // TODO: Get actual count from Redux state
-              onSubtypeClick={handleSubtypeClick}
-            />
-          </Grid>
+          <LedgerSubtypeCardWrapper
+            key={subtype}
+            type={ledgerType}
+            subtype={subtype}
+            config={config}
+            currentParty={currentParty}
+            onSubtypeClick={handleSubtypeClick}
+          />
         ))}
       </Grid>
 

@@ -258,9 +258,13 @@ export const deleteLedgerItem = createAsyncThunk(
     type: LedgerType; 
     subtype: LedgerSubtype;
   }) => {
-    // Prevent deletion of Asset Counterparty ledgers
+    // Prevent deletion of Asset Counterparty and Asset Maker Account ledgers
     if (type === 'Asset' && subtype === 'Counterparty') {
       throw new Error('Asset Counterparty ledgers cannot be deleted');
+    }
+    
+    if (type === 'Asset' && subtype === 'MakerAccount') {
+      throw new Error('Asset Maker Account ledgers cannot be deleted');
     }
 
     const functionName = 'dbo.PartyLedger_DELETE_tr';
@@ -419,6 +423,11 @@ export const selectLedgerError = (state: RootState, type: LedgerType, subtype: L
 
 export const selectLedgerFormLoading = (state: RootState) => state.ledger.formLoading;
 export const selectLedgerFormError = (state: RootState) => state.ledger.formError;
+
+export const selectLedgerItemCount = (state: RootState, type: LedgerType, subtype: LedgerSubtype) => {
+  const key = getLedgerKey(type, subtype);
+  return state.ledger.items[key]?.length || 0;
+};
 
 // Export reducer
 export default ledgerSlice.reducer; 

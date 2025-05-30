@@ -33,8 +33,14 @@ export interface EquityPartnershipLedger extends BaseLedger {
   Description: string;
 }
 
+export interface EquityLoanLedger extends BaseLedger {
+  Creditor: string;
+  Borrower: string;
+  Status: string;
+}
+
 // Union type for all ledger items
-export type LedgerItem = AssetBankrollLedger | AssetMakerAccountLedger | EquityPartnershipLedger;
+export type LedgerItem = AssetBankrollLedger | AssetMakerAccountLedger | EquityPartnershipLedger | EquityLoanLedger;
 
 // Database operation configuration for each leaf type
 export interface LedgerTypeConfig {
@@ -83,7 +89,7 @@ export interface ValidationRule {
   type: 'required' | 'minLength' | 'maxLength' | 'pattern' | 'custom';
   value?: any;
   message: string;
-  validator?: (value: any) => boolean;
+  validator?: (value: any, formData?: any) => boolean;
 }
 
 export interface EditorConfig {

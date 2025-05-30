@@ -24,6 +24,6 @@ export const assetBankrollConfig: LedgerTypeConfig = {
   ui: {
     icon: 'AccountBalance',
     color: '#4caf50',
-    cardDescription: 'Manage cash and digital asset bankrolls',
+    cardDescription: 'Cash and digital asset bankrolls',
   },
 }; 
