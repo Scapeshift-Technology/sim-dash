@@ -8,10 +8,11 @@ import { MlbLiveDataApiResponse } from "@@/types/mlb";
 
 export async function runSimulation(
     gameInputs: MLBGameInputs2,
-    numGames: number = 50000,
+    numGames: number = 120000,
     liveGameData?: MlbLiveDataApiResponse
 ): Promise<SimResultsMLB> {
     const redoneLineups = applyMatchupLeansMLB(gameInputs);
+    console.log('redoneLineups', redoneLineups);
     
     const results = await window.electronAPI.simulateMatchupMLB({
         matchupLineups: redoneLineups,

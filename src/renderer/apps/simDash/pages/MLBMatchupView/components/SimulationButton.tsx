@@ -55,28 +55,6 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
     // ---------- Render ----------
 
     const isGameLive = liveGameData && liveGameData.gameData.status.abstractGameState === 'Live';
-    const showDropdown = seriesGames || isGameLive;
-
-    if (!showDropdown) {
-        return (
-            <Button
-                variant="contained"
-                color="primary"
-                size="large"
-                startIcon={isSimulating ? <CircularProgress size={20} color="inherit" /> : <PlayArrowIcon />}
-                onClick={() => onRunSimulation('game')}
-                disabled={disabled}
-                sx={{ 
-                    height: '100%', 
-                    width: '100%',
-                    py: '8px',
-                    px: '16px'
-                }}
-            >
-                {isSimulating ? 'Running...' : 'Run Simulation'}
-            </Button>
-        );
-    }
 
     const getButtonText = () => {
         if (isSimulating) return 'Running...';
@@ -85,6 +63,8 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
                 return 'Simulate Series';
             case 'live':
                 return 'Simulate Live Game';
+            case 'custom':
+                return 'Simulate Custom Game';
             case 'game':
             default:
                 return 'Simulate Game';
@@ -124,6 +104,7 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
                 onClose={handleClose}
             >
                 <MenuItem onClick={() => handleMenuItemClick('game')}>Simulate Game</MenuItem>
+                <MenuItem onClick={() => handleMenuItemClick('custom')}>Simulate Custom Game</MenuItem>
                 {seriesGames && <MenuItem onClick={() => handleMenuItemClick('series')}>Simulate Series</MenuItem>}
                 {isGameLive && <MenuItem onClick={() => handleMenuItemClick('live')}>Simulate Live Game</MenuItem>}
             </Menu>

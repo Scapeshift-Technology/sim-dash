@@ -5,21 +5,41 @@ import CircleOutlinedIcon from '@mui/icons-material/CircleOutlined';
 
 // ---------- Sub-component ----------
 
-const BaseSquare: React.FC<{ isOccupied: boolean }> = ({ isOccupied }) => (
-    <Box sx={{
-        width: '14px',
-        height: '14px',
-        transform: 'rotate(45deg)',
-        backgroundColor: isOccupied ? 'white' : 'transparent',
-        border: '2px solid white',
-    }} />
+const BaseSquare: React.FC<{ 
+    isOccupied: boolean; 
+    isEditable?: boolean; 
+    onClick?: () => void;
+}> = ({ isOccupied, isEditable = false, onClick }) => (
+    <Box 
+        sx={{
+            width: '14px',
+            height: '14px',
+            transform: 'rotate(45deg)',
+            backgroundColor: isOccupied ? 'white' : 'transparent',
+            border: '2px solid white',
+            cursor: isEditable ? 'pointer' : 'default',
+            '&:hover': isEditable ? {
+                backgroundColor: isOccupied ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.3)',
+            } : {}
+        }} 
+        onClick={isEditable ? onClick : undefined}
+    />
 );
 
 const BasesGraphic: React.FC<{
     firstBase: string | undefined,
     secondBase: string | undefined,
-    thirdBase: string | undefined
-}> = ({ firstBase, secondBase, thirdBase }) => {
+    thirdBase: string | undefined,
+    isEditable?: boolean,
+    onBaseChange?: (base: 'first' | 'second' | 'third', occupied: boolean) => void
+}> = ({ firstBase, secondBase, thirdBase, isEditable = false, onBaseChange }) => {
+    
+    const handleBaseClick = (base: 'first' | 'second' | 'third', currentlyOccupied: boolean) => {
+        if (isEditable && onBaseChange) {
+            onBaseChange(base, !currentlyOccupied);
+        }
+    };
+
     return (
         <Box sx={{ 
             position: 'relative',
@@ -36,7 +56,11 @@ const BasesGraphic: React.FC<{
                 left: '50%',
                 transform: 'translateX(-50%)'
             }}>
-                <BaseSquare isOccupied={!!secondBase} />
+                <BaseSquare 
+                    isOccupied={!!secondBase} 
+                    isEditable={isEditable}
+                    onClick={() => handleBaseClick('second', !!secondBase)}
+                />
             </Box>
             
             {/* Third Base (Left) */}
@@ -46,7 +70,11 @@ const BasesGraphic: React.FC<{
                 top: '50%',
                 transform: 'translateY(-50%)'
             }}>
-                <BaseSquare isOccupied={!!thirdBase} />
+                <BaseSquare 
+                    isOccupied={!!thirdBase} 
+                    isEditable={isEditable}
+                    onClick={() => handleBaseClick('third', !!thirdBase)}
+                />
             </Box>
             
             {/* First Base (Right) */}
@@ -56,7 +84,11 @@ const BasesGraphic: React.FC<{
                 top: '50%',
                 transform: 'translateY(-50%)'
             }}>
-                <BaseSquare isOccupied={!!firstBase} />
+                <BaseSquare 
+                    isOccupied={!!firstBase} 
+                    isEditable={isEditable}
+                    onClick={() => handleBaseClick('first', !!firstBase)}
+                />
             </Box>
         </Box>
     );
@@ -71,6 +103,9 @@ interface BasesAndCountDisplayProps {
     firstBase: string | undefined;
     secondBase: string | undefined;
     thirdBase: string | undefined;
+    isEditable?: boolean;
+    onOutsChange?: (outs: number) => void;
+    onBaseChange?: (base: 'first' | 'second' | 'third', occupied: boolean) => void;
 }
 
 const BasesAndCountDisplay: React.FC<BasesAndCountDisplayProps> = ({
@@ -79,16 +114,41 @@ const BasesAndCountDisplay: React.FC<BasesAndCountDisplayProps> = ({
     outs,
     firstBase,
     secondBase,
-    thirdBase
+    thirdBase,
+    isEditable = false,
+    onOutsChange,
+    onBaseChange
 }) => {
-    // Generate out indicators
-    const outIndicators = Array(3).fill(0).map((_, index) => (
-        index < outs ? (
-            <CircleIcon key={index} sx={{ fontSize: 12 }} />
-        ) : (
-            <CircleOutlinedIcon key={index} sx={{ fontSize: 12 }} />
-        )
-    ));
+    const handleOutClick = (outNumber: number) => {
+        if (!isEditable || !onOutsChange) return;
+        
+        if (outs === outNumber) { // Reset to 0
+            onOutsChange(0);
+        } else {
+            onOutsChange(outNumber);
+        }
+    };
+
+    // Generate out indicators - make them clickable when editable
+    const outIndicators = Array(3).fill(0).map((_, index) => {
+        const outNumber = index + 1;
+        const isCurrentOut = index < outs;
+        const IconComponent = isCurrentOut ? CircleIcon : CircleOutlinedIcon;
+        
+        return (
+            <IconComponent 
+                key={index} 
+                sx={{ 
+                    fontSize: 12,
+                    cursor: isEditable ? 'pointer' : 'default',
+                    '&:hover': isEditable ? {
+                        opacity: 0.7
+                    } : {}
+                }}
+                onClick={() => handleOutClick(outNumber)}
+            />
+        );
+    });
 
     return (
         <Box sx={{ 
@@ -101,6 +161,8 @@ const BasesAndCountDisplay: React.FC<BasesAndCountDisplayProps> = ({
                 firstBase={firstBase}
                 secondBase={secondBase}
                 thirdBase={thirdBase}
+                isEditable={isEditable}
+                onBaseChange={onBaseChange}
             />
             <Box sx={{
                 display: 'flex',

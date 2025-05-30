@@ -1,6 +1,6 @@
 import { 
   MlbLiveDataApiTeamBoxscorePlayerStatsPitching, TeamLineup, MlbLiveDataApiResponse, Player, GameStatePitcher, 
-  Position, TeamType
+  Position, TeamType, GameStateMLB, MatchupLineups
 } from "@/types/mlb";
 import { ReducedGameStateMLB, ReducedMatchupLineups, ReducedPlayer, ReducedTeamLineup } from "@/types/simHistory";
 
@@ -192,5 +192,308 @@ export function createCurrentUnavailablePitchers(teamData: TeamLineup, liveGameD
 
   // Return
   return [...filteredTeamUnavailablePitchers, ...usedUnavailablePitchersPlayersList];
+}
+
+/**
+ * Enhanced conversion that combines GameStateMLB with MatchupLineups for more complete data.
+ * This provides better team information, bench players, and other details not available in GameStateMLB alone.
+ * 
+ * REMAINING LIMITATIONS:
+ * - balls/strikes: Set to 0 (not tracked in GameStateMLB)
+ * - Hits/Errors: Set to 0 (not tracked in GameStateMLB)
+ * - Innings array: Empty (no inning-by-inning data in GameStateMLB)
+ * - Detailed player stats: Minimal placeholder data only
+ * - Plays data: Empty (no play-by-play history in GameStateMLB)
+ * - Base runners: Shows presence but no specific player details
+ */
+export function convertGameStateWithLineupsToLiveData(
+  gameState: GameStateMLB,
+  lineups: MatchupLineups,
+  awayTeamName: string,
+  homeTeamName: string
+): MlbLiveDataApiResponse {
+  
+  // Helper to convert inning number to ordinal
+  const getInningOrdinal = (inning: number): string => {
+    const suffix = inning === 1 ? 'st' : inning === 2 ? 'nd' : inning === 3 ? 'rd' : 'th';
+    return `${inning}${suffix}`;
+  };
+
+  // Helper to find player name by ID from lineups (more complete than gameState)
+  const findPlayerName = (playerId: number): string => {
+    // Check all possible player locations in lineups
+    const allAwayPlayers = [
+      ...lineups.away.lineup,
+      ...lineups.away.bench,
+      ...lineups.away.bullpen,
+      lineups.away.startingPitcher,
+      ...lineups.away.unavailableHitters,
+      ...lineups.away.unavailablePitchers
+    ];
+    
+    const allHomePlayers = [
+      ...lineups.home.lineup,
+      ...lineups.home.bench,
+      ...lineups.home.bullpen,
+      lineups.home.startingPitcher,
+      ...lineups.home.unavailableHitters,
+      ...lineups.home.unavailablePitchers
+    ];
+    
+    const allPlayers = [...allAwayPlayers, ...allHomePlayers];
+    const player = allPlayers.find((p: Player) => p.id === playerId);
+    return player?.name || `Player ${playerId}`;
+  };
+
+  // Helper to find player handedness by ID from lineups
+  const findPlayerHandedness = (playerId: number): { batSide: string; pitchHand: string } => {
+    const allAwayPlayers = [
+      ...lineups.away.lineup,
+      ...lineups.away.bench,
+      ...lineups.away.bullpen,
+      lineups.away.startingPitcher,
+      ...lineups.away.unavailableHitters,
+      ...lineups.away.unavailablePitchers
+    ];
+    
+    const allHomePlayers = [
+      ...lineups.home.lineup,
+      ...lineups.home.bench,
+      ...lineups.home.bullpen,
+      lineups.home.startingPitcher,
+      ...lineups.home.unavailableHitters,
+      ...lineups.home.unavailablePitchers
+    ];
+    
+    const allPlayers = [...allAwayPlayers, ...allHomePlayers];
+    const player = allPlayers.find((p: Player) => p.id === playerId);
+    
+    return {
+      batSide: player?.battingSide || 'R',
+      pitchHand: player?.pitchingSide || 'R'
+    };
+  };
+
+  // Determine current pitcher and batter info based on inning state
+  const inningOver = gameState.outs === 3;
+  const isTopInningAdjusted = inningOver ? !gameState.topInning : gameState.topInning;
+
+  // Determine current pitcher and batter info
+  const currentPitcher = isTopInningAdjusted ? gameState.homePitcher : gameState.awayPitcher;
+  const sittingPitcher = isTopInningAdjusted ? gameState.awayPitcher : gameState.homePitcher;
+  const battingTeam = isTopInningAdjusted ? gameState.awayLineup : gameState.homeLineup;
+  const battingPos = isTopInningAdjusted ? gameState.awayLineupPos : gameState.homeLineupPos;
+  const currentBatter = battingTeam[battingPos];
+  const onDeckBatter = battingTeam[(battingPos + 1) % 9];
+
+  // Get all available players for batters/bench arrays
+  const awayAllBatters = [
+    ...gameState.awayLineup.map((p: Player) => p.id),
+    ...lineups.away.bench.map((p: Player) => p.id)
+  ];
+  
+  const homeAllBatters = [
+    ...gameState.homeLineup.map((p: Player) => p.id),
+    ...lineups.home.bench.map((p: Player) => p.id)
+  ];
+
+  // Get all pitchers (current + available bullpen)
+  const awayAllPitchers = [
+    gameState.awayPitcher.id,
+    ...gameState.awayBullpen.map((p: Player) => p.id)
+  ];
+  
+  const homeAllPitchers = [
+    gameState.homePitcher.id,
+    ...gameState.homeBullpen.map((p: Player) => p.id)
+  ];
+
+  // Create player stats objects for current pitchers
+  const awayPitcherHandedness = findPlayerHandedness(gameState.awayPitcher.id);
+  const awayPitcherStats = {
+    [`ID${gameState.awayPitcher.id}`]: {
+      person: {
+        id: gameState.awayPitcher.id,
+        fullName: findPlayerName(gameState.awayPitcher.id),
+        batSide: {
+          code: awayPitcherHandedness.batSide as 'L' | 'R' | 'S'
+        },
+        pitchHand: {
+          code: awayPitcherHandedness.pitchHand as 'L' | 'R' | 'S'
+        }
+      },
+      gameStatus: {
+        isOnBench: false,
+        isSubstitute: false
+      },
+      stats: {
+        pitching: {
+          gamesStarted: gameState.awayPitcher.position === 'SP' ? 1 : 0,
+          battersFaced: gameState.awayPitcher.battersFaced
+        }
+      }
+    }
+  };
+
+  const homePitcherHandedness = findPlayerHandedness(gameState.homePitcher.id);
+  const homePitcherStats = {
+    [`ID${gameState.homePitcher.id}`]: {
+      person: {
+        id: gameState.homePitcher.id,
+        fullName: findPlayerName(gameState.homePitcher.id),
+        batSide: {
+          code: homePitcherHandedness.batSide as 'L' | 'R' | 'S'
+        },
+        pitchHand: {
+          code: homePitcherHandedness.pitchHand as 'L' | 'R' | 'S'
+        }
+      },
+      gameStatus: {
+        isOnBench: false,
+        isSubstitute: false
+      },
+      stats: {
+        pitching: {
+          gamesStarted: gameState.homePitcher.position === 'SP' ? 1 : 0,
+          battersFaced: gameState.homePitcher.battersFaced
+        }
+      }
+    }
+  };
+
+  return {
+    gameData: {
+      teams: {
+        away: {
+          name: awayTeamName
+        },
+        home: {
+          name: homeTeamName
+        }
+      },
+      status: {
+        abstractGameState: "Live" as const
+      }
+    },
+    liveData: {
+      boxscore: {
+        teams: {
+          away: {
+            battingOrder: gameState.awayLineup.map((p: Player) => p.id),
+            batters: awayAllBatters, // Include bench players
+            pitchers: awayAllPitchers, // Include available bullpen
+            bullpen: gameState.awayBullpen.map((p: Player) => p.id),
+            bench: lineups.away.bench.map((p: Player) => p.id), // Real bench data from lineups
+            players: awayPitcherStats // Include pitcher stats from gameState
+          },
+          home: {
+            battingOrder: gameState.homeLineup.map((p: Player) => p.id),
+            batters: homeAllBatters, // Include bench players
+            pitchers: homeAllPitchers, // Include available bullpen
+            bullpen: gameState.homeBullpen.map((p: Player) => p.id),
+            bench: lineups.home.bench.map((p: Player) => p.id), // Real bench data from lineups
+            players: homePitcherStats // Include pitcher stats from gameState
+          }
+        }
+      },
+      linescore: {
+        // Game state basics
+        balls: 0, // LIMITATION: Not tracked in GameStateMLB
+        strikes: 0, // LIMITATION: Not tracked in GameStateMLB
+        outs: gameState.outs,
+        currentInning: gameState.inning,
+        currentInningOrdinal: getInningOrdinal(gameState.inning),
+        inningHalf: gameState.topInning ? "Top" : "Bottom",
+        
+        // Innings data
+        innings: [], // LIMITATION: No inning-by-inning data in GameStateMLB
+        
+        // Team scores
+        teams: {
+          away: {
+            runs: gameState.awayScore,
+            hits: 0, // LIMITATION: Not tracked in GameStateMLB
+            errors: 0 // LIMITATION: Not tracked in GameStateMLB
+          },
+          home: {
+            runs: gameState.homeScore,
+            hits: 0, // LIMITATION: Not tracked in GameStateMLB
+            errors: 0 // LIMITATION: Not tracked in GameStateMLB
+          }
+        },
+
+        // Current game situation
+        offense: {
+          battingOrder: battingPos + 1, // Convert 0-based to 1-based
+          batter: {
+            id: currentBatter.id,
+            fullName: currentBatter.name || `Player ${currentBatter.id}`
+          },
+          onDeck: {
+            id: onDeckBatter.id,
+            fullName: onDeckBatter.name || `Player ${onDeckBatter.id}`
+          },
+          pitcher: {
+            id: sittingPitcher.id,
+            fullName: findPlayerName(sittingPitcher.id)
+          },
+          // Base runners - simplified representation
+          first: gameState.bases[0] ? { 
+            id: 999999, // LIMITATION: Don't know which specific player is on base
+            fullName: "Runner on 1st" 
+          } : undefined,
+          second: gameState.bases[1] ? { 
+            id: 999998, // LIMITATION: Don't know which specific player is on base
+            fullName: "Runner on 2nd" 
+          } : undefined,
+          third: gameState.bases[2] ? { 
+            id: 999997, // LIMITATION: Don't know which specific player is on base
+            fullName: "Runner on 3rd" 
+          } : undefined
+        },
+        defense: {
+          battingOrder: (gameState.topInning ? gameState.homeLineupPos : gameState.awayLineupPos) + 1,
+          pitcher: {
+            id: currentPitcher.id,
+            fullName: findPlayerName(currentPitcher.id)
+          }
+        }
+      },
+      plays: {
+        allPlays: [], // LIMITATION: No play history in GameStateMLB
+        currentPlay: {
+          matchup: {
+            pitcher: {
+              id: currentPitcher.id,
+              fullName: findPlayerName(currentPitcher.id)
+            },
+            batter: {
+              id: currentBatter.id,
+              fullName: currentBatter.name || `Player ${currentBatter.id}`
+            }
+          },
+          // LIMITATION: Following properties not available in GameStateMLB, using defaults
+          result: {
+            eventType: "field_out" as const, // Placeholder
+            rbi: 0,
+            awayScore: gameState.awayScore,
+            homeScore: gameState.homeScore
+          },
+          about: {
+            inning: gameState.inning,
+            halfInning: gameState.topInning ? "top" : "bottom",
+            isTopInning: gameState.topInning,
+            outs: gameState.outs
+          },
+          count: {
+            outs: gameState.outs,
+            strikes: 0, // LIMITATION: Not tracked in GameStateMLB
+            balls: 0 // LIMITATION: Not tracked in GameStateMLB
+          },
+          runners: [] // LIMITATION: No detailed runner movement(yet) in GameStateMLB
+        }
+      }
+    }
+  };
 }
 

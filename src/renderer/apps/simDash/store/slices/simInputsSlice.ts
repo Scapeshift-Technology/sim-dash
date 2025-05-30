@@ -1,15 +1,17 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { GameMetadataMLB, MarketLinesMLB, MatchupLineups, MLBGameData, MLBGameDataResponse, Player, Position, SeriesInfoMLB } from '@/types/mlb';
+import type { GameMetadataMLB, MarketLinesMLB, MatchupLineups, MLBGameData, MLBGameDataResponse, Player, Position, SeriesInfoMLB, MlbLiveDataApiResponse, GameStateMLB } from '@/types/mlb';
 import type { 
   MLBGameSimInputs, 
   MLBGameSimInputsTeam, 
   SimInputsState, 
   MLBGameInputs2, 
-  MLBGameContainer 
+  MLBGameContainer,
+  MLBGameCustomModeData
 } from '@/types/simInputs';
 import { LeagueName } from '@@/types/league';
 import { RootState } from '@/store/store';
 import { SimType } from '@@/types/mlb/mlb-sim';
+import { initializeGameState } from '@@/services/mlb/sim/gameState';
 
 // ---------- Initial States ----------
 // ----- MLB -----
@@ -59,6 +61,39 @@ function syncCurrentGameEdit(state: SimInputsState, matchId: number) {
       container.seriesGames[gameNumber] = container.currentGame;
     }
   }
+}
+
+function createCustomModeData(lineups: MatchupLineups, liveGameData?: MlbLiveDataApiResponse): MLBGameCustomModeData {
+  const gameState = initializeGameState(lineups, liveGameData);
+  return {
+    gameState: gameState,
+    lineups: lineups
+  };
+}
+
+function handleMLBLineupEdit<T extends { matchId: number; simType: SimType; team: 'home' | 'away' }>(
+  state: SimInputsState,
+  payload: T,
+  updateCurrentGame: (lineups: MatchupLineups, team: 'home' | 'away', payload: T) => void,
+  updateCustomMode: (lineups: MatchupLineups, team: 'home' | 'away', payload: T) => void
+) {
+  const { matchId, simType, team } = payload;
+  
+  // No edits allowed for live mode
+  if (simType === 'live') return;
+  
+  if (!state['MLB']?.[matchId]?.currentGame) return;
+  
+  // Handle custom mode
+  if (simType === 'custom' && state['MLB']?.[matchId]?.customModeData) {
+    updateCustomMode(state['MLB'][matchId].customModeData.lineups, team, payload);
+    return;
+  }
+  
+  // Handle normal mode
+  updateCurrentGame(state['MLB'][matchId].currentGame.lineups, team, payload);
+  syncCurrentGameEdit(state, matchId);
+  state['MLB'][matchId].currentGame.gameInfo.lineupsSource = 'Manual';
 }
 
 // ---------- Thunks ----------
@@ -136,74 +171,74 @@ const simInputsSlice = createSlice({
 
     editMLBLineup: (state, action: { 
       payload: { 
-        matchId: number; 
-        team: 'home' | 'away'; 
-        newLineup: Player[] 
+        matchId: number;
+        simType: SimType;
+        team: 'home' | 'away';
+        newLineup: Player[]
       } 
     }) => {
-      const { matchId, team, newLineup } = action.payload;
-      if (state['MLB']?.[matchId]?.currentGame) {
-        state['MLB'][matchId].currentGame.lineups[team].lineup = newLineup;
-        syncCurrentGameEdit(state, matchId);
-        state['MLB'][matchId].currentGame.gameInfo.lineupsSource = 'Manual';
-      }
+      handleMLBLineupEdit(state, action.payload, (lineups, team, payload) => {
+        lineups[team].lineup = payload.newLineup;
+      }, (lineups, team, payload) => {
+        lineups[team].lineup = payload.newLineup;
+      });
     },
     editMLBBench: (state, action: {
       payload: {
         matchId: number;
+        simType: SimType;
         team: 'home' | 'away';
         newBench: Player[];
       }
     }) => {
-      const { matchId, team, newBench } = action.payload;
-      if (state['MLB']?.[matchId]?.currentGame) {
-        state['MLB'][matchId].currentGame.lineups[team].bench = newBench;
-        syncCurrentGameEdit(state, matchId);
-        state['MLB'][matchId].currentGame.gameInfo.lineupsSource = 'Manual';
-      }
+      handleMLBLineupEdit(state, action.payload, (lineups, team, payload) => {
+        lineups[team].bench = payload.newBench;
+      }, (lineups, team, payload) => {
+        lineups[team].bench = payload.newBench;
+      });
     },
     editMLBStartingPitcher: (state, action: {
       payload: {
         matchId: number;
+        simType: SimType;
         team: 'home' | 'away';
         newStartingPitcher: Player;
       }
     }) => {
-      const { matchId, team, newStartingPitcher } = action.payload;
-      if (state['MLB']?.[matchId]?.currentGame) {
-        state['MLB'][matchId].currentGame.lineups[team].startingPitcher = newStartingPitcher;
-        syncCurrentGameEdit(state, matchId);
-        state['MLB'][matchId].currentGame.gameInfo.lineupsSource = 'Manual';
-      }
+      handleMLBLineupEdit(state, action.payload, (lineups, team, payload) => {
+        lineups[team].startingPitcher = payload.newStartingPitcher;
+      }, (lineups, team, payload) => {
+        lineups[team].startingPitcher = payload.newStartingPitcher;
+      });
     },
     editMLBBullpen: (state, action: {
       payload: {
         matchId: number;
+        simType: SimType;
         team: 'home' | 'away';
         newBullpen: Player[];
       }
     }
     ) => {
-      const { matchId, team, newBullpen } = action.payload;
-      if (state['MLB']?.[matchId]?.currentGame) {
-        state['MLB'][matchId].currentGame.lineups[team].bullpen = newBullpen;
-        syncCurrentGameEdit(state, matchId);
-        state['MLB'][matchId].currentGame.gameInfo.lineupsSource = 'Manual';
-      }
+      handleMLBLineupEdit(state, action.payload, (lineups, team, payload) => {
+        lineups[team].bullpen = payload.newBullpen;
+      }, (lineups, team, payload) => {
+        lineups[team].bullpen = payload.newBullpen;
+      });
     },
     editMLBUnavailablePitchers: (state, action: {
       payload: {
         matchId: number;
+        simType: SimType;
         team: 'home' | 'away';
         newUnavailablePitchers: Player[];
       }
     }) => {
-      const { matchId, team, newUnavailablePitchers } = action.payload;
-      if (state['MLB']?.[matchId]?.currentGame) {
-        state['MLB'][matchId].currentGame.lineups[team].unavailablePitchers = newUnavailablePitchers;
-        syncCurrentGameEdit(state, matchId);
-        state['MLB'][matchId].currentGame.gameInfo.lineupsSource = 'Manual';
-      }
+      handleMLBLineupEdit(state, action.payload, (lineups, team, payload) => {
+        lineups[team].unavailablePitchers = payload.newUnavailablePitchers;
+      }, (lineups, team, payload) => {
+        lineups[team].unavailablePitchers = payload.newUnavailablePitchers;
+      });
     },
 
     updateMLBPlayerPosition: (state, action: {
@@ -321,11 +356,38 @@ const simInputsSlice = createSlice({
         league: LeagueName;
         matchId: number;
         simType: SimType;
+        liveGameData?: MlbLiveDataApiResponse;
       }
     }) => {
-      const { league, matchId, simType } = action.payload;
+      const { league, matchId, simType, liveGameData } = action.payload;
       if (league === 'MLB' && state[league]?.[matchId]) {
         state[league][matchId].simMode = simType;
+        if (simType === 'custom' && state[league][matchId].currentGame) {
+          if (!state[league][matchId].customModeData) {
+            console.log('Initializing custom mode data');
+            if (liveGameData) {
+              console.log('Creating custom mode data with live game data');
+              const newGameState = createCustomModeData(state[league][matchId].currentGame.lineups, liveGameData);
+              state[league][matchId].customModeData = newGameState;
+              console.log('Custom mode data created', newGameState);
+            } else {
+              console.log('Creating custom mode data without live game data');
+              state[league][matchId].customModeData = createCustomModeData(state[league][matchId].currentGame.lineups);
+            }
+          }
+        }
+      }
+    },
+    updateCustomModeGameState: (state, action: {
+      payload: {
+        league: LeagueName;
+        matchId: number;
+        gameState: GameStateMLB;
+      }
+    }) => {
+      const { league, matchId, gameState } = action.payload;
+      if (league === 'MLB' && state[league]?.[matchId]?.customModeData) {
+        state[league][matchId].customModeData.gameState = gameState;
       }
     }
   },
@@ -430,7 +492,8 @@ export const {
   switchCurrentSeriesGame,
   updateMLBMarketLines,
   updateMLBAutomatedLeans,
-  updateSimMode
+  updateSimMode,
+  updateCustomModeGameState
 } = simInputsSlice.actions;
 
 // ---------- Selectors ----------
@@ -462,6 +525,11 @@ export const selectGamePlayerStatsStatus = (state: RootState, league: LeagueName
   state.simDash.simInputs[league]?.[matchId]?.statsStatus ?? 'idle';
 export const selectGamePlayerStatsError = (state: RootState, league: LeagueName, matchId: number): string | null | undefined => 
   state.simDash.simInputs[league]?.[matchId]?.statsError;
+
+export const selectGameCustomModeDataLineups = (state: RootState, league: LeagueName, matchId: number): MatchupLineups | undefined => 
+  state.simDash.simInputs[league]?.[matchId]?.customModeData?.lineups;
+export const selectGameCustomModeDataGameState = (state: RootState, league: LeagueName, matchId: number): GameStateMLB | undefined => 
+  state.simDash.simInputs[league]?.[matchId]?.customModeData?.gameState;
 
 export default simInputsSlice.reducer;
 

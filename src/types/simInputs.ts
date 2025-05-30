@@ -1,4 +1,4 @@
-import type { MatchupLineups, GameMetadataMLB } from './mlb';
+import type { MatchupLineups, GameMetadataMLB, GameStateMLB } from './mlb';
 import type { SimType } from './mlb/mlb-sim';
 import type { LeagueName } from './league';
 
@@ -14,23 +14,8 @@ export type SimInputsState = {
 
 // ---------- MLB ----------
 
-export interface CustomGameStateMLB {
-  inning: number;
-  topInning: boolean;
-  outs: number;
-  bases: boolean[];
-  awayScore: number;
-  homeScore: number;
-
-  awayLineupPos: number;
-  homeLineupPos: number;
-
-  awayPitcherId: number;
-  homePitcherId: number;
-}
-
 export interface MLBGameCustomModeData {
-  gameState: CustomGameStateMLB;
+  gameState: GameStateMLB;
   lineups: MatchupLineups;
 }
 

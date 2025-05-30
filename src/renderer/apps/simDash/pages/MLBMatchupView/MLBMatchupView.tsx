@@ -14,7 +14,7 @@ import {
     Tooltip
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import type { MatchupLineups, MlbLiveDataApiResponse, Player, Position, TeamLineup } from '@/types/mlb';
+import type { MatchupLineups, MlbLiveDataApiResponse, Player, Position } from '@/types/mlb';
 import DraggableLineup from './components/DraggableLineup';
 import MLBMatchupHeader from './components/MLBMatchupHeader';
 import BettingBoundsSection from './components/BettingBoundsSection';
@@ -43,7 +43,10 @@ import {
     selectGameMetadata,
     selectGameMlbGameId,
     selectGameSimMode,
-    updateSimMode
+    selectGameCustomModeDataLineups,
+    updateSimMode,
+    selectGameCustomModeDataGameState,
+    updateCustomModeGameState
 } from '@/simDash/store/slices/simInputsSlice';
 import { LeagueName } from '@@/types/league';
 import { useLeanValidation } from './hooks/leanValidation';
@@ -65,6 +68,7 @@ import MLBGameBanner from './components/MLBGameBanner';
 import { useMLBMatchupData } from './hooks/useMLBMatchupData';
 import { SimType } from '@@/types/mlb/mlb-sim';
 import { useLineupFinder } from './hooks/useLineupFinder';
+import { convertGameStateWithLineupsToLiveData } from '@@/services/mlb/utils/gameState';
 
 // ---------- Sub-components ----------
 
@@ -132,6 +136,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const simType = useSelector((state: RootState) => selectGameSimMode(state, league, matchId));
     const gameMetadata = useSelector((state: RootState) => selectGameMetadata(state, league, matchId));
     const mlbGameId = useSelector((state: RootState) => selectGameMlbGameId(state, league, matchId));
+    const customModeLineups = useSelector((state: RootState) => selectGameCustomModeDataLineups(state, league, matchId));
+    const customModeGameState = useSelector((state: RootState) => selectGameCustomModeDataGameState(state, league, matchId));
     const traditionalSimulationStatus = useSelector((state: RootState) => selectTraditionalSimulationStatus(state, league, matchId));
     const traditionalSimulationError = useSelector((state: RootState) => selectTraditionalSimulationError(state, league, matchId));
     const seriesSimulationStatus = useSelector((state: RootState) => selectSeriesSimulationStatus(state, league, matchId));
@@ -145,7 +151,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const { usedLineups } = useLineupFinder({
         standardGameLineups: gameLineups,
         liveGameData,
-        customGameLineups: undefined,
+        customGameLineups: customModeLineups,
         simType
     });
 
@@ -155,6 +161,11 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         showInvalidLeansSnackbar,
         setShowInvalidLeansSnackbar
     } = useLeanValidation({ league, matchId });
+
+    // Create liveGameData either using the liveGameData from the API or the custom mode game state
+    const bannerLiveGameData = simType === 'custom' && customModeGameState && usedLineups
+        ? convertGameStateWithLineupsToLiveData(customModeGameState, usedLineups, participant1, participant2)
+        : liveGameData;
 
     // ---------- Effect ----------
 
@@ -252,10 +263,12 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             result = await dispatch(runSimulationThunk({
                 league,
                 matchId,
-                gameInputs: gameInputs
+                gameInputs: gameInputs,
+                liveGameData: bannerLiveGameData
             })).unwrap();
+            console.log('result', result);
 
-            await saveAndUpdateHistory(result, gameInputs);
+            await saveAndUpdateHistory(result, gameInputs, bannerLiveGameData);
             return;
         } else {
             if (!gameContainer.currentGame) return;
@@ -285,19 +298,19 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     };
 
     const handleLineupReorder = (team: 'home' | 'away', newLineup: Player[], newBench: Player[] | null) => {
-        dispatch(editMLBLineup({ matchId, team, newLineup }));
+        dispatch(editMLBLineup({ matchId, simType: simType as SimType, team, newLineup }));
         if (newBench) {
-            dispatch(editMLBBench({ matchId, team, newBench }));
+            dispatch(editMLBBench({ matchId, simType: simType as SimType, team, newBench }));
         }
     };
 
     const handlePitcherReorder = (team: 'home' | 'away', newStartingPitcher: Player | null, newBullpen: Player[], newUnavailablePitchers: Player[] | undefined) => {
         if (newStartingPitcher) {
-            dispatch(editMLBStartingPitcher({ matchId, team, newStartingPitcher }));
+            dispatch(editMLBStartingPitcher({ matchId, simType: simType as SimType, team, newStartingPitcher }));
         }
-        dispatch(editMLBBullpen({ matchId, team, newBullpen }));
+        dispatch(editMLBBullpen({ matchId, simType: simType as SimType, team, newBullpen }));
         if (newUnavailablePitchers) {
-            dispatch(editMLBUnavailablePitchers({ matchId, team, newUnavailablePitchers }));
+            dispatch(editMLBUnavailablePitchers({ matchId, simType: simType as SimType, team, newUnavailablePitchers }));
         }
     }
 
@@ -326,7 +339,118 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     };
 
     const handleChangeSimType = (simType: SimType) => {
-        dispatch(updateSimMode({ league, matchId, simType }));
+        if (liveGameData && liveGameData.gameData.status.abstractGameState === 'Live') {
+            dispatch(updateSimMode({ league, matchId, simType, liveGameData }));
+        } else {
+            dispatch(updateSimMode({ league, matchId, simType }));
+        }
+    };
+
+    const handleGameStateUpdate = (field: 'awayScore' | 'homeScore' | 'inning' | 'outs' | 'topInning', value: number | boolean) => {
+        if (!customModeGameState) return;
+        
+        const updatedGameState = { ...customModeGameState };
+        
+        if (field === 'awayScore') {
+            updatedGameState.awayScore = value as number;
+        } else if (field === 'homeScore') {
+            updatedGameState.homeScore = value as number;
+        } else if (field === 'inning') {
+            updatedGameState.inning = value as number;
+        } else if (field === 'outs') {
+            updatedGameState.outs = value as number;
+        } else if (field === 'topInning') {
+            updatedGameState.topInning = value as boolean;
+        }
+        
+        dispatch(updateCustomModeGameState({ league, matchId, gameState: updatedGameState }));
+    };
+
+    const handlePlayerChange = (field: 'currentBatter' | 'currentPitcher', playerId: number) => {
+        if (!customModeGameState || !usedLineups) return;
+        
+        const updatedGameState = { ...customModeGameState };
+        
+        if (field === 'currentBatter') {
+            if (updatedGameState.topInning) {
+                const playerIndex = updatedGameState.awayLineup.findIndex(p => p.id === playerId);
+                if (playerIndex !== -1) {
+                    updatedGameState.awayLineupPos = playerIndex;
+                }
+            } else {
+                const playerIndex = updatedGameState.homeLineup.findIndex(p => p.id === playerId);
+                if (playerIndex !== -1) {
+                    updatedGameState.homeLineupPos = playerIndex;
+                }
+            }
+        } else if (field === 'currentPitcher') {
+            const findPlayerInTeamPitchers = (teamLineup: { startingPitcher: Player; bullpen: Player[] }) => {
+                if (teamLineup.startingPitcher.id === playerId) {
+                    return { player: teamLineup.startingPitcher, isStarter: true };
+                }
+                const reliever = teamLineup.bullpen.find(p => p.id === playerId);
+                return reliever ? { player: reliever, isStarter: false } : null;
+            };
+
+            if (updatedGameState.topInning) {
+                const pitcherInfo = findPlayerInTeamPitchers(usedLineups.home);
+                if (pitcherInfo) {
+                    updatedGameState.homePitcher = {
+                        id: playerId,
+                        battersFaced: updatedGameState.homePitcher.battersFaced,
+                        recentResults: updatedGameState.homePitcher.recentResults,
+                        position: pitcherInfo.isStarter ? 'SP' : 'RP'
+                    };
+                }
+            } else {
+                const pitcherInfo = findPlayerInTeamPitchers(usedLineups.away);
+                if (pitcherInfo) {
+                    updatedGameState.awayPitcher = {
+                        id: playerId,
+                        battersFaced: updatedGameState.awayPitcher.battersFaced,
+                        recentResults: updatedGameState.awayPitcher.recentResults,
+                        position: pitcherInfo.isStarter ? 'SP' : 'RP'
+                    };
+                }
+            }
+        }
+        
+        dispatch(updateCustomModeGameState({ league, matchId, gameState: updatedGameState }));
+    };
+
+    const handleBaseChange = (base: 'first' | 'second' | 'third', occupied: boolean) => {
+        if (!customModeGameState) return;
+        
+        const updatedGameState = { ...customModeGameState };
+        const baseIndex = base === 'first' ? 0 : base === 'second' ? 1 : 2;
+        
+        // Update the bases array - [first, second, third]
+        updatedGameState.bases = [...updatedGameState.bases];
+        updatedGameState.bases[baseIndex] = occupied;
+        
+        dispatch(updateCustomModeGameState({ league, matchId, gameState: updatedGameState }));
+    };
+
+    const handleBattersFacedChange = (battersFaced: number) => {
+        if (!customModeGameState || !bannerLiveGameData) return;
+        
+        const updatedGameState = { ...customModeGameState };
+        const outs = updatedGameState.outs;
+        const isTopInning = updatedGameState.topInning;
+        
+        if (isTopInning || (!isTopInning && outs === 3)) {
+            updatedGameState.homePitcher = {
+                ...updatedGameState.homePitcher,
+                battersFaced: battersFaced
+            };
+        } else {
+            updatedGameState.awayPitcher = {
+                ...updatedGameState.awayPitcher,
+                battersFaced: battersFaced
+            };
+        }
+        
+        dispatch(updateCustomModeGameState({ league, matchId, gameState: updatedGameState }));
     };
 
     // ---------- Render ----------
@@ -337,7 +461,15 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
 
     return (
         <Box sx={{ flexGrow: 1, p: 2 }}>
-            <MLBGameBanner liveGameData={liveGameData} />
+            <MLBGameBanner 
+                liveGameData={bannerLiveGameData} 
+                lineupData={usedLineups}
+                isEditable={simType === 'custom'}
+                onGameStateUpdate={handleGameStateUpdate}
+                onPlayerChange={handlePlayerChange}
+                onBaseChange={handleBaseChange}
+                onBattersFacedChange={handleBattersFacedChange}
+            />
             <MLBMatchupHeader
                 participant1={participant1}
                 participant2={participant2}

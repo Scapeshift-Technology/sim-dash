@@ -1,20 +1,28 @@
-import { Paper, Box, Typography } from '@mui/material';
+import { Paper, Box, Typography, TextField, InputAdornment } from '@mui/material';
 import { teamNameToAbbreviationMLB } from '@@/services/mlb/utils/teamName';
 import BasesAndCountDisplay from './BasesAndCountDisplay';
 import Linescore from './Linescore';
+import ScoreDisplay from './ScoreDisplay';
+import InningDisplay from './InningDisplay';
+import PlayerSelector from './PlayerSelector';
 
 import { MlbLiveDataApiResponse } from '@@/types/mlb';
 import { MlbLiveDataApiLinescoreInning } from '@@/types/mlb/mlb-api';
+import { MatchupLineups, Player } from '@@/types/mlb';
 
 // ---------- Main components ----------
 
 type MLBGameBannerProps = {
   liveGameData: MlbLiveDataApiResponse | undefined;
+  lineupData?: MatchupLineups; // Add lineup data for player options
+  isEditable?: boolean;
+  onGameStateUpdate?: (field: 'awayScore' | 'homeScore' | 'inning' | 'outs' | 'topInning', value: number | boolean) => void;
+  onPlayerChange?: (field: 'currentBatter' | 'currentPitcher', playerId: number) => void; // Add player change callback
+  onBaseChange?: (base: 'first' | 'second' | 'third', occupied: boolean) => void; // Add base change callback
+  onBattersFacedChange?: (battersFaced: number) => void; // Add batters faced change callback
 };
 
-const MLBGameBanner = ({ liveGameData }: MLBGameBannerProps) => {
-
-  // ---------- Render ----------
+const MLBGameBanner = ({ liveGameData, lineupData, isEditable = false, onGameStateUpdate, onPlayerChange, onBaseChange, onBattersFacedChange }: MLBGameBannerProps) => {
   if (!liveGameData) return null;
 
   const gameStatus = liveGameData.gameData.status.abstractGameState;
@@ -33,9 +41,13 @@ const MLBGameBanner = ({ liveGameData }: MLBGameBannerProps) => {
   // Variables that are conditional on gameStatus === "Live"
   let inningStr: string | undefined;
   let isTopInning: boolean | undefined;
+  let isTopInningAdjusted: boolean | undefined;
   let currentPitcher: string | undefined;
   let currentBatter: string | undefined;
-  let onDeck: string | undefined
+  let currentPitcherId: number | undefined;
+  let currentBatterId: number | undefined;
+  let battersFaced: number | undefined;
+  let onDeck: string | undefined;
   let balls: number | undefined;
   let strikes: number | undefined;
   let outs: number | undefined;
@@ -43,11 +55,7 @@ const MLBGameBanner = ({ liveGameData }: MLBGameBannerProps) => {
   let secondBase: string | undefined;
   let thirdBase: string | undefined;
 
-  if (gameStatus === "Live") {
-    inningStr = `${liveGameData.liveData.linescore.inningHalf.slice(0, 3).toUpperCase()} ${liveGameData.liveData.linescore.currentInningOrdinal}`;
-    isTopInning = inningStr.includes("TOP");
-    currentPitcher = liveGameData.liveData.plays.currentPlay.matchup.pitcher.fullName;
-    currentBatter = liveGameData.liveData.plays.currentPlay.matchup.batter.fullName;
+  if (gameStatus === "Live") {    
     onDeck = liveGameData.liveData.linescore.offense.onDeck.fullName;
     balls = liveGameData.liveData.linescore.balls;
     strikes = liveGameData.liveData.linescore.strikes;
@@ -55,7 +63,117 @@ const MLBGameBanner = ({ liveGameData }: MLBGameBannerProps) => {
     firstBase = liveGameData.liveData.linescore.offense.first?.fullName;
     secondBase = liveGameData.liveData.linescore.offense.second?.fullName;
     thirdBase = liveGameData.liveData.linescore.offense.third?.fullName;
+
+    inningStr = `${liveGameData.liveData.linescore.inningHalf.slice(0, 3).toUpperCase()} ${liveGameData.liveData.linescore.currentInningOrdinal}`;
+    isTopInning = inningStr.includes("TOP");
+    isTopInningAdjusted = isTopInning || (!isTopInning && outs === 3);
+    currentPitcher = liveGameData.liveData.plays.currentPlay.matchup.pitcher.fullName;
+    currentBatter = liveGameData.liveData.plays.currentPlay.matchup.batter.fullName;
+    currentPitcherId = liveGameData.liveData.plays.currentPlay.matchup.pitcher.id;
+    currentBatterId = liveGameData.liveData.plays.currentPlay.matchup.batter.id;
+    
+    const pitchingTeam = isTopInningAdjusted ? 'home' : 'away';
+    const pitcherStats = liveGameData.liveData.boxscore.teams[pitchingTeam].players[`ID${currentPitcherId}`]?.stats?.pitching;
+    battersFaced = pitcherStats?.battersFaced || 0;
   }
+
+  // ---------- Helper functions ----------
+
+  const getAvailableBatters = (teamType: 'home' | 'away'): Player[] => {
+    if (!lineupData) return [];
+    const team = lineupData[teamType];
+    return [...team.lineup];
+  };
+
+  const getAvailablePitchers = (teamType: 'home' | 'away'): Player[] => {
+    if (!lineupData) return [];
+    const team = lineupData[teamType];
+    return [team.startingPitcher, ...team.bullpen];
+  };
+
+  // ---------- Handlers ----------
+  const handleScoreChange = (team: 'awayScore' | 'homeScore', increment: boolean) => {
+    if (!onGameStateUpdate) return;
+    
+    const currentScore = team === 'awayScore' ? awayScore : homeScore;
+    const newScore = increment ? currentScore + 1 : Math.max(0, currentScore - 1);
+    onGameStateUpdate(team, newScore);
+  };
+
+  const handleInningChange = (increment: boolean) => {
+    if (!onGameStateUpdate || !liveGameData) return;
+    
+    const currentInning = liveGameData.liveData.linescore.currentInning;
+    const newInning = increment ? currentInning + 1 : Math.max(1, currentInning - 1);
+    onGameStateUpdate('inning', newInning);
+  };
+
+  const handleOutsChange = (newOuts: number) => {
+    if (!onGameStateUpdate) return;
+    onGameStateUpdate('outs', newOuts);
+  };
+
+  const handleInningHalfToggle = () => {
+    if (!onGameStateUpdate) return;
+    onGameStateUpdate('topInning', !isTopInning);
+  };
+
+  const handlePlayerChange = (field: 'currentBatter' | 'currentPitcher', playerId: number) => {
+    if (!onPlayerChange) return;
+    onPlayerChange(field, playerId);
+  };
+
+  const handleBaseChange = (base: 'first' | 'second' | 'third', occupied: boolean) => {
+    if (!onBaseChange) return;
+    onBaseChange(base, occupied);
+  };
+
+  const handleBattersFacedChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!onBattersFacedChange) return;
+    const value = Math.max(0, parseInt(event.target.value) || 0);
+    onBattersFacedChange(value);
+  };
+
+  // Component for displaying batters faced
+  const BattersFacedDisplay: React.FC<{ 
+    battersFaced: number; 
+    isEditable: boolean; 
+    textAlign?: 'left' | 'right' | 'center' 
+  }> = ({ battersFaced, isEditable, textAlign = 'left' }) => {
+    if (!isEditable) {
+      return (
+        <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem', textAlign }}>
+          BF: {battersFaced}
+        </Typography>
+      );
+    }
+
+    return (
+      <TextField
+        size="small"
+        type="number"
+        value={battersFaced}
+        onChange={handleBattersFacedChange}
+        inputProps={{ min: 0, style: { textAlign: textAlign === 'right' ? 'right' : 'left' } }}
+        InputProps={{
+          startAdornment: <InputAdornment position="start">BF:</InputAdornment>,
+        }}
+        sx={{
+          width: '80px',
+          '& .MuiOutlinedInput-root': {
+            height: '24px',
+            fontSize: '0.75rem',
+          },
+          '& .MuiInputAdornment-root': {
+            fontSize: '0.75rem',
+          },
+          '& input': {
+            padding: '2px 4px',
+          }
+        }}
+      />
+    );
+  };
 
   // ---------- Render ----------
 
@@ -85,19 +203,40 @@ const MLBGameBanner = ({ liveGameData }: MLBGameBannerProps) => {
       }}>
         {/* Away Column */}
         <Box sx={{ gridArea: 'away', textAlign: 'right' }}>
-          <Typography variant="h6">{awayTeam} {awayScore}</Typography>
+          <ScoreDisplay
+            teamName={awayTeam}
+            score={awayScore}
+            isEditable={isEditable}
+            textAlign="right"
+            justifyContent="flex-end"
+            onScoreChange={(increment) => handleScoreChange('awayScore', increment)}
+          />
         </Box>
         
         {/* Center Column */}
         <Box sx={{ gridArea: 'center', textAlign: 'center' }}>
-          <Typography variant="h6">
-            {gameStatus === "Live" ? inningStr : "Final"}
-          </Typography>
+          {gameStatus === "Live" ? (
+            <InningDisplay
+              inningStr={inningStr!}
+              isEditable={isEditable}
+              onInningChange={handleInningChange}
+              onInningHalfToggle={handleInningHalfToggle}
+            />
+          ) : (
+            <Typography variant="h6">Final</Typography>
+          )}
         </Box>
 
         {/* Home Column */}
         <Box sx={{ gridArea: 'home', textAlign: 'left' }}>
-          <Typography variant="h6">{homeTeam} {homeScore}</Typography>
+          <ScoreDisplay
+            teamName={homeTeam}
+            score={homeScore}
+            isEditable={isEditable}
+            textAlign="left"
+            justifyContent="flex-start"
+            onScoreChange={(increment) => handleScoreChange('homeScore', increment)}
+          />
         </Box>
 
         {/* Conditional rendering for Live game details */}
@@ -112,10 +251,35 @@ const MLBGameBanner = ({ liveGameData }: MLBGameBannerProps) => {
               alignItems: 'flex-end',
               justifyContent: 'center'
             }}>
-              <Typography>
-                {isTopInning ? `AB: ${currentBatter}` : `P: ${currentPitcher}`}
-              </Typography>
-              {isTopInning && onDeck && (
+              {isTopInningAdjusted ? (
+                <PlayerSelector
+                  label="AB:"
+                  currentPlayer={currentBatter!}
+                  currentPlayerId={currentBatterId}
+                  availablePlayers={getAvailableBatters('away')}
+                  isEditable={isEditable}
+                  textAlign="right"
+                  onPlayerChange={(playerId) => handlePlayerChange('currentBatter', playerId)}
+                />
+              ) : (
+                <>
+                  <PlayerSelector
+                    label="P:"
+                    currentPlayer={currentPitcher!}
+                    currentPlayerId={currentPitcherId}
+                    availablePlayers={getAvailablePitchers('away')}
+                    isEditable={isEditable}
+                    textAlign="right"
+                    onPlayerChange={(playerId) => handlePlayerChange('currentPitcher', playerId)}
+                  />
+                  <BattersFacedDisplay
+                    battersFaced={battersFaced || 0}
+                    isEditable={isEditable}
+                    textAlign="right"
+                  />
+                </>
+              )}
+              {isTopInningAdjusted && onDeck && (
                 <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
                   On Deck: {onDeck}
                 </Typography>
@@ -131,6 +295,9 @@ const MLBGameBanner = ({ liveGameData }: MLBGameBannerProps) => {
                 firstBase={firstBase} 
                 secondBase={secondBase}
                 thirdBase={thirdBase}
+                isEditable={isEditable}
+                onOutsChange={handleOutsChange}
+                onBaseChange={handleBaseChange}
               />
             </Box>
 
@@ -143,10 +310,35 @@ const MLBGameBanner = ({ liveGameData }: MLBGameBannerProps) => {
               alignItems: 'flex-start',
               justifyContent: 'center'
             }}>
-              <Typography>
-                {isTopInning ? `P: ${currentPitcher}` : `AB: ${currentBatter}`}
-              </Typography>
-              {!isTopInning && onDeck && (
+              {isTopInningAdjusted ? (
+                <>
+                  <PlayerSelector
+                    label="P:"
+                    currentPlayer={currentPitcher!}
+                    currentPlayerId={currentPitcherId}
+                    availablePlayers={getAvailablePitchers('home')}
+                    isEditable={isEditable}
+                    textAlign="left"
+                    onPlayerChange={(playerId) => handlePlayerChange('currentPitcher', playerId)}
+                  />
+                  <BattersFacedDisplay
+                    battersFaced={battersFaced || 0}
+                    isEditable={isEditable}
+                    textAlign="left"
+                  />
+                </>
+              ) : (
+                <PlayerSelector
+                  label="AB:"
+                  currentPlayer={currentBatter!}
+                  currentPlayerId={currentBatterId}
+                  availablePlayers={getAvailableBatters('home')}
+                  isEditable={isEditable}
+                  textAlign="left"
+                  onPlayerChange={(playerId) => handlePlayerChange('currentBatter', playerId)}
+                />
+              )}
+              {!isTopInningAdjusted && onDeck && (
                 <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
                   On Deck: {onDeck}
                 </Typography>
@@ -156,18 +348,20 @@ const MLBGameBanner = ({ liveGameData }: MLBGameBannerProps) => {
         )}
       </Box>
       
-      {/* Linescore */}
-      <Linescore
-        innings={lineScoreInnings}
-        awayTeam={awayTeam}
-        homeTeam={homeTeam}
-        awayScore={awayScore}
-        homeScore={homeScore}
-        awayHits={awayHits}
-        homeHits={homeHits}
-        awayErrors={awayErrors}
-        homeErrors={homeErrors}
-      />
+      {/* Linescore - only show for real live games with actual data */}
+      {lineScoreInnings.length > 0 && (
+        <Linescore
+          innings={lineScoreInnings}
+          awayTeam={awayTeam}
+          homeTeam={homeTeam}
+          awayScore={awayScore}
+          homeScore={homeScore}
+          awayHits={awayHits}
+          homeHits={homeHits}
+          awayErrors={awayErrors}
+          homeErrors={homeErrors}
+        />
+      )}
     </Paper>
   );
 };
