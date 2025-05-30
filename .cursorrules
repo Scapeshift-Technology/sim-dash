@@ -1,0 +1,159 @@
+# Cursor Rules for React + Material-UI + Redux Projects
+
+## Material-UI Grid Component Rules
+
+### Grid Version Awareness
+- ALWAYS check the Material-UI version in package.json before using Grid components
+- For Material-UI v6+: Use `Grid` import from `@mui/material/Grid` (which is Grid2)
+- For Material-UI v5: Use `Grid` import from `@mui/material/Unstable_Grid2` or stick with GridLegacy
+
+### Grid v7 (Current) - Grid2 Component Rules
+- **Import**: `import Grid from '@mui/material/Grid'` (this imports Grid2 in v7)
+- **NO `item` prop**: All Grid components are items by default unless they have `container` prop
+- **Use `size` prop**: Instead of `xs={12} sm={6}`, use `size={{ xs: 12, sm: 6 }}`
+- **Single values**: For uniform sizing, use `size={6}` instead of `xs={6}`
+- **Auto grow**: Use `size="grow"` instead of `xs={true}`
+- **Offset support**: Use `offset={{ md: 2 }}` for spacing instead of empty Grid items
+- **Container width**: Grid containers don't auto-expand, add `sx={{ width: '100%' }}` if needed
+
+### Example Migration Pattern:
+```tsx
+// OLD (GridLegacy/Grid v1)
+<Grid container spacing={2}>
+  <Grid item xs={12} sm={6} md={4}>Content</Grid>
+</Grid>
+
+// NEW (Grid v7 - Grid2)
+<Grid container spacing={2} sx={{ width: '100%' }}>
+  <Grid size={{ xs: 12, sm: 6, md: 4 }}>Content</Grid>
+</Grid>
+```
+
+## React Redux Hook Rules
+
+### useSelector Rules of Hooks Compliance
+- **NEVER call useSelector inside map functions, callbacks, or conditional blocks**
+- **ALWAYS call useSelector at the top level of components**
+- **For dynamic data in lists**: Create wrapper components that use hooks properly
+
+### Anti-Pattern (DON'T DO):
+```tsx
+// BAD - violates Rules of Hooks
+{items.map(item => {
+  const data = useSelector(state => selectData(state, item.id)); // ❌ WRONG
+  return <div key={item.id}>{data}</div>;
+})}
+```
+
+### Correct Pattern (DO THIS):
+```tsx
+// GOOD - wrapper component with proper hook usage
+const ItemWrapper = ({ item }) => {
+  const data = useSelector(state => selectData(state, item.id)); // ✅ CORRECT
+  return <div>{data}</div>;
+};
+
+// In main component
+{items.map(item => <ItemWrapper key={item.id} item={item} />)}
+```
+
+### Redux State Management Patterns
+- **Always fetch data**: Don't hardcode values like `itemCount={0}`, fetch from Redux state
+- **Use selectors properly**: Create specific selectors for computed values and counts
+- **Fetch data in useEffect**: Use useEffect to dispatch actions when dependencies change
+- **Handle loading states**: Check if data exists before assuming it's been fetched
+
+### Example Redux Pattern:
+```tsx
+const MyComponent = ({ id }) => {
+  const dispatch = useDispatch();
+  const data = useSelector(state => selectDataById(state, id));
+  const loading = useSelector(state => selectDataLoading(state, id));
+  
+  useEffect(() => {
+    if (!data && !loading) {
+      dispatch(fetchData(id));
+    }
+  }, [dispatch, id, data, loading]);
+  
+  return <div>{data ? data.value : 'Loading...'}</div>;
+};
+```
+
+## TypeScript and Material-UI Integration
+
+### Grid TypeScript Issues
+- If encountering Grid TypeScript errors about `item` prop not existing, you're likely using Grid2 syntax with Grid v1 expectations
+- Check Material-UI version and use appropriate Grid syntax
+- For Grid2, ensure you're using `size` prop instead of breakpoint props
+
+### Common Fix for Grid TypeScript Errors:
+```tsx
+// If you see: Property 'item' does not exist
+// Change from:
+<Grid item xs={12} sm={6}>Content</Grid>
+
+// To (for Grid2/v7):
+<Grid size={{ xs: 12, sm: 6 }}>Content</Grid>
+```
+
+## General Development Rules
+
+### Before Making Changes
+1. **Check package.json** for Material-UI version
+2. **Look at existing working components** in the project for patterns
+3. **Verify Grid import** matches the version being used
+4. **Test with small changes** before large refactors
+
+### When Debugging Grid Issues
+1. Check if using correct Grid import for the Material-UI version
+2. Verify prop syntax matches the Grid version (item/size, xs/size, etc.)
+3. Ensure container grids have proper width styling if needed
+4. Check for TypeScript errors related to prop mismatches
+
+### When Debugging useSelector Issues
+1. Ensure all useSelector calls are at component top level
+2. Never call useSelector inside loops, conditions, or callbacks
+3. Create wrapper components for dynamic selector usage
+4. Use useEffect for data fetching, not inline in render logic
+
+## Code Review Checklist
+
+- [ ] Grid components use correct syntax for Material-UI version
+- [ ] No useSelector calls inside map functions or conditions
+- [ ] Redux data is properly fetched, not hardcoded
+- [ ] TypeScript errors are addressed with correct prop usage
+- [ ] Loading states are handled for async Redux data
+- [ ] Grid containers have appropriate width styling when needed
+
+## UI/UX Patterns
+
+### Card Component Design
+- **Avoid redundant information**: Don't repeat the same information in different parts of a card
+- **Remove unnecessary actions**: If clicking anywhere on the card does the same thing, don't add redundant "Click to..." text
+- **Clean descriptions**: Use noun phrases instead of "Manage..." verbs for card descriptions
+- **Minimize visual clutter**: Remove badges, extra text, or elements that don't add value
+
+### Example Card Cleanup:
+```tsx
+// BEFORE - Redundant and cluttered
+<CardHeader>
+  Asset Bankroll
+  <Badge>3</Badge>
+</CardHeader>
+<CardBody>
+  Asset • Bankroll
+  Manage cash and digital asset bankrolls
+  <Chip>3 items</Chip>
+  <Text>Click to manage</Text>
+</CardBody>
+
+// AFTER - Clean and focused
+<CardHeader>
+  Asset Bankroll
+</CardHeader>
+<CardBody>
+  Cash and digital asset bankrolls
+  <Chip>3 items</Chip>
+</CardBody>
+``` 

@@ -117,6 +117,6 @@ export const equityPartnershipConfig: LedgerTypeConfig = {
   ui: {
     icon: 'Handshake',
     color: '#ff9800',
-    cardDescription: 'Manage partnership agreements and percentage allocations',
+    cardDescription: 'Partnership agreements and percentage allocations',
   },
 }; 

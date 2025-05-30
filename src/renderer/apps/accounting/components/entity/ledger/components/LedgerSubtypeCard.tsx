@@ -6,7 +6,6 @@ import {
   Typography,
   Box,
   Chip,
-  Badge,
 } from '@mui/material';
 import {
   AccountBalance as AccountBalanceIcon,
@@ -98,26 +97,7 @@ export const LedgerSubtypeCard: React.FC<LedgerSubtypeCardProps> = ({
               <Typography variant="h6" component="h3" gutterBottom noWrap>
                 {config.displayName}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {type} • {subtype}
-              </Typography>
             </Box>
-            {/* Item count badge */}
-            {itemCount > 0 && (
-              <Badge
-                badgeContent={itemCount}
-                color="primary"
-                sx={{
-                  '& .MuiBadge-badge': {
-                    fontSize: '0.75rem',
-                    height: '20px',
-                    minWidth: '20px',
-                  },
-                }}
-              >
-                <Box sx={{ width: 16, height: 16 }} />
-              </Badge>
-            )}
           </Box>
 
           {/* Description */}
@@ -135,17 +115,14 @@ export const LedgerSubtypeCard: React.FC<LedgerSubtypeCardProps> = ({
             {config.ui.cardDescription}
           </Typography>
 
-          {/* Additional info */}
-          <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {/* Item count */}
+          <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'flex-start' }}>
             <Chip 
               label={itemCount === 0 ? 'No items' : `${itemCount} item${itemCount !== 1 ? 's' : ''}`}
               size="small"
               color={itemCount > 0 ? 'primary' : 'default'}
               variant="outlined"
             />
-            <Typography variant="caption" color="text.secondary">
-              Click to manage
-            </Typography>
           </Box>
         </CardContent>
       </CardActionArea>

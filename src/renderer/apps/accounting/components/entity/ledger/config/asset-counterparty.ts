@@ -24,6 +24,6 @@ export const assetCounterpartyConfig: LedgerTypeConfig = {
   ui: {
     icon: 'AccountBox',
     color: '#2196f3',
-    cardDescription: 'Manage counterparty asset accounts and relationships',
+    cardDescription: 'Counterparty asset accounts and relationships',
   },
 }; 
