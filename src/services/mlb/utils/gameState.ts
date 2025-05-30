@@ -60,8 +60,8 @@ export function createGameStateFromLiveDataHelper<T extends TeamLineup | Reduced
     // Batting order and current position
     awayLineup: awayLineup,
     homeLineup: homeLineup,
-    awayLineupPos: isTopInning ? liveGameData.liveData.linescore.offense.battingOrder - 1 : liveGameData.liveData.linescore.defense.battingOrder - 1,
-    homeLineupPos: isTopInning ? liveGameData.liveData.linescore.defense.battingOrder - 1 : liveGameData.liveData.linescore.offense.battingOrder - 1,
+    awayLineupPos: isTopInningAdjusted ? liveGameData.liveData.linescore.offense.battingOrder - 1 : liveGameData.liveData.linescore.defense.battingOrder - 1,
+    homeLineupPos: isTopInningAdjusted ? liveGameData.liveData.linescore.defense.battingOrder - 1 : liveGameData.liveData.linescore.offense.battingOrder - 1,
 
     // Bullpens
     awayBullpen: awayBullpen,
