@@ -14,12 +14,10 @@ interface ComparisonTotalsTableProps {
   data: ComparisonTotalsData[];
 }
 
-interface FormattedComparisonTotalsData extends Omit<ComparisonTotalsData, 'overPercent' | 'underPercent' | 'pushPercent' | 'usaFairOver' | 'usaFairUnder'> {
+interface FormattedComparisonTotalsData extends Omit<ComparisonTotalsData, 'overPercent' | 'underPercent' | 'pushPercent'> {
   overPercent: string;
   underPercent: string;
   pushPercent: string;
-  usaFairOver: string;
-  usaFairUnder: string;
 }
 
 // ---------- Column config ----------
@@ -106,32 +104,6 @@ function getComparisonTotalsColumns(data: ComparisonTotalsData[]): ColumnConfig[
           matchKeys
         )
       }
-    },
-    {
-      name: 'usaFairOver',
-      type: 'string',
-      label: 'USA-Fair Over',
-      display: {
-        rules: createComparisonColorRules(
-          data, 
-          'usaFairOver', 
-          COLOR_MAX_VALUES.usaFair,
-          matchKeys
-        )
-      }
-    },
-    {
-      name: 'usaFairUnder',
-      type: 'string',
-      label: 'USA-Fair Under',
-      display: {
-        rules: createComparisonColorRules(
-          data, 
-          'usaFairUnder', 
-          COLOR_MAX_VALUES.usaFair,
-          matchKeys
-        )
-      }
     }
   ];
 }
@@ -143,9 +115,7 @@ function formatComparisonTotalsData(data: ComparisonTotalsData[]): FormattedComp
     ...row,
     overPercent: `${formatDecimal(100 * row.overPercent)}%`,
     underPercent: `${formatDecimal(100 * row.underPercent)}%`,
-    pushPercent: `${formatDecimal(100 * row.pushPercent)}%`,
-    usaFairOver: displayAmericanOdds(Number(formatDecimal(row.usaFairOver))),
-    usaFairUnder: displayAmericanOdds(Number(formatDecimal(row.usaFairUnder)))
+    pushPercent: `${formatDecimal(100 * row.pushPercent)}%`
   }));
 }
 

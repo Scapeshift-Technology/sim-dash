@@ -14,9 +14,8 @@ interface ComparisonFirstInningPropsTableProps {
   data: ComparisonFirstInningPropsData[];
 }
 
-interface FormattedComparisonFirstInningPropsData extends Omit<ComparisonFirstInningPropsData, 'scorePercent' | 'usaFair'> {
+interface FormattedComparisonFirstInningPropsData extends Omit<ComparisonFirstInningPropsData, 'scorePercent'> {
   scorePercent: string;
-  usaFair: string;
 }
 
 // ---------- Column config ----------
@@ -58,19 +57,6 @@ function getComparisonFirstInningPropsColumns(data: ComparisonFirstInningPropsDa
           )
         ]
       }
-    },
-    {
-      name: 'usaFair',
-      type: 'string',
-      label: 'USA-Fair',
-      display: {
-        rules: createComparisonColorRules(
-          data, 
-          'usaFair', 
-          COLOR_MAX_VALUES.usaFair,
-          matchKeys
-        )
-      }
     }
   ];
 }
@@ -80,8 +66,7 @@ function getComparisonFirstInningPropsColumns(data: ComparisonFirstInningPropsDa
 function formatComparisonFirstInningPropsData(data: ComparisonFirstInningPropsData[]): FormattedComparisonFirstInningPropsData[] {
   return data.map(row => ({
     ...row,
-    scorePercent: `${formatDecimal(100 * row.scorePercent)}%`,
-    usaFair: displayAmericanOdds(Number(formatDecimal(row.usaFair)))
+    scorePercent: `${formatDecimal(100 * row.scorePercent)}%`
   }));
 }
 

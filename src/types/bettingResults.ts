@@ -78,7 +78,6 @@ export interface ComparisonSidesData {
   period: string;
   line: number;
   coverPercent: number;
-  usaFair: number;
 }
 
 export interface ComparisonTotalsData {
@@ -88,8 +87,6 @@ export interface ComparisonTotalsData {
   overPercent: number;
   underPercent: number;
   pushPercent: number;
-  usaFairOver: number;
-  usaFairUnder: number;
 }
 
 export interface ComparisonPropsData {
@@ -101,7 +98,6 @@ export interface ComparisonPropsData {
 export interface ComparisonFirstInningPropsData {
   team: string;
   scorePercent: number;
-  usaFair: number;
 }
 
 export interface ComparisonPlayerPropsData {
@@ -110,14 +106,12 @@ export interface ComparisonPlayerPropsData {
   statName: string;
   line: number;
   overPercent: number;
-  usaFair: number;
 }
 
 export interface ComparisonScoringOrderPropsData {
   team: string;
   propType: 'first' | 'last';
   percent: number;
-  usaFair: number;
 }
 
 // ---------- MLB ----------

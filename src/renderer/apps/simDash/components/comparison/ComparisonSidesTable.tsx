@@ -14,9 +14,8 @@ interface ComparisonSidesTableProps {
   data: ComparisonSidesData[];
 }
 
-interface FormattedComparisonSidesData extends Omit<ComparisonSidesData, 'coverPercent' | 'usaFair'> {
+interface FormattedComparisonSidesData extends Omit<ComparisonSidesData, 'coverPercent'> {
   coverPercent: string;
-  usaFair: string;
 }
 
 // ---------- Column config ----------
@@ -77,19 +76,6 @@ function getComparisonSidesColumns(data: ComparisonSidesData[]): ColumnConfig[] 
           )
         ]
       }
-    },
-    { 
-      name: 'usaFair', 
-      type: 'string', 
-      label: 'USA-Fair',
-      display: {
-        rules: createComparisonColorRules(
-          data, 
-          'usaFair', 
-          COLOR_MAX_VALUES.usaFair,
-          matchKeys
-        )
-      }
     }
   ];
 }
@@ -99,8 +85,7 @@ function getComparisonSidesColumns(data: ComparisonSidesData[]): ColumnConfig[] 
 function formatComparisonSidesData(data: ComparisonSidesData[]): FormattedComparisonSidesData[] {
   return data.map(row => ({
     ...row,
-    coverPercent: `${formatDecimal(100 * row.coverPercent)}%`,
-    usaFair: displayAmericanOdds(Number(formatDecimal(row.usaFair)))
+    coverPercent: `${formatDecimal(100 * row.coverPercent)}%`
   }));
 }
 

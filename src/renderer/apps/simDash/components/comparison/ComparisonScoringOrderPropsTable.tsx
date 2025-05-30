@@ -14,9 +14,8 @@ interface ComparisonScoringOrderPropsTableProps {
   data: ComparisonScoringOrderPropsData[];
 }
 
-interface FormattedComparisonScoringOrderPropsData extends Omit<ComparisonScoringOrderPropsData, 'percent' | 'usaFair'> {
+interface FormattedComparisonScoringOrderPropsData extends Omit<ComparisonScoringOrderPropsData, 'percent'> {
   percent: string;
-  usaFair: string;
 }
 
 // ---------- Column config ----------
@@ -72,19 +71,6 @@ function getComparisonScoringOrderPropsColumns(data: ComparisonScoringOrderProps
           )
         ]
       }
-    },
-    {
-      name: 'usaFair',
-      type: 'string',
-      label: 'USA-Fair',
-      display: {
-        rules: createComparisonColorRules(
-          data, 
-          'usaFair', 
-          COLOR_MAX_VALUES.usaFair,
-          matchKeys
-        )
-      }
     }
   ];
 }
@@ -94,8 +80,7 @@ function getComparisonScoringOrderPropsColumns(data: ComparisonScoringOrderProps
 function formatComparisonScoringOrderPropsData(data: ComparisonScoringOrderPropsData[]): FormattedComparisonScoringOrderPropsData[] {
   return data.map(row => ({
     ...row,
-    percent: `${formatDecimal(100 * row.percent)}%`,
-    usaFair: displayAmericanOdds(Number(formatDecimal(row.usaFair)))
+    percent: `${formatDecimal(100 * row.percent)}%`
   }));
 }
 

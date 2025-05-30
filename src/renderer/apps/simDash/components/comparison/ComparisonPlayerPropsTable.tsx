@@ -14,9 +14,8 @@ interface ComparisonPlayerPropsTableProps {
   data: ComparisonPlayerPropsData[];
 }
 
-interface FormattedComparisonPlayerPropsData extends Omit<ComparisonPlayerPropsData, 'overPercent' | 'usaFair'> {
+interface FormattedComparisonPlayerPropsData extends Omit<ComparisonPlayerPropsData, 'overPercent'> {
   overPercent: string;
-  usaFair: string;
 }
 
 // ---------- Column config ----------
@@ -82,19 +81,6 @@ function getComparisonPlayerPropsColumns(data: ComparisonPlayerPropsData[]): Col
           )
         ]
       }
-    },
-    {
-      name: 'usaFair',
-      type: 'string',
-      label: 'USA-Fair',
-      display: {
-        rules: createComparisonColorRules(
-          data, 
-          'usaFair', 
-          COLOR_MAX_VALUES.usaFair,
-          matchKeys
-        )
-      }
     }
   ];
 }
@@ -104,8 +90,7 @@ function getComparisonPlayerPropsColumns(data: ComparisonPlayerPropsData[]): Col
 function formatComparisonPlayerPropsData(data: ComparisonPlayerPropsData[]): FormattedComparisonPlayerPropsData[] {
   return data.map(row => ({
     ...row,
-    overPercent: `${formatDecimal(100 * row.overPercent)}%`,
-    usaFair: displayAmericanOdds(Number(formatDecimal(row.usaFair)))
+    overPercent: `${formatDecimal(100 * row.overPercent)}%`
   }));
 }
 
