@@ -5,6 +5,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 type InningDisplayProps = {
   inningStr: string;
   isEditable: boolean;
+  outs?: number;
   onInningChange: (increment: boolean) => void;
   onInningHalfToggle?: () => void;
 };
@@ -12,6 +13,7 @@ type InningDisplayProps = {
 const InningDisplay = ({ 
   inningStr, 
   isEditable, 
+  outs = 0,
   onInningChange,
   onInningHalfToggle
 }: InningDisplayProps) => {
@@ -19,6 +21,15 @@ const InningDisplay = ({
   const inningParts = inningStr.split(' ');
   const inningHalf = inningParts[0]; // "TOP" or "BOT"
   const inningNumber = inningParts[1]; // "9"
+
+  // ---------- Helper functions ----------
+
+  const getDisplayInningHalf = () => {
+    if (outs === 3) {
+      return inningHalf === 'TOP' ? 'MID' : 'END';
+    }
+    return inningHalf;
+  };
 
   const clickableInningHalf = (
     <Box
@@ -37,9 +48,11 @@ const InningDisplay = ({
         } : {}
       }}
     >
-      {inningHalf}
+      {getDisplayInningHalf()}
     </Box>
   );
+
+  // ---------- Render ----------
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>

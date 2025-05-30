@@ -219,6 +219,7 @@ const MLBGameBanner = ({ liveGameData, lineupData, isEditable = false, onGameSta
             <InningDisplay
               inningStr={inningStr!}
               isEditable={isEditable}
+              outs={outs}
               onInningChange={handleInningChange}
               onInningHalfToggle={handleInningHalfToggle}
             />
