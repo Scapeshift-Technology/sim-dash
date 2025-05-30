@@ -1,26 +1,21 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { Drawer, Box, Toolbar } from '@mui/material';
-import { useNavigate, useLocation } from 'react-router-dom';
 
 interface GenericSidebarProps {
     currentWidth: number;
     onResize: (newWidth: number) => void;
     children: React.ReactNode;
-    navigateToRootOnClick?: boolean; // Optional prop to control navigation behavior
 }
 
 const GenericSidebar: React.FC<GenericSidebarProps> = ({ 
     currentWidth, 
     onResize, 
-    children, 
-    navigateToRootOnClick = false 
+    children
 }) => {
     // ---------- State ----------
 
     const sidebarRef = useRef<HTMLDivElement>(null);
     const isResizing = useRef(false);
-    const navigate = useNavigate();
-    const location = useLocation();
 
     // ---------- Handlers ----------
 
@@ -47,13 +42,6 @@ const GenericSidebar: React.FC<GenericSidebarProps> = ({
         document.body.style.cursor = 'col-resize';
     }, [handleMouseMove, handleMouseUp]);
 
-    const handleSidebarClick = useCallback((e: React.MouseEvent) => {
-        // Only navigate if the prop is enabled and we're currently on profile or settings page
-        if (navigateToRootOnClick && (location.pathname === '/profile' || location.pathname === '/settings')) {
-            navigate('/');
-        }
-    }, [navigate, location.pathname, navigateToRootOnClick]);
-
     // ---------- useEffect ----------
 
     useEffect(() => {
@@ -78,7 +66,6 @@ const GenericSidebar: React.FC<GenericSidebarProps> = ({
             <Toolbar />
             <Box 
                 sx={{ overflow: 'auto', flexGrow: 1, position: 'relative' }}
-                onClick={navigateToRootOnClick ? handleSidebarClick : undefined}
             >
                 {children}
             </Box>
