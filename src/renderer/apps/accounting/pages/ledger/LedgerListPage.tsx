@@ -11,6 +11,7 @@ import {
   fetchLedgerItems,
   clearError,
   clearLedgerItems,
+  deleteLedgerItem,
 } from '@/store/slices/ledgerSlice';
 import { HierarchicalNavigation, buildLedgerBreadcrumbs } from '@/accounting/components/entity/ledger/components/HierarchicalNavigation';
 import { LedgerTable } from '@/accounting/components/entity/ledger/components/LedgerTable';
@@ -118,13 +119,20 @@ export const LedgerListPage: React.FC = () => {
     }
   }, [dispatch, currentParty, ledgerType, ledgerSubtype]);
 
-  const handleRowClick = useCallback((item: LedgerItem) => {
-    navigate(`/ledgers/${type}/${subtype}/${encodeURIComponent(item.Ledger)}`);
-  }, [navigate, type, subtype]);
-
   const handleAddNew = useCallback(() => {
     navigate(`/ledgers/${type}/${subtype}/new`);
   }, [navigate, type, subtype]);
+
+  const handleDelete = useCallback((item: LedgerItem) => {
+    if (currentParty && ledgerType && ledgerSubtype) {
+      dispatch(deleteLedgerItem({ 
+        party: currentParty, 
+        type: ledgerType, 
+        subtype: ledgerSubtype,
+        ledgerName: item.Ledger
+      }));
+    }
+  }, [dispatch, currentParty, ledgerType, ledgerSubtype]);
 
   // ---------- Render ----------
 
@@ -169,8 +177,8 @@ export const LedgerListPage: React.FC = () => {
         loading={loading}
         error={error}
         onRefresh={handleRefresh}
-        onRowClick={handleRowClick}
         onAddNew={handleAddNew}
+        onDelete={handleDelete}
       />
     </Container>
   );

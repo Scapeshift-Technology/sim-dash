@@ -174,6 +174,7 @@ export interface LedgerTableProps {
   onRefresh?: () => void;
   onRowClick?: (item: LedgerItem) => void;
   onAddNew?: () => void;
+  onDelete?: (item: LedgerItem) => void;
 }
 
 export interface LedgerFormProps {

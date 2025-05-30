@@ -18,6 +18,12 @@ import {
   CircularProgress,
   Alert,
   TablePagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -45,12 +51,15 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
   onRefresh,
   onRowClick,
   onAddNew,
+  onDelete,
 }) => {
   // ---------- State ----------
   const [sortConfig, setSortConfig] = useState<SortConfig>({ field: '', order: 'asc' });
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [selectedItem, setSelectedItem] = useState<LedgerItem | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   // ---------- Configuration ----------
   const config = getLedgerTypeConfig(type, subtype);
@@ -133,57 +142,66 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
   }, [displayColumns]);
 
   const handleRowClick = useCallback((item: LedgerItem) => {
-    onRowClick?.(item);
-  }, [onRowClick]);
+    // Removed automatic row click navigation
+  }, []);
+
+  const handleDelete = useCallback((item: LedgerItem) => {
+    setSelectedItem(item);
+    setConfirmDelete(true);
+  }, []);
+
+  const handleConfirmDelete = useCallback(() => {
+    if (selectedItem && onDelete) {
+      onDelete(selectedItem);
+    }
+    setSelectedItem(null);
+    setConfirmDelete(false);
+  }, [selectedItem, onDelete]);
 
   const formatCellValue = useCallback((value: any, columnKey: string) => {
-    if (value === null || value === undefined) return '-';
-    
-    // Special formatting based on column type
-    if (columnKey === 'Description' && typeof value === 'string') {
-      // Truncate long descriptions
-      return value.length > 50 ? `${value.substring(0, 50)}...` : value;
+    if (value === null || value === undefined) {
+      return '-';
     }
     
+    // Add any specific formatting logic here based on column type
     return String(value);
   }, []);
 
   // ---------- Render Helpers ----------
 
   const renderTableToolbar = () => (
-    <Toolbar sx={{ px: 2, py: 1 }}>
-      <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-        {config?.pluralDisplayName || `${type} ${subtype} Ledgers`}
-        <Typography variant="body2" color="text.secondary" component="span" sx={{ ml: 1 }}>
-          ({items.length} total)
-        </Typography>
+    <Toolbar sx={{ pl: 2, pr: 1 }}>
+      <Typography variant="h6" component="div" sx={{ flex: '1 1 100%' }}>
+        {config?.pluralDisplayName || 'Ledgers'}
+        {` (${processedData.length})`}
       </Typography>
       
-      <Box sx={{ display: 'flex', alignItems: 'center', mr: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <TextField
+          variant="outlined"
           size="small"
-          placeholder="Search ledgers..."
+          placeholder="Search..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           InputProps={{
-            startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+            startAdornment: <SearchIcon sx={{ mr: 1, color: 'action.active' }} />,
             endAdornment: searchTerm && (
               <IconButton size="small" onClick={() => setSearchTerm('')}>
                 <ClearIcon />
               </IconButton>
             ),
           }}
-          sx={{ minWidth: 200 }}
+          sx={{ width: 250 }}
         />
+        
+        {onRefresh && (
+          <Tooltip title="Refresh">
+            <IconButton onClick={onRefresh}>
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
+        )}
       </Box>
-
-      {onRefresh && (
-        <Tooltip title="Refresh">
-          <IconButton onClick={onRefresh} disabled={loading}>
-            <RefreshIcon />
-          </IconButton>
-        </Tooltip>
-      )}
     </Toolbar>
   );
 
@@ -205,6 +223,11 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
             )}
           </TableCell>
         ))}
+        {onDelete && (
+          <TableCell>
+            Actions
+          </TableCell>
+        )}
       </TableRow>
     </TableHead>
   );
@@ -212,17 +235,28 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
   const renderTableBody = () => (
     <TableBody>
       {paginatedData.map((item) => (
-        <TableRow
-          key={item.Ledger}
-          hover
-          onClick={() => handleRowClick(item)}
-          sx={{ cursor: onRowClick ? 'pointer' : 'default' }}
-        >
+        <TableRow key={item.Ledger}>
           {displayColumns.map((column) => (
             <TableCell key={column.key}>
               {formatCellValue(item[column.key as keyof LedgerItem], column.key)}
             </TableCell>
           ))}
+          {onDelete && (
+            <TableCell>
+              <Tooltip title="Delete">
+                <IconButton 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(item);
+                  }}
+                  color="error"
+                  size="small"
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Tooltip>
+            </TableCell>
+          )}
         </TableRow>
       ))}
     </TableBody>
@@ -250,7 +284,7 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
               <TableBody>
                 <TableRow>
                   <TableCell 
-                    colSpan={displayColumns.length}
+                    colSpan={displayColumns.length + (onDelete ? 1 : 0)}
                     align="center"
                     sx={{ py: 4 }}
                   >
@@ -290,6 +324,45 @@ export const LedgerTable: React.FC<LedgerTableProps> = ({
           <AddIcon />
         </Fab>
       )}
+
+      {/* Confirmation Dialog for Deleting */}
+      <Dialog
+        open={confirmDelete}
+        onClose={() => {
+          setConfirmDelete(false);
+          setSelectedItem(null);
+        }}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <DialogTitle id="delete-dialog-title">
+          Confirm Delete
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description">
+            Are you sure you want to delete the ledger "{selectedItem?.Ledger}"? 
+            This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button 
+            onClick={() => {
+              setConfirmDelete(false);
+              setSelectedItem(null);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleConfirmDelete} 
+            color="error"
+            variant="contained"
+            autoFocus
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
