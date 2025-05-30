@@ -258,6 +258,11 @@ export const deleteLedgerItem = createAsyncThunk(
     type: LedgerType; 
     subtype: LedgerSubtype;
   }) => {
+    // Prevent deletion of Asset Counterparty ledgers
+    if (type === 'Asset' && subtype === 'Counterparty') {
+      throw new Error('Asset Counterparty ledgers cannot be deleted');
+    }
+
     const functionName = 'dbo.PartyLedger_DELETE_tr';
     const params = {
       Party: party,

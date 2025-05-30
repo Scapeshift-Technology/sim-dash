@@ -134,6 +134,12 @@ export const LedgerListPage: React.FC = () => {
     }
   }, [dispatch, currentParty, ledgerType, ledgerSubtype]);
 
+  // Check if current ledger type should allow deletion
+  const isDeletable = useCallback(() => {
+    // Asset Counterparty ledgers should not be deletable
+    return !(ledgerType === 'Asset' && ledgerSubtype === 'Counterparty');
+  }, [ledgerType, ledgerSubtype]);
+
   // ---------- Render ----------
 
   if (!ledgerType || !ledgerSubtype || !config) {
@@ -178,7 +184,7 @@ export const LedgerListPage: React.FC = () => {
         error={error}
         onRefresh={handleRefresh}
         onAddNew={handleAddNew}
-        onDelete={handleDelete}
+        onDelete={isDeletable() ? handleDelete : undefined}
       />
     </Container>
   );
