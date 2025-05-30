@@ -1,0 +1,72 @@
+import { LedgerTypeConfig } from '../types';
+
+export const assetMakerAccountConfig: LedgerTypeConfig = {
+  type: 'Asset',
+  subtype: 'MakerAccount',
+  displayName: 'Asset Maker Account',
+  pluralDisplayName: 'Asset Maker Accounts',
+  description: 'Trading accounts for market making activities',
+  
+  database: {
+    fetchFunction: 'dbo.Party_GET_Ledger_Asset_MakerAccounts_tvf',
+    fetchParams: ['Party'],
+    fetchColumns: {
+      select: ['Ledger', 'Maker', 'Username'], // Based on the type definition
+      trimCharColumns: ['Ledger', 'Maker', 'Username'],
+    },
+    addFunction: 'dbo.PartyLedger_Asset_MakerAccount_ADD_tr',
+    addParams: ['Party', 'Ledger', 'Maker', 'Username'], // TODO: Verify parameters
+  },
+  
+  // Additional fields beyond Party and Ledger
+  additionalFields: [
+    {
+      key: 'Maker',
+      label: 'Maker',
+      type: 'string',
+      required: true,
+      validation: [
+        {
+          type: 'required',
+          message: 'Maker is required',
+        },
+        {
+          type: 'maxLength',
+          value: 50,
+          message: 'Maker name must be 50 characters or less',
+        },
+      ],
+      editor: {
+        type: 'text',
+        placeholder: 'Enter maker name',
+      },
+    },
+    {
+      key: 'Username',
+      label: 'Username',
+      type: 'string',
+      required: true,
+      validation: [
+        {
+          type: 'required',
+          message: 'Username is required',
+        },
+        {
+          type: 'maxLength',
+          value: 50,
+          message: 'Username must be 50 characters or less',
+        },
+      ],
+      editor: {
+        type: 'text',
+        placeholder: 'Enter username',
+      },
+    },
+  ],
+  
+  ui: {
+    icon: 'TrendingUp',
+    color: '#9c27b0',
+    cardDescription: 'Manage market maker accounts and trading credentials',
+  },
+}; 

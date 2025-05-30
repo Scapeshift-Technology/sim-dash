@@ -78,5 +78,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onBuildTime: (callback) => ipcRenderer.on('set-build-time', callback),
 
     // Expose logger functions
-    ...logFunctions
+    ...logFunctions,
+
+    // URL Validation specific logger
+    urlValidationLog: {
+      info: (message, meta) => {
+        // Send to main process for URL validation logging
+        ipcRenderer.invoke('url-validation-log', 'info', message, meta);
+      }
+    }
 }); 

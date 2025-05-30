@@ -7,6 +7,10 @@ import SettingsPage from '@/layouts/pages/SettingsPage';
 import { CounterpartiesListPage } from "@/accounting/pages/CounterpartiesListPage";
 import { CounterpartyFormPage } from "@/accounting/pages/CounterpartyFormPage";
 import { CounterpartyDetailPage } from "@/accounting/pages/CounterpartyDetailPage";
+import { LedgerMainPage } from "@/accounting/pages/ledger/LedgerMainPage";
+import { LedgerTypePage } from "@/accounting/pages/ledger/LedgerTypePage";
+import { LedgerListPage } from "@/accounting/pages/ledger/LedgerListPage";
+import { LedgerFormPage } from "@/accounting/pages/ledger/LedgerFormPage";
 
 const AccountingRouter: React.FC = () => {
   return (
@@ -18,6 +22,14 @@ const AccountingRouter: React.FC = () => {
       <Route path="/counterparties" element={<MainLayout Sidebar={AccountingSidebar} children={<CounterpartiesListPage />} />} />
       <Route path="/counterparties/new" element={<MainLayout Sidebar={AccountingSidebar} children={<CounterpartyFormPage />} />} />
       <Route path="/counterparties/:id" element={<MainLayout Sidebar={AccountingSidebar} children={<CounterpartyDetailPage />} />} />
+      
+      {/* Ledger routes */}
+      <Route path="/ledgers" element={<MainLayout Sidebar={AccountingSidebar} children={<LedgerMainPage />} />} />
+      <Route path="/ledgers/:type" element={<MainLayout Sidebar={AccountingSidebar} children={<LedgerTypePage />} />} />
+      <Route path="/ledgers/:type/:subtype" element={<MainLayout Sidebar={AccountingSidebar} children={<LedgerListPage />} />} />
+      <Route path="/ledgers/:type/:subtype/new" element={<MainLayout Sidebar={AccountingSidebar} children={<LedgerFormPage />} />} />
+      {/* TODO: Add detail page route when implemented */}
+      {/* <Route path="/ledgers/:type/:subtype/:id" element={<MainLayout Sidebar={AccountingSidebar} children={<LedgerDetailPage />} />} /> */}
       
       <Route path="/" element={<MainLayout Sidebar={AccountingSidebar} children={<ComingSoonView />} />} />
       <Route path="*" element={<MainLayout Sidebar={AccountingSidebar} children={<ComingSoonView />} />} />

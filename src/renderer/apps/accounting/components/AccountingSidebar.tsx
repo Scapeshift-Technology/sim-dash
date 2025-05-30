@@ -37,6 +37,11 @@ const AccountingSidebar: React.FC<AccountingSidebarProps> = ({ currentWidth, onR
             path: '/counterparties',
             key: 'counterparties' 
         },
+        { 
+            label: 'Ledgers', 
+            path: '/ledgers',
+            key: 'ledgers' 
+        },
     ];
 
     // ---------- Render content ----------
