@@ -137,7 +137,7 @@ function extractCompleteTeamLineup(
   const unavailablePitchers = extractUnavailablePitchersFromMlbRoster(rosterInfo, probablePitchers, startingPitcher.id);
 
   // Get bullpen
-  const bullpen = extractBullPenFromMlbRoster(rosterInfo, teamType, probablePitchers);
+  const bullpen = extractBullPenFromMlbRoster(rosterInfo, teamType, [...probablePitchers, startingPitcher.id]);
 
   return {
     lineup: startingLineup,
