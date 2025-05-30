@@ -3,10 +3,11 @@ import { Route, Routes } from 'react-router-dom';
 import MLBSimulationView from '@/simDash/pages/MLBSimulationView/MLBSimulationView';
 import MLBComparisonView from '@/simDash/pages/MLBComparisonView/MLBComparisonView';
 import MainLayout from '@/layouts/MainLayout';
-import TabViewContainers from '@/simDash/containers/TabViewContainers';
-import Sidebar from '@/simDash/components/Sidebar';
+import LeagueSidebar from '@/simDash/components/LeagueSidebar';
 import ProfilePage from '@/layouts/pages/ProfilePage';
 import SettingsPage from '@/layouts/pages/SettingsPage';
+import LeaguesHomePage from '@/simDash/pages/LeaguesHomePage';
+import LeagueDetailPage from '@/simDash/pages/LeagueDetailPage';
 
 const SimDashRouter: React.FC = () => {
 
@@ -31,10 +32,16 @@ const SimDashRouter: React.FC = () => {
 
   return (
     <Routes>
-      <Route path="/profile" element={<MainLayout Sidebar={Sidebar} children={<ProfilePage />} />} />
-      <Route path="/settings" element={<MainLayout Sidebar={Sidebar} children={<SettingsPage />} />} />
-      <Route path="/" element={<MainLayout Sidebar={Sidebar} children={<TabViewContainers />} />} />
-      <Route path="*" element={<MainLayout Sidebar={Sidebar} children={<TabViewContainers />} />} />
+      <Route path="/profile" element={<MainLayout Sidebar={LeagueSidebar} children={<ProfilePage />} />} />
+      <Route path="/settings" element={<MainLayout Sidebar={LeagueSidebar} children={<SettingsPage />} />} />
+      
+      {/* League routes */}
+      <Route path="/leagues/:leagueName" element={<MainLayout Sidebar={LeagueSidebar} children={<LeagueDetailPage />} />} />
+      <Route path="/leagues" element={<MainLayout Sidebar={LeagueSidebar} children={<LeaguesHomePage />} />} />
+      
+      {/* Default route - redirect to leagues home */}
+      <Route path="/" element={<MainLayout Sidebar={LeagueSidebar} children={<LeaguesHomePage />} />} />
+      <Route path="*" element={<MainLayout Sidebar={LeagueSidebar} children={<LeaguesHomePage />} />} />
     </Routes>
   )
 };

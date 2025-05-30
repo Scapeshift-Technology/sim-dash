@@ -101,6 +101,11 @@ declare global {
       debug?: (...args: any[]) => void;
       verbose?: (...args: any[]) => void;
       silly?: (...args: any[]) => void;
+
+      // URL Validation specific logger
+      urlValidationLog?: {
+        info: (message: string, meta?: any) => void;
+      };
     };
   }
 }

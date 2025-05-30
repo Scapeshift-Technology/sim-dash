@@ -1,23 +1,25 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
     List, ListItemButton, ListItemText, CircularProgress, Typography, Box
 } from '@mui/material';
 import { AppDispatch } from '@/store/store';
 import { fetchLeagues, selectAllLeagues, selectLeaguesLoading, selectLeaguesError } from '@/simDash/store/slices/leagueSlice';
-import { openLeagueTab } from '@/simDash/store/slices/tabSlice';
 import { initializeLeague } from '@/simDash/store/slices/scheduleSlice';
 import { initializeLeagueSimInputs } from '@/simDash/store/slices/simInputsSlice';
 import { League, LeagueName } from '@@/types/league';
 import GenericSidebar from '@/layouts/components/GenericSidebar';
 
-interface SidebarProps {
+interface LeagueSidebarProps {
     currentWidth: number;
     onResize: (newWidth: number) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentWidth, onResize }) => {
+const LeagueSidebar: React.FC<LeagueSidebarProps> = ({ currentWidth, onResize }) => {
     const dispatch: AppDispatch = useDispatch();
+    const navigate = useNavigate();
+    const location = useLocation();
 
     // ---------- State ----------
 
@@ -29,7 +31,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentWidth, onResize }) => {
 
     const handleLeagueClick = (leagueName: string) => {
         console.log(`League clicked: ${leagueName}`);
-        dispatch(openLeagueTab(leagueName as LeagueName));
+        // Navigate to league-specific page instead of opening tab
+        navigate(`/leagues/${encodeURIComponent(leagueName.trim())}`);
     };
 
     // ---------- useEffect ----------
@@ -37,7 +40,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentWidth, onResize }) => {
     useEffect(() => {
         // Fetch leagues only if the state is idle (initial load)
         if (loading === 'idle') {
-            console.log("Sidebar useEffect: Dispatching fetchLeagues");
+            console.log("LeagueSidebar useEffect: Dispatching fetchLeagues");
             dispatch(fetchLeagues());
         }
     }, [dispatch, loading]);
@@ -79,23 +82,30 @@ const Sidebar: React.FC<SidebarProps> = ({ currentWidth, onResize }) => {
     } else {
         content = (
             <List>
-                {leagues.map((league: League) => (
-                    <ListItemButton
-                        key={league.League.trim()}
-                        onClick={() => handleLeagueClick(league.League.trim())}
-                    >
-                        <ListItemText primary={league.League.trim()} />
-                    </ListItemButton>
-                ))}
+                {leagues.map((league: League) => {
+                    const leagueName = league.League.trim();
+                    const leaguePath = `/leagues/${encodeURIComponent(leagueName)}`;
+                    const isActive = location.pathname.startsWith(leaguePath);
+                    
+                    return (
+                        <ListItemButton
+                            key={leagueName}
+                            selected={isActive}
+                            onClick={() => handleLeagueClick(leagueName)}
+                        >
+                            <ListItemText primary={leagueName} />
+                        </ListItemButton>
+                    );
+                })}
             </List>
         );
     }
 
     return (
-        <GenericSidebar currentWidth={currentWidth} onResize={onResize} navigateToRootOnClick={true}>
+        <GenericSidebar currentWidth={currentWidth} onResize={onResize}>
             {content}
         </GenericSidebar>
     );
 };
 
-export default Sidebar; 
+export default LeagueSidebar; 

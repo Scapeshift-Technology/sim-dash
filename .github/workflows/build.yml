@@ -149,5 +149,4 @@ jobs:
           name: ${{ steps.set_artifact_name_mac.outputs.artifact_name }}
           path: |
             dist/*.dmg
-            dist/*-mac.zip
           if-no-files-found: error 

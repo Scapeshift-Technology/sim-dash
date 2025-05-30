@@ -56,6 +56,22 @@ Object.assign(console, log.functions); // Optional: Redirect console.error, .war
 
 log.info('Main process script started.'); // Add an initial log message
 
+// --- URL Validation Logger Configuration ---
+// Create a separate logger instance for URL validation logging
+const urlValidationLog = log.create('url-validation');
+
+// Configure URL validation logger to write to separate file
+urlValidationLog.transports.file.resolvePathFn = () => {
+  return path.join(app.getPath('logs'), 'url-validation.log');
+};
+urlValidationLog.transports.file.format = '[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] URL-VALIDATION - {text}';
+urlValidationLog.transports.file.level = 'silly';
+
+// Disable console output for URL validation logger to avoid duplication
+urlValidationLog.transports.console.level = false;
+
+log.info('URL validation logger configured:', urlValidationLog.transports.file.resolvePathFn());
+
 // --- Build Info Handling ---
 let buildInfo = { buildTimeISO: 'N/A' };
 // Construct path relative to the app's content root to ensure robustness
@@ -412,6 +428,17 @@ ipcMain.handle('create-comparison-window', async (event, {league, matchupId, tim
     throw err;
   }
 })
+
+// --- URL Validation Logging Handler ---
+ipcMain.handle('url-validation-log', async (event, level, message, meta) => {
+    // Use the URL validation logger instance
+    if (urlValidationLog && urlValidationLog[level]) {
+        urlValidationLog[level](message, meta);
+    } else {
+        // Fallback to main logger if something goes wrong
+        log.info(`[URL-VALIDATION] ${message}`, meta);
+    }
+});
 
 // --- Execute SQL Query Handler ---
 ipcMain.handle('execute-sql-query', async (event, query) => {

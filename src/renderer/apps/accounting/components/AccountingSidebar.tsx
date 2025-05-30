@@ -14,7 +14,8 @@ const AccountingSidebar: React.FC<AccountingSidebarProps> = ({ currentWidth, onR
 
     // ---------- Handlers ----------
 
-    const handleCategoryClick = (category: string, path: string) => {
+    const handleCategoryClick = (category: string, path: string, isEnabled: boolean) => {
+        if (!isEnabled) return;
         console.log(`Category clicked: ${category}`);
         navigate(path);
     };
@@ -23,19 +24,32 @@ const AccountingSidebar: React.FC<AccountingSidebarProps> = ({ currentWidth, onR
 
     const menuItems = [
         { 
-            label: 'Quick grader', 
-            path: '/quick-grader',
-            key: 'quick-grader' 
-        },
-        { 
             label: 'Accounts', 
-            path: '/accounts',
-            key: 'accounts' 
+            path: '/accounts/coming-soon',
+            key: 'accounts',
+            enabled: false,
+            isComingSoon: true
         },
         { 
             label: 'Counterparties', 
-            path: '/counterparties',
-            key: 'counterparties' 
+            path: '/counterparties-main',
+            key: 'counterparties',
+            enabled: true,
+            isComingSoon: false
+        },
+        { 
+            label: 'Ledgers', 
+            path: '/ledgers',
+            key: 'ledgers',
+            enabled: true,
+            isComingSoon: false
+        },
+        { 
+            label: 'Quick grader', 
+            path: '/quick-grader/coming-soon',
+            key: 'quick-grader',
+            enabled: false,
+            isComingSoon: true
         },
     ];
 
@@ -44,13 +58,28 @@ const AccountingSidebar: React.FC<AccountingSidebarProps> = ({ currentWidth, onR
     const content = (
         <List>
             {menuItems.map((item) => {
-                const isActive = location.pathname.startsWith(item.path);
+                const isActive = item.enabled && (
+                    location.pathname.startsWith(item.path) ||
+                    (item.key === 'counterparties' && location.pathname.startsWith('/counterparties'))
+                );
                 
                 return (
                     <ListItemButton
                         key={item.key}
                         selected={isActive}
-                        onClick={() => handleCategoryClick(item.label, item.path)}
+                        onClick={() => handleCategoryClick(item.label, item.path, item.enabled)}
+                        disabled={!item.enabled}
+                        sx={{
+                            color: item.enabled ? 'inherit' : 'text.disabled',
+                            cursor: item.enabled ? 'pointer' : 'not-allowed',
+                            '&.Mui-disabled': {
+                                opacity: 0.4,
+                                backgroundColor: 'transparent',
+                            },
+                            '&.Mui-disabled:hover': {
+                                backgroundColor: 'transparent',
+                            },
+                        }}
                     >
                         <ListItemText primary={item.label} />
                     </ListItemButton>
