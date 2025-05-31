@@ -75,7 +75,7 @@ async function extractTeamLineupFromSwishLineupCard(lineupCard: string, date: st
   const bench = extractBenchFromMlbRoster(rosterInfo, lineup);
 
   // Get the bullpen
-  const bullpen = extractBullPenFromMlbRoster(rosterInfo, teamType, probablePitchers);
+  const bullpen = extractBullPenFromMlbRoster(rosterInfo, teamType, [...probablePitchers, startingPitcher.id]);
 
   return {
     lineup: lineup,
