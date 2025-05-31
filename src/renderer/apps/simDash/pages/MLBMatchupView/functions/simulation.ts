@@ -8,7 +8,7 @@ import { MlbLiveDataApiResponse } from "@@/types/mlb";
 
 export async function runSimulation(
     gameInputs: MLBGameInputs2,
-    numGames: number = 120000,
+    numGames: number = 90000,
     liveGameData?: MlbLiveDataApiResponse
 ): Promise<SimResultsMLB> {
     const redoneLineups = applyMatchupLeansMLB(gameInputs);
@@ -25,7 +25,7 @@ export async function runSimulation(
 
 export async function runSeriesSimulation(
     gameInputs: SeriesGameInputs,
-    numGames: number = 50000
+    numGames: number = 90000
 ): Promise<SimResultsMLB> {
     const simResults: {[key: number]: SimResultsMLB} = {};
     
