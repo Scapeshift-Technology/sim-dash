@@ -560,6 +560,10 @@ const menuTemplate = [
 app.whenReady().then(async () => {
     log.info("app 'ready' event triggered.");
 
+    // Log the application version on startup
+    const appVersion = process.env.NODE_ENV === 'development' ? 'dev' : app.getVersion();
+    log.info(`SimDash started - Version: ${appVersion}`);
+
     // Initialize the database before creating the main window
     try {
         log.info("app 'ready': Calling initializeDb...");
