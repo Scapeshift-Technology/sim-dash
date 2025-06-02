@@ -64,7 +64,7 @@ const MLBGameBanner = ({ liveGameData, lineupData, isEditable = false, onGameSta
     secondBase = liveGameData.liveData.linescore.offense.second?.fullName;
     thirdBase = liveGameData.liveData.linescore.offense.third?.fullName;
 
-    inningStr = `${liveGameData.liveData.linescore.inningHalf.slice(0, 3).toUpperCase()} ${liveGameData.liveData.linescore.currentInningOrdinal}`;
+    inningStr = liveGameData.gameData.status.detailedState === 'Warmup' ? 'WARMUP' : `${liveGameData.liveData.linescore.inningHalf.slice(0, 3).toUpperCase()} ${liveGameData.liveData.linescore.currentInningOrdinal}`;
     isTopInning = inningStr.includes("TOP");
     isTopInningAdjusted = isTopInning || (!isTopInning && outs === 3);
     currentPitcher = liveGameData.liveData.plays.currentPlay.matchup.pitcher.fullName;
@@ -215,7 +215,8 @@ const MLBGameBanner = ({ liveGameData, lineupData, isEditable = false, onGameSta
         
         {/* Center Column */}
         <Box sx={{ gridArea: 'center', textAlign: 'center' }}>
-          {gameStatus === "Live" ? (
+          {
+          gameStatus === "Live" ? (
             <InningDisplay
               inningStr={inningStr!}
               isEditable={isEditable}
