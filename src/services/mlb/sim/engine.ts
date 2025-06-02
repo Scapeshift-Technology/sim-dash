@@ -35,7 +35,7 @@ async function simulateMatchupMLB(
     await initializeHomeFieldMultipliers();
 
     // Simulate games
-    const simPlays = simulateGames(matchup, leagueAvgStats, num_games, liveGameData);
+    const simPlays = await simulateGames(matchup, leagueAvgStats, num_games, liveGameData);
     // Get results
     const outputResults: SimResultsMLB = calculateSimCounts(simPlays, matchup, liveGameData);
 
@@ -45,13 +45,18 @@ async function simulateMatchupMLB(
   }
 }
 
-function simulateGames(matchup: MatchupLineups, leagueAvgStats: LeagueAvgStats, num_games: number, liveGameData?: MlbLiveDataApiResponse): PlayResult[][] {
+async function simulateGames(matchup: MatchupLineups, leagueAvgStats: LeagueAvgStats, num_games: number, liveGameData?: MlbLiveDataApiResponse): Promise<PlayResult[][]> {
   const matchupProbabilities: GameMatchupProbabilities = getMatchupProbabilities(matchup, leagueAvgStats);
   const allPlays: PlayResult[][] = [];
 
   for (let i = 0; i < num_games; i++) {
     const gamePlays = simulateGame(matchup, matchupProbabilities, liveGameData);
     allPlays.push(gamePlays);
+    
+    // Yield control every 100 games to allow worker termination
+    if (i % 100 === 0) {
+      await new Promise(resolve => setImmediate(resolve)); // Prevent the CPU leakage bug
+    }
   }
 
   return allPlays;
