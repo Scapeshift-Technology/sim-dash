@@ -104,8 +104,13 @@ const handleFetchInitialMLBLiveData = async (event, { gameId }) => {
 // ---------- Simulations ----------
 
 // Handler for simulating MLB matchups
-const handleSimulateMatchup = async (event, { numGames, matchupLineups, liveGameData }) => {
-    log.info(`Simulating ${numGames} MLB games`);
+const handleSimulateMatchup = async (event, { numGames, matchupLineups, gameId, liveGameData }) => {
+    if (gameId) {
+        log.info(`Simulating ${numGames} MLB games - Game ${gameId}`);
+    } else {
+        log.info(`Simulating ${numGames} MLB games`);
+    }
+
     try {
         return await runParallelSimulation(matchupLineups, numGames, liveGameData);
     } catch (err) {

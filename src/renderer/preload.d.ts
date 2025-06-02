@@ -45,7 +45,7 @@ declare global {
       fetchMlbGamePlayerStats: (args: { matchupLineups: MatchupLineups, date: string }) => Promise<MatchupLineups>;
 
       // Simulations
-      simulateMatchupMLB: (args: { matchupLineups: MatchupLineups, numGames: number, liveGameData?: MlbLiveDataApiResponse }) => Promise<SimResults>;
+      simulateMatchupMLB: (args: { matchupLineups: MatchupLineups, numGames: number, gameId: number | undefined, liveGameData?: MlbLiveDataApiResponse }) => Promise<SimResults>;
 
       // Live data (MLB)
       connectToWebSocketMLB: (args: { gameId: number }) => Promise<void>;

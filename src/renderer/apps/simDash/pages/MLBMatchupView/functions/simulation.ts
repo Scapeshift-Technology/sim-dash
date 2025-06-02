@@ -17,6 +17,7 @@ export async function runSimulation(
     const results = await window.electronAPI.simulateMatchupMLB({
         matchupLineups: redoneLineups,
         numGames: numGames,
+        gameId: gameInputs.gameInfo.mlbGameId,
         liveGameData: liveGameData
     });
 

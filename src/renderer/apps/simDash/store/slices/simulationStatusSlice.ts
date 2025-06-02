@@ -72,7 +72,7 @@ export const runSimulationThunk = createAsyncThunk(
     league, // These inputs are necessary for the thunk reducers
     matchId,
     gameInputs,
-    numGames = 50000,
+    numGames = 90000,
     liveGameData
   }: {
     league: LeagueName;
@@ -92,7 +92,7 @@ export const runSeriesSimulationThunk = createAsyncThunk(
     league, // These inputs are necessary for the thunk reducers
     matchId,
     gameInputs,
-    numGames = 50000
+    numGames = 90000
   }: {
     league: LeagueName;
     matchId: number;
