@@ -13,7 +13,6 @@ function transformMLBGameInputs2ToDB(gameInputs: MLBGameInputs2, liveGameData?: 
         gameState = createReducedGameStateFromLiveData(lineups, liveGameData);
     }
 
-    // const gameState: ReducedGameStateMLB = transformGameStateToReduced(gameInputs.liveGameData);
     const gameInfo: SimMetadataMLB = {
         ...gameInputs.gameInfo,
         lineupsSource: gameInputs.gameInfo.lineupsSource as LineupsSource,
@@ -47,7 +46,9 @@ function transformTeamLineupToReduced(teamLineup: TeamLineup): ReducedTeamLineup
         lineup: transformPlayerArrayToReduced(teamLineup.lineup),
         startingPitcher: transformPlayerToReduced(teamLineup.startingPitcher),
         bullpen: transformPlayerArrayToReduced(teamLineup.bullpen),
-        bench: transformPlayerArrayToReduced(teamLineup.bench)
+        bench: transformPlayerArrayToReduced(teamLineup.bench),
+        unavailablePitchers: transformPlayerArrayToReduced(teamLineup.unavailablePitchers),
+        unavailableHitters: transformPlayerArrayToReduced(teamLineup.unavailableHitters)
     }
 }
 
