@@ -95,7 +95,7 @@ interface MlbLiveDataApiGameData {
   }
   status: {
     abstractGameState: "Preview" | "Live" | "Final" | "Postponed" | "Delayed" | "Suspended" | "Cancelled";
-    detailedState: "Warmup" | "Final";
+    detailedState: "Warmup" | "Final" | "In Progress";
   }
 };
 

@@ -373,7 +373,8 @@ export function convertGameStateWithLineupsToLiveData(
         }
       },
       status: {
-        abstractGameState: "Live" as const
+        abstractGameState: "Live" as const,
+        detailedState: "In Progress" as const
       }
     },
     liveData: {
