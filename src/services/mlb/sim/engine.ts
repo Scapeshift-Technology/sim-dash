@@ -17,6 +17,7 @@ import { SimResultsMLB } from "@/types/bettingResults";
 import { evaluatePitchingSubstitution } from "./pitcherSubstitution";
 import { processEvent } from "./baserunning2";
 import { initializeGameState } from "./gameState";
+import log from "electron-log";
 
 // ---------- MLB sim engine ----------
 /**
@@ -30,6 +31,9 @@ async function simulateMatchupMLB(
   num_games: number = 50000,
   liveGameData?: MlbLiveDataApiResponse
 ) {
+  log.info('Matchup lineups:', JSON.stringify(matchup));
+  log.info('Live game data:', JSON.stringify(liveGameData));
+
   try {
     // Matchup probabilities
     await initializeHomeFieldMultipliers();
@@ -41,7 +45,7 @@ async function simulateMatchupMLB(
 
     return outputResults;
   } catch (error) {
-    console.error('Error simulating games:', error);
+    log.error('Error simulating games:', error);
   }
 }
 
