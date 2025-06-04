@@ -223,6 +223,7 @@ interface MlbLiveDataApiLinescoreOffense {
 interface MlbLiveDataApiLinescoreDefense {
   pitcher: MlbLiveDataApiLinescorePlayer;
   battingOrder: number;
+  onDeck: MlbLiveDataApiLinescorePlayer;
 }
 
 interface MlbLiveDataApiLinescoreInningTeam {

@@ -56,7 +56,7 @@ const MLBGameBanner = ({ liveGameData, lineupData, isEditable = false, onGameSta
   let thirdBase: string | undefined;
 
   if (gameStatus === "Live") {    
-    onDeck = liveGameData.liveData.linescore.offense.onDeck.fullName;
+    onDeck = liveGameData.liveData.linescore.outs == 3 ? liveGameData.liveData.linescore.defense.onDeck.fullName : liveGameData.liveData.linescore.offense.onDeck.fullName;
     balls = liveGameData.liveData.linescore.balls;
     strikes = liveGameData.liveData.linescore.strikes;
     outs = liveGameData.liveData.linescore.outs;
