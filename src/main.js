@@ -257,7 +257,6 @@ async function initializeDb() {
 ipcMain.handle('save-sim-history', async (event, simHistory) => {
     if (!db) return false;
     try {
-        log.info('Saving sim history:', JSON.stringify(simHistory));
         await dbHelper.saveSimHistory(db, simHistory);
         return true;
     } catch (err) {

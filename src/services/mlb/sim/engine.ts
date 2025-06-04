@@ -31,9 +31,9 @@ async function simulateMatchupMLB(
   num_games: number = 50000,
   liveGameData?: MlbLiveDataApiResponse
 ) {
-  log.info('Matchup lineups:', JSON.stringify(matchup));
-  log.info('Live game data:', JSON.stringify(liveGameData));
-
+  // const gameState = initializeGameState(matchup, liveGameData);
+  // log.info('Game state:', JSON.stringify(gameState));
+  
   try {
     // Matchup probabilities
     await initializeHomeFieldMultipliers();
@@ -148,34 +148,46 @@ function simulatePlay(gameState: GameStateMLB, matchupProbabilities: GameMatchup
   let currentBatter: Player;
   let currentPitcherID: number;
 
-  if (topInning) {
-    currentBatter = gameState.awayLineup[gameState.awayLineupPos];
-    currentPitcherID = gameState.homePitcher.id;
-    atBatMatchupProbabilities = matchupProbabilities.away.batter[currentBatter.id][currentPitcherID];
-  } else {
-    currentBatter = gameState.homeLineup[gameState.homeLineupPos];
-    currentPitcherID = gameState.awayPitcher.id;
-    atBatMatchupProbabilities = matchupProbabilities.home.batter[currentBatter.id][currentPitcherID];
+  const awayLineupPos = gameState.awayLineupPos;
+  const homeLineupPos = gameState.homeLineupPos;
+
+  try {
+    if (topInning) {
+      currentBatter = gameState.awayLineup[gameState.awayLineupPos];
+      currentPitcherID = gameState.homePitcher.id;
+      atBatMatchupProbabilities = matchupProbabilities.away.batter[currentBatter.id][currentPitcherID];
+    } else {
+      currentBatter = gameState.homeLineup[gameState.homeLineupPos];
+      currentPitcherID = gameState.awayPitcher.id;
+      atBatMatchupProbabilities = matchupProbabilities.home.batter[currentBatter.id][currentPitcherID];
+    }
+
+    const playEvent = simulatePlayResult(atBatMatchupProbabilities);
+    const result = processEvent(playEvent, gameState);
+    const playResult: PlayResult = {
+      batterID: currentBatter.id,
+      pitcherID: currentPitcherID,
+      eventType: playEvent,
+      runsOnPlay: result.runsOnPlay,
+      inning: gameState.inning,
+      topInning: gameState.topInning,
+      outs: gameState.outs,
+      outsOnPlay: result.outsOnPlay,
+      awayScore: gameState.awayScore,
+      homeScore: gameState.homeScore,
+      basesBefore: gameState.bases,
+      basesAfter: result.newBases
+    }
+  
+    return playResult;
+  } catch (error) {
+    log.error('Error simulating play:', error);
+    log.info('AWAY LINEUP POS ON ERROR:', awayLineupPos)
+    log.info('HOME LINEUP POS ON ERROR:', homeLineupPos)
+    throw error;
   }
 
-  const playEvent = simulatePlayResult(atBatMatchupProbabilities);
-  const result = processEvent(playEvent, gameState);
-  const playResult: PlayResult = {
-    batterID: currentBatter.id,
-    pitcherID: currentPitcherID,
-    eventType: playEvent,
-    runsOnPlay: result.runsOnPlay,
-    inning: gameState.inning,
-    topInning: gameState.topInning,
-    outs: gameState.outs,
-    outsOnPlay: result.outsOnPlay,
-    awayScore: gameState.awayScore,
-    homeScore: gameState.homeScore,
-    basesBefore: gameState.bases,
-    basesAfter: result.newBases
-  }
 
-  return playResult;
 }
 
 function simulatePlayResult(atBatMatchupProbabilities: Stats): EventType {
