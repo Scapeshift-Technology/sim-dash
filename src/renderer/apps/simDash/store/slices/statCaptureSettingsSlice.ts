@@ -1,23 +1,25 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
 import { LeagueName } from '@@/types/league';
-import { Period } from '@/simDash/components/MainMarketsConfiguration';
+import { Period } from '@@/types/statCaptureConfig';
+import { SavedConfiguration } from '@@/types/statCaptureConfig';
+
 
 // ---------- Types ----------
 
-// Mock settings structure - you can expand this as needed
-export interface StatCaptureLeagueSettings {
-    simulationSpeed: number;
-    enableAdvancedStats: boolean;
-    defaultGameLength: number;
-    autoSaveInterval: number;
-    // Add more settings fields as needed
-}
-
 export interface StatCaptureLeagueState {
-    settings: StatCaptureLeagueSettings;
+    // Configurations
+    savedConfigurations: SavedConfiguration[];
+    configurationsLoading: boolean;
+    configurationsError: string | null;
+    
+    // Current draft
+    currentDraft: SavedConfiguration;
+
+    // Active tab
     activeTab: number;
 
+    // Period loading
     periodsLoading: boolean;
     periodsError: string | null;
     periods: Period[];
@@ -28,13 +30,6 @@ export interface StatCaptureSettingsState {
 }
 
 // ---------- Initial state ----------
-
-const initialLeagueSettings: StatCaptureLeagueSettings = {
-    simulationSpeed: 1,
-    enableAdvancedStats: true,
-    defaultGameLength: 9,
-    autoSaveInterval: 300, // 5 minutes in seconds
-};
 
 const initialState: StatCaptureSettingsState = {};
 
@@ -69,10 +64,18 @@ const statCaptureSettingsSlice = createSlice({
             if (!state[leagueName]) {
                 state[leagueName] = {
                     activeTab: 0,
-                    settings: { ...initialLeagueSettings },
                     periodsLoading: false,
                     periodsError: null,
-                    periods: []
+                    periods: [],
+                    savedConfigurations: [],
+                    configurationsLoading: false,
+                    configurationsError: null,
+                    currentDraft: {
+                        name: '',
+                        mainMarkets: [],
+                        propsOU: [],
+                        propsYN: []
+                    }
                 };
             }
         },
@@ -81,26 +84,6 @@ const statCaptureSettingsSlice = createSlice({
             const { leagueName, tabIndex } = action.payload;
             if (state[leagueName]) {
                 state[leagueName].activeTab = tabIndex;
-            }
-        },
-
-        updateLeagueSettings: (state, action: PayloadAction<{ 
-            leagueName: string; 
-            settings: Partial<StatCaptureLeagueSettings> 
-        }>) => {
-            const { leagueName, settings } = action.payload;
-            if (state[leagueName]) {
-                state[leagueName].settings = {
-                    ...state[leagueName].settings,
-                    ...settings
-                };
-            }
-        },
-
-        resetLeagueSettings: (state, action: PayloadAction<string>) => {
-            const leagueName = action.payload;
-            if (state[leagueName]) {
-                state[leagueName].settings = { ...initialLeagueSettings };
             }
         },
 
@@ -148,8 +131,6 @@ const statCaptureSettingsSlice = createSlice({
 export const {
     initializeLeague,
     setActiveTab,
-    updateLeagueSettings,
-    resetLeagueSettings,
     removeLeague,
     clearPeriodsError
 } = statCaptureSettingsSlice.actions;
@@ -160,8 +141,6 @@ export const selectStatCaptureLeagueState = (state: { simDash: { settings: StatC
     state.simDash?.settings?.[leagueName];
 export const selectActiveTab = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): number => 
     state.simDash?.settings?.[leagueName]?.activeTab ?? 0;
-export const selectLeagueSettings = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): StatCaptureLeagueSettings | undefined => 
-    state.simDash?.settings?.[leagueName]?.settings;
 export const selectAllLeagues = (state: { simDash: { settings: StatCaptureSettingsState } }): string[] => 
     Object.keys(state.simDash?.settings || {});
 

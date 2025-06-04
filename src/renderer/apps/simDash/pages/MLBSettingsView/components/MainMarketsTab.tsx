@@ -4,15 +4,13 @@ import { Alert, Box, IconButton, Tooltip, CircularProgress } from "@mui/material
 import { Refresh as RefreshIcon } from "@mui/icons-material";
 
 import { LeagueName } from "@@/types/league";
+import { BetType, ConfigurationRow, ValidationConfig } from "@@/types/statCaptureConfig";
 
-import MainMarketsConfiguration, { 
-    BetType, 
-    ValidationConfig, 
-    ConfigurationRow 
-} from "@/simDash/components/MainMarketsConfiguration";
+import MainMarketsConfiguration from "@/simDash/components/MainMarketsConfiguration";
 
 import { AppDispatch, RootState } from "@/store/store";
 import { getLeaguePeriods, selectLeaguePeriods, selectLeaguePeriodsError, selectLeaguePeriodsLoading } from "@/apps/simDash/store/slices/statCaptureSettingsSlice";
+
 
 // ---------- Constants ----------
 
