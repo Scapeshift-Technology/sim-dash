@@ -70,6 +70,31 @@ const handleFetchSchedule = async (event, { league, date }, getCurrentPool) => {
     }
 };
 
+// Handler for fetching league periods
+const getLeaguePeriods = async (event, leagueName, getCurrentPool) => {
+    log.info(`IPC received: get-league-periods for ${leagueName}`);
+    const currentPool = getCurrentPool();
+    if (!currentPool) {
+        log.error('get-league-periods: No active SQL Server connection.');
+        throw new Error('Not connected to database.'); // Throw error to be caught by renderer
+    }
+
+    try {
+        const result = await currentPool.request().query(`
+            SELECT PeriodTypeCode
+                , PeriodNumber
+                , IIF(SubPeriodType = CHAR(0), SuperPeriodType, SubPeriodType) AS PeriodName
+            FROM LeaguePeriodShortcode
+            WHERE league = '${leagueName}'
+        `);
+
+        return result.recordset;
+    } catch (err) {
+        log.error(`Error fetching league periods for ${leagueName}:`, err);
+        throw err; // Rethrow the error to be caught by the renderer
+    }
+};
+
 /**
  * Register all shared league IPC handlers
  * @param {Object} params - Parameters needed for handler registration
@@ -81,6 +106,9 @@ const registerSharedLeagueHandlers = ({ getCurrentPool }) => {
 
     // Schedule handlers
     ipcMain.handle('fetch-schedule', (event, { league, date }) => handleFetchSchedule(event, { league, date }, getCurrentPool));
+
+    // League periods handlers
+    ipcMain.handle('get-league-periods', (event, leagueName) => getLeaguePeriods(event, leagueName, getCurrentPool));
 
     log.info('Shared league IPC handlers registered');
 };

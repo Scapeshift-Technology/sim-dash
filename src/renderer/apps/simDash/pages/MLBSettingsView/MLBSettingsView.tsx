@@ -1,15 +1,13 @@
 import React, { useEffect } from 'react';
-import {
-    Box,
-    Typography
-} from '@mui/material';
-import { useDispatch } from 'react-redux';
+import { Box } from '@mui/material';
 
 import FolderTabs, { FolderTab } from './components/FolderTabs';
 import MainMarketsTab from './components/MainMarketsTab';
 import OUPropsTab from './components/OUPropsTab';
 import YesNoTab from './components/YesNoTab';
-import { initializeLeague } from '@/simDash/store/slices/settingsSlice';
+
+import { useDispatch } from 'react-redux';
+import { initializeLeague } from '@/apps/simDash/store/slices/statCaptureSettingsSlice';
 
 // ---------- Constants ----------
 
@@ -35,7 +33,7 @@ const MLBSettingsView: React.FC = () => {
         {
             id: 'main-markets',
             label: 'Main Markets',
-            content: <MainMarketsTab/>
+            content: <MainMarketsTab leagueName={LEAGUE_NAME}/>
         },
         {
             id: 'ou-props',

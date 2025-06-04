@@ -5,7 +5,7 @@ import {
     Tab
 } from '@mui/material';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectActiveTab, setActiveTab } from '@/simDash/store/slices/settingsSlice';
+import { selectActiveTab, setActiveTab } from '@/apps/simDash/store/slices/statCaptureSettingsSlice';
 
 // ---------- Types ----------
 

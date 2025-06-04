@@ -36,6 +36,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // League/Schedule/Lineup data
     fetchLeagues: () => ipcRenderer.invoke('fetch-leagues'),
     fetchSchedule: (args) => ipcRenderer.invoke('fetch-schedule', args),
+    getLeaguePeriods: (leagueName) => ipcRenderer.invoke('get-league-periods', leagueName),
 
     // ---------- MLB-specific functions ----------
     // Fetching data

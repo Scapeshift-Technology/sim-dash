@@ -7,7 +7,7 @@ import scheduleReducer from './slices/scheduleSlice';
 import simInputsReducer from './slices/simInputsSlice';
 import simulationStatusReducer from './slices/simulationStatusSlice';
 import bettingBoundsReducer from './slices/bettingBoundsSlice';
-import settingsReducer from './slices/settingsSlice';
+import statCaptureSettingsReducer from './slices/statCaptureSettingsSlice';
 
 const simDashReducer = combineReducers({
   // auth: authReducer,
@@ -18,7 +18,7 @@ const simDashReducer = combineReducers({
   simInputs: simInputsReducer,
   simulationStatus: simulationStatusReducer,
   bettingBounds: bettingBoundsReducer,
-  settings: settingsReducer
+  settings: statCaptureSettingsReducer
 });
 
 export type SimDashState = ReturnType<typeof simDashReducer>;
