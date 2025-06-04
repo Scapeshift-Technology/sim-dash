@@ -6,20 +6,21 @@ import MainMarketsTab from './components/MainMarketsTab';
 import OUPropsTab from './components/OUPropsTab';
 import YesNoTab from './components/YesNoTab';
 
-import { useDispatch } from 'react-redux';
-import { initializeLeague } from '@/apps/simDash/store/slices/statCaptureSettingsSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/store/store';
+import { initializeLeague, selectLeagueStatCaptureConfigurations } from '@/apps/simDash/store/slices/statCaptureSettingsSlice';
+
+import { LeagueName } from '@@/types/league';
 
 // ---------- Constants ----------
 
-const LEAGUE_NAME = 'MLB';
+const LEAGUE_NAME = 'MLB' as LeagueName;
 
 // ---------- Main component ----------
 
 const MLBSettingsView: React.FC = () => {
 
-    // ---------- Redux ----------
-
-    const dispatch = useDispatch();
+    const dispatch = useDispatch<AppDispatch>();
 
     // ---------- Effects ----------
 

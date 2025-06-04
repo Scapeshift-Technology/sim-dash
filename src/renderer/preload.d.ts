@@ -40,6 +40,12 @@ declare global {
       fetchSchedule: (args: { league: string; date: string }) => Promise<ScheduleItem[]>;
       getLeaguePeriods: (leagueName: string) => Promise<any[]>;
 
+      // Stat capture config
+      fetchLeagueStatCaptureConfigurations: (leagueName: string) => Promise<any[]>;
+      fetchStatCaptureConfiguration: (configName: string) => Promise<any>;
+      saveStatCaptureConfiguration: (config: SavedConfiguration) => Promise<any>;
+      deleteStatCaptureConfiguration: (configName: string) => Promise<any>;
+
       // ---------- MLB-specific functions ----------
       // Fetching data
       fetchMlbGameData: (args: FetchMlbGameDataArgs) => Promise<MLBGameDataResponse>;

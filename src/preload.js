@@ -38,6 +38,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     fetchSchedule: (args) => ipcRenderer.invoke('fetch-schedule', args),
     getLeaguePeriods: (leagueName) => ipcRenderer.invoke('get-league-periods', leagueName),
 
+    // Stat capture config
+    fetchLeagueStatCaptureConfigurations: (leagueName) => ipcRenderer.invoke('fetch-league-stat-capture-configurations', leagueName),
+    fetchStatCaptureConfiguration: (configName) => ipcRenderer.invoke('fetch-stat-capture-configuration', configName),
+    saveStatCaptureConfiguration: (config) => ipcRenderer.invoke('save-stat-capture-configuration', config),
+    deleteStatCaptureConfiguration: (configName) => ipcRenderer.invoke('delete-stat-capture-configuration', configName),
+
     // ---------- MLB-specific functions ----------
     // Fetching data
     fetchMlbGameData: (args) => ipcRenderer.invoke('fetch-mlb-game-data', args),

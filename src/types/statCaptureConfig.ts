@@ -1,3 +1,5 @@
+import { LeagueName } from "./league";
+
 // ---------- Config types ----------
 
 export interface MainMarketConfig {
@@ -20,6 +22,7 @@ export interface PropYNConfig {
 
 export interface SavedConfiguration {
     name: string;
+    league: LeagueName;
     mainMarkets: MainMarketConfig[];
     propsOU: PropOUConfig[];
     propsYN: PropYNConfig[];

@@ -9,7 +9,14 @@ import { BetType, ConfigurationRow, ValidationConfig } from "@@/types/statCaptur
 import MainMarketsConfiguration from "@/simDash/components/MainMarketsConfiguration";
 
 import { AppDispatch, RootState } from "@/store/store";
-import { getLeaguePeriods, selectLeaguePeriods, selectLeaguePeriodsError, selectLeaguePeriodsLoading } from "@/apps/simDash/store/slices/statCaptureSettingsSlice";
+import { 
+    getLeaguePeriods, 
+    getLeagueStatCaptureConfigurations, 
+    selectLeaguePeriods, 
+    selectLeaguePeriodsError, 
+    selectLeaguePeriodsLoading ,
+    selectLeagueStatCaptureConfigurations
+} from "@/apps/simDash/store/slices/statCaptureSettingsSlice";
 
 
 // ---------- Constants ----------
@@ -57,8 +64,9 @@ const MainMarketsTab: React.FC<{ leagueName: LeagueName }> = ({ leagueName }) =>
     const leaguePeriods = useSelector((state: RootState) => selectLeaguePeriods(state, leagueName));
     const periodsLoading = useSelector((state: RootState) => selectLeaguePeriodsLoading(state, leagueName));
     const periodsError = useSelector((state: RootState) => selectLeaguePeriodsError(state, leagueName));
-    console.log('periodsError', periodsError);
     const isPeriodsError = periodsError !== null;
+    // const leagueStatCaptureConfigurations = useSelector((state: RootState) => selectLeagueStatCaptureConfigurations(state, leagueName));
+    // console.log('leagueStatCaptureConfigurations', leagueStatCaptureConfigurations);
 
     // ---------- Redux ----------
 
@@ -70,6 +78,10 @@ const MainMarketsTab: React.FC<{ leagueName: LeagueName }> = ({ leagueName }) =>
         if (leaguePeriods.length === 0 && !periodsLoading) {
             dispatch(getLeaguePeriods(leagueName));
         }
+    }, [dispatch, leagueName]);
+
+    useEffect(() => {
+        dispatch(getLeagueStatCaptureConfigurations(leagueName));
     }, [dispatch, leagueName]);
 
     // ---------- Event handlers ----------
