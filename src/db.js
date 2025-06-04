@@ -61,7 +61,44 @@ async function initializeSchema(db) {
           input_data TEXT NOT NULL,   -- JSON column for league-specific input data
           PRIMARY KEY (match_id, timestamp),
           FOREIGN KEY (match_id) REFERENCES Match_V(Match)
-        );`
+        );`,
+        // Create a saved stat capture config table
+        `CREATE TABLE IF NOT EXISTS strike_configuration (
+            name TEXT PRIMARY KEY,
+            league TEXT NOT NULL
+        );`,
+
+        `CREATE TABLE IF NOT EXISTS strike_configuration_main_markets (
+            name TEXT PRIMARY KEY,
+            market_type TEXT CHECK (market_type IN ('Spread', 'Total', 'TeamTotal')) NOT NULL,
+            period_type_code TEXT NOT NULL,
+            period_number INTEGER NOT NULL,
+            strike REAL NOT NULL,
+            FOREIGN KEY (name) REFERENCES strike_configuration(name) ON DELETE CASCADE
+        );`,
+
+        `CREATE TABLE IF NOT EXISTS strike_configuration_props_ou (
+            name TEXT PRIMARY KEY,
+            prop TEXT NOT NULL,
+            contestant_type TEXT CHECK (contestant_type IN ('Individual', 'TeamLeague')) NOT NULL,
+            strike REAL NOT NULL,
+            FOREIGN KEY (name) REFERENCES strike_configuration(name) ON DELETE CASCADE
+        );`,
+
+        `CREATE TABLE IF NOT EXISTS strike_configuration_props_yn (
+            name TEXT PRIMARY KEY,
+            prop TEXT NOT NULL,
+            contestant_type TEXT CHECK (contestant_type IN ('Individual', 'TeamLeague')) NOT NULL,
+            FOREIGN KEY (name) REFERENCES strike_configuration(name) ON DELETE CASCADE
+        );`,
+
+        `CREATE INDEX IF NOT EXISTS idx_strike_config_league ON strike_configuration(league);
+        CREATE INDEX IF NOT EXISTS idx_main_markets_market_type ON strike_configuration_main_markets(market_type);
+        CREATE INDEX IF NOT EXISTS idx_main_markets_period ON strike_configuration_main_markets(period_type_code, period_number);
+        CREATE INDEX IF NOT EXISTS idx_props_ou_prop ON strike_configuration_props_ou(prop);
+        CREATE INDEX IF NOT EXISTS idx_props_ou_contestant_type ON strike_configuration_props_ou(contestant_type);
+        CREATE INDEX IF NOT EXISTS idx_props_yn_prop ON strike_configuration_props_yn(prop);
+        CREATE INDEX IF NOT EXISTS idx_props_yn_contestant_type ON strike_configuration_props_yn(contestant_type);`
     ];
     try {
         // Execute each table creation statement
