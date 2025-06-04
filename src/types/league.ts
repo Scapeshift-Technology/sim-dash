@@ -25,8 +25,15 @@ export interface MatchupTab {
     label: string; // Short label for the tab, e.g., "NYY @ BOS"
 }
 
+export interface SettingsTab {
+    id: string;
+    type: 'settings';
+    league: LeagueName;
+    label: string;
+}
+
 // Union type for all possible tabs
-export type Tab = LeagueTab | MatchupTab;
+export type Tab = LeagueTab | MatchupTab | SettingsTab;
 
 // Define the state structure for this slice
 export interface LeagueState {
