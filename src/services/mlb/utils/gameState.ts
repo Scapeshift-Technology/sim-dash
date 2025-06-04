@@ -31,12 +31,17 @@ export function createGameStateFromLiveDataHelper<T extends TeamLineup | Reduced
   const isTopInningAdjusted = inningOver ? !isTopInning : isTopInning;
   
   const inning = inningOver && isTopInningAdjusted ? liveGameData.liveData.linescore.currentInning + 1 : liveGameData.liveData.linescore.currentInning;
+  const inExtras = inning > 9;
+  const adjustedBases = inningOver ? 
+    (inExtras ? [false, true, false] :
+      [false, false, false]) : 
+      bases;
 
   const baseGameState = {
     inning: inning,
     topInning: isTopInningAdjusted,
     outs: inningOver ? 0 : liveGameData.liveData.linescore.outs,
-    bases: inningOver ? [false, false, false] : bases,
+    bases: adjustedBases,
     awayScore: liveGameData.liveData.linescore.teams.away.runs,
     homeScore: liveGameData.liveData.linescore.teams.home.runs,
     awayPitcher: awayPitcher,
