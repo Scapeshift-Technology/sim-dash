@@ -8,11 +8,19 @@ import {
     Tooltip
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import SettingsIcon from '@mui/icons-material/Settings';
+
 import MLBSimulationResultsSummary from '@/simDash/components/simulation/MLBSimulationResultsSummary';
-import type { SimHistoryEntry } from '@/types/simHistory';
 import SimulationButton from './SimulationButton';
+
+import { useDispatch } from 'react-redux';
+import { openSettingsTab } from '@/simDash/store/slices/tabSlice';
+
 import { MlbLiveDataApiResponse } from '@@/types/mlb';
 import { SimType } from '@@/types/mlb/mlb-sim';
+import type { SimHistoryEntry } from '@/types/simHistory';
+
+// ---------- Main component ----------
 
 interface MLBMatchupHeaderProps {
     participant1: string;
@@ -51,10 +59,23 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
     onRunSimulation,
     onChangeSimType
 }) => {
-    // Convert UTC datetime to local time
+    const dispatch = useDispatch();
+    
+    // ---------- State ----------
+
     const localDateTime = new Date(dateTime);
     const timeString = localDateTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     const dateString = localDateTime.toLocaleDateString();
+
+    // ---------- Event handlers ----------
+
+    const handleSimSettingsClick = () => {
+        dispatch(openSettingsTab({
+            league: 'MLB'
+        }));
+    };
+
+    // ---------- Rendering ----------
 
     return (
         <Paper 
@@ -79,16 +100,26 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
                         {dateString} • {timeString}
                     </Typography>
                 </Box>
-                <Tooltip title="Reload lineups">
-                    <IconButton 
-                        onClick={onRefresh}
-                        size="small"
-                        sx={{ ml: 2 }}
-                        disabled={!lineupData}
-                    >
-                        <RefreshIcon />
-                    </IconButton>
-                </Tooltip>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Tooltip title="Reload lineups">
+                        <IconButton 
+                            onClick={onRefresh}
+                            size="small"
+                            disabled={!lineupData}
+                        >
+                            <RefreshIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Simulation Settings">
+                        <IconButton 
+                            size="small" 
+                            onClick={handleSimSettingsClick}
+                            sx={{ mr: 1 }}
+                        >
+                            <SettingsIcon />
+                        </IconButton>
+                    </Tooltip>
+                </Box>
             </Box>
             {simError && (
                 <Alert severity="error" sx={{ mb: 2 }}>

@@ -1,5 +1,4 @@
 import React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
 import {
     Box,
     Typography,
@@ -9,6 +8,8 @@ import {
     IconButton
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+
+import { useSelector, useDispatch } from 'react-redux';
 import type { AppDispatch } from '@/store/store';
 import { 
     selectOpenTabs, 
@@ -17,9 +18,14 @@ import {
     closeTab, 
     selectActiveTabData 
 } from '@/simDash/store/slices/tabSlice';
-import type { Tab } from '@/types/league';
+
 import LeagueScheduleView from '@/simDash/pages/LeagueScheduleView';
 import MLBMatchupView from '@/simDash/pages/MLBMatchupView/MLBMatchupView';
+import SettingsView from '@/simDash/pages/SettingsView';
+
+import type { Tab } from '@/types/league';
+
+// ---------- Main component ----------
 
 const TabViewContainer: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -59,6 +65,8 @@ const TabViewContainer: React.FC = () => {
                             participant2={tab.participant2} 
                             daySequence={tab.daySequence} 
                         />;
+            case 'settings':
+                return <SettingsView league={tab.league}/>;
             default:
                 return <Typography>Unknown tab type</Typography>;
         }
