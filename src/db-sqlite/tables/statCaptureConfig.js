@@ -249,9 +249,9 @@ async function getActiveStatCaptureConfiguration(db, leagueName) {
     dbOperation(db, 'all', 
       `SELECT 
         name
-        , market_type
-        , period_type_code
-        , period_number
+        , market_type AS marketType
+        , period_type_code AS periodTypeCode
+        , period_number AS periodNumber
         , strike 
       FROM strike_configuration_main_markets 
       WHERE name = ?`,
@@ -261,7 +261,7 @@ async function getActiveStatCaptureConfiguration(db, leagueName) {
       `SELECT 
         name
         , prop
-        , contestant_type
+        , contestant_type AS contestantType
         , strike 
       FROM strike_configuration_props_ou 
       WHERE name = ?`, 
@@ -271,7 +271,7 @@ async function getActiveStatCaptureConfiguration(db, leagueName) {
       `SELECT 
         name
         , prop
-        , contestant_type 
+        , contestant_type AS contestantType
       FROM strike_configuration_props_yn 
       WHERE name = ?`,
       [config.name]

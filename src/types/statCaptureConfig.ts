@@ -2,9 +2,13 @@ import { LeagueName } from "./league";
 
 // ---------- Config types ----------
 
+export type MarketType = 'Spread' | 'Total' | 'TeamTotal';
+export type PeriodTypeCode = 'M' | 'H' | 'I';
+export type PeriodKey = `${PeriodTypeCode}${number}` | 'fullGame' | 'firstFive';
+
 export interface MainMarketConfig {
-    marketType: string;
-    periodTypeCode: string;
+    marketType: MarketType;
+    periodTypeCode: PeriodTypeCode;
     periodNumber: number;
     strike: string;
 }

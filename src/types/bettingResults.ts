@@ -141,9 +141,14 @@ export interface SidesPeriodCountsMLB {
   [key: string]: OutcomeCounts;
 }
 
-export interface TeamSidesCountsMLB {
-  fullGame: SidesPeriodCountsMLB;
-  firstFive: SidesPeriodCountsMLB;
+// export interface TeamSidesCountsMLB {  // Old version of TeamSidesCountsMLB for reference
+//   fullGame: SidesPeriodCountsMLB;
+//   firstFive: SidesPeriodCountsMLB;
+// }
+
+export type TeamSidesCountsMLB = {
+  [key: string]: SidesPeriodCountsMLB // Really PeriodKey type, but typescript gets mad when I put that
+
 }
   
 export interface SidesCountsMLB {

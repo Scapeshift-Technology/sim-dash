@@ -40,7 +40,7 @@ async function simulateMatchupMLB(
     // Simulate games
     const simPlays = await simulateGames(matchup, leagueAvgStats, num_games, liveGameData);
     // Get results
-    const outputResults: SimResultsMLB = calculateSimCounts(simPlays, matchup, liveGameData);
+    const outputResults: SimResultsMLB = calculateSimCounts(simPlays, matchup, statCaptureConfig, liveGameData);
 
     return outputResults;
   } catch (error) {

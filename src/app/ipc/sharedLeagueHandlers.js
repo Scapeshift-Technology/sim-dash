@@ -81,9 +81,9 @@ const getLeaguePeriods = async (event, leagueName, getCurrentPool) => {
 
     try {
         const result = await currentPool.request().query(`
-            SELECT PeriodTypeCode
+            SELECT TRIM(PeriodTypeCode) AS PeriodTypeCode
                 , PeriodNumber
-                , IIF(SubPeriodType = CHAR(0), SuperPeriodType, SubPeriodType) AS PeriodName
+                , TRIM(IIF(SubPeriodType = CHAR(0), SuperPeriodType, SubPeriodType)) AS PeriodName
             FROM LeaguePeriodShortcode
             WHERE league = '${leagueName}'
         `);
