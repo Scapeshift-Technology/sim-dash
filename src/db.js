@@ -109,9 +109,114 @@ async function initializeSchema(db) {
             await db.runAsync(sql);
         }
         console.log("All database tables ensured.");
+        
+        // Add default stat capture configuration if it doesn't exist
+        await addDefaultConfiguration(db);
     } catch (err) {
         console.error('Error creating database tables:', err.message);
         throw err; // Re-throw error to be caught by caller
+    }
+}
+
+// Add default strike configuration
+async function addDefaultConfiguration(db) {
+    try {
+        // Check if default configuration already exists
+        const existingConfig = await new Promise((resolve, reject) => {
+            db.get("SELECT name FROM strike_configuration WHERE name = 'default'", (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+
+        if (existingConfig) {
+            console.log("Default configuration already exists, skipping creation.");
+            return;
+        }
+
+        // Insert default configuration
+        await db.runAsync(
+            "INSERT INTO strike_configuration (name, league) VALUES ('default', 'MLB')"
+        );
+
+        // Define the default main markets data
+        const defaultMainMarkets = [
+            // Spread - Full game (M, 0): 0, 1.5
+            { marketType: 'Spread', periodTypeCode: 'M', periodNumber: 0, strike: 0 },
+            { marketType: 'Spread', periodTypeCode: 'M', periodNumber: 0, strike: 1.5 },
+            // Spread - Half 1 (H, 1): 0, 1.5
+            { marketType: 'Spread', periodTypeCode: 'H', periodNumber: 1, strike: 0 },
+            { marketType: 'Spread', periodTypeCode: 'H', periodNumber: 1, strike: 1.5 },
+            
+            // Totals - Full game (M, 0): 6.5 - 11.5
+            { marketType: 'Total', periodTypeCode: 'M', periodNumber: 0, strike: 6.5 },
+            { marketType: 'Total', periodTypeCode: 'M', periodNumber: 0, strike: 7.0 },
+            { marketType: 'Total', periodTypeCode: 'M', periodNumber: 0, strike: 7.5 },
+            { marketType: 'Total', periodTypeCode: 'M', periodNumber: 0, strike: 8.0 },
+            { marketType: 'Total', periodTypeCode: 'M', periodNumber: 0, strike: 8.5 },
+            { marketType: 'Total', periodTypeCode: 'M', periodNumber: 0, strike: 9.0 },
+            { marketType: 'Total', periodTypeCode: 'M', periodNumber: 0, strike: 9.5 },
+            { marketType: 'Total', periodTypeCode: 'M', periodNumber: 0, strike: 10.0 },
+            { marketType: 'Total', periodTypeCode: 'M', periodNumber: 0, strike: 10.5 },
+            { marketType: 'Total', periodTypeCode: 'M', periodNumber: 0, strike: 11.0 },
+            { marketType: 'Total', periodTypeCode: 'M', periodNumber: 0, strike: 11.5 },
+            
+            // Totals - H1 (H, 1): 2.5 - 8.5
+            { marketType: 'Total', periodTypeCode: 'H', periodNumber: 1, strike: 2.5 },
+            { marketType: 'Total', periodTypeCode: 'H', periodNumber: 1, strike: 3.0 },
+            { marketType: 'Total', periodTypeCode: 'H', periodNumber: 1, strike: 3.5 },
+            { marketType: 'Total', periodTypeCode: 'H', periodNumber: 1, strike: 4.0 },
+            { marketType: 'Total', periodTypeCode: 'H', periodNumber: 1, strike: 4.5 },
+            { marketType: 'Total', periodTypeCode: 'H', periodNumber: 1, strike: 5.0 },
+            { marketType: 'Total', periodTypeCode: 'H', periodNumber: 1, strike: 5.5 },
+            { marketType: 'Total', periodTypeCode: 'H', periodNumber: 1, strike: 6.0 },
+            { marketType: 'Total', periodTypeCode: 'H', periodNumber: 1, strike: 6.5 },
+            { marketType: 'Total', periodTypeCode: 'H', periodNumber: 1, strike: 7.0 },
+            { marketType: 'Total', periodTypeCode: 'H', periodNumber: 1, strike: 7.5 },
+            { marketType: 'Total', periodTypeCode: 'H', periodNumber: 1, strike: 8.0 },
+            { marketType: 'Total', periodTypeCode: 'H', periodNumber: 1, strike: 8.5 },
+            
+            // TeamTotals - Full game (M, 0): 2 - 8.5
+            { marketType: 'TeamTotal', periodTypeCode: 'M', periodNumber: 0, strike: 2.0 },
+            { marketType: 'TeamTotal', periodTypeCode: 'M', periodNumber: 0, strike: 2.5 },
+            { marketType: 'TeamTotal', periodTypeCode: 'M', periodNumber: 0, strike: 3.0 },
+            { marketType: 'TeamTotal', periodTypeCode: 'M', periodNumber: 0, strike: 3.5 },
+            { marketType: 'TeamTotal', periodTypeCode: 'M', periodNumber: 0, strike: 4.0 },
+            { marketType: 'TeamTotal', periodTypeCode: 'M', periodNumber: 0, strike: 4.5 },
+            { marketType: 'TeamTotal', periodTypeCode: 'M', periodNumber: 0, strike: 5.0 },
+            { marketType: 'TeamTotal', periodTypeCode: 'M', periodNumber: 0, strike: 5.5 },
+            { marketType: 'TeamTotal', periodTypeCode: 'M', periodNumber: 0, strike: 6.0 },
+            { marketType: 'TeamTotal', periodTypeCode: 'M', periodNumber: 0, strike: 6.5 },
+            { marketType: 'TeamTotal', periodTypeCode: 'M', periodNumber: 0, strike: 7.0 },
+            { marketType: 'TeamTotal', periodTypeCode: 'M', periodNumber: 0, strike: 7.5 },
+            { marketType: 'TeamTotal', periodTypeCode: 'M', periodNumber: 0, strike: 8.0 },
+            { marketType: 'TeamTotal', periodTypeCode: 'M', periodNumber: 0, strike: 8.5 },
+            
+            // TeamTotals - H1 (H, 1): 0.5 - 4
+            { marketType: 'TeamTotal', periodTypeCode: 'H', periodNumber: 1, strike: 0.5 },
+            { marketType: 'TeamTotal', periodTypeCode: 'H', periodNumber: 1, strike: 1.0 },
+            { marketType: 'TeamTotal', periodTypeCode: 'H', periodNumber: 1, strike: 1.5 },
+            { marketType: 'TeamTotal', periodTypeCode: 'H', periodNumber: 1, strike: 2.0 },
+            { marketType: 'TeamTotal', periodTypeCode: 'H', periodNumber: 1, strike: 2.5 },
+            { marketType: 'TeamTotal', periodTypeCode: 'H', periodNumber: 1, strike: 3.0 },
+            { marketType: 'TeamTotal', periodTypeCode: 'H', periodNumber: 1, strike: 3.5 },
+            { marketType: 'TeamTotal', periodTypeCode: 'H', periodNumber: 1, strike: 4.0 }
+        ];
+
+        // Insert all default main markets
+        for (const market of defaultMainMarkets) {
+            await db.runAsync(
+                `INSERT INTO strike_configuration_main_markets 
+                 (name, market_type, period_type_code, period_number, strike)
+                 VALUES ('default', ?, ?, ?, ?)`,
+                [market.marketType, market.periodTypeCode, market.periodNumber, market.strike]
+            );
+        }
+
+        console.log(`Default configuration created with ${defaultMainMarkets.length} main market entries.`);
+    } catch (err) {
+        console.error('Error creating default configuration:', err.message);
+        throw err;
     }
 }
 
