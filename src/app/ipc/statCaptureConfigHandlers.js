@@ -73,6 +73,22 @@ const handleDeleteStatCaptureConfiguration = async (event, configName, getDbHelp
     }
 };
 
+const handleSetActiveStatCaptureConfiguration = async (event, configName, leagueName, getDbHelper, getDb) => {
+    log.info(`IPC received: set-active-stat-capture-configuration for ${configName} in league ${leagueName}`);
+
+    try {
+        const dbHelper = getDbHelper();
+        const db = getDb();
+
+        const result = await dbHelper.setActiveStatCaptureConfiguration(db, configName, leagueName);
+
+        log.info(`Set active stat capture configuration for ${configName} in league ${leagueName}`);
+        return result;
+    } catch (err) {
+        log.error(`Error setting active stat capture configuration for ${configName} in league ${leagueName}:`, err);
+        throw err;
+    }
+};
 // ---------- Register functions ----------
 
 /**
@@ -97,6 +113,10 @@ const registerStatCaptureConfigHandlers = ({ getDbHelper, getDb }) => {
     // Delete stat capture configuration handler
     ipcMain.handle('delete-stat-capture-configuration', (event, configName) => 
         handleDeleteStatCaptureConfiguration(event, configName, getDbHelper, getDb));
+
+    // Set active stat capture configuration handler
+    ipcMain.handle('set-active-stat-capture-configuration', (event, configName, leagueName) => 
+        handleSetActiveStatCaptureConfiguration(event, configName, leagueName, getDbHelper, getDb));
 
     log.info('Stat capture config IPC handlers registered');
 };

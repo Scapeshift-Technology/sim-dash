@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box, FormControl, InputLabel, Select, MenuItem, Typography, TextField, Button, Alert } from '@mui/material';
-import { Save as SaveIcon } from '@mui/icons-material';
+import { Save as SaveIcon, CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 
 import FolderTabs, { FolderTab } from './components/FolderTabs';
 import MainMarketsTab from './components/MainMarketsTab';
@@ -18,7 +18,10 @@ import {
     selectCurrentDraft,
     saveStatCaptureConfiguration,
     selectSaveConfigLoading,
-    selectSaveConfigError
+    selectSaveConfigError,
+    setActiveStatCaptureConfiguration,
+    selectSetActiveConfigLoading,
+    selectSetActiveConfigError
 } from '@/apps/simDash/store/slices/statCaptureSettingsSlice';
 
 import { LeagueName } from '@@/types/league';
@@ -37,6 +40,7 @@ const MLBSettingsView: React.FC = () => {
     const [hasAttemptedConfigFetch, setHasAttemptedConfigFetch] = useState(false);
     const [configName, setConfigName] = useState('');
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const [setActiveSuccess, setSetActiveSuccess] = useState(false);
 
     // ---------- Redux State ----------
     
@@ -45,6 +49,8 @@ const MLBSettingsView: React.FC = () => {
     const currentDraft = useSelector((state: RootState) => selectCurrentDraft(state, LEAGUE_NAME));
     const saveLoading = useSelector((state: RootState) => selectSaveConfigLoading(state, LEAGUE_NAME));
     const saveError = useSelector((state: RootState) => selectSaveConfigError(state, LEAGUE_NAME));
+    const setActiveLoading = useSelector((state: RootState) => selectSetActiveConfigLoading(state, LEAGUE_NAME));
+    const setActiveError = useSelector((state: RootState) => selectSetActiveConfigError(state, LEAGUE_NAME));
 
     // ---------- Effects ----------
 
@@ -65,6 +71,13 @@ const MLBSettingsView: React.FC = () => {
             return () => clearTimeout(timer);
         }
     }, [saveSuccess]);
+
+    useEffect(() => { // Clear set active success message after 3 seconds
+        if (setActiveSuccess) {
+            const timer = setTimeout(() => setSetActiveSuccess(false), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [setActiveSuccess]);
 
     // ---------- Event handlers ----------
 
@@ -91,8 +104,11 @@ const MLBSettingsView: React.FC = () => {
 
         const configToSave = {
             ...currentDraft,
-            name: configName.trim()
+            name: configName.trim(),
+            isActive: false
         };
+
+        console.log('configToSave', configToSave);
 
         try {
             await dispatch(saveStatCaptureConfiguration(configToSave)).unwrap();
@@ -104,6 +120,22 @@ const MLBSettingsView: React.FC = () => {
             setConfigName('');
         } catch (error) {
             // Error is handled by Redux state
+        }
+    };
+
+    const handleSetActiveConfig = async () => {
+        if (currentDraft?.name) {
+            try {
+                await dispatch(setActiveStatCaptureConfiguration({ 
+                    configName: currentDraft.name, 
+                    leagueName: LEAGUE_NAME 
+                })).unwrap();
+                setSetActiveSuccess(true);
+                dispatch(getLeagueStatCaptureConfigurations(LEAGUE_NAME)); // Refresh the configurations list to show updated active status
+            } catch (error) {
+                // Error is handled by Redux state
+                console.error('Error setting active config:', error);
+            }
         }
     };
 
@@ -146,24 +178,35 @@ const MLBSettingsView: React.FC = () => {
                 <Typography variant="h6" sx={{ mb: 2 }}>
                     Configuration
                 </Typography>
-                <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-                    <InputLabel>Select Configuration</InputLabel>
-                    <Select
-                        value={currentDraft?.name || ''}
-                        label="Select Configuration"
-                        disabled={configurationsLoading}
-                        onChange={(e) => handleConfigurationSelect(e.target.value)}
-                    >
-                        <MenuItem value="">
-                            <em>No configuration selected</em>
-                        </MenuItem>
-                        {leagueStatCaptureConfigurations.map((config) => (
-                            <MenuItem key={config.name} value={config.name}>
-                                {config.name}
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', mb: 2 }}>
+                    <FormControl size="small" sx={{ flexGrow: 1 }}>
+                        <InputLabel>Select Configuration</InputLabel>
+                        <Select
+                            value={currentDraft?.name || ''}
+                            label="Select Configuration"
+                            disabled={configurationsLoading}
+                            onChange={(e) => handleConfigurationSelect(e.target.value)}
+                        >
+                            <MenuItem value="">
+                                <em>No configuration selected</em>
                             </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
+                            {leagueStatCaptureConfigurations.map((config) => (
+                                <MenuItem key={config.name} value={config.name}>
+                                    {config.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <Button
+                        variant="outlined"
+                        startIcon={<CheckCircleIcon />}
+                        onClick={handleSetActiveConfig}
+                        disabled={!currentDraft?.name || setActiveLoading || currentDraft?.isActive}
+                        sx={{ minWidth: 140 }}
+                    >
+                        {setActiveLoading ? 'Setting...' : 'Set Active'}
+                    </Button>
+                </Box>
 
                 {/* Save Configuration */}
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
@@ -181,7 +224,7 @@ const MLBSettingsView: React.FC = () => {
                         startIcon={<SaveIcon />}
                         onClick={handleSaveConfig}
                         disabled={!canSave()}
-                        sx={{ minWidth: 100 }}
+                        sx={{ minWidth: 140 }}
                     >
                         {saveLoading ? 'Saving...' : 'Save'}
                     </Button>
@@ -196,6 +239,16 @@ const MLBSettingsView: React.FC = () => {
                 {saveError && (
                     <Alert severity="error" sx={{ mt: 2 }}>
                         {saveError}
+                    </Alert>
+                )}
+                {setActiveSuccess && (
+                    <Alert severity="success" sx={{ mt: 2 }}>
+                        Configuration set as active successfully!
+                    </Alert>
+                )}
+                {setActiveError && (
+                    <Alert severity="error" sx={{ mt: 2 }}>
+                        {setActiveError}
                     </Alert>
                 )}
             </Box>

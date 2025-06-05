@@ -29,6 +29,7 @@ export interface SavedConfiguration extends LeagueSavedConfiguration {
 export interface LeagueSavedConfiguration {
     league: LeagueName;
     name: string;
+    isActive: boolean;
 }
 
 // ---------- State types ----------

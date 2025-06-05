@@ -62,11 +62,13 @@ async function initializeSchema(db) {
           PRIMARY KEY (match_id, timestamp),
           FOREIGN KEY (match_id) REFERENCES Match_V(Match)
         );`,
+
         // Create a saved stat capture config table
         `CREATE TABLE IF NOT EXISTS strike_configuration (
-            name TEXT PRIMARY KEY,
-            league TEXT NOT NULL
-        );`,
+          name TEXT PRIMARY KEY,
+          league TEXT NOT NULL,
+          is_active BOOLEAN NOT NULL DEFAULT FALSE
+         );`,
 
         `CREATE TABLE IF NOT EXISTS strike_configuration_main_markets (
             name TEXT NOT NULL,
@@ -136,7 +138,7 @@ async function addDefaultConfiguration(db) {
 
         // Insert default configuration
         await db.runAsync(
-            "INSERT INTO strike_configuration (name, league) VALUES ('default', 'MLB')"
+            "INSERT INTO strike_configuration (name, league, is_active) VALUES ('default', 'MLB', TRUE)"
         );
 
         // Define the default main markets data
@@ -340,7 +342,7 @@ async function getSimData(db, matchupId, timestamp) {
 // Get all strike configurations for a league
 async function getLeagueStrikeConfigurations(db, leagueName) {
   return new Promise((resolve, reject) => {
-    const query = "SELECT name, league FROM strike_configuration WHERE league = ? ORDER BY name";
+    const query = "SELECT name, league, is_active FROM strike_configuration WHERE league = ? ORDER BY name";
     db.all(query, [leagueName], (err, rows) => {
       if (err) {
         console.error('[db.js] Error fetching strike configurations from SQLite:', err.message);
@@ -359,7 +361,7 @@ async function getStrikeConfiguration(db, configName) {
     try {
       // Get main configuration
       const mainConfig = await new Promise((resolve, reject) => {
-        const query = "SELECT name, league FROM strike_configuration WHERE name = ?";
+        const query = "SELECT name, league, is_active FROM strike_configuration WHERE name = ?";
         db.get(query, [configName], (err, row) => {
           if (err) reject(err);
           else resolve(row);
@@ -445,12 +447,12 @@ async function saveStrikeConfiguration(db, config) {
         // 1. Insert/update main configuration
         await new Promise((resolve, reject) => {
           const sql = `
-            INSERT INTO strike_configuration (name, league)
-            VALUES (?, ?)
+            INSERT INTO strike_configuration (name, league, is_active)
+            VALUES (?, ?, ?)
             ON CONFLICT(name) DO UPDATE SET
               league = excluded.league
           `;
-          db.run(sql, [config.name, config.league], function(err) {
+          db.run(sql, [config.name, config.league, config.isActive], function(err) {
             if (err) reject(err);
             else resolve(this);
           });
@@ -622,6 +624,66 @@ async function deleteStrikeConfiguration(db, configName) {
   });
 }
 
+async function setActiveStatCaptureConfiguration(db, configName, leagueName) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      await new Promise((resolve, reject) => {
+        db.run("BEGIN TRANSACTION", (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+
+      try {
+        await new Promise((resolve, reject) => {
+          db.run(
+            "UPDATE strike_configuration SET is_active = FALSE WHERE league = ?",
+            [leagueName],
+            function(err) {
+              if (err) reject(err);
+              else resolve(this);
+            }
+          );
+        });
+
+        const result = await new Promise((resolve, reject) => {
+          db.run(
+            "UPDATE strike_configuration SET is_active = TRUE WHERE name = ? AND league = ?",
+            [configName, leagueName],
+            function(err) {
+              if (err) reject(err);
+              else resolve(this);
+            }
+          );
+        });
+
+        if (result.changes === 0) {
+          throw new Error(`Configuration '${configName}' not found in league '${leagueName}'`);
+        }
+
+        await new Promise((resolve, reject) => {
+          db.run("COMMIT", (err) => {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
+
+        console.log(`[db.js] Set '${configName}' as active configuration for league '${leagueName}'`);
+        resolve({ success: true, configName });
+      } catch (err) {
+        // Rollback transaction on error
+        await new Promise((rollbackResolve) => {
+          db.run("ROLLBACK", () => rollbackResolve()); // Always resolve rollback
+        });
+        throw err;
+      }
+    } catch (err) {
+      console.error(`[db.js] Error setting active stat capture configuration:`, err.message);
+      reject(err);
+    }
+  });
+}
+
 // ---------- Export ----------
 
 module.exports = {
@@ -638,5 +700,6 @@ module.exports = {
     getLeagueStrikeConfigurations,
     getStrikeConfiguration,
     saveStrikeConfiguration,
-    deleteStrikeConfiguration
+    deleteStrikeConfiguration,
+    setActiveStatCaptureConfiguration
 }; 

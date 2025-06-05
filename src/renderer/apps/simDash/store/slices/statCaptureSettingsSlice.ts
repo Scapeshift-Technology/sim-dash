@@ -33,6 +33,10 @@ export interface StatCaptureLeagueState {
     // Save config thunk
     saveConfigLoading: boolean;
     saveConfigError: string | null;
+
+    // Set active config thunk
+    setActiveConfigLoading: boolean;
+    setActiveConfigError: string | null;
 }
 
 export interface StatCaptureSettingsState {
@@ -101,6 +105,7 @@ export const saveStatCaptureConfiguration = createAsyncThunk<
     'statCaptureSettings/saveStatCaptureConfiguration',
     async (config, { rejectWithValue }) => {
         try {
+            console.log('saveStatCaptureConfiguration', config);
             const result = await window.electronAPI.saveStatCaptureConfiguration(config);
             return result;
         } catch (err: any) {
@@ -108,6 +113,23 @@ export const saveStatCaptureConfiguration = createAsyncThunk<
         }
     }
 );
+
+export const setActiveStatCaptureConfiguration = createAsyncThunk<
+    { success: boolean, configName: string },
+    { configName: string, leagueName: string },
+    { rejectValue: string }
+    >(
+        'statCaptureSettings/setActiveStatCaptureConfiguration',
+        async ({ configName, leagueName }, { rejectWithValue }) => {
+            try {
+                const result = await window.electronAPI.setActiveStatCaptureConfiguration(configName, leagueName);
+                return result;
+            } catch (err: any) {
+                return rejectWithValue(err.message || 'An unexpected error occurred while fetching league periods.');
+            }
+        }
+    );
+
 
 // ---------- Slice ----------
 
@@ -131,12 +153,15 @@ const statCaptureSettingsSlice = createSlice({
                     currentDraft: {
                         name: '',
                         league: leagueName,
+                        isActive: false,
                         mainMarkets: [],
                         propsOU: [],
                         propsYN: []
                     },
                     saveConfigLoading: false,
-                    saveConfigError: null
+                    saveConfigError: null,
+                    setActiveConfigLoading: false,
+                    setActiveConfigError: null
                 };
             }
         },
@@ -266,6 +291,46 @@ const statCaptureSettingsSlice = createSlice({
                     state[leagueName].statCaptureConfigurationError = action.payload ?? 'Failed to load stat capture configuration';
                 }
             })
+
+            // Set active stat capture configuration actions
+            .addCase(setActiveStatCaptureConfiguration.pending, (state, action) => {
+                const { configName, leagueName } = action.meta.arg;
+                if (state[leagueName]) {
+                    state[leagueName].setActiveConfigLoading = true;
+                    state[leagueName].setActiveConfigError = null;
+                }
+            })
+            .addCase(setActiveStatCaptureConfiguration.fulfilled, (state, action) => {
+                const { configName, leagueName } = action.meta.arg;
+                if (state[leagueName]) {
+                    state[leagueName].setActiveConfigLoading = false;
+                    
+                    // Set all configs in this league to inactive
+                    state[leagueName].leagueSavedConfigurations.forEach(config => {
+                        config.isActive = false;
+                    });
+                    
+                    // Set the specified config to active
+                    const targetConfig = state[leagueName].leagueSavedConfigurations.find(config => config.name === configName);
+                    if (targetConfig) {
+                        targetConfig.isActive = true;
+                    }
+                    
+                    // Update currentDraft if it matches the config being set active
+                    if (state[leagueName].currentDraft.name === configName) {
+                        state[leagueName].currentDraft.isActive = true;
+                    } else {
+                        state[leagueName].currentDraft.isActive = false;
+                    }
+                }
+            })
+            .addCase(setActiveStatCaptureConfiguration.rejected, (state, action) => {
+                const { configName, leagueName } = action.meta.arg;
+                if (state[leagueName]) {
+                    state[leagueName].setActiveConfigLoading = false;
+                    state[leagueName].setActiveConfigError = action.payload ?? 'Failed to set active stat capture configuration';
+                }
+            })
     }
 });
 
@@ -318,6 +383,12 @@ export const selectSaveConfigLoading = (state: { simDash: { settings: StatCaptur
     state.simDash?.settings?.[leagueName]?.saveConfigLoading ?? false;
 export const selectSaveConfigError = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): string | null => 
     state.simDash?.settings?.[leagueName]?.saveConfigError ?? null;
+
+// Set active configuration selectors
+export const selectSetActiveConfigLoading = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): boolean => 
+    state.simDash?.settings?.[leagueName]?.setActiveConfigLoading ?? false;
+export const selectSetActiveConfigError = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): string | null => 
+    state.simDash?.settings?.[leagueName]?.setActiveConfigError ?? null;
 
 // ---------- Reducer ----------
 
