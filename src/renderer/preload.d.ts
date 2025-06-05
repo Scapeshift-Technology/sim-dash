@@ -41,8 +41,8 @@ declare global {
       getLeaguePeriods: (leagueName: string) => Promise<any[]>;
 
       // Stat capture config
-      fetchLeagueStatCaptureConfigurations: (leagueName: string) => Promise<any[]>;
-      fetchStatCaptureConfiguration: (configName: string) => Promise<any>;
+      fetchLeagueStatCaptureConfigurations: (leagueName: string) => Promise<LeagueSavedConfiguration[]>;
+      fetchStatCaptureConfiguration: (configName: string) => Promise<SavedConfiguration>;
       saveStatCaptureConfiguration: (config: SavedConfiguration) => Promise<any>;
       deleteStatCaptureConfiguration: (configName: string) => Promise<any>;
 

@@ -20,7 +20,7 @@ import {
 } from "@mui/material";
 import { Delete as DeleteIcon, Add as AddIcon } from "@mui/icons-material";
 
-import { BetType, Period, ValidationConfig, ConfigurationRow } from '@@/types/statCaptureConfig';
+import { BetType, Period, ValidationConfig, MainMarketConfig } from '@@/types/statCaptureConfig';
 
 // ---------- Types ----------
 
@@ -28,8 +28,8 @@ export interface MainMarketsConfigurationProps {
     betTypes: BetType[];
     periods: Period[];
     validationConfig: ValidationConfig;
-    existingConfigurations: ConfigurationRow[];
-    onConfigurationChange: (configurations: ConfigurationRow[]) => void;
+    existingConfigurations: MainMarketConfig[];
+    onConfigurationChange: (configurations: MainMarketConfig[]) => void;
     leagueName: string;
 }
 
@@ -118,15 +118,16 @@ const MainMarketsConfiguration: React.FC<MainMarketsConfigurationProps> = ({
         const generatedLines = generateLines(min, max, validationConfig.increment);
 
         // Create table rows for each combination of betType x period x line
-        const newRows: ConfigurationRow[] = [];
+        const newRows: MainMarketConfig[] = [];
         selectedBetTypes.forEach(betType => {
-            selectedPeriods.forEach(period => {
+            selectedPeriods.forEach(periodId => {
+                const [periodTypeCode, periodNumber] = periodId.split('-');
                 generatedLines.forEach(line => {
                     newRows.push({
-                        id: `${betType}-${period}-${line}-${Date.now()}`,
-                        betType,
-                        period,
-                        line
+                        marketType: betType,
+                        periodTypeCode: periodTypeCode,
+                        periodNumber: parseInt(periodNumber),
+                        strike: line.toString()
                     });
                 });
             });
@@ -142,8 +143,8 @@ const MainMarketsConfiguration: React.FC<MainMarketsConfigurationProps> = ({
         setMaxValue('');
     };
 
-    const handleRemoveRow = (rowId: string) => {
-        const updatedConfigurations = existingConfigurations.filter(row => row.id !== rowId);
+    const handleRemoveRow = (index: number) => {
+        const updatedConfigurations = existingConfigurations.filter((_, i) => i !== index);
         onConfigurationChange(updatedConfigurations);
     };
 
@@ -322,19 +323,19 @@ const MainMarketsConfiguration: React.FC<MainMarketsConfigurationProps> = ({
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {existingConfigurations.map((row) => (
-                                <TableRow key={row.id}>
+                            {existingConfigurations.map((row, index) => (
+                                <TableRow key={`${row.marketType}-${row.periodTypeCode}-${row.periodNumber}-${row.strike}-${index}`}>
                                     <TableCell>
-                                        <Chip label={getBetTypeLabel(row.betType)} size="small" />
+                                        <Chip label={getBetTypeLabel(row.marketType)} size="small" />
                                     </TableCell>
                                     <TableCell>
-                                        <Chip label={getPeriodDisplayLabelFromId(row.period)} variant="outlined" size="small" />
+                                        <Chip label={getPeriodDisplayLabelFromId(row.periodTypeCode + '-' + row.periodNumber.toString())} variant="outlined" size="small" />
                                     </TableCell>
-                                    <TableCell>{row.line}</TableCell>
+                                    <TableCell>{row.strike}</TableCell>
                                     <TableCell>
                                         <IconButton 
                                             size="small" 
-                                            onClick={() => handleRemoveRow(row.id)}
+                                            onClick={() => handleRemoveRow(index)}
                                             color="error"
                                         >
                                             <DeleteIcon />

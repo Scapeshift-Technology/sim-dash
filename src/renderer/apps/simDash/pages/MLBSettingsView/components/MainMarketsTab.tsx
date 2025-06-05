@@ -1,30 +1,29 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Alert, Box, IconButton, Tooltip, CircularProgress } from "@mui/material";
 import { Refresh as RefreshIcon } from "@mui/icons-material";
 
 import { LeagueName } from "@@/types/league";
-import { BetType, ConfigurationRow, ValidationConfig } from "@@/types/statCaptureConfig";
+import { BetType, MainMarketConfig, ValidationConfig } from "@@/types/statCaptureConfig";
 
 import MainMarketsConfiguration from "@/simDash/components/MainMarketsConfiguration";
 
 import { AppDispatch, RootState } from "@/store/store";
 import { 
     getLeaguePeriods, 
-    getLeagueStatCaptureConfigurations, 
     selectLeaguePeriods, 
     selectLeaguePeriodsError, 
-    selectLeaguePeriodsLoading ,
-    selectLeagueStatCaptureConfigurations
+    selectLeaguePeriodsLoading,
+    selectCurrentDraft,
+    updateCurrentDraftMainMarkets
 } from "@/apps/simDash/store/slices/statCaptureSettingsSlice";
-
 
 // ---------- Constants ----------
 
 const MLB_BET_TYPES: BetType[] = [
-    { value: 'spread', label: 'Spread' },
-    { value: 'totals', label: 'Totals' },
-    { value: 'teamTotals', label: 'Team Totals' }
+    { value: 'Spread', label: 'Spread' },
+    { value: 'Total', label: 'Totals' },
+    { value: 'TeamTotal', label: 'Team Totals' }
 ];
 
 const validateMLBRangeValue = (value: string): string | null => {
@@ -57,22 +56,17 @@ const MLB_VALIDATION_CONFIG: ValidationConfig = {
 const MainMarketsTab: React.FC<{ leagueName: LeagueName }> = ({ leagueName }) => {
     const dispatch = useDispatch<AppDispatch>();
 
-    // ---------- State ----------
-
-    const [configurations, setConfigurations] = useState<ConfigurationRow[]>([]);
+    // ---------- Redux state ----------
 
     const leaguePeriods = useSelector((state: RootState) => selectLeaguePeriods(state, leagueName));
     const periodsLoading = useSelector((state: RootState) => selectLeaguePeriodsLoading(state, leagueName));
     const periodsError = useSelector((state: RootState) => selectLeaguePeriodsError(state, leagueName));
     const isPeriodsError = periodsError !== null;
-    // const leagueStatCaptureConfigurations = useSelector((state: RootState) => selectLeagueStatCaptureConfigurations(state, leagueName));
-    // console.log('leagueStatCaptureConfigurations', leagueStatCaptureConfigurations);
+    
+    const currentDraft = useSelector((state: RootState) => selectCurrentDraft(state, leagueName));
+    const mainMarkets = currentDraft?.mainMarkets || [];
 
-    // ---------- Redux ----------
-
-    // TODO: Once Redux is set up for configurations, uncomment these:
-    // const configurations = useSelector(state => selectMLBMainMarketConfigurations(state));
-    // const loading = useSelector(state => selectMLBConfigurationsLoading(state));
+    // ---------- Effects ----------
 
     useEffect(() => {
         if (leaguePeriods.length === 0 && !periodsLoading) {
@@ -80,16 +74,10 @@ const MainMarketsTab: React.FC<{ leagueName: LeagueName }> = ({ leagueName }) =>
         }
     }, [dispatch, leagueName]);
 
-    useEffect(() => {
-        dispatch(getLeagueStatCaptureConfigurations(leagueName));
-    }, [dispatch, leagueName]);
-
     // ---------- Event handlers ----------
 
-    const handleConfigurationChange = (newConfigurations: ConfigurationRow[]) => {
-        setConfigurations(newConfigurations);
-        // TODO: Dispatch to Redux to save configurations
-        // dispatch(updateMLBMainMarketConfigurations(newConfigurations));
+    const handleConfigurationChange = (newConfigurations: MainMarketConfig[]) => {
+        dispatch(updateCurrentDraftMainMarkets({ leagueName, mainMarkets: newConfigurations }));
     };
 
     // ---------- Render ----------
@@ -137,7 +125,7 @@ const MainMarketsTab: React.FC<{ leagueName: LeagueName }> = ({ leagueName }) =>
             betTypes={MLB_BET_TYPES}
             periods={leaguePeriods}
             validationConfig={MLB_VALIDATION_CONFIG}
-            existingConfigurations={configurations}
+            existingConfigurations={mainMarkets}
             onConfigurationChange={handleConfigurationChange}
             leagueName={leagueName}
         />

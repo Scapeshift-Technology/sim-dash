@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
 import { LeagueName } from '@@/types/league';
-import { Period } from '@@/types/statCaptureConfig';
+import { LeagueSavedConfiguration, Period } from '@@/types/statCaptureConfig';
 import { SavedConfiguration } from '@@/types/statCaptureConfig';
 
 
@@ -9,7 +9,7 @@ import { SavedConfiguration } from '@@/types/statCaptureConfig';
 
 export interface StatCaptureLeagueState {
     // Configurations
-    leagueSavedConfigurations: SavedConfiguration[];
+    leagueSavedConfigurations: LeagueSavedConfiguration[];
     
     // Current draft
     currentDraft: SavedConfiguration;
@@ -53,8 +53,6 @@ export const getLeaguePeriods = createAsyncThunk<
     'statCaptureSettings/getLeaguePeriods',
     async (leagueName, { rejectWithValue }) => {
         try {
-            console.log(`Fetching periods for league: ${leagueName}`);
-
             const result = await window.electronAPI.getLeaguePeriods(leagueName);
             return result;
         } catch (err: any) {
@@ -64,15 +62,13 @@ export const getLeaguePeriods = createAsyncThunk<
 );
 
 export const getLeagueStatCaptureConfigurations = createAsyncThunk<
-    SavedConfiguration[],
+    LeagueSavedConfiguration[],
     LeagueName,
     { rejectValue: string }
 >(
     'statCaptureSettings/getLeagueStatCaptureConfigurations',
     async (leagueName, { rejectWithValue }) => {
         try {
-            console.log(`Fetching stat capture configurations for league: ${leagueName}`);
-
             const result = await window.electronAPI.fetchLeagueStatCaptureConfigurations(leagueName);
             return result;
         } catch (err: any) {
@@ -105,8 +101,6 @@ export const saveStatCaptureConfiguration = createAsyncThunk<
     'statCaptureSettings/saveStatCaptureConfiguration',
     async (config, { rejectWithValue }) => {
         try {
-            console.log(`Saving stat capture configuration: ${config.name}`);
-
             const result = await window.electronAPI.saveStatCaptureConfiguration(config);
             return result;
         } catch (err: any) {
@@ -163,6 +157,20 @@ const statCaptureSettingsSlice = createSlice({
             const leagueName = action.payload;
             if (state[leagueName]) {
                 state[leagueName].periodsError = null;
+            }
+        },
+
+        updateCurrentDraft: (state, action: PayloadAction<{ leagueName: string; currentDraft: SavedConfiguration }>) => {
+            const { leagueName, currentDraft } = action.payload;
+            if (state[leagueName]) {
+                state[leagueName].currentDraft = currentDraft;
+            }
+        },
+
+        updateCurrentDraftMainMarkets: (state, action: PayloadAction<{ leagueName: string; mainMarkets: any[] }>) => {
+            const { leagueName, mainMarkets } = action.payload;
+            if (state[leagueName]) {
+                state[leagueName].currentDraft.mainMarkets = mainMarkets;
             }
         }
     },
@@ -267,7 +275,9 @@ export const {
     initializeLeague,
     setActiveTab,
     removeLeague,
-    clearPeriodsError
+    clearPeriodsError,
+    updateCurrentDraftMainMarkets,
+    updateCurrentDraft
 } = statCaptureSettingsSlice.actions;
 
 // ---------- Selectors ----------
@@ -288,7 +298,7 @@ export const selectLeaguePeriodsError = (state: { simDash: { settings: StatCaptu
     state.simDash?.settings?.[leagueName]?.periodsError ?? null;
 
 // League stat capture configurations selectors
-export const selectLeagueStatCaptureConfigurations = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): SavedConfiguration[] => 
+export const selectLeagueStatCaptureConfigurations = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): LeagueSavedConfiguration[] => 
     state.simDash?.settings?.[leagueName]?.leagueSavedConfigurations ?? [];
 export const selectLeagueStatCaptureConfigurationsLoading = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): boolean => 
     state.simDash?.settings?.[leagueName]?.leagueConfigurationsLoading ?? false;

@@ -20,13 +20,16 @@ export interface PropYNConfig {
     contestantType: string;
 }
 
-export interface SavedConfiguration {
-    name: string;
-    league: LeagueName;
+export interface SavedConfiguration extends LeagueSavedConfiguration {
     mainMarkets: MainMarketConfig[];
     propsOU: PropOUConfig[];
     propsYN: PropYNConfig[];
 };
+
+export interface LeagueSavedConfiguration {
+    league: LeagueName;
+    name: string;
+}
 
 // ---------- State types ----------
 

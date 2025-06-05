@@ -69,27 +69,30 @@ async function initializeSchema(db) {
         );`,
 
         `CREATE TABLE IF NOT EXISTS strike_configuration_main_markets (
-            name TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
             market_type TEXT CHECK (market_type IN ('Spread', 'Total', 'TeamTotal')) NOT NULL,
             period_type_code TEXT NOT NULL,
             period_number INTEGER NOT NULL,
             strike REAL NOT NULL,
+            PRIMARY KEY (name, market_type, period_type_code, period_number, strike),
             FOREIGN KEY (name) REFERENCES strike_configuration(name) ON DELETE CASCADE
         );`,
 
         `CREATE TABLE IF NOT EXISTS strike_configuration_props_ou (
-            name TEXT PRIMARY KEY,
-            prop TEXT NOT NULL,
-            contestant_type TEXT CHECK (contestant_type IN ('Individual', 'TeamLeague')) NOT NULL,
-            strike REAL NOT NULL,
-            FOREIGN KEY (name) REFERENCES strike_configuration(name) ON DELETE CASCADE
+          name TEXT NOT NULL,
+          prop TEXT NOT NULL,
+          contestant_type TEXT CHECK (contestant_type IN ('Individual', 'TeamLeague')) NOT NULL,
+          strike REAL NOT NULL,
+          PRIMARY KEY (name, prop, contestant_type, strike),
+          FOREIGN KEY (name) REFERENCES strike_configuration(name) ON DELETE CASCADE
         );`,
 
         `CREATE TABLE IF NOT EXISTS strike_configuration_props_yn (
-            name TEXT PRIMARY KEY,
-            prop TEXT NOT NULL,
-            contestant_type TEXT CHECK (contestant_type IN ('Individual', 'TeamLeague')) NOT NULL,
-            FOREIGN KEY (name) REFERENCES strike_configuration(name) ON DELETE CASCADE
+          name TEXT NOT NULL,
+          prop TEXT NOT NULL,
+          contestant_type TEXT CHECK (contestant_type IN ('Individual', 'TeamLeague')) NOT NULL,
+          PRIMARY KEY (name, prop, contestant_type),
+          FOREIGN KEY (name) REFERENCES strike_configuration(name) ON DELETE CASCADE
         );`,
 
         `CREATE INDEX IF NOT EXISTS idx_strike_config_league ON strike_configuration(league);

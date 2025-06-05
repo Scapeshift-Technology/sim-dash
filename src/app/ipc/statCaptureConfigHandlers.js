@@ -39,6 +39,40 @@ const handleFetchStatCaptureConfiguration = async (event, configName, getDbHelpe
     }
 };
 
+const handleSaveStatCaptureConfiguration = async (event, config, getDbHelper, getDb) => {
+    log.info(`IPC received: save-stat-capture-configuration for ${config.name}`);
+    
+    try {
+        const dbHelper = getDbHelper();
+        const db = getDb();
+
+        const result = await dbHelper.saveStrikeConfiguration(db, config);
+
+        log.info(`Saved stat capture configuration for ${config.name}`);
+        return result;
+    } catch (err) {
+        log.error(`Error saving stat capture configuration for ${config.name}:`, err);
+        throw err;
+    }
+};
+
+const handleDeleteStatCaptureConfiguration = async (event, configName, getDbHelper, getDb) => {
+    log.info(`IPC received: delete-stat-capture-configuration for ${configName}`);
+    
+    try {
+        const dbHelper = getDbHelper();
+        const db = getDb();
+
+        const result = await dbHelper.deleteStrikeConfiguration(db, configName);
+
+        log.info(`Deleted stat capture configuration for ${configName}`);
+        return result;
+    } catch (err) {
+        log.error(`Error deleting stat capture configuration for ${configName}:`, err);
+        throw err;
+    }
+};
+
 // ---------- Register functions ----------
 
 /**
