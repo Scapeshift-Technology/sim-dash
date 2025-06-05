@@ -47,7 +47,6 @@ const MLBSettingsView: React.FC = () => {
     const leagueStatCaptureConfigurations = useSelector((state: RootState) => selectLeagueStatCaptureConfigurations(state, LEAGUE_NAME));
     const configurationsLoading = useSelector((state: RootState) => selectLeagueStatCaptureConfigurationsLoading(state, LEAGUE_NAME));
     const currentDraft = useSelector((state: RootState) => selectCurrentDraft(state, LEAGUE_NAME));
-    console.log('currentDraft', currentDraft);
     const saveLoading = useSelector((state: RootState) => selectSaveConfigLoading(state, LEAGUE_NAME));
     const saveError = useSelector((state: RootState) => selectSaveConfigError(state, LEAGUE_NAME));
     const setActiveLoading = useSelector((state: RootState) => selectSetActiveConfigLoading(state, LEAGUE_NAME));

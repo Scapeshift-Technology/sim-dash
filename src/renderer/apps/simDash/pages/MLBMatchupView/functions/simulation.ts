@@ -10,10 +10,10 @@ import { SavedConfiguration } from "@/types/statCaptureConfig";
 export async function runSimulation(
     gameInputs: MLBGameInputs2,
     numGames: number = 90000,
-    liveGameData?: MlbLiveDataApiResponse
+    liveGameData?: MlbLiveDataApiResponse,
+    activeConfig?: SavedConfiguration
 ): Promise<SimResultsMLB> {
-    const activeConfig = await window.electronAPI.getActiveStatCaptureConfiguration('MLB');
-    console.log('activeConfig', activeConfig);
+    const config = activeConfig || await window.electronAPI.getActiveStatCaptureConfiguration('MLB');
 
     const redoneLineups = applyMatchupLeansMLB(gameInputs);
     
@@ -21,7 +21,7 @@ export async function runSimulation(
         matchupLineups: redoneLineups,
         numGames: numGames,
         gameId: gameInputs.gameInfo.mlbGameId,
-        statCaptureConfig: activeConfig,
+        statCaptureConfig: config,
         liveGameData: liveGameData
     });
 
@@ -30,7 +30,8 @@ export async function runSimulation(
 
 export async function runSeriesSimulation(
     gameInputs: SeriesGameInputs,
-    numGames: number = 90000
+    numGames: number = 90000,
+    activeConfig?: SavedConfiguration
 ): Promise<SimResultsMLB> {
     const simResults: {[key: number]: SimResultsMLB} = {};
     
@@ -39,7 +40,7 @@ export async function runSeriesSimulation(
       .filter(game => game.gameInfo.seriesGameNumber <= 3);
     
     for (const game of seriesGames) {
-      const gameSimResults = await runSimulation(game, numGames);
+      const gameSimResults = await runSimulation(game, numGames, undefined, activeConfig);
       simResults[game.gameInfo.seriesGameNumber] = gameSimResults;
     }
 
@@ -50,7 +51,6 @@ export async function runSeriesSimulation(
       ...simResults[1],
       series: seriesProbs
     };
-    console.log('Probabilities', calculatedResults);
 
     // Return
     return calculatedResults;

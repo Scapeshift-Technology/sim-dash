@@ -28,6 +28,14 @@ import {
 } from '@/simDash/store/slices/scheduleSlice';
 import { calculateResultsSummaryDisplayMLB } from '@/simDash/utils/oddsUtilsMLB';
 import { usePrevious } from '@dnd-kit/utilities';
+import { 
+    initializeLeague,
+    getActiveStatCaptureConfiguration,
+    selectActiveConfig,
+    selectActiveConfigLoading,
+    selectActiveConfigError
+} from '@/simDash/store/slices/statCaptureSettingsSlice';
+import { LeagueName } from '@@/types/league';
 
 // ---------- Helper functions ----------
 
@@ -171,6 +179,10 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
     const error = useSelector((state: RootState) => selectLeagueScheduleError(state, league));
     const [currentDate, setCurrentDate] = useState<Dayjs | null>(null);
 
+    const activeConfig = useSelector((state: RootState) => selectActiveConfig(state, league));
+    const activeConfigLoading = useSelector((state: RootState) => selectActiveConfigLoading(state, league));
+    const activeConfigError = useSelector((state: RootState) => selectActiveConfigError(state, league));
+
     // ---------- UseEffects ----------
 
     useEffect(() => {
@@ -193,6 +205,14 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
           .catch(error => console.error('Error fetching sim results:', error));
       }
     }, [leagueScheduleStatus]);
+
+    // Initialize league and fetch active config if needed
+    useEffect(() => {
+        dispatch(initializeLeague(league as LeagueName));
+        if (!activeConfig && !activeConfigLoading && !activeConfigError && league === 'MLB') {
+            dispatch(getActiveStatCaptureConfiguration(league as LeagueName));
+        }
+    }, [dispatch, league, activeConfig, activeConfigLoading, activeConfigError]);
 
     // ---------- Handlers ----------
 

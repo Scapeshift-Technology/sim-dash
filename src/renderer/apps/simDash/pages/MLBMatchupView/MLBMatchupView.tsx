@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
     Box, 
@@ -69,6 +69,13 @@ import { useMLBMatchupData } from './hooks/useMLBMatchupData';
 import { SimType } from '@@/types/mlb/mlb-sim';
 import { useLineupFinder } from './hooks/useLineupFinder';
 import { convertGameStateWithLineupsToLiveData } from '@@/services/mlb/utils/gameState';
+import { 
+    initializeLeague,
+    getActiveStatCaptureConfiguration,
+    selectActiveConfig,
+    selectActiveConfigLoading,
+    selectActiveConfigError
+} from '@/simDash/store/slices/statCaptureSettingsSlice';
 
 // ---------- Sub-components ----------
 
@@ -142,6 +149,9 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const traditionalSimulationError = useSelector((state: RootState) => selectTraditionalSimulationError(state, league, matchId));
     const seriesSimulationStatus = useSelector((state: RootState) => selectSeriesSimulationStatus(state, league, matchId));
     const seriesSimulationError = useSelector((state: RootState) => selectSeriesSimulationError(state, league, matchId));
+    const activeConfig = useSelector((state: RootState) => selectActiveConfig(state, league));
+    const activeConfigLoading = useSelector((state: RootState) => selectActiveConfigLoading(state, league));
+    const activeConfigError = useSelector((state: RootState) => selectActiveConfigError(state, league));
 
     const [selectedGameTab, setSelectedGameTab] = useState(0);
     const [showCopySuccess, setShowCopySuccess] = useState(false);
@@ -184,6 +194,13 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         mlbGameId,
         setLiveGameData
     });
+
+    useEffect(() => {
+        dispatch(initializeLeague(league)); // Only initializes if no league yet; won't overwrite anything
+        if (!activeConfig && !activeConfigLoading && !activeConfigError) {
+            dispatch(getActiveStatCaptureConfiguration(league));
+        }
+    }, [dispatch, league, activeConfig, activeConfigLoading, activeConfigError]);
 
     // ---------- Handlers ----------
     const handleTeamLeanUpdate = (teamType: 'home' | 'away', leanType: 'offense' | 'defense', value: number) => {
@@ -242,18 +259,23 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         
         if (simType === 'series') {
             if (!gameContainer.seriesGames) return;
+            console.log('Running series simulation.');
             result = await dispatch(runSeriesSimulationThunk({
                 league,
                 matchId,
-                gameInputs: gameContainer.seriesGames
+                gameInputs: gameContainer.seriesGames,
+                activeConfig: activeConfig || undefined
             })).unwrap();
         } else if (simType === 'live') {
             if (!gameContainer.currentGame) return;
+            console.log('Running live simulation.');
             result = await dispatch(runSimulationThunk({
                 league,
                 matchId,
                 gameInputs: gameInputs,
-                liveGameData: liveGameData
+                numGames: 90000,
+                liveGameData: liveGameData,
+                activeConfig: activeConfig || undefined
             })).unwrap();
 
             await saveAndUpdateHistory(result, gameContainer.currentGame as MLBGameInputs2, liveGameData);
@@ -264,7 +286,9 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 league,
                 matchId,
                 gameInputs: gameInputs,
-                liveGameData: bannerLiveGameData
+                numGames: 90000,
+                liveGameData: bannerLiveGameData,
+                activeConfig: activeConfig || undefined
             })).unwrap();
             console.log('result', result);
 
@@ -275,7 +299,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             result = await dispatch(runSimulationThunk({
                 league,
                 matchId,
-                gameInputs: gameContainer.currentGame
+                gameInputs: gameContainer.currentGame,
+                activeConfig: activeConfig || undefined
             })).unwrap();
         }
 

@@ -37,6 +37,11 @@ export interface StatCaptureLeagueState {
     // Set active config thunk
     setActiveConfigLoading: boolean;
     setActiveConfigError: string | null;
+
+    // Active config thunk
+    activeConfigLoading: boolean;
+    activeConfigError: string | null;
+    activeConfig: SavedConfiguration | null;
 }
 
 export interface StatCaptureSettingsState {
@@ -129,6 +134,22 @@ export const setActiveStatCaptureConfiguration = createAsyncThunk<
     }
 );
 
+export const getActiveStatCaptureConfiguration = createAsyncThunk<
+    SavedConfiguration,
+    LeagueName,
+    { rejectValue: string }
+>(
+    'statCaptureSettings/getActiveStatCaptureConfiguration',
+    async (leagueName, { rejectWithValue }) => {
+        try {
+            const result = await window.electronAPI.getActiveStatCaptureConfiguration(leagueName);
+            return result;
+        } catch (err: any) {
+            return rejectWithValue(err.message || 'An unexpected error occurred while fetching active configuration.');
+        }
+    }
+);
+
 
 // ---------- Slice ----------
 
@@ -160,7 +181,10 @@ const statCaptureSettingsSlice = createSlice({
                     saveConfigLoading: false,
                     saveConfigError: null,
                     setActiveConfigLoading: false,
-                    setActiveConfigError: null
+                    setActiveConfigError: null,
+                    activeConfigLoading: false,
+                    activeConfigError: null,
+                    activeConfig: null
                 };
             }
         },
@@ -318,6 +342,29 @@ const statCaptureSettingsSlice = createSlice({
                     state[leagueName].setActiveConfigError = action.payload ?? 'Failed to set active stat capture configuration';
                 }
             })
+
+            // Get active stat capture configuration
+            .addCase(getActiveStatCaptureConfiguration.pending, (state, action) => {
+                const leagueName = action.meta.arg;
+                if (state[leagueName]) {
+                    state[leagueName].activeConfigLoading = true;
+                    state[leagueName].activeConfigError = null;
+                }
+            })
+            .addCase(getActiveStatCaptureConfiguration.fulfilled, (state, action) => {
+                const leagueName = action.meta.arg;
+                if (state[leagueName]) {
+                    state[leagueName].activeConfigLoading = false;
+                    state[leagueName].activeConfig = action.payload;
+                }
+            })
+            .addCase(getActiveStatCaptureConfiguration.rejected, (state, action) => {
+                const leagueName = action.meta.arg;
+                if (state[leagueName]) {
+                    state[leagueName].activeConfigLoading = false;
+                    state[leagueName].activeConfigError = action.payload ?? 'Failed to fetch active stat capture configuration';
+                }
+            })
     }
 });
 
@@ -376,6 +423,14 @@ export const selectSetActiveConfigLoading = (state: { simDash: { settings: StatC
     state.simDash?.settings?.[leagueName]?.setActiveConfigLoading ?? false;
 export const selectSetActiveConfigError = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): string | null => 
     state.simDash?.settings?.[leagueName]?.setActiveConfigError ?? null;
+
+// Active configuration selectors
+export const selectActiveConfig = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): SavedConfiguration | null => 
+    state.simDash?.settings?.[leagueName]?.activeConfig ?? null;
+export const selectActiveConfigLoading = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): boolean => 
+    state.simDash?.settings?.[leagueName]?.activeConfigLoading ?? false;
+export const selectActiveConfigError = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): string | null => 
+    state.simDash?.settings?.[leagueName]?.activeConfigError ?? null;
 
 // ---------- Reducer ----------
 
