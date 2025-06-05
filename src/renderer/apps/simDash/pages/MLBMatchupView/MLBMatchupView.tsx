@@ -14,10 +14,12 @@ import {
     Tooltip
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import type { MatchupLineups, MlbLiveDataApiResponse, Player, Position } from '@/types/mlb';
+
 import DraggableLineup from './components/DraggableLineup';
 import MLBMatchupHeader from './components/MLBMatchupHeader';
 import BettingBoundsSection from './components/BettingBoundsSection';
+import MLBGameBanner from './components/MLBGameBanner';
+
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchSimResults, selectMatchSimResults, selectMatchSimStatus } from '@/simDash/store/slices/scheduleSlice';
 import {
@@ -48,7 +50,6 @@ import {
     selectGameCustomModeDataGameState,
     updateCustomModeGameState
 } from '@/simDash/store/slices/simInputsSlice';
-import { LeagueName } from '@@/types/league';
 import { useLeanValidation } from './hooks/leanValidation';
 import { 
     runSeriesSimulationThunk, 
@@ -58,17 +59,6 @@ import {
     selectTraditionalSimulationError, 
     selectTraditionalSimulationStatus 
 } from '@/simDash/store/slices/simulationStatusSlice';
-import { MLBGameInputs2 } from '@@/types/simInputs';
-import { MLBGameSimInputData } from '@@/types/simHistory';
-import { SimHistoryEntry } from '@@/types/simHistory';
-import { transformMLBGameInputs2ToDB } from '@/simDash/utils/transformers';
-import { SimResultsMLB } from '@@/types/bettingResults';
-import { convertLineupsToTSV } from '@/simDash/utils/copyUtils';
-import MLBGameBanner from './components/MLBGameBanner';
-import { useMLBMatchupData } from './hooks/useMLBMatchupData';
-import { SimType } from '@@/types/mlb/mlb-sim';
-import { useLineupFinder } from './hooks/useLineupFinder';
-import { convertGameStateWithLineupsToLiveData } from '@@/services/mlb/utils/gameState';
 import { 
     initializeLeague,
     getActiveStatCaptureConfiguration,
@@ -76,6 +66,22 @@ import {
     selectActiveConfigLoading,
     selectActiveConfigError
 } from '@/simDash/store/slices/statCaptureSettingsSlice';
+
+import { LeagueName } from '@@/types/league';
+import { MLBGameInputs2 } from '@@/types/simInputs';
+import { MLBGameSimInputData } from '@@/types/simHistory';
+import { SimHistoryEntry } from '@@/types/simHistory';
+import { SimResultsMLB } from '@@/types/bettingResults';
+import { SimType } from '@@/types/mlb/mlb-sim';
+import type { MatchupLineups, MlbLiveDataApiResponse, Player, Position } from '@/types/mlb';
+
+import { transformMLBGameInputs2ToDB } from '@/simDash/utils/transformers';
+import { convertLineupsToTSV } from '@/simDash/utils/copyUtils';
+
+import { useMLBMatchupData } from './hooks/useMLBMatchupData';
+import { useLineupFinder } from './hooks/useLineupFinder';
+
+import { convertGameStateWithLineupsToLiveData } from '@@/services/mlb/utils/gameState';
 
 // ---------- Sub-components ----------
 
@@ -259,7 +265,6 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         
         if (simType === 'series') {
             if (!gameContainer.seriesGames) return;
-            console.log('Running series simulation.');
             result = await dispatch(runSeriesSimulationThunk({
                 league,
                 matchId,
@@ -268,7 +273,6 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             })).unwrap();
         } else if (simType === 'live') {
             if (!gameContainer.currentGame) return;
-            console.log('Running live simulation.');
             result = await dispatch(runSimulationThunk({
                 league,
                 matchId,
@@ -509,6 +513,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 hasInvalidLeans={hasInvalidLeans}
                 seriesGames={seriesGames}
                 liveGameData={liveGameData}
+                leagueName={league}
                 onRefresh={handleRefresh}
                 onRunSimulation={handleRunSimulation}
                 onChangeSimType={handleChangeSimType}

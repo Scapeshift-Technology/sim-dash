@@ -15,9 +15,11 @@ import SimulationButton from './SimulationButton';
 
 import { useDispatch } from 'react-redux';
 import { openSettingsTab } from '@/simDash/store/slices/tabSlice';
+import { AppDispatch } from '@/store/store';
 
 import { MlbLiveDataApiResponse } from '@@/types/mlb';
 import { SimType } from '@@/types/mlb/mlb-sim';
+import { LeagueName } from '@@/types/league';
 import type { SimHistoryEntry } from '@/types/simHistory';
 
 // ---------- Main component ----------
@@ -36,6 +38,7 @@ interface MLBMatchupHeaderProps {
     hasInvalidLeans: boolean;
     seriesGames?: { [key: string]: any };
     liveGameData: MlbLiveDataApiResponse | undefined;
+    leagueName: LeagueName;
     onRefresh: () => void;
     onRunSimulation: (simType: SimType) => void;
     onChangeSimType: (simType: SimType) => void;
@@ -55,11 +58,12 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
     hasInvalidLeans,
     seriesGames,
     liveGameData,
+    leagueName,
     onRefresh,
     onRunSimulation,
     onChangeSimType
 }) => {
-    const dispatch = useDispatch();
+    const dispatch = useDispatch<AppDispatch>();
     
     // ---------- State ----------
 
@@ -71,7 +75,7 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
 
     const handleSimSettingsClick = () => {
         dispatch(openSettingsTab({
-            league: 'MLB'
+            league: leagueName
         }));
     };
 
@@ -141,6 +145,7 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
                         disabled={isSimulating || !lineupData || hasInvalidLeans}
                         seriesGames={seriesGames}
                         liveGameData={liveGameData}
+                        leagueName={leagueName}
                         onRunSimulation={onRunSimulation}
                         onChangeSimType={onChangeSimType}
                     />

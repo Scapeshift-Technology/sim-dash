@@ -44,7 +44,7 @@ declare global {
       fetchLeagueStatCaptureConfigurations: (leagueName: string) => Promise<LeagueSavedConfiguration[]>;
       fetchStatCaptureConfiguration: (configName: string) => Promise<SavedConfiguration>;
       saveStatCaptureConfiguration: (config: SavedConfiguration) => Promise<any>;
-      setActiveStatCaptureConfiguration: (configName: string, leagueName: string) => Promise<any>;
+      setActiveStatCaptureConfiguration: (configName: string, leagueName: string) => Promise<SavedConfiguration>;
       getActiveStatCaptureConfiguration: (leagueName: string) => Promise<SavedConfiguration>;
 
       // ---------- MLB-specific functions ----------

@@ -215,7 +215,7 @@ async function setActiveStatCaptureConfiguration(db, configName, leagueName) {
         [leagueName, configName]
       );
 
-      return { success: true, configName };
+      return await getStrikeConfiguration(db, configName);
     });
 
     console.log(`[statCaptureConfig.js] Set '${configName}' as active configuration for league '${leagueName}'`);

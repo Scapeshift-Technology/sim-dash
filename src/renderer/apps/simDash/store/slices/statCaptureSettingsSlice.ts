@@ -119,7 +119,7 @@ export const saveStatCaptureConfiguration = createAsyncThunk<
 );
 
 export const setActiveStatCaptureConfiguration = createAsyncThunk<
-    { success: boolean, configName: string },
+    SavedConfiguration,
     { configName: string, leagueName: string },
     { rejectValue: string }
 >(
@@ -333,10 +333,12 @@ const statCaptureSettingsSlice = createSlice({
                     } else {
                         state[leagueName].currentDraft.isActive = false;
                     }
+
+                    state[leagueName].activeConfig = action.payload;
                 }
             })
             .addCase(setActiveStatCaptureConfiguration.rejected, (state, action) => {
-                const { configName, leagueName } = action.meta.arg;
+                const { leagueName } = action.meta.arg;
                 if (state[leagueName]) {
                     state[leagueName].setActiveConfigLoading = false;
                     state[leagueName].setActiveConfigError = action.payload ?? 'Failed to set active stat capture configuration';
