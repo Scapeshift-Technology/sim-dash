@@ -4,7 +4,7 @@ import path from 'path';
 const fs = require('fs'); // Import fs module
 const url = require('url'); // Import url module
 const log = require('electron-log/main'); // <-- Import electron-log
-const dbHelper = require('./db'); // Local SQLite helper
+const dbHelper = require('./db-sqlite/db'); // Local SQLite helper
 const sql = require('mssql'); // SQL Server driver
 const { createMLBSimResultsWindow2 } = require('./services/mlb/electron/createSimResultsWindows');
 const { createMLBComparisonWindow } = require('./services/mlb/electron/createComparisonWindow');

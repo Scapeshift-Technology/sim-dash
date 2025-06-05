@@ -42,8 +42,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     fetchLeagueStatCaptureConfigurations: (leagueName) => ipcRenderer.invoke('fetch-league-stat-capture-configurations', leagueName),
     fetchStatCaptureConfiguration: (configName) => ipcRenderer.invoke('fetch-stat-capture-configuration', configName),
     saveStatCaptureConfiguration: (config) => ipcRenderer.invoke('save-stat-capture-configuration', config),
-    deleteStatCaptureConfiguration: (configName) => ipcRenderer.invoke('delete-stat-capture-configuration', configName),
     setActiveStatCaptureConfiguration: (configName, leagueName) => ipcRenderer.invoke('set-active-stat-capture-configuration', configName, leagueName),
+    getActiveStatCaptureConfiguration: (leagueName) => ipcRenderer.invoke('get-active-stat-capture-configuration', leagueName),
 
     // ---------- MLB-specific functions ----------
     // Fetching data

@@ -3,6 +3,7 @@ import { applyMatchupLeansMLB } from "./leans";
 import { SimResultsMLB } from "@@/types/bettingResults";
 import { calculateSeriesWinProbability } from "@@/services/mlb/sim/analysis/seriesAnalyzer";
 import { MlbLiveDataApiResponse } from "@@/types/mlb";
+import { SavedConfiguration } from "@/types/statCaptureConfig";
 
 // ---------- Main functions ----------
 
@@ -11,13 +12,16 @@ export async function runSimulation(
     numGames: number = 90000,
     liveGameData?: MlbLiveDataApiResponse
 ): Promise<SimResultsMLB> {
+    const activeConfig = await window.electronAPI.getActiveStatCaptureConfiguration('MLB');
+    console.log('activeConfig', activeConfig);
+
     const redoneLineups = applyMatchupLeansMLB(gameInputs);
-    console.log('redoneLineups', redoneLineups);
     
     const results = await window.electronAPI.simulateMatchupMLB({
         matchupLineups: redoneLineups,
         numGames: numGames,
         gameId: gameInputs.gameInfo.mlbGameId,
+        statCaptureConfig: activeConfig,
         liveGameData: liveGameData
     });
 

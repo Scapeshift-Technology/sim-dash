@@ -555,75 +555,6 @@ async function saveStrikeConfiguration(db, config) {
   });
 }
 
-// Delete strike configuration (complete implementation)
-async function deleteStrikeConfiguration(db, configName) {
-  return new Promise(async (resolve, reject) => {
-    try {
-      // Begin transaction
-      await new Promise((resolve, reject) => {
-        db.run("BEGIN TRANSACTION", (err) => {
-          if (err) reject(err);
-          else resolve();
-        });
-      });
-
-      try {
-        // Delete main markets
-        await new Promise((resolve, reject) => {
-          db.run("DELETE FROM strike_configuration_main_markets WHERE name = ?", [configName], (err) => {
-            if (err) reject(err);
-            else resolve();
-          });
-        });
-
-        // Delete props OU
-        await new Promise((resolve, reject) => {
-          db.run("DELETE FROM strike_configuration_props_ou WHERE name = ?", [configName], (err) => {
-            if (err) reject(err);
-            else resolve();
-          });
-        });
-
-        // Delete props YN  
-        await new Promise((resolve, reject) => {
-          db.run("DELETE FROM strike_configuration_props_yn WHERE name = ?", [configName], (err) => {
-            if (err) reject(err);
-            else resolve();
-          });
-        });
-
-        // Delete main configuration last
-        const result = await new Promise((resolve, reject) => {
-          db.run("DELETE FROM strike_configuration WHERE name = ?", [configName], function(err) {
-            if (err) reject(err);
-            else resolve(this);
-          });
-        });
-
-        // Commit transaction
-        await new Promise((resolve, reject) => {
-          db.run("COMMIT", (err) => {
-            if (err) reject(err);
-            else resolve();
-          });
-        });
-
-        console.log(`[db.js] Strike configuration '${configName}' deleted successfully`);
-        resolve({ success: true, configName, deletedRows: result.changes });
-      } catch (err) {
-        // Rollback transaction on error
-        await new Promise((rollbackResolve) => {
-          db.run("ROLLBACK", () => rollbackResolve()); // Always resolve rollback
-        });
-        throw err;
-      }
-    } catch (err) {
-      console.error('[db.js] Error deleting strike configuration:', err.message);
-      reject(err);
-    }
-  });
-}
-
 async function setActiveStatCaptureConfiguration(db, configName, leagueName) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -684,6 +615,70 @@ async function setActiveStatCaptureConfiguration(db, configName, leagueName) {
   });
 }
 
+async function getActiveStatCaptureConfiguration(db, leagueName) {
+  // Find which config it is
+  const config = await new Promise((resolve, reject) => {
+    const query = "SELECT name, league, is_active FROM strike_configuration WHERE league = ? AND is_active = TRUE";
+    db.get(query, [leagueName], (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
+    });
+  });
+
+  // Now get each of the subtables
+  const mainMarkets = await new Promise((resolve, reject) => {
+    const query = `
+      SELECT 
+        name
+        , market_type
+        , period_type_code
+        , period_number
+        , strike 
+      FROM strike_configuration_main_markets 
+      WHERE name = ?`;
+    db.all(query, [config.name], (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+
+  const propsOU = await new Promise((resolve, reject) => {
+    const query = `
+      SELECT 
+        name
+        , prop
+        , contestant_type
+        , strike 
+      FROM strike_configuration_props_ou 
+      WHERE name = ?`;
+    db.all(query, [config.name], (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+
+  const propsYN = await new Promise((resolve, reject) => {
+    const query = `
+      SELECT 
+        name
+        , prop
+        , contestant_type 
+      FROM strike_configuration_props_yn 
+      WHERE name = ?`;
+    db.all(query, [config.name], (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows);
+    });
+  });
+
+  return {
+    ...config,
+    mainMarkets,
+    propsOU,
+    propsYN
+  };
+}
+
 // ---------- Export ----------
 
 module.exports = {
@@ -700,6 +695,6 @@ module.exports = {
     getLeagueStrikeConfigurations,
     getStrikeConfiguration,
     saveStrikeConfiguration,
-    deleteStrikeConfiguration,
-    setActiveStatCaptureConfiguration
+    setActiveStatCaptureConfiguration,
+    getActiveStatCaptureConfiguration
 }; 

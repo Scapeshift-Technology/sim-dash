@@ -86,7 +86,7 @@ export const getStatCaptureConfiguration = createAsyncThunk<
     { configName: string, leagueName: string },
     { rejectValue: string }
 >(
-    'statCaptureSettings/getStatCaptureConfigurations',
+    'statCaptureSettings/getStatCaptureConfiguration',
     async ({ configName, leagueName }, { rejectWithValue }) => {
         try {
             const result = await window.electronAPI.fetchStatCaptureConfiguration(configName);
@@ -105,7 +105,6 @@ export const saveStatCaptureConfiguration = createAsyncThunk<
     'statCaptureSettings/saveStatCaptureConfiguration',
     async (config, { rejectWithValue }) => {
         try {
-            console.log('saveStatCaptureConfiguration', config);
             const result = await window.electronAPI.saveStatCaptureConfiguration(config);
             return result;
         } catch (err: any) {
@@ -118,17 +117,17 @@ export const setActiveStatCaptureConfiguration = createAsyncThunk<
     { success: boolean, configName: string },
     { configName: string, leagueName: string },
     { rejectValue: string }
-    >(
-        'statCaptureSettings/setActiveStatCaptureConfiguration',
-        async ({ configName, leagueName }, { rejectWithValue }) => {
-            try {
-                const result = await window.electronAPI.setActiveStatCaptureConfiguration(configName, leagueName);
-                return result;
-            } catch (err: any) {
-                return rejectWithValue(err.message || 'An unexpected error occurred while fetching league periods.');
-            }
+>(
+    'statCaptureSettings/setActiveStatCaptureConfiguration',
+    async ({ configName, leagueName }, { rejectWithValue }) => {
+        try {
+            const result = await window.electronAPI.setActiveStatCaptureConfiguration(configName, leagueName);
+            return result;
+        } catch (err: any) {
+            return rejectWithValue(err.message || 'An unexpected error occurred while fetching league periods.');
         }
-    );
+    }
+);
 
 
 // ---------- Slice ----------
@@ -305,18 +304,6 @@ const statCaptureSettingsSlice = createSlice({
                 if (state[leagueName]) {
                     state[leagueName].setActiveConfigLoading = false;
                     
-                    // Set all configs in this league to inactive
-                    state[leagueName].leagueSavedConfigurations.forEach(config => {
-                        config.isActive = false;
-                    });
-                    
-                    // Set the specified config to active
-                    const targetConfig = state[leagueName].leagueSavedConfigurations.find(config => config.name === configName);
-                    if (targetConfig) {
-                        targetConfig.isActive = true;
-                    }
-                    
-                    // Update currentDraft if it matches the config being set active
                     if (state[leagueName].currentDraft.name === configName) {
                         state[leagueName].currentDraft.isActive = true;
                     } else {

@@ -44,8 +44,8 @@ declare global {
       fetchLeagueStatCaptureConfigurations: (leagueName: string) => Promise<LeagueSavedConfiguration[]>;
       fetchStatCaptureConfiguration: (configName: string) => Promise<SavedConfiguration>;
       saveStatCaptureConfiguration: (config: SavedConfiguration) => Promise<any>;
-      deleteStatCaptureConfiguration: (configName: string) => Promise<any>;
       setActiveStatCaptureConfiguration: (configName: string, leagueName: string) => Promise<any>;
+      getActiveStatCaptureConfiguration: (leagueName: string) => Promise<SavedConfiguration>;
 
       // ---------- MLB-specific functions ----------
       // Fetching data
@@ -53,7 +53,7 @@ declare global {
       fetchMlbGamePlayerStats: (args: { matchupLineups: MatchupLineups, date: string }) => Promise<MatchupLineups>;
 
       // Simulations
-      simulateMatchupMLB: (args: { matchupLineups: MatchupLineups, numGames: number, gameId: number | undefined, liveGameData?: MlbLiveDataApiResponse }) => Promise<SimResults>;
+      simulateMatchupMLB: (args: { matchupLineups: MatchupLineups, numGames: number, gameId: number | undefined, statCaptureConfig: SavedConfiguration, liveGameData?: MlbLiveDataApiResponse }) => Promise<SimResults>;
 
       // Live data (MLB)
       connectToWebSocketMLB: (args: { gameId: number }) => Promise<void>;

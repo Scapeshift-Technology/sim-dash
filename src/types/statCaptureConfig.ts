@@ -21,6 +21,7 @@ export interface PropYNConfig {
 }
 
 export interface SavedConfiguration extends LeagueSavedConfiguration {
+    isActive: boolean;
     mainMarkets: MainMarketConfig[];
     propsOU: PropOUConfig[];
     propsYN: PropYNConfig[];
@@ -29,7 +30,6 @@ export interface SavedConfiguration extends LeagueSavedConfiguration {
 export interface LeagueSavedConfiguration {
     league: LeagueName;
     name: string;
-    isActive: boolean;
 }
 
 // ---------- State types ----------

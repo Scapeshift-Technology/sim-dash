@@ -56,23 +56,6 @@ const handleSaveStatCaptureConfiguration = async (event, config, getDbHelper, ge
     }
 };
 
-const handleDeleteStatCaptureConfiguration = async (event, configName, getDbHelper, getDb) => {
-    log.info(`IPC received: delete-stat-capture-configuration for ${configName}`);
-    
-    try {
-        const dbHelper = getDbHelper();
-        const db = getDb();
-
-        const result = await dbHelper.deleteStrikeConfiguration(db, configName);
-
-        log.info(`Deleted stat capture configuration for ${configName}`);
-        return result;
-    } catch (err) {
-        log.error(`Error deleting stat capture configuration for ${configName}:`, err);
-        throw err;
-    }
-};
-
 const handleSetActiveStatCaptureConfiguration = async (event, configName, leagueName, getDbHelper, getDb) => {
     log.info(`IPC received: set-active-stat-capture-configuration for ${configName} in league ${leagueName}`);
 
@@ -89,6 +72,24 @@ const handleSetActiveStatCaptureConfiguration = async (event, configName, league
         throw err;
     }
 };
+
+const handleGetActiveStatCaptureConfiguration = async (event, leagueName, getDbHelper, getDb) => {
+    log.info(`IPC received: get-active-stat-capture-configuration for ${leagueName}`);
+
+    try {
+        const dbHelper = getDbHelper();
+        const db = getDb();
+
+        const result = await dbHelper.getActiveStatCaptureConfiguration(db, leagueName);
+
+        log.info(`Fetched active stat capture configuration for ${leagueName}`);
+        return result;
+    } catch (err) {
+        log.error(`Error getting active stat capture configuration for ${leagueName}:`, err);
+        throw err;
+    }
+};
+
 // ---------- Register functions ----------
 
 /**
@@ -110,13 +111,13 @@ const registerStatCaptureConfigHandlers = ({ getDbHelper, getDb }) => {
     ipcMain.handle('save-stat-capture-configuration', (event, config) => 
         handleSaveStatCaptureConfiguration(event, config, getDbHelper, getDb));
 
-    // Delete stat capture configuration handler
-    ipcMain.handle('delete-stat-capture-configuration', (event, configName) => 
-        handleDeleteStatCaptureConfiguration(event, configName, getDbHelper, getDb));
-
     // Set active stat capture configuration handler
     ipcMain.handle('set-active-stat-capture-configuration', (event, configName, leagueName) => 
         handleSetActiveStatCaptureConfiguration(event, configName, leagueName, getDbHelper, getDb));
+
+    // Get active stat capture configuration handler
+    ipcMain.handle('get-active-stat-capture-configuration', (event, leagueName) => 
+        handleGetActiveStatCaptureConfiguration(event, leagueName, getDbHelper, getDb));
 
     log.info('Stat capture config IPC handlers registered');
 };
