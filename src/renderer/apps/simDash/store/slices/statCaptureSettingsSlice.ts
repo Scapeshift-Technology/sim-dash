@@ -3,6 +3,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { LeagueName } from '@@/types/league';
 import { LeagueSavedConfiguration, Period } from '@@/types/statCaptureConfig';
 import { SavedConfiguration } from '@@/types/statCaptureConfig';
+import { MainMarketConfig, PropOUConfig, PropYNConfig } from '@@/types/statCaptureConfig';
 
 
 // ---------- Types ----------
@@ -10,9 +11,13 @@ import { SavedConfiguration } from '@@/types/statCaptureConfig';
 export interface StatCaptureLeagueState {
     // Configurations
     leagueSavedConfigurations: LeagueSavedConfiguration[];
+    currentlyLoadedConfiguration: SavedConfiguration | null;
     
     // Current draft
     currentDraft: SavedConfiguration;
+
+    // Save config name(used in MLBSettingsView.tsx)
+    saveConfigName: string;
 
     // Active tab
     activeTab: number;
@@ -46,6 +51,105 @@ export interface StatCaptureLeagueState {
 
 export interface StatCaptureSettingsState {
     [leagueName: string]: StatCaptureLeagueState;
+}
+
+// ---------- Helper Functions ----------
+
+/**
+ * Recursively compares two objects for deep equality.
+ * Arrays are compared order-insensitively (same elements, different order = equal).
+ * 
+ * @param obj1 - First object to compare
+ * @param obj2 - Second object to compare
+ * @returns True if objects have the same content, false otherwise
+ */
+function deepEqual(obj1: any, obj2: any): boolean {
+    if (obj1 === obj2) return true;
+    if (obj1 == null || obj2 == null) return obj1 === obj2;
+    if (typeof obj1 !== typeof obj2) return false;
+    if (typeof obj1 !== 'object') return obj1 === obj2;
+    
+    // Order-insensitive array comparison
+    if (Array.isArray(obj1) && Array.isArray(obj2)) {
+        if (obj1.length !== obj2.length) return false;
+        
+        const obj2Copy = [...obj2];
+        for (const item1 of obj1) {
+            const matchIndex = obj2Copy.findIndex(item2 => deepEqual(item1, item2));
+            if (matchIndex === -1) return false;
+            obj2Copy.splice(matchIndex, 1);
+        }
+        return true;
+    }
+    
+    if (Array.isArray(obj1) || Array.isArray(obj2)) return false;
+    
+    // Object comparison
+    const keys1 = Object.keys(obj1);
+    const keys2 = Object.keys(obj2);
+    
+    if (keys1.length !== keys2.length) return false;
+    
+    for (const key of keys1) {
+        if (!keys2.includes(key)) return false;
+        if (!deepEqual(obj1[key], obj2[key])) return false;
+    }
+    
+    return true;
+}
+
+/**
+ * Type-safe comparison helper specifically for SavedConfiguration objects
+ * Excludes the isActive property from comparison as it's set by the system
+ */
+function compareConfigurations(config1: SavedConfiguration | null, config2: SavedConfiguration | null): boolean {
+    if (!config1 || !config2) return config1 === config2;
+    
+    // Helper function to normalize MainMarketConfig objects(Remove 'name' property so that we can compare accurately)
+    const normalizeMainMarkets = (markets: MainMarketConfig[]) => {
+        return markets.map(market => ({
+            marketType: market.marketType,
+            periodTypeCode: market.periodTypeCode,
+            periodNumber: market.periodNumber,
+            strike: typeof market.strike === 'string' ? parseFloat(market.strike) : market.strike
+        }));
+    };
+    
+    // Helper function to normalize PropOUConfig objects  
+    const normalizePropOU = (props: PropOUConfig[]) => {
+        return props.map(prop => ({
+            prop: prop.prop,
+            contestantType: prop.contestantType,
+            strike: typeof prop.strike === 'string' ? parseFloat(prop.strike) : prop.strike
+        }));
+    };
+    
+    // Helper function to normalize PropYNConfig objects
+    const normalizePropYN = (props: PropYNConfig[]) => {
+        return props.map(prop => ({
+            name: prop.name,
+            contestantType: prop.contestantType
+        }));
+    };
+    
+    // Create comparison objects excluding system-generated properties
+    const compareObj1 = {
+        name: config1.name,
+        league: config1.league,
+        mainMarkets: normalizeMainMarkets(config1.mainMarkets || []),
+        propsOU: normalizePropOU(config1.propsOU || []),
+        propsYN: normalizePropYN(config1.propsYN || [])
+    };
+    
+    const compareObj2 = {
+        name: config2.name,
+        league: config2.league,
+        mainMarkets: normalizeMainMarkets(config2.mainMarkets || []),
+        propsOU: normalizePropOU(config2.propsOU || []),
+        propsYN: normalizePropYN(config2.propsYN || [])
+    };
+    
+    return deepEqual(compareObj1, compareObj2);
 }
 
 // ---------- Initial state ----------
@@ -166,6 +270,7 @@ const statCaptureSettingsSlice = createSlice({
                     periodsError: null,
                     periods: [],
                     leagueSavedConfigurations: [],
+                    currentlyLoadedConfiguration: null,
                     leagueConfigurationsLoading: false,
                     leagueConfigurationsError: null,
                     statCaptureConfigurationLoading: false,
@@ -184,7 +289,8 @@ const statCaptureSettingsSlice = createSlice({
                     setActiveConfigError: null,
                     activeConfigLoading: false,
                     activeConfigError: null,
-                    activeConfig: null
+                    activeConfig: null,
+                    saveConfigName: ''
                 };
             }
         },
@@ -219,6 +325,28 @@ const statCaptureSettingsSlice = createSlice({
             const { leagueName, mainMarkets } = action.payload;
             if (state[leagueName]) {
                 state[leagueName].currentDraft.mainMarkets = mainMarkets;
+            }
+        },
+
+        updateSaveConfigName: (state, action: PayloadAction<{ leagueName: string; saveConfigName: string }>) => {
+            const { leagueName, saveConfigName } = action.payload;
+            if (state[leagueName]) {
+                state[leagueName].saveConfigName = saveConfigName;
+            }
+        },
+
+        clearCurrentDraft: (state, action: PayloadAction<LeagueName>) => {
+            const leagueName = action.payload;
+            if (state[leagueName]) {
+                state[leagueName].currentDraft = {
+                    name: '',
+                    league: leagueName,
+                    isActive: false,
+                    mainMarkets: [],
+                    propsOU: [],
+                    propsYN: []
+                };
+                state[leagueName].currentlyLoadedConfiguration = null;
             }
         }
     },
@@ -309,6 +437,7 @@ const statCaptureSettingsSlice = createSlice({
                 if (state[leagueName]) {
                     state[leagueName].statCaptureConfigurationLoading = false;
                     state[leagueName].currentDraft = action.payload;
+                    state[leagueName].currentlyLoadedConfiguration = action.payload;
                 }
             })
             .addCase(getStatCaptureConfiguration.rejected, (state, action) => {
@@ -382,7 +511,9 @@ export const {
     removeLeague,
     clearPeriodsError,
     updateCurrentDraftMainMarkets,
-    updateCurrentDraft
+    updateCurrentDraft,
+    updateSaveConfigName,
+    clearCurrentDraft
 } = statCaptureSettingsSlice.actions;
 
 // ---------- Selectors ----------
@@ -437,6 +568,26 @@ export const selectActiveConfigLoading = (state: { simDash: { settings: StatCapt
     state.simDash?.settings?.[leagueName]?.activeConfigLoading ?? false;
 export const selectActiveConfigError = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): string | null => 
     state.simDash?.settings?.[leagueName]?.activeConfigError ?? null;
+
+// Save config name selector
+export const selectSaveConfigName = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): string => 
+    state.simDash?.settings?.[leagueName]?.saveConfigName ?? '';
+
+// Currently loaded configuration selector
+export const selectCurrentlyLoadedConfiguration = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): SavedConfiguration | null => 
+    state.simDash?.settings?.[leagueName]?.currentlyLoadedConfiguration ?? null;
+
+// Has unsaved changes selector - compares current draft to loaded configuration
+export const selectHasUnsavedChanges = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): boolean => {
+    const currentDraft = state.simDash?.settings?.[leagueName]?.currentDraft;
+    const loadedConfig = state.simDash?.settings?.[leagueName]?.currentlyLoadedConfiguration;
+    
+    if (!loadedConfig || !currentDraft) {
+        return false;
+    }
+    
+    return !compareConfigurations(currentDraft, loadedConfig);
+};
 
 // ---------- Reducer ----------
 

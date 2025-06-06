@@ -6,6 +6,7 @@ import FolderTabs, { FolderTab } from './components/FolderTabs';
 import MainMarketsTab from './components/MainMarketsTab';
 import OUPropsTab from './components/OUPropsTab';
 import YesNoTab from './components/YesNoTab';
+import UnsavedChangesModal from './components/UnsavedChangesModal';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
@@ -18,7 +19,12 @@ import {
     selectCurrentDraft,
     saveStatCaptureConfiguration,
     selectSaveConfigLoading,
-    selectSaveConfigError
+    selectSaveConfigError,
+    selectSaveConfigName,
+    updateSaveConfigName,
+    clearCurrentDraft,
+    selectHasUnsavedChanges,
+    selectCurrentlyLoadedConfiguration
 } from '@/apps/simDash/store/slices/statCaptureSettingsSlice';
 
 import { LeagueName } from '@@/types/league';
@@ -35,8 +41,9 @@ const MLBSettingsView: React.FC = () => {
     // ---------- State ----------
     
     const [hasAttemptedConfigFetch, setHasAttemptedConfigFetch] = useState(false);
-    const [configName, setConfigName] = useState('');
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
+    const [pendingConfigSelection, setPendingConfigSelection] = useState<string>('');
 
     // ---------- Redux State ----------
     
@@ -45,6 +52,9 @@ const MLBSettingsView: React.FC = () => {
     const currentDraft = useSelector((state: RootState) => selectCurrentDraft(state, LEAGUE_NAME));
     const saveLoading = useSelector((state: RootState) => selectSaveConfigLoading(state, LEAGUE_NAME));
     const saveError = useSelector((state: RootState) => selectSaveConfigError(state, LEAGUE_NAME));
+    const saveConfigName = useSelector((state: RootState) => selectSaveConfigName(state, LEAGUE_NAME));
+    const hasUnsavedChanges = useSelector((state: RootState) => selectHasUnsavedChanges(state, LEAGUE_NAME));
+    const currentlyLoadedConfiguration = useSelector((state: RootState) => selectCurrentlyLoadedConfiguration(state, LEAGUE_NAME));
 
     // ---------- Effects ----------
 
@@ -69,8 +79,18 @@ const MLBSettingsView: React.FC = () => {
     // ---------- Event handlers ----------
 
     const handleConfigurationSelect = async (configName: string) => {
+        if (hasUnsavedChanges) {
+            setPendingConfigSelection(configName);
+            setShowUnsavedChangesModal(true);
+            return;
+        }
+
+        await proceedWithConfigurationChange(configName);
+    };
+
+    const proceedWithConfigurationChange = async (configName: string) => {
         if (!configName) {
-            setConfigName('');
+            dispatch(clearCurrentDraft(LEAGUE_NAME));
             return;
         }
         
@@ -80,36 +100,59 @@ const MLBSettingsView: React.FC = () => {
                 leagueName: LEAGUE_NAME 
             })).unwrap();
 
-            setConfigName(result.name);
+            dispatch(updateSaveConfigName({ leagueName: LEAGUE_NAME, saveConfigName: result.name }));
         } catch (error) {
             console.error('Error loading configuration:', error);
         }
     };
 
+    const handleUnsavedChangesAccept = async () => {
+        setShowUnsavedChangesModal(false);
+        await proceedWithConfigurationChange(pendingConfigSelection);
+        setPendingConfigSelection('');
+    };
+
+    const handleUnsavedChangesDecline = () => {
+        setShowUnsavedChangesModal(false);
+        setPendingConfigSelection('');
+    };
+
+    const handleUnsavedChangesClose = () => {
+        setShowUnsavedChangesModal(false);
+        setPendingConfigSelection('');
+    };
+
     const handleSaveConfig = async () => {
-        if (!currentDraft || !configName.trim()) return;
+        if (!currentDraft || !saveConfigName.trim()) return;
 
         const configToSave = {
             ...currentDraft,
-            name: configName.trim(),
+            name: saveConfigName.trim(),
             isActive: false
         };
 
         try {
             await dispatch(saveStatCaptureConfiguration(configToSave)).unwrap();
             setSaveSuccess(true);
-            setConfigName('');
+            dispatch(updateSaveConfigName({ leagueName: LEAGUE_NAME, saveConfigName: '' }));
             // Refresh the configurations list
             dispatch(getLeagueStatCaptureConfigurations(LEAGUE_NAME));
-
-            setConfigName('');
         } catch (error) {
             // Error is handled by Redux state
         }
     };
 
     const canSave = () => {
-        return configName.trim() !== '' && currentDraft && !saveLoading;
+        if (!saveConfigName.trim() || !currentDraft || saveLoading) {
+            return false;
+        }
+        
+        if (!currentlyLoadedConfiguration) {// If no config is loaded, we can always save
+            return true;
+        }
+        
+        // If a config is loaded, we can only save if there are unsaved changes or we save a different name
+        return hasUnsavedChanges || saveConfigName !== currentlyLoadedConfiguration.name;
     };
 
     // ---------- Tab configuration ----------
@@ -172,8 +215,8 @@ const MLBSettingsView: React.FC = () => {
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
                     <TextField
                         label="Capture Configuration Name"
-                        value={configName}
-                        onChange={(e) => setConfigName(e.target.value)}
+                        value={saveConfigName}
+                        onChange={(e) => dispatch(updateSaveConfigName({ leagueName: LEAGUE_NAME, saveConfigName: e.target.value }))}
                         size="small"
                         sx={{ flexGrow: 1 }}
                         disabled={saveLoading}
@@ -207,6 +250,13 @@ const MLBSettingsView: React.FC = () => {
                 tabs={settingsTabs}
                 leagueName={LEAGUE_NAME}
                 ariaLabel="MLB simulation settings tabs"
+            />
+
+            <UnsavedChangesModal
+                open={showUnsavedChangesModal}
+                onClose={handleUnsavedChangesClose}
+                onAccept={handleUnsavedChangesAccept}
+                onDecline={handleUnsavedChangesDecline}
             />
         </Box>
     );
