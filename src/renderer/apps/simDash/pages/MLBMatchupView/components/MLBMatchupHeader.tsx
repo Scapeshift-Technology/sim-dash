@@ -114,7 +114,7 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
                             <RefreshIcon />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Simulation Settings">
+                    <Tooltip title="Capture Configuration Settings">
                         <IconButton 
                             size="small" 
                             onClick={handleSimSettingsClick}

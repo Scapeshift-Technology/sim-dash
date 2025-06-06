@@ -83,7 +83,7 @@ const tabSlice = createSlice({
         openSettingsTab(state, action: PayloadAction<Omit<SettingsTab, 'id' | 'type' | 'label'>>) {
             const details = action.payload;
             const tabId = generateSettingsTabId(details);
-            const tabLabel = `${details.league} Settings`;
+            const tabLabel = `${details.league} Capture Configuration`;
             const existingTab = state.openTabs.find(tab => tab.id === tabId);
 
             if (!existingTab) {
