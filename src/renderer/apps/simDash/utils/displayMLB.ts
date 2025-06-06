@@ -27,7 +27,7 @@ import {
 
 import { calculateUsaDiff, countsToAmericanOdds, countsToProbability, marginOfError, proportionToAmericanOdds } from "./oddsCalculations";
 import { sortSidesData, analyzeSidesCountsMLB } from "./displayMLB/sides";
-import { transformGamePeriodTotalsMLB } from "./displayMLB/totals";
+import { analyzeTotalsCountsMLB, sortTotalsData } from "./displayMLB/totals";
 
 export { teamNameToAbbreviationMLB };
 
@@ -44,12 +44,8 @@ export { transformSidesCountsMLB };
 // ----- Totals -----
 
 function transformTotalsCountsMLB(totalsCounts: TotalsCountsMLB, awayTeamName: string, homeTeamName: string): TotalsData[] {
-  const { combined, home, away } = totalsCounts;
-  const combinedData = transformGamePeriodTotalsMLB(combined, 'Combined');
-  const homeData = transformGamePeriodTotalsMLB(home, homeTeamName);
-  const awayData = transformGamePeriodTotalsMLB(away, awayTeamName);
-
-  return [...combinedData, ...homeData, ...awayData];
+  const allData = analyzeTotalsCountsMLB(totalsCounts, awayTeamName, homeTeamName);
+  return sortTotalsData(allData);
 }
 
 export { transformTotalsCountsMLB };

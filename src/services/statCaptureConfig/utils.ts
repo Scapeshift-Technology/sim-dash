@@ -1,4 +1,4 @@
-import { PeriodTypeCode, PeriodKey } from "@/types/statCaptureConfig";
+import { PeriodTypeCode, PeriodKey, Period } from "@/types/statCaptureConfig";
 
 // ---------- Main function ----------
 
@@ -29,8 +29,38 @@ function periodKeyToDisplayPeriod(periodKey: PeriodKey): string {
         return 'FG';
     } else {
         const { periodTypeCode, periodNumber } = periodKeyToCodeAndNumber(periodKey);
+
+        if (periodTypeCode === 'I' && periodNumber === 99) {
+            return 'I1-3';
+        }
+
         return `${periodTypeCode}${periodNumber}`;
     }
 }
 
-export { getPeriodKey, periodKeyToCodeAndNumber, periodKeyToDisplayPeriod }
+function displayPeriodToCodeAndNumber(displayPeriod: string): { periodTypeCode: PeriodTypeCode, periodNumber: number } {
+    if (displayPeriod === 'FG') {
+        return { periodTypeCode: 'M', periodNumber: 0 };
+    } else if (displayPeriod === 'I1-3') {
+        return { periodTypeCode: 'I', periodNumber: 99 };
+    } else {
+        const periodTypeCode = displayPeriod[0] as PeriodTypeCode;
+        const periodNumber = parseInt(displayPeriod.slice(1));
+        return { periodTypeCode, periodNumber };
+    }
+}
+
+function getPeriodLabel(period: Period): string {
+    if (period.PeriodTypeCode.trim() === 'M' && period.PeriodNumber === 0) {
+        return 'Full Game';
+    }
+    
+    // Handle special MLB periods
+    if (period.PeriodTypeCode === 'I' && period.PeriodNumber === 99) {
+        return period.PeriodName; // Returns "Innings 1-3"
+    }
+    
+    return `${period.PeriodName} ${period.PeriodNumber}`;
+}
+
+export { getPeriodKey, periodKeyToCodeAndNumber, periodKeyToDisplayPeriod, displayPeriodToCodeAndNumber, getPeriodLabel }

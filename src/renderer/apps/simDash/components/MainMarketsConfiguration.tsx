@@ -20,6 +20,8 @@ import {
 } from "@mui/material";
 import { Delete as DeleteIcon, Add as AddIcon } from "@mui/icons-material";
 
+import { getPeriodLabel } from "@@/services/statCaptureConfig/utils";
+
 import { BetType, Period, ValidationConfig, MainMarketConfig, PeriodTypeCode, MarketType } from '@@/types/statCaptureConfig';
 import HierarchicalPeriodSelector, { HierarchyConfig } from './HierarchicalPeriodSelector';
 
@@ -43,13 +45,6 @@ const generateLines = (min: number, max: number, increment: number): number[] =>
     }
     return lines;
 };
-
-const getPeriodLabel = (period: Period): string => {
-    if (period.PeriodTypeCode.trim() === 'M' && period.PeriodNumber === 0) {
-        return 'Full Game';
-    }
-    return `${period.PeriodName} ${period.PeriodNumber}`;
-}
 
 function getPeriodId(period: Period): string {
     return `${period.PeriodTypeCode}-${period.PeriodNumber}`;

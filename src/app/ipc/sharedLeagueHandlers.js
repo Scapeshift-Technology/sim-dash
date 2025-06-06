@@ -80,8 +80,9 @@ const getLeaguePeriods = async (event, leagueName, getCurrentPool) => {
     }
 
     try {
+        // fetch the actual periods
         const result = await currentPool.request().query(`
-            SELECT SuperPeriodType
+            SELECT TRIM(SuperPeriodType) AS SuperPeriodType
                 , SuperPeriodNumber
                 , TRIM(PeriodTypeCode) AS PeriodTypeCode
                 , PeriodNumber
@@ -90,12 +91,31 @@ const getLeaguePeriods = async (event, leagueName, getCurrentPool) => {
             WHERE league = '${leagueName}'
         `);
 
-        return result.recordset;
+        // Potentially add special periods
+        let results = result.recordset;
+        if (leagueName === 'MLB') {
+            results = [...results, ...specialMLBPeriods];
+        }
+
+        // Return the results
+        return results;
     } catch (err) {
         log.error(`Error fetching league periods for ${leagueName}:`, err);
         throw err; // Rethrow the error to be caught by the renderer
     }
 };
+
+const specialMLBPeriods = [
+    {
+        SuperPeriodType: 'Half',
+        SuperPeriodNumber: 1,
+        PeriodTypeCode: 'I',
+        PeriodNumber: 99, // Used because no inning 99 is used elsewhere. This will need to be transformed across the app.
+        PeriodName: 'Innings 1-3'
+    }
+]
+
+// ---------- Register the handlers ----------
 
 /**
  * Register all shared league IPC handlers

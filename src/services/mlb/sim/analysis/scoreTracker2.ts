@@ -29,8 +29,8 @@ export function getScoreForPeriod(
       throw new Error(`Invalid period number ${periodNumber} for Half period type`);
     
     case 'I':
-      if (periodNumber === 1) {
-        return getScoreAtInning(plays, periodNumber);
+      if (periodNumber === 99) { // Case of innings 1-3
+        return getScoreAtInning(plays, 3);
       } else {
         return getScoreInInning(plays, periodNumber);
       }

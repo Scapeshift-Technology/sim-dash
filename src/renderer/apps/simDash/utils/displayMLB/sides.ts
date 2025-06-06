@@ -8,6 +8,7 @@ import {
 } from "@/types/bettingResults";
 
 import { countsToAmericanOdds, countsToProbability, marginOfError, proportionToAmericanOdds } from "../oddsCalculations";
+import { getPeriodSortOrder } from "./sorting";
 
 import { periodKeyToDisplayPeriod } from "@@/services/statCaptureConfig/utils";
 
@@ -113,9 +114,10 @@ function transformSidesOutcomeCountsMLB(outcomeCounts: OutcomeCounts, teamName: 
 
 function sortSidesData(data: SidesData[]): SidesData[] {
   return data.sort((a, b) => {
-    // 1. Sort by period (FG, then H_, then I_)
-    const periodOrder = getPeriodSortOrder(a.period) - getPeriodSortOrder(b.period);
-    if (periodOrder !== 0) return periodOrder;
+    // 1. Sort by period (FG, then H_, then I_) and period number
+    const periodOrderA = getPeriodSortOrder(a.period);
+    const periodOrderB = getPeriodSortOrder(b.period);
+    if (periodOrderA !== periodOrderB) return periodOrderA - periodOrderB;
     
     // 2. Sort by absolute line value
     const absLineA = Math.abs(a.line);
@@ -130,13 +132,6 @@ function sortSidesData(data: SidesData[]): SidesData[] {
     // 4. If line is the same, team that covers more on top
     return b.coverPercent - a.coverPercent;
   });
-}
-
-function getPeriodSortOrder(period: string): number {
-  if (period === 'FG') return 0;
-  if (period.startsWith('H')) return 1;
-  if (period.startsWith('I')) return 2;
-  return 3; // fallback
 }
 
 export { sortSidesData };
