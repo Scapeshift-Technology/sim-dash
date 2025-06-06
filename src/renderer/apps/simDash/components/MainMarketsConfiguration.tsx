@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { 
     Typography, 
     Box, 
@@ -67,6 +67,31 @@ const MainMarketsConfiguration: React.FC<MainMarketsConfigurationProps> = ({
     const [selectedPeriods, setSelectedPeriods] = useState<string[]>([]);
     const [minValue, setMinValue] = useState<string>('');
     const [maxValue, setMaxValue] = useState<string>('');
+
+    // ---------- Sorted configurations ----------
+
+    const sortedConfigurations = useMemo(() => {
+        return [...existingConfigurations].sort((a, b) => {
+            // Sort by market type
+            const marketTypeComparison = a.marketType.localeCompare(b.marketType);
+            if (marketTypeComparison !== 0) return marketTypeComparison;
+
+            // Then sort by period type code - 'M' first, then alphabetically
+            if (a.periodTypeCode === 'M' && b.periodTypeCode !== 'M') return -1;
+            if (a.periodTypeCode !== 'M' && b.periodTypeCode === 'M') return 1;
+            const periodTypeComparison = a.periodTypeCode.localeCompare(b.periodTypeCode);
+            if (periodTypeComparison !== 0) return periodTypeComparison;
+
+            // Then sort by period number
+            const periodNumberComparison = a.periodNumber - b.periodNumber;
+            if (periodNumberComparison !== 0) return periodNumberComparison;
+
+            // Finally sort by line/strike
+            const strikeA = parseFloat(a.strike);
+            const strikeB = parseFloat(b.strike);
+            return strikeA - strikeB;
+        });
+    }, [existingConfigurations]);
 
     // ---------- Effects ----------
 
@@ -153,8 +178,18 @@ const MainMarketsConfiguration: React.FC<MainMarketsConfigurationProps> = ({
     };
 
     const handleRemoveRow = (index: number) => {
-        const updatedConfigurations = existingConfigurations.filter((_, i) => i !== index);
-        onConfigurationChange(updatedConfigurations);
+        const configToRemove = sortedConfigurations[index];
+        const originalIndex = existingConfigurations.findIndex(config => 
+            config.marketType === configToRemove.marketType &&
+            config.periodTypeCode === configToRemove.periodTypeCode &&
+            config.periodNumber === configToRemove.periodNumber &&
+            config.strike === configToRemove.strike
+        );
+        
+        if (originalIndex !== -1) {
+            const updatedConfigurations = existingConfigurations.filter((_, i) => i !== originalIndex);
+            onConfigurationChange(updatedConfigurations);
+        }
     };
 
     // ---------- Helper functions ----------
@@ -322,7 +357,7 @@ const MainMarketsConfiguration: React.FC<MainMarketsConfigurationProps> = ({
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {existingConfigurations.map((row, index) => (
+                            {sortedConfigurations.map((row, index) => (
                                 <TableRow key={`${row.marketType}-${row.periodTypeCode}-${row.periodNumber}-${row.strike}-${index}`}>
                                     <TableCell>
                                         <Chip label={getBetTypeLabel(row.marketType)} size="small" />
