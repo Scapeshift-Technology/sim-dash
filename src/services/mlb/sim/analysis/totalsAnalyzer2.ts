@@ -7,10 +7,12 @@ import { getPeriodKey, periodKeyToCodeAndNumber } from "../../../statCaptureConf
 // ---------- Main function ----------
 
 function calculateTotalsCounts(simPlays: PlayResult[][], statCaptureConfig: SavedConfiguration): TotalsCountsMLB {
+  const adjustedStatCaptureConfig = adjustStatCaptureConfig(simPlays, statCaptureConfig);
+
   return {
-    combined: calculateSingleTypeTotals(simPlays, 'combined', statCaptureConfig),
-    home: calculateSingleTypeTotals(simPlays, 'home', statCaptureConfig),
-    away: calculateSingleTypeTotals(simPlays, 'away', statCaptureConfig)
+    combined: calculateSingleTypeTotals(simPlays, 'combined', adjustedStatCaptureConfig),
+    home: calculateSingleTypeTotals(simPlays, 'home', adjustedStatCaptureConfig),
+    away: calculateSingleTypeTotals(simPlays, 'away', adjustedStatCaptureConfig)
   };
 }
 
@@ -143,4 +145,45 @@ function getScoreForType(
     default:
       throw new Error(`Unknown type: ${type}`);
   }
+};
+
+function adjustStatCaptureConfig(simPlays: PlayResult[][], statCaptureConfig: SavedConfiguration): SavedConfiguration {
+  const adjustedConfig = { ...statCaptureConfig };
+
+  const meanRunsScored = getMeanRunsScore(simPlays);
+
+  // Add closest full-game totals lines to mean runs scored
+  const baseTotal = Math.round(meanRunsScored * 2) / 2;
+  const totalsToAdd = [
+    baseTotal - 1,
+    baseTotal - 0.5,
+    baseTotal,
+    baseTotal + 0.5,
+    baseTotal + 1
+  ];
+  
+  totalsToAdd.forEach(total => { // Duplicated lines do not cause issues for now, but maybe keep an eye out if there are big changes made
+    adjustedConfig.mainMarkets.push({
+      marketType: 'Total',
+      periodTypeCode: 'M',
+      periodNumber: 0,
+      strike: total.toString(),
+    });
+  });
+
+  return adjustedConfig;
+};
+
+function getMeanRunsScore(simPlays: PlayResult[][]): number {
+  // Find the last play of each game
+  const lastPlays = simPlays.map(game => game[game.length - 1]);
+
+  // Get the runs scored in the last play
+  const runsScored = lastPlays.map(play => play.homeScore + play.awayScore + play.runsOnPlay);
+
+  // Get the mean total scored
+  const meanRunsScored = runsScored.reduce((acc, runs) => acc + runs, 0) / runsScored.length;
+
+  return meanRunsScored;
 }
+

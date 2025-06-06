@@ -11,9 +11,11 @@ import { getPeriodKey } from "../../../statCaptureConfig/utils";
 // ---------- Main function ----------
 
 function calculateSidesCounts(simPlays: PlayResult[][], statCaptureConfig: SavedConfiguration): SidesCountsMLB {
+  const adjustedStatCaptureConfig = adjustStatCaptureConfig(statCaptureConfig);
+
   return {
-    home: calculateSingleSideCounts(simPlays, 'home', statCaptureConfig),
-    away: calculateSingleSideCounts(simPlays, 'away', statCaptureConfig)
+    home: calculateSingleSideCounts(simPlays, 'home', adjustedStatCaptureConfig),
+    away: calculateSingleSideCounts(simPlays, 'away', adjustedStatCaptureConfig)
   };
 }
 
@@ -91,3 +93,22 @@ function calculateSideProbability(
     total: totalGames
   };
 } 
+
+function adjustStatCaptureConfig(statCaptureConfig: SavedConfiguration): SavedConfiguration {
+  const adjustedConfig = { ...statCaptureConfig };
+
+  // If no moneyline market, add it
+  if (!adjustedConfig.mainMarkets.find(market => (
+    market.marketType === 'Spread' && market.periodTypeCode === 'M' && market.periodNumber === 0 && market.strike === '0'
+  ))) {
+    adjustedConfig.mainMarkets.push({
+      marketType: 'Spread',
+      periodTypeCode: 'M',
+      periodNumber: 0,
+      strike: '0'
+    });
+  }
+
+  return adjustedConfig;
+}
+
