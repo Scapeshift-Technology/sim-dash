@@ -211,8 +211,7 @@ export interface TotalsCountsMLB {
 }
 
 export interface GamePeriodTotalsMLB {
-  fullGame: TotalsLinesMLB,
-  firstFive: TotalsLinesMLB
+  [key: string]: TotalsLinesMLB; // Really PeriodKey type, but typescript gets mad when I put that
 }
 
 export interface TotalsLinesMLB {

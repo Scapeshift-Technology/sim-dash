@@ -10,7 +10,10 @@ function calculateResultsSummaryDisplayMLB(simResults: SimResultsMLB, awayTeamNa
   topLine: string;
   bottomLine: string;
 } {
-  if (!simResults.sides || !simResults.sides?.away.fullGame?.['0'] || !simResults.sides?.home?.fullGame?.['0']) return { topLine: 'N/A', bottomLine: 'N/A' };
+  if (
+    !simResults.sides || !simResults.sides?.away.fullGame?.['0'] || !simResults.sides?.home?.fullGame?.['0'] ||
+    !simResults.totals.combined.fullGame
+  ) return { topLine: 'N/A', bottomLine: 'N/A' };
   const { home, away } = simResults.sides;
   const homeWinCt = home.fullGame['0'].success;
   const awayWinCt = away.fullGame['0'].success;

@@ -39,12 +39,20 @@ import { americanOddsToProbability, countsToProbability } from "@/simDash/utils/
       league: 'MLB' as LeagueName,
       name: ' optimalLeans',
       isActive: true,
-      mainMarkets: [{
-        marketType: 'Spread' as MarketType,
+      mainMarkets: [
+      { marketType: 'Spread' as MarketType,
         periodTypeCode: 'M' as PeriodTypeCode,
         periodNumber: 0,
-        strike: '0'
-      }],
+        strike: '0' },
+      { marketType: 'Total' as MarketType,
+        periodTypeCode: 'M' as PeriodTypeCode,
+        periodNumber: 0,
+        strike: marketLines.over.line.toString() },
+      { marketType: 'Total' as MarketType,
+        periodTypeCode: 'M' as PeriodTypeCode,
+        periodNumber: 0,
+        strike: marketLines.under.line.toString() }
+      ],
       propsOU: [],
       propsYN: []
     }
@@ -62,7 +70,6 @@ import { americanOddsToProbability, countsToProbability } from "@/simDash/utils/
   
       // Run the sim
       const simResults = await runSimulation(gameInputs, 90000, undefined, leansConfig);
-      console.log(`SIM RESULTS:`, JSON.stringify(simResults, null, 2));
   
       // Find where the lines and sim results differ(or are close)
       const diffs = findLineDifferences(simResults, marketLines);
