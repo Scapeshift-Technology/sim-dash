@@ -282,6 +282,10 @@ const statCaptureSettingsSlice = createSlice({
                 const config = action.meta.arg;
                 if (state[config.league]) {
                     state[config.league].saveConfigLoading = false;
+
+                    if (state[config.league].activeConfig?.name === config.name) {
+                        state[config.league].activeConfig = config;
+                    }
                 }
             })
             .addCase(saveStatCaptureConfiguration.rejected, (state, action) => {

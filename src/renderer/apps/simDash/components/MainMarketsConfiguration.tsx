@@ -20,7 +20,7 @@ import {
 } from "@mui/material";
 import { Delete as DeleteIcon, Add as AddIcon } from "@mui/icons-material";
 
-import { BetType, Period, ValidationConfig, MainMarketConfig } from '@@/types/statCaptureConfig';
+import { BetType, Period, ValidationConfig, MainMarketConfig, PeriodTypeCode, MarketType } from '@@/types/statCaptureConfig';
 
 // ---------- Types ----------
 
@@ -124,8 +124,8 @@ const MainMarketsConfiguration: React.FC<MainMarketsConfigurationProps> = ({
                 const [periodTypeCode, periodNumber] = periodId.split('-');
                 generatedLines.forEach(line => {
                     newRows.push({
-                        marketType: betType,
-                        periodTypeCode: periodTypeCode,
+                        marketType: betType as MarketType,
+                        periodTypeCode: periodTypeCode as PeriodTypeCode,
                         periodNumber: parseInt(periodNumber),
                         strike: line.toString()
                     });

@@ -32,12 +32,7 @@ export function getScoreForPeriod(
       if (periodNumber === 1) {
         return getScoreAtInning(plays, periodNumber);
       } else {
-        const currentScore = getScoreAtInning(plays, periodNumber);
-        const priorScore = getScoreAtInning(plays, periodNumber - 1);
-        return {
-          homeScore: currentScore.homeScore - priorScore.homeScore,
-          awayScore: currentScore.awayScore - priorScore.awayScore,
-        }
+        return getScoreInInning(plays, periodNumber);
       }
     default:
       throw new Error(`Unknown period type code: ${periodTypeCode}`);
@@ -72,6 +67,29 @@ function getScoreAtInning(
 
   console.error(`getScoreAtInning: No play found at or before inning ${endInning}`);
   return { homeScore: 0, awayScore: 0 };
+}
+
+function getScoreInInning(
+  plays: PlayResult[],
+  inning: number
+): ScoreAtPeriod {
+  let homeRuns = 0;
+  let awayRuns = 0;
+
+  for (const play of plays) {
+    if (play.inning === inning) {
+      if (play.topInning) {
+        awayRuns += play.runsOnPlay;
+      } else {
+        homeRuns += play.runsOnPlay;
+      }
+    }
+  }
+
+  return {
+    homeScore: homeRuns,
+    awayScore: awayRuns
+  };
 }
 
 export function getScoreForTypeAndPeriod(

@@ -1,12 +1,12 @@
 import { PlayResult } from "@/types/mlb";
-import { 
-    SidesCountsMLB, 
-    TeamSidesCountsMLB, 
-    OutcomeCounts
+import {
+    SidesCountsMLB,
+    OutcomeCounts,
+    TeamSidesCountsMLB
 } from "@/types/bettingResults";
 import { SavedConfiguration, PeriodTypeCode, PeriodKey } from "@/types/statCaptureConfig";
 import { getScoreForPeriod } from "./scoreTracker2";
-import { getPeriodCode } from "../../../statCaptureConfig/utils";
+import { getPeriodKey } from "../../../statCaptureConfig/utils";
 
 // ---------- Main function ----------
 
@@ -23,28 +23,40 @@ export { calculateSidesCounts }
 
 function calculateSingleSideCounts(simPlays: PlayResult[][], side: 'home' | 'away', statCaptureConfig: SavedConfiguration): TeamSidesCountsMLB {
   const sidesMarkets = statCaptureConfig.mainMarkets.filter(market => market.marketType === 'Spread');
-  const dynamicResults: { [periodKey: string]: { [strike: string]: OutcomeCounts } } = {};
+  const results: TeamSidesCountsMLB = {};
   
   for (const market of sidesMarkets) {
-    const periodKey: PeriodKey = getPeriodCode(market.periodTypeCode, market.periodNumber);
-    const strike = parseFloat(market.strike);
+    // Initialize
+    const originalStrike = parseFloat(market.strike);
+    const periodKey: PeriodKey = getPeriodKey(market.periodTypeCode, market.periodNumber);
     
-    if (!dynamicResults[periodKey]) {
-      dynamicResults[periodKey] = {};
+    if (!results[periodKey]) {
+      results[periodKey] = {};
     }
     
-    const result = calculateSideProbability(
+    // Get lines 
+    const positiveResult = calculateSideProbability(
       simPlays, 
       side, 
-      strike, 
+      originalStrike, 
       market.periodTypeCode, 
       market.periodNumber
     );
+    results[periodKey][originalStrike.toString()] = positiveResult;
     
-    dynamicResults[periodKey][market.strike] = result;
+    if (originalStrike > 0) {
+      const negativeResult = calculateSideProbability(
+        simPlays, 
+        side, 
+        -originalStrike, 
+        market.periodTypeCode, 
+        market.periodNumber
+      );
+      results[periodKey][(-originalStrike).toString()] = negativeResult;
+    }
   }
   
-  return dynamicResults;
+  return results;
 }
 
 function calculateSideProbability(

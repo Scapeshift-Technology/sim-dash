@@ -131,10 +131,10 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 1 }}>
             {/* Configuration Selector */}
             <FormControl size="small" fullWidth>
-                <InputLabel>Configuration</InputLabel>
+                <InputLabel>Capture Configuration</InputLabel>
                 <Select
                     value={activeConfig?.name || ''}
-                    label="Configuration"
+                    label="Capture Configuration"
                     disabled={leagueConfigurationsLoading}
                     onChange={(e) => handleActiveConfigChange(e.target.value)}
                     sx={{ fontSize: '0.875rem' }}

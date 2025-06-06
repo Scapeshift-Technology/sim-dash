@@ -145,19 +145,19 @@ const MLBSettingsView: React.FC = () => {
             {/* Config Selection */}
             <Box sx={{ mb: 3, px: 2 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
-                    Configuration
+                    Capture Configuration
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', mb: 2 }}>
                     <FormControl size="small" sx={{ flexGrow: 1 }}>
-                        <InputLabel>Select Configuration</InputLabel>
+                        <InputLabel>Select Capture Configuration</InputLabel>
                         <Select
                             value={currentDraft?.name || ''}
-                            label="Select Configuration"
+                            label="Select Capture Configuration"
                             disabled={configurationsLoading}
                             onChange={(e) => handleConfigurationSelect(e.target.value)}
                         >
                             <MenuItem value="">
-                                <em>No configuration selected</em>
+                                <em>No capture configuration selected</em>
                             </MenuItem>
                             {leagueStatCaptureConfigurations.map((config) => (
                                 <MenuItem key={config.name} value={config.name}>
@@ -171,13 +171,13 @@ const MLBSettingsView: React.FC = () => {
                 {/* Save Configuration */}
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
                     <TextField
-                        label="Configuration Name"
+                        label="Capture Configuration Name"
                         value={configName}
                         onChange={(e) => setConfigName(e.target.value)}
                         size="small"
                         sx={{ flexGrow: 1 }}
                         disabled={saveLoading}
-                        placeholder="Enter name to save current configuration"
+                        placeholder="Enter name to save current capture configuration"
                     />
                     <Button
                         variant="contained"
@@ -193,7 +193,7 @@ const MLBSettingsView: React.FC = () => {
                 {/* Success/Error Messages */}
                 {saveSuccess && (
                     <Alert severity="success" sx={{ mt: 2 }}>
-                        Configuration saved successfully!
+                        Capture configuration saved successfully!
                     </Alert>
                 )}
                 {saveError && (
