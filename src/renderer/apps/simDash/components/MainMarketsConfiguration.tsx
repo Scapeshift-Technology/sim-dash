@@ -21,6 +21,7 @@ import {
 import { Delete as DeleteIcon, Add as AddIcon } from "@mui/icons-material";
 
 import { BetType, Period, ValidationConfig, MainMarketConfig, PeriodTypeCode, MarketType } from '@@/types/statCaptureConfig';
+import HierarchicalPeriodSelector, { HierarchyConfig } from './HierarchicalPeriodSelector';
 
 // ---------- Types ----------
 
@@ -50,6 +51,10 @@ const getPeriodLabel = (period: Period): string => {
     return `${period.PeriodName} ${period.PeriodNumber}`;
 }
 
+function getPeriodId(period: Period): string {
+    return `${period.PeriodTypeCode}-${period.PeriodNumber}`;
+}
+
 // ---------- Main component ----------
 
 const MainMarketsConfiguration: React.FC<MainMarketsConfigurationProps> = ({
@@ -76,6 +81,15 @@ const MainMarketsConfiguration: React.FC<MainMarketsConfigurationProps> = ({
         setMinValue('');
         setMaxValue('');
     }, [betTypes, periods, validationConfig]);
+
+    // ---------- Hierarchy Configuration ----------
+
+    const hierarchyConfig: HierarchyConfig = {
+        superPeriodTypeField: 'SuperPeriodType',
+        superPeriodNumberField: 'SuperPeriodNumber', 
+        getSuperPeriodTypeLabel: (value: string) => value,
+        getSuperPeriodNumberLabel: (superPeriodType: string, superPeriodNumber: string) => `${superPeriodType} ${superPeriodNumber}`
+    };
 
     // ---------- Validation functions ----------
 
@@ -152,10 +166,6 @@ const MainMarketsConfiguration: React.FC<MainMarketsConfigurationProps> = ({
 
     const getBetTypeLabel = (value: string) => betTypes.find(bt => bt.value === value)?.label || value;
 
-    function getPeriodId(period: Period): string {
-        return `${period.PeriodTypeCode}-${period.PeriodNumber}`;
-    }
-
     const getPeriodDisplayLabelFromId = (periodId: string): string => {
         const [typeCode, numberStr] = periodId.split('-');
         const periodNumber = parseInt(numberStr);
@@ -218,20 +228,14 @@ const MainMarketsConfiguration: React.FC<MainMarketsConfigurationProps> = ({
                     <Typography variant="subtitle1" gutterBottom>
                         Periods
                     </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
-                        {periods.map(period => (
-                            <FormControlLabel
-                                key={getPeriodId(period)}
-                                control={
-                                    <Checkbox
-                                        checked={selectedPeriods.includes(getPeriodId(period))}
-                                        onChange={() => handlePeriodChange(period)}
-                                    />
-                                }
-                                label={getPeriodLabel(period)}
-                            />
-                        ))}
-                    </Box>
+                    <HierarchicalPeriodSelector
+                        periods={periods}
+                        selectedPeriods={selectedPeriods}
+                        onPeriodChange={handlePeriodChange}
+                        getPeriodId={getPeriodId}
+                        getPeriodLabel={getPeriodLabel}
+                        hierarchyConfig={hierarchyConfig}
+                    />
 
                     {/* Range Inputs */}
                     <Typography variant="subtitle1" gutterBottom>

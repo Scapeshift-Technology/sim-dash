@@ -44,6 +44,8 @@ export interface BetType {
 }
 
 export interface Period {
+    SuperPeriodType: string;
+    SuperPeriodNumber: number;
     PeriodName: string;
     PeriodNumber: number;
     PeriodTypeCode: string;

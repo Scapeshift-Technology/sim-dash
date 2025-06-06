@@ -38,7 +38,7 @@ declare global {
       // League data
       fetchLeagues: () => Promise<FetchedLeague[]>;
       fetchSchedule: (args: { league: string; date: string }) => Promise<ScheduleItem[]>;
-      getLeaguePeriods: (leagueName: string) => Promise<any[]>;
+      getLeaguePeriods: (leagueName: string) => Promise<Period[]>;
 
       // Stat capture config
       fetchLeagueStatCaptureConfigurations: (leagueName: string) => Promise<LeagueSavedConfiguration[]>;
