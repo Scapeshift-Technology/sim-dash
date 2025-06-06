@@ -5,10 +5,7 @@ import {
     Menu,
     MenuItem,
     CircularProgress,
-    Box,
-    FormControl,
-    InputLabel,
-    Select
+    Box
 } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
@@ -93,21 +90,6 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
         handleClose();
     };
 
-    const handleActiveConfigChange = async (configName: string) => {
-        if (!configName) return;
-        
-        try {
-            await dispatch(setActiveStatCaptureConfiguration({ 
-                configName, 
-                leagueName: leagueName 
-            })).unwrap();
-
-            await dispatch(getActiveStatCaptureConfiguration(leagueName));
-        } catch (error) {
-            console.error('Error setting active config:', error);
-        }
-    };
-
     // ---------- Render ----------
 
     const isGameLive = liveGameData && liveGameData.gameData.status.abstractGameState === 'Live';
@@ -129,23 +111,7 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
 
     return (
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {/* Configuration Selector */}
-            <FormControl size="small" fullWidth>
-                <InputLabel>Capture Configuration</InputLabel>
-                <Select
-                    value={activeConfig?.name || ''}
-                    label="Capture Configuration"
-                    disabled={leagueConfigurationsLoading}
-                    onChange={(e) => handleActiveConfigChange(e.target.value)}
-                    sx={{ fontSize: '0.875rem' }}
-                >
-                    {leagueConfigurations.map((config) => (
-                        <MenuItem key={config.name} value={config.name}>
-                            {config.name}
-                        </MenuItem>
-                    ))}
-                </Select>
-            </FormControl>
+
 
             {/* Simulation Button */}
             <ButtonGroup

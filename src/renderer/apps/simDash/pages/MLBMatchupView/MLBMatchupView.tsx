@@ -54,6 +54,7 @@ import { useLeanValidation } from './hooks/leanValidation';
 import { 
     runSeriesSimulationThunk, 
     runSimulationThunk, 
+    selectNumGames, 
     selectSeriesSimulationError, 
     selectSeriesSimulationStatus, 
     selectTraditionalSimulationError, 
@@ -158,6 +159,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const activeConfig = useSelector((state: RootState) => selectActiveConfig(state, league));
     const activeConfigLoading = useSelector((state: RootState) => selectActiveConfigLoading(state, league));
     const activeConfigError = useSelector((state: RootState) => selectActiveConfigError(state, league));
+    const numGames = useSelector((state: RootState) => selectNumGames(state));
 
     const [selectedGameTab, setSelectedGameTab] = useState(0);
     const [showCopySuccess, setShowCopySuccess] = useState(false);
@@ -269,6 +271,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 league,
                 matchId,
                 gameInputs: gameContainer.seriesGames,
+                numGames: numGames,
                 activeConfig: activeConfig || undefined
             })).unwrap();
         } else if (simType === 'live') {
@@ -277,7 +280,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 league,
                 matchId,
                 gameInputs: gameInputs,
-                numGames: 90000,
+                numGames: numGames,
                 liveGameData: liveGameData,
                 activeConfig: activeConfig || undefined
             })).unwrap();
@@ -290,7 +293,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 league,
                 matchId,
                 gameInputs: gameInputs,
-                numGames: 90000,
+                numGames: numGames,
                 liveGameData: bannerLiveGameData,
                 activeConfig: activeConfig || undefined
             })).unwrap();
@@ -304,6 +307,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 league,
                 matchId,
                 gameInputs: gameContainer.currentGame,
+                numGames: numGames,
                 activeConfig: activeConfig || undefined
             })).unwrap();
         }

@@ -12,10 +12,15 @@ import SettingsIcon from '@mui/icons-material/Settings';
 
 import MLBSimulationResultsSummary from '@/simDash/components/simulation/MLBSimulationResultsSummary';
 import SimulationButton from './SimulationButton';
+import AdvancedSimulationSettings from './AdvancedSimulationSettings';
+import NumberOfGamesSettings from './NumberOfGamesSettings';
+import CaptureConfigDropdown from '@/apps/simDash/components/CaptureConfigDropdown';
 
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/store/store';
 import { openSettingsTab } from '@/simDash/store/slices/tabSlice';
-import { AppDispatch } from '@/store/store';
+import { selectNumGames } from '@/apps/simDash/store/slices/simulationStatusSlice';
+import { selectActiveConfig } from '@/apps/simDash/store/slices/statCaptureSettingsSlice';
 
 import { MlbLiveDataApiResponse } from '@@/types/mlb';
 import { SimType } from '@@/types/mlb/mlb-sim';
@@ -70,6 +75,28 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
     const localDateTime = new Date(dateTime);
     const timeString = localDateTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     const dateString = localDateTime.toLocaleDateString();
+
+    const numGames = useSelector((state: RootState) => selectNumGames(state));
+    const currentConfig = useSelector((state: RootState) => selectActiveConfig(state, leagueName));
+
+    // ---------- Helper functions ----------
+
+    const formatNumGames = (num: number): string => {
+        if (num >= 1000000) {
+            return `${(num / 1000000).toFixed(num % 1000000 === 0 ? 0 : 1)}M`;
+        } else if (num >= 1000) {
+            return `${(num / 1000).toFixed(num % 1000 === 0 ? 0 : 1)}K`;
+        }
+        return num.toString();
+    };
+
+    const createLabel = (): string => {
+        const numGamesPart = formatNumGames(numGames);
+        const configPart = currentConfig?.name || 'No Config';
+        const fullLabel = `Advanced settings - ${numGamesPart} games • ${configPart}`;
+
+       return fullLabel;
+    };
 
     // ---------- Event handlers ----------
 
@@ -163,6 +190,14 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
                         isLoading={simStatus === 'loading'}
                     />
                 </Box>
+            </Box>
+            
+            {/* Advanced Settings */}
+            <Box sx={{ maxWidth: '420px', mt: 2 }}>
+                <AdvancedSimulationSettings caption={createLabel()}>
+                    <NumberOfGamesSettings leagueName={leagueName} />
+                    <CaptureConfigDropdown leagueName={leagueName} />
+                </AdvancedSimulationSettings>
             </Box>
         </Paper>
     );

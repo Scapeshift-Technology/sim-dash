@@ -40,6 +40,8 @@ export type LeagueToStatusMap = {
 }
 
 export type SimulationStatusState = {
+  numGames: number;
+} & {
   [Key in LeagueName]?: {
     [matchId: number]: LeagueToStatusMap[Key & keyof LeagueToStatusMap];
   };
@@ -47,7 +49,9 @@ export type SimulationStatusState = {
 
 // ----- Initializers -----
 
-const initialState: SimulationStatusState = {};
+const initialState: SimulationStatusState = {
+  numGames: 90000
+};
 
 const getInitialLeagueMatchState = (league: keyof LeagueToStatusMap) => {
   function createSimState(status: SimStatus = 'idle'): SimState {
@@ -147,7 +151,11 @@ const handleSimulationState = (
 const simulationStatusSlice = createSlice({
   name: 'simulationStatus',
   initialState,
-  reducers: {},
+  reducers: {
+    updateNumGames: (state, action: { payload: number }) => {
+      state.numGames = action.payload;
+    }
+  },
   extraReducers: (builder) => {
     // Traditional simulation
     builder
@@ -191,10 +199,14 @@ const simulationStatusSlice = createSlice({
 // ---------- Actions ----------
 
 export const { 
-  
+  updateNumGames
 } = simulationStatusSlice.actions;
 
 // ---------- Selectors ----------
+
+export const selectNumGames = (state: RootState) => {
+  return state.simDash.simulationStatus.numGames;
+};
 
 export const selectTraditionalSimulationStatus = (state: RootState, league: keyof LeagueToStatusMap, matchId: number) => {
   return state.simDash.simulationStatus[league]?.[matchId]?.traditional?.simStatus ?? 'idle';
