@@ -8,7 +8,6 @@ import {
     Tooltip
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import SettingsIcon from '@mui/icons-material/Settings';
 
 import MLBSimulationResultsSummary from '@/simDash/components/simulation/MLBSimulationResultsSummary';
 import SimulationButton from './SimulationButton';
@@ -18,7 +17,6 @@ import CaptureConfigDropdown from '@/apps/simDash/components/CaptureConfigDropdo
 
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
-import { openSettingsTab } from '@/simDash/store/slices/tabSlice';
 import { selectNumGames } from '@/apps/simDash/store/slices/simulationStatusSlice';
 import { selectActiveConfig } from '@/apps/simDash/store/slices/statCaptureSettingsSlice';
 
@@ -100,12 +98,6 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
 
     // ---------- Event handlers ----------
 
-    const handleSimSettingsClick = () => {
-        dispatch(openSettingsTab({
-            league: leagueName
-        }));
-    };
-
     // ---------- Rendering ----------
 
     return (
@@ -139,15 +131,6 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
                             disabled={!lineupData}
                         >
                             <RefreshIcon />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Capture Configuration Settings">
-                        <IconButton 
-                            size="small" 
-                            onClick={handleSimSettingsClick}
-                            sx={{ mr: 1 }}
-                        >
-                            <SettingsIcon />
                         </IconButton>
                     </Tooltip>
                 </Box>
