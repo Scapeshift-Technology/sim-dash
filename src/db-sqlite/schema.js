@@ -93,24 +93,36 @@ async function addDefaultConfiguration(db) {
             db.get(`
                 SELECT name 
                 FROM strike_configuration 
-                WHERE name = 'default'`, (err, row) => {
+                WHERE name = 'default' 
+                AND league = 'MLB'
+                `, (err, row) => {
                 if (err) reject(err);
                 else resolve(row);
             });
         });
 
-        if (existingConfig) {
-            return;
+        if (!existingConfig) {
+            await db.runAsync(
+                `
+                INSERT INTO strike_configuration (name, league) 
+                VALUES ('default', 'MLB')
+                `
+            );
+
+            await db.runAsync(
+                `
+                INSERT INTO strike_configuration_league_active (league, active_config_name) 
+                VALUES ('MLB', 'default')
+                `
+            );
+        } else {
+            await db.runAsync(
+                `
+                DELETE FROM strike_configuration_main_markets 
+                WHERE name = 'default'
+                `
+            );
         }
-
-        // Insert default configuration
-        await db.runAsync(
-            "INSERT INTO strike_configuration (name, league) VALUES ('default', 'MLB')"
-        );
-
-        await db.runAsync(
-            "INSERT INTO strike_configuration_league_active (league, active_config_name) VALUES ('MLB', 'default')"
-        );
 
         // Define the default main markets data
         const defaultMainMarkets = [
@@ -119,8 +131,7 @@ async function addDefaultConfiguration(db) {
             { marketType: 'Spread', periodTypeCode: 'M', periodNumber: 0, strike: 1.5 },
             // Spread - Half 1 (H, 1): 0, 1.5
             { marketType: 'Spread', periodTypeCode: 'H', periodNumber: 1, strike: 0 },
-            { marketType: 'Spread', periodTypeCode: 'H', periodNumber: 1, strike: 1.5 },
-            
+            { marketType: 'Spread', periodTypeCode: 'H', periodNumber: 1, strike: 0.5 },
             // Totals - Full game (M, 0): 6.5 - 11.5
             { marketType: 'Total', periodTypeCode: 'M', periodNumber: 0, strike: 6.5 },
             { marketType: 'Total', periodTypeCode: 'M', periodNumber: 0, strike: 7.0 },
@@ -186,7 +197,8 @@ async function addDefaultConfiguration(db) {
             );
         }
 
-        console.log(`Default configuration created with ${defaultMainMarkets.length} main market entries.`);
+        const action = existingConfig ? "Reset" : "Created";
+        console.log(`${action} default configuration with ${defaultMainMarkets.length} main market entries.`);
     } catch (err) {
         console.error('Error creating default configuration:', err.message);
         throw err;
