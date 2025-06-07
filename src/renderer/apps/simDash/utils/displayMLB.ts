@@ -28,6 +28,7 @@ import {
 import { calculateUsaDiff, countsToAmericanOdds, countsToProbability, marginOfError, proportionToAmericanOdds } from "./oddsCalculations";
 import { sortSidesData, analyzeSidesCountsMLB } from "./displayMLB/sides";
 import { analyzeTotalsCountsMLB, sortTotalsData } from "./displayMLB/totals";
+import { analyzeAllPlayerCountsMLB } from "./displayMLB/playerProps";
 
 export { teamNameToAbbreviationMLB };
 
@@ -77,7 +78,7 @@ export { transformSeriesProbsMLB };
 
 function transformPropsCountsMLB(propsCounts: PropsCountsMLB, awayTeamName: string, homeTeamName: string): PropsData {
   const firstInningPropData = transformFirstInningCountsMLB(propsCounts.firstInning, awayTeamName, homeTeamName);
-  const playerPropData = transformAllPlayerCountsMLB(propsCounts.player, awayTeamName, homeTeamName);
+  const playerPropData = analyzeAllPlayerCountsMLB(propsCounts.player, awayTeamName, homeTeamName);
   const scoringOrderPropData = propsCounts.scoringOrder ? transformScoringOrderCountsMLB(propsCounts.scoringOrder, awayTeamName, homeTeamName) : undefined;
 
   return {
@@ -120,52 +121,6 @@ function transformScoringOrderTeamCountsMLB(outcomeCounts: OutcomeCounts, teamNa
   };
 }
 
-// -- Player props --
-
-function transformAllPlayerCountsMLB(propsCounts: AllPlayersPropsCountsMLB, awayTeamName: string, homeTeamName: string): PlayerPropsData[] {
-  const data: PlayerPropsData[] = [];
-
-  // Loop through all of the players
-  for (const playerID of Object.keys(propsCounts)) {
-    const playerData = propsCounts[Number(playerID)];
-    const playerName = playerData.playerName;
-    const teamName = playerData.teamName;
-    // Loop through the player's stats
-    for (const stat of Object.keys(playerData.stats)) {
-      // Loop through the stat's lines
-      for (const line of Object.keys(playerData.stats[stat])) {
-        const lineNumber = parseFloat(line);
-        const lineData = transformPlayerStatLinesPropsCountsMLB(playerName, stat, lineNumber, playerData.stats[stat][lineNumber], teamName);
-        data.push(lineData);
-      }
-    }
-  }
-
-  return data;
-}
-
-function transformPlayerStatLinesPropsCountsMLB(playerName: string, statName: string, lineNumber: number, statData: OutcomeCounts, teamName: string): PlayerPropsData {
-  // Return values for the given line
-  const { success, failure, push, total } = statData;
-  const pushCt = push || 0;
-  const overPercent = countsToProbability(success, failure, pushCt);
-  const moe = marginOfError(total - pushCt, overPercent);
-  const usaOdds = countsToAmericanOdds(success, failure, pushCt);
-  const varianceProportion = Math.min(Math.max(overPercent - moe, 0), 1);
-  const varianceOdds = proportionToAmericanOdds(varianceProportion);
-
-  return {
-    playerName: playerName,
-    teamName: teamName,
-    statName: statName,
-    line: lineNumber,
-    overPercent: overPercent,
-    marginOfError: moe,
-    usaFair: usaOdds,
-    varianceOdds: varianceOdds
-  };
-}
-
 // -- First inning props --
 
 function transformFirstInningCountsMLB(propsCounts: FirstInningScoreCountsMLB, awayTeamName: string, homeTeamName: string): FirstInningPropsData[] {
@@ -202,18 +157,16 @@ export { transformPropsCountsMLB, transformFirstInningCountsMLB };
 // -- Sides --
 
 function compareSidesDataRow(sidesData1: SidesData, sidesData2: SidesData): ComparisonSidesData {
-  const { team, period, line, coverPercent: coverPercent1, usaFair: usaFair1 } = sidesData1;
-  const { coverPercent: coverPercent2, usaFair: usaFair2 } = sidesData2;
+  const { team, period, line, coverPercent: coverPercent1 } = sidesData1;
+  const { coverPercent: coverPercent2 } = sidesData2;
   
   const diffCoverPercent = coverPercent2 - coverPercent1;
-  const diffUsaFair = calculateUsaDiff(usaFair1, usaFair2);
 
   return {
     team: team,
     period: period,
     line: line,
-    coverPercent: diffCoverPercent,
-    usaFair: diffUsaFair
+    coverPercent: diffCoverPercent
   }
 }
 
@@ -251,14 +204,12 @@ function transformComparisonSidesCountsMLB(sidesCounts1: SidesCountsMLB, sidesCo
 // -- Totals --
 
 function compareTotalsDataRow(totalsData1: TotalsData, totalsData2: TotalsData): ComparisonTotalsData {
-  const { team, period, line, overPercent: overPercent1, underPercent: underPercent1, pushPercent: pushPercent1, usaFairOver: usaFairOver1, usaFairUnder: usaFairUnder1 } = totalsData1;
-  const { overPercent: overPercent2, underPercent: underPercent2, pushPercent: pushPercent2, usaFairOver: usaFairOver2, usaFairUnder: usaFairUnder2 } = totalsData2;
+  const { team, period, line, overPercent: overPercent1, underPercent: underPercent1, pushPercent: pushPercent1 } = totalsData1;
+  const { overPercent: overPercent2, underPercent: underPercent2, pushPercent: pushPercent2 } = totalsData2;
 
   const diffOverPercent = overPercent2 - overPercent1;
   const diffUnderPercent = underPercent2 - underPercent1;
   const diffPushPercent = pushPercent2 - pushPercent1;
-  const diffUsaFairOver = calculateUsaDiff(usaFairOver1, usaFairOver2);
-  const diffUsaFairUnder = calculateUsaDiff(usaFairUnder1, usaFairUnder2);
 
   return {
     team: team,
@@ -266,9 +217,7 @@ function compareTotalsDataRow(totalsData1: TotalsData, totalsData2: TotalsData):
     line: line,
     overPercent: diffOverPercent,
     underPercent: diffUnderPercent,
-    pushPercent: diffPushPercent,
-    usaFairOver: diffUsaFairOver,
-    usaFairUnder: diffUsaFairUnder
+    pushPercent: diffPushPercent
   }
 }
 
@@ -306,16 +255,14 @@ function transformComparisonTotalsCountsMLB(totalsCounts1: TotalsCountsMLB, tota
 // -- Props --
 
 function compareFirstInningPropsDataRow(firstInningData1: FirstInningPropsData, firstInningData2: FirstInningPropsData): ComparisonFirstInningPropsData {
-  const { team, scorePercent: scorePercent1, usaFair: usaFair1 } = firstInningData1;
-  const { scorePercent: scorePercent2, usaFair: usaFair2 } = firstInningData2;
+  const { team, scorePercent: scorePercent1 } = firstInningData1;
+  const { scorePercent: scorePercent2 } = firstInningData2;
   
   const diffScorePercent = scorePercent2 - scorePercent1;
-  const diffUsaFair = calculateUsaDiff(usaFair1, usaFair2);
 
   return {
     team: team,
-    scorePercent: diffScorePercent,
-    usaFair: diffUsaFair
+    scorePercent: diffScorePercent
   }
 }
 
@@ -351,19 +298,17 @@ function transformComparisonFirstInningPropsCountsMLB(firstInningCounts1: FirstI
 }
 
 function comparePlayerPropsDataRow(playerData1: PlayerPropsData, playerData2: PlayerPropsData): ComparisonPlayerPropsData {
-  const { playerName, teamName, statName, line, overPercent: overPercent1, usaFair: usaFair1 } = playerData1;
-  const { overPercent: overPercent2, usaFair: usaFair2 } = playerData2;
+  const { playerName, teamName, statName, line, overPercent: overPercent1 } = playerData1;
+  const { overPercent: overPercent2 } = playerData2;
   
   const diffOverPercent = overPercent2 - overPercent1;
-  const diffUsaFair = calculateUsaDiff(usaFair1, usaFair2);
 
   return {
     playerName: playerName,
     teamName: teamName,
     statName: statName,
     line: line,
-    overPercent: diffOverPercent,
-    usaFair: diffUsaFair
+    overPercent: diffOverPercent
   }
 }
 
@@ -391,25 +336,23 @@ function createComparisonPlayerPropsData(sim1PlayerData: PlayerPropsData[], sim2
 }
 
 function transformComparisonPlayerPropsCountsMLB(playerCounts1: AllPlayersPropsCountsMLB, playerCounts2: AllPlayersPropsCountsMLB, awayTeamName: string, homeTeamName: string): ComparisonPlayerPropsData[] {
-  const sim1PlayerData: PlayerPropsData[] = transformAllPlayerCountsMLB(playerCounts1, awayTeamName, homeTeamName);
-  const sim2PlayerData: PlayerPropsData[] = transformAllPlayerCountsMLB(playerCounts2, awayTeamName, homeTeamName);
+  const sim1PlayerData: PlayerPropsData[] = analyzeAllPlayerCountsMLB(playerCounts1, awayTeamName, homeTeamName);
+  const sim2PlayerData: PlayerPropsData[] = analyzeAllPlayerCountsMLB(playerCounts2, awayTeamName, homeTeamName);
 
   const diffData = createComparisonPlayerPropsData(sim1PlayerData, sim2PlayerData);
   return diffData;
 }
 
 function compareScoringOrderPropsDataRow(scoringOrderData1: ScoringOrderPropsData, scoringOrderData2: ScoringOrderPropsData): ComparisonScoringOrderPropsData {
-  const { team, propType, percent: percent1, usaFair: usaFair1 } = scoringOrderData1;
-  const { percent: percent2, usaFair: usaFair2 } = scoringOrderData2;
+  const { team, propType, percent: percent1 } = scoringOrderData1;
+  const { percent: percent2 } = scoringOrderData2;
   
   const diffPercent = percent2 - percent1;
-  const diffUsaFair = calculateUsaDiff(usaFair1, usaFair2);
 
   return {
     team: team,
     propType: propType,
-    percent: diffPercent,
-    usaFair: diffUsaFair
+    percent: diffPercent
   }
 }
 

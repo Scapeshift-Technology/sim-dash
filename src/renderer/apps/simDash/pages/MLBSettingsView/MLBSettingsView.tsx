@@ -166,7 +166,7 @@ const MLBSettingsView: React.FC = () => {
         {
             id: 'ou-props',
             label: 'O/U Props',
-            content: <OUPropsTab/>
+            content: <OUPropsTab leagueName={LEAGUE_NAME} />
         },
         {
             id: 'yesno-props',

@@ -116,12 +116,15 @@ async function addDefaultConfiguration(db) {
                 `
             );
         } else {
-            await db.runAsync(
-                `
-                DELETE FROM strike_configuration_main_markets 
-                WHERE name = 'default'
-                `
-            );
+            const sqlDeleteStatements = [
+                `DELETE FROM strike_configuration_main_markets WHERE name = 'default';`,
+                `DELETE FROM strike_configuration_props_ou WHERE name = 'default';`,
+                `DELETE FROM strike_configuration_props_yn WHERE name = 'default';`
+            ]
+
+            for (const sql of sqlDeleteStatements) {
+                await db.runAsync(sql);
+            }
         }
 
         // Define the default main markets data
@@ -194,6 +197,27 @@ async function addDefaultConfiguration(db) {
                  (name, market_type, period_type_code, period_number, strike)
                  VALUES ('default', ?, ?, ?, ?)`,
                 [market.marketType, market.periodTypeCode, market.periodNumber, market.strike]
+            );
+        }
+
+        // Define the default O/U props
+        const defaultOUProps = [
+            { contestantType: 'Individual', prop: 'Ks', strike: 2.5 },
+            { contestantType: 'Individual', prop: 'Ks', strike: 3.5 },
+            { contestantType: 'Individual', prop: 'Ks', strike: 4.5 },
+            { contestantType: 'Individual', prop: 'Ks', strike: 5.5 },
+            { contestantType: 'Individual', prop: 'Ks', strike: 6.5 },
+            { contestantType: 'Individual', prop: 'Ks', strike: 7.5 },
+            { contestantType: 'Individual', prop: 'Ks', strike: 8.5 },
+            { contestantType: 'Individual', prop: 'Ks', strike: 9.5 }
+        ]
+
+        // Insert all default O/U props
+        for (const prop of defaultOUProps) {
+            await db.runAsync(
+                `INSERT INTO strike_configuration_props_ou (name, prop, contestant_type, strike)
+                 VALUES ('default', ?, ?, ?)`,
+                [prop.prop, prop.contestantType, prop.strike]
             );
         }
 

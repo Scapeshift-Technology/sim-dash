@@ -63,3 +63,8 @@ export interface ConfigurationRow {
     line: number;
 }
 
+export interface LeagueOUProps {
+    ContestantType: string;
+    Prop: string;
+}
+

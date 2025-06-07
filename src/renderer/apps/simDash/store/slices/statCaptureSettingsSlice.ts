@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
 import { LeagueName } from '@@/types/league';
-import { LeagueSavedConfiguration, Period } from '@@/types/statCaptureConfig';
+import { LeagueOUProps, LeagueSavedConfiguration, Period } from '@@/types/statCaptureConfig';
 import { SavedConfiguration } from '@@/types/statCaptureConfig';
 import { MainMarketConfig, PropOUConfig, PropYNConfig } from '@@/types/statCaptureConfig';
 
@@ -26,6 +26,11 @@ export interface StatCaptureLeagueState {
     periodsLoading: boolean;
     periodsError: string | null;
     periods: Period[];
+
+    // Over/Under props loading
+    overUnderPropsLoading: boolean;
+    overUnderPropsError: string | null;
+    overUnderProps: LeagueOUProps[];
 
     // League configurations thunk
     leagueConfigurationsLoading: boolean;
@@ -158,6 +163,8 @@ const initialState: StatCaptureSettingsState = {};
 
 // ---------- Async thunks ----------
 
+// ---- League fetching -----
+
 export const getLeaguePeriods = createAsyncThunk<
     Period[],
     LeagueName,
@@ -173,6 +180,24 @@ export const getLeaguePeriods = createAsyncThunk<
         }
     }
 );
+
+export const getLeagueOUProps = createAsyncThunk<
+    LeagueOUProps[],
+    LeagueName,
+    { rejectValue: string }
+    >(
+    'statCaptureSettings/getLeagueOUProps',
+    async (leagueName, { rejectWithValue }) => {
+        try {
+            const result = await window.electronAPI.getLeagueOUProps(leagueName);
+            return result;
+        } catch (err: any) {
+            return rejectWithValue(err.message || 'An unexpected error occurred while fetching league periods.');
+        }
+    }
+);
+
+// ---- Configuration fetching -----
 
 export const getLeagueStatCaptureConfigurations = createAsyncThunk<
     LeagueSavedConfiguration[],
@@ -269,6 +294,9 @@ const statCaptureSettingsSlice = createSlice({
                     periodsLoading: false,
                     periodsError: null,
                     periods: [],
+                    overUnderPropsLoading: false,
+                    overUnderPropsError: null,
+                    overUnderProps: [],
                     leagueSavedConfigurations: [],
                     currentlyLoadedConfiguration: null,
                     leagueConfigurationsLoading: false,
@@ -328,6 +356,13 @@ const statCaptureSettingsSlice = createSlice({
             }
         },
 
+        updateCurrentDraftOUProps: (state, action: PayloadAction<{ leagueName: string; ouProps: any[] }>) => {
+            const { leagueName, ouProps } = action.payload;
+            if (state[leagueName]) {
+                state[leagueName].currentDraft.propsOU = ouProps;
+            }
+        },
+
         updateSaveConfigName: (state, action: PayloadAction<{ leagueName: string; saveConfigName: string }>) => {
             const { leagueName, saveConfigName } = action.payload;
             if (state[leagueName]) {
@@ -372,6 +407,29 @@ const statCaptureSettingsSlice = createSlice({
                 if (state[leagueName]) {
                     state[leagueName].periodsLoading = false;
                     state[leagueName].periodsError = action.payload ?? 'Failed to fetch league periods';
+                }
+            })
+
+            // Get league OU props actions
+            .addCase(getLeagueOUProps.pending, (state, action) => {
+                const leagueName = action.meta.arg;
+                if (state[leagueName]) {
+                    state[leagueName].overUnderPropsLoading = true;
+                    state[leagueName].overUnderPropsError = null;
+                }
+            })
+            .addCase(getLeagueOUProps.fulfilled, (state, action) => {
+                const leagueName = action.meta.arg;
+                if (state[leagueName]) {
+                    state[leagueName].overUnderPropsLoading = false;
+                    state[leagueName].overUnderProps = action.payload;
+                }
+            })
+            .addCase(getLeagueOUProps.rejected, (state, action) => {
+                const leagueName = action.meta.arg;
+                if (state[leagueName]) {
+                    state[leagueName].overUnderPropsLoading = false;
+                    state[leagueName].overUnderPropsError = action.payload ?? 'Failed to fetch league OU props';
                 }
             })
 
@@ -511,6 +569,7 @@ export const {
     removeLeague,
     clearPeriodsError,
     updateCurrentDraftMainMarkets,
+    updateCurrentDraftOUProps,
     updateCurrentDraft,
     updateSaveConfigName,
     clearCurrentDraft
@@ -532,6 +591,14 @@ export const selectLeaguePeriodsLoading = (state: { simDash: { settings: StatCap
     state.simDash?.settings?.[leagueName]?.periodsLoading ?? false;
 export const selectLeaguePeriodsError = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): string | null => 
     state.simDash?.settings?.[leagueName]?.periodsError ?? null;
+
+// League OU props selectors
+export const selectLeagueOUProps = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): LeagueOUProps[] => 
+    state.simDash?.settings?.[leagueName]?.overUnderProps ?? [];
+export const selectLeagueOUPropsLoading = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): boolean => 
+    state.simDash?.settings?.[leagueName]?.overUnderPropsLoading ?? false;
+export const selectLeagueOUPropsError = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): string | null => 
+    state.simDash?.settings?.[leagueName]?.overUnderPropsError ?? null;
 
 // League stat capture configurations selectors
 export const selectLeagueStatCaptureConfigurations = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): LeagueSavedConfiguration[] => 

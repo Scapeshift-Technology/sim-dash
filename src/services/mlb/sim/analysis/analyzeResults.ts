@@ -2,13 +2,11 @@ import { PlayResult, MatchupLineups, MlbLiveDataApiResponse } from "@/types/mlb"
 import { SimResultsMLB } from "@/types/bettingResults";
 import { SavedConfiguration } from "@/types/statCaptureConfig";
 
-// import { calculateSidesCounts } from "./sidesAnalyzer";
-// import { calculateTotalsCounts } from "./totalsAnalyzer";
-import { calculatePropsCounts } from "./propsAnalyzer";
+import { calculateSidesCounts } from "./sidesAnalyzer2";
+import { calculateTotalsCounts } from "./totalsAnalyzer2";
+import { calculatePropsCounts } from "./propsAnalyzer2";
 import { pastPlaysToSimPlays } from "./pastPlaysAnalyzer";
 
-import { calculateSidesCounts } from "./sidesAnalyzer2";
-import { calculateTotalsCounts as calculateTotalsCounts2 } from "./totalsAnalyzer2";
 
 // ---------- Main function ----------
 
@@ -22,8 +20,8 @@ function calculateSimCounts(simPlays: PlayResult[][], matchup: MatchupLineups, s
   };
 
   const sidesCounts = calculateSidesCounts(simPlays, statCaptureConfig);
-  const totalsCounts = calculateTotalsCounts2(simPlays, statCaptureConfig);
-  const propsCounts = calculatePropsCounts(simPlays, matchup);
+  const totalsCounts = calculateTotalsCounts(simPlays, statCaptureConfig);
+  const propsCounts = calculatePropsCounts(simPlays, matchup, statCaptureConfig);
 
   const outputResults: SimResultsMLB = {
     sides: sidesCounts,

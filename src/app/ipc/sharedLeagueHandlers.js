@@ -113,7 +113,42 @@ const specialMLBPeriods = [
         PeriodNumber: 99, // Used because no inning 99 is used elsewhere. This will need to be transformed across the app.
         PeriodName: 'Innings 1-3'
     }
-]
+];
+
+const getLeagueOUProps = async (event, leagueName, getCurrentPool) => {
+    log.info(`IPC received: get-league-ou-props for ${leagueName}`);
+    const currentPool = getCurrentPool();
+    if (!currentPool) {
+        log.error('get-league-ou-props: No active SQL Server connection.');
+        throw new Error('Not connected to database.');
+    }
+
+    try {
+        // Fetch the actual props
+        const result = await currentPool.request().query(`
+            SELECT TRIM(ContestantType) AS ContestantType
+                , TRIM(Prop) AS Prop
+            FROM dbo.PropSportContestantType PSCT
+            WHERE EXISTS(
+                SELECT 1
+                FROM dbo.League L
+                WHERE L.Sport = PSCT.Sport
+                    AND L.League = '${leagueName}'
+                )
+            AND EXISTS(
+                SELECT 1
+                FROM dbo.Prop P
+                WHERE P.Prop = PSCT.Prop
+                    AND P.PropType = 'OvrUnd'
+                )
+        `);
+
+        return result.recordset;
+    } catch (err) {
+        log.error(`Error fetching league OU props for ${leagueName}:`, err);
+        throw err; // Rethrow the error to be caught by the renderer
+    }
+};
 
 // ---------- Register the handlers ----------
 
@@ -123,14 +158,17 @@ const specialMLBPeriods = [
  * @param {Function} params.getCurrentPool - Function to get current SQL Server connection pool
  */
 const registerSharedLeagueHandlers = ({ getCurrentPool }) => {
-    // League Data Handlers
+    // League Data Handler
     ipcMain.handle('fetch-leagues', (event) => handleFetchLeagues(event, getCurrentPool));
 
-    // Schedule handlers
+    // Schedule handler
     ipcMain.handle('fetch-schedule', (event, { league, date }) => handleFetchSchedule(event, { league, date }, getCurrentPool));
 
-    // League periods handlers
+    // League periods handler
     ipcMain.handle('get-league-periods', (event, leagueName) => getLeaguePeriods(event, leagueName, getCurrentPool));
+
+    // League OU props handler
+    ipcMain.handle('get-league-ou-props', (event, leagueName) => getLeagueOUProps(event, leagueName, getCurrentPool));
 
     log.info('Shared league IPC handlers registered');
 };
