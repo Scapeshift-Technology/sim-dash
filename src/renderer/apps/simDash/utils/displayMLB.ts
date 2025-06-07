@@ -47,7 +47,7 @@ export { transformSidesCountsMLB };
 
 function transformTotalsCountsMLB(totalsCounts: TotalsCountsMLB, awayTeamName: string, homeTeamName: string): TotalsData[] {
   const allData = analyzeTotalsCountsMLB(totalsCounts, awayTeamName, homeTeamName);
-  return sortTotalsData(allData);
+  return sortTotalsData(allData, awayTeamName, homeTeamName);
 }
 
 export { transformTotalsCountsMLB };

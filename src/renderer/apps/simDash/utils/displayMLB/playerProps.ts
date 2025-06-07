@@ -5,6 +5,15 @@ import {
 } from "@/types/bettingResults";
 
 import { countsToAmericanOdds, countsToProbability, marginOfError, proportionToAmericanOdds } from "@/apps/simDash/utils/oddsCalculations";
+import { 
+  sortWithConfig, 
+  awayTeamFirstComparator, 
+  playerNameComparator, 
+  statNameComparator, 
+  lineComparator,
+  type SortConfig 
+} from "./sorting";
+
 
 // ---------- Main function ----------
 
@@ -63,28 +72,31 @@ function transformPlayerStatLinesPropsCountsMLB(playerName: string, statName: st
 
 // ---------- Sorting ----------
 
+const playerPropsDataSortConfig: SortConfig<PlayerPropsData> = [
+  {
+    key: 'teamName',
+    direction: 'asc',
+    compareFn: awayTeamFirstComparator
+  },
+  {
+    key: 'playerName',
+    direction: 'asc',
+    compareFn: playerNameComparator
+  },
+  {
+    key: 'statName',
+    direction: 'asc',
+    compareFn: statNameComparator
+  },
+  {
+    key: 'line',
+    direction: 'asc',
+    compareFn: lineComparator
+  }
+];
+
 function sortPlayerPropsData(data: PlayerPropsData[], awayTeamName: string): PlayerPropsData[] {
-  return data.sort((a, b) => {
-    // 1. Sort by team (away first)
-    const aIsAway = a.teamName === awayTeamName;
-    const bIsAway = b.teamName === awayTeamName;
-    if (aIsAway && !bIsAway) return -1;
-    if (!aIsAway && bIsAway) return 1;
-    if (aIsAway === bIsAway && a.teamName !== b.teamName) {
-      return a.teamName.localeCompare(b.teamName);
-    }
-    
-    // 2. Sort by player name (alphabetically)
-    const playerOrder = a.playerName.localeCompare(b.playerName);
-    if (playerOrder !== 0) return playerOrder;
-    
-    // 3. Sort by stat name (alphabetically)
-    const statOrder = a.statName.localeCompare(b.statName);
-    if (statOrder !== 0) return statOrder;
-    
-    // 4. Sort by line (smallest first)
-    return a.line - b.line;
-  });
+  return sortWithConfig(data, playerPropsDataSortConfig, { awayTeamName });
 }
 
 export { sortPlayerPropsData };

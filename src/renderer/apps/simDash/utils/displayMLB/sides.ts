@@ -8,7 +8,14 @@ import {
 } from "@/types/bettingResults";
 
 import { countsToAmericanOdds, countsToProbability, marginOfError, proportionToAmericanOdds } from "../oddsCalculations";
-import { getPeriodSortOrder } from "./sorting";
+import { 
+  sortWithConfig, 
+  periodOrderComparator, 
+  absoluteLineComparator, 
+  lineComparator, 
+  coverPercentComparator,
+  type SortConfig 
+} from "./sorting";
 
 import { periodKeyToDisplayPeriod } from "@@/services/statCaptureConfig/utils";
 
@@ -112,26 +119,32 @@ function transformSidesOutcomeCountsMLB(outcomeCounts: OutcomeCounts, teamName: 
 
 // ----- Sorting -----
 
+
+const sidesDataSortConfig: SortConfig<SidesData> = [
+  {
+    key: 'period',
+    direction: 'asc',
+    compareFn: periodOrderComparator
+  },
+  {
+    key: 'line',
+    direction: 'asc',
+    compareFn: absoluteLineComparator
+  },
+  {
+    key: 'line',
+    direction: 'asc',
+    compareFn: lineComparator // Favorite before underdog (negative before positive)
+  },
+  {
+    key: 'coverPercent',
+    direction: 'desc',
+    compareFn: coverPercentComparator
+  }
+];
+
 function sortSidesData(data: SidesData[]): SidesData[] {
-  return data.sort((a, b) => {
-    // 1. Sort by period (FG, then H_, then I_) and period number
-    const periodOrderA = getPeriodSortOrder(a.period);
-    const periodOrderB = getPeriodSortOrder(b.period);
-    if (periodOrderA !== periodOrderB) return periodOrderA - periodOrderB;
-    
-    // 2. Sort by absolute line value
-    const absLineA = Math.abs(a.line);
-    const absLineB = Math.abs(b.line);
-    const lineOrder = absLineA - absLineB;
-    if (lineOrder !== 0) return lineOrder;
-    
-    // 3. Favorite before underdog
-    const favoriteOrder = a.line - b.line;
-    if (favoriteOrder !== 0) return favoriteOrder;
-    
-    // 4. If line is the same, team that covers more on top
-    return b.coverPercent - a.coverPercent;
-  });
+  return sortWithConfig(data, sidesDataSortConfig);
 }
 
 export { sortSidesData };

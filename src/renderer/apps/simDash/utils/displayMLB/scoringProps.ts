@@ -3,8 +3,16 @@ import {
     ScoringOrderPropsData, 
     OutcomeCounts 
 } from "@/types/bettingResults";
-import { countsToProbability, marginOfError, proportionToAmericanOdds } from "../oddsCalculations";
+
 import { teamNameToAbbreviationMLB } from "@@/services/mlb/utils/teamName";
+
+import { countsToProbability, marginOfError, proportionToAmericanOdds } from "../oddsCalculations";
+import { 
+  sortWithConfig, 
+  propTypeOrderComparator, 
+  percentComparator,
+  type SortConfig 
+} from "./sorting";
 
 // ---------- Main function ----------
 
@@ -57,16 +65,23 @@ function transformScoringOrderTeamCountsMLB(outcomeCounts: OutcomeCounts, teamNa
 
 // ---------- Sorting ----------
 
+// ---------- Sort Configuration ----------
+
+const scoringOrderPropsSortConfig: SortConfig<ScoringOrderPropsData> = [
+    {
+      key: 'propType',
+      direction: 'asc',
+      compareFn: propTypeOrderComparator
+    },
+    {
+      key: 'percent',
+      direction: 'desc',
+      compareFn: percentComparator
+    }
+  ];
+
 function sortScoringOrderPropsData(data: ScoringOrderPropsData[]): ScoringOrderPropsData[] {
-    return data.sort((a, b) => {
-        // Sort by prop type first (first before last)
-        if (a.propType !== b.propType) {
-            return a.propType === 'first' ? -1 : 1;
-        }
-        
-        // Then sort by percentage (higher first)
-        return b.percent - a.percent;
-    });
+    return sortWithConfig(data, scoringOrderPropsSortConfig);
 }
 
 export { sortScoringOrderPropsData };

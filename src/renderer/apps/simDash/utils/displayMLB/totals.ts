@@ -1,8 +1,17 @@
 import { TotalsLinesMLB, TotalsData, GamePeriodTotalsMLB, OutcomeCounts, TotalsCountsMLB } from "@@/types/bettingResults";
-import { countsToProbability, countsToAmericanOdds, marginOfError, proportionToAmericanOdds } from "../oddsCalculations";
-import { periodKeyToDisplayPeriod, displayPeriodToCodeAndNumber } from "@@/services/statCaptureConfig/utils";
 import { PeriodKey } from "@@/types/statCaptureConfig";
-import { getPeriodSortOrder } from "./sorting";
+
+import { countsToProbability, countsToAmericanOdds, marginOfError, proportionToAmericanOdds } from "../oddsCalculations";
+import { 
+  sortWithConfig, 
+  teamOrderComparator, 
+  periodOrderComparator, 
+  lineComparator, 
+  overPercentComparator,
+  type SortConfig 
+} from "./sorting";
+
+import { periodKeyToDisplayPeriod } from "@@/services/statCaptureConfig/utils";
 
 // ---------- Main function ----------
 
@@ -92,20 +101,33 @@ function transformTotalsOutcomeCountsMLB(
   };
 }
 
-export function sortTotalsData(data: TotalsData[]): TotalsData[] {
-  return data.sort((a, b) => {
-    // 1. Sort by period (FG, then H_, then I_) and period number
-    const periodOrderA = getPeriodSortOrder(a.period);
-    const periodOrderB = getPeriodSortOrder(b.period);
-    if (periodOrderA !== periodOrderB) return periodOrderA - periodOrderB;
-    
-    // 2. Sort by line value (ascending)
-    const lineOrder = a.line - b.line;
-    if (lineOrder !== 0) return lineOrder;
-    
-    // 3. If everything else is equal, sort by over percentage (higher first)
-    return b.overPercent - a.overPercent;
-  });
+// ---------- Sort Configuration ----------
+
+const totalsDataSortConfig: SortConfig<TotalsData> = [
+  {
+    key: 'team',
+    direction: 'asc',
+    compareFn: teamOrderComparator
+  },
+  {
+    key: 'period',
+    direction: 'asc', 
+    compareFn: periodOrderComparator
+  },
+  {
+    key: 'line',
+    direction: 'asc',
+    compareFn: lineComparator
+  },
+  {
+    key: 'overPercent',
+    direction: 'desc',
+    compareFn: overPercentComparator
+  }
+];
+
+export function sortTotalsData(data: TotalsData[], awayTeamName: string, homeTeamName: string): TotalsData[] {
+  return sortWithConfig(data, totalsDataSortConfig, { awayTeamName, homeTeamName });
 }
 
 
