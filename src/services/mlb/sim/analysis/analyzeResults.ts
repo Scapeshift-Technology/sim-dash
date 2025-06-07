@@ -2,9 +2,9 @@ import { PlayResult, MatchupLineups, MlbLiveDataApiResponse } from "@/types/mlb"
 import { SimResultsMLB } from "@/types/bettingResults";
 import { SavedConfiguration } from "@/types/statCaptureConfig";
 
-import { calculateSidesCounts } from "./sidesAnalyzer2";
-import { calculateTotalsCounts } from "./totalsAnalyzer2";
-import { calculatePropsCounts } from "./propsAnalyzer2";
+import { calculateSidesCounts } from "./sidesAnalyzer";
+import { calculateTotalsCounts } from "./totalsAnalyzer";
+import { calculatePropsCounts } from "./propsAnalyzer";
 import { pastPlaysToSimPlays } from "./pastPlaysAnalyzer";
 
 // ---------- Main function ----------

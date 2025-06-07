@@ -225,15 +225,6 @@ const YNPropsConfiguration: React.FC<YNPropsConfigurationProps> = ({
                                                                 label={
                                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                                         <span>{propData.Prop}</span>
-                                                                        {isAlreadyConfigured && (
-                                                                            <Chip 
-                                                                                label="Added" 
-                                                                                size="small" 
-                                                                                variant="outlined" 
-                                                                                color="success"
-                                                                                sx={{ fontSize: '0.6rem', height: 16 }}
-                                                                            />
-                                                                        )}
                                                                     </Box>
                                                                 }
                                                                 sx={{ 

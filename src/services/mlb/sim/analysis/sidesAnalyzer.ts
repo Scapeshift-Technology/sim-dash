@@ -1,38 +1,72 @@
 import { PlayResult } from "@/types/mlb";
-import { SidesCountsMLB, TeamSidesCountsMLB, OutcomeCounts } from "@/types/bettingResults";
-import { GameTimeframe, getScoreAtTimeframe } from "./scoreTracker";
+import {
+    SidesCountsMLB,
+    OutcomeCounts,
+    TeamSidesCountsMLB
+} from "@/types/bettingResults";
+import { SavedConfiguration, PeriodTypeCode, PeriodKey } from "@/types/statCaptureConfig";
+import { getScoreForPeriod } from "./scoreTracker";
+import { getPeriodKey } from "../../../statCaptureConfig/utils";
 
-export function calculateSidesCounts(simPlays: PlayResult[][]): SidesCountsMLB {
+// ---------- Main function ----------
+
+function calculateSidesCounts(simPlays: PlayResult[][], statCaptureConfig: SavedConfiguration): SidesCountsMLB {
+  const adjustedStatCaptureConfig = adjustStatCaptureConfig(statCaptureConfig);
+
   return {
-    home: calculateSingleSideCounts(simPlays, 'home'),
-    away: calculateSingleSideCounts(simPlays, 'away')
+    home: calculateSingleSideCounts(simPlays, 'home', adjustedStatCaptureConfig),
+    away: calculateSingleSideCounts(simPlays, 'away', adjustedStatCaptureConfig)
   };
 }
 
-function calculateSingleSideCounts(simPlays: PlayResult[][], side: 'home' | 'away'): TeamSidesCountsMLB {
-  return {
-    fullGame: calculateTimeframeCounts(simPlays, side, {}),
-    firstFive: calculateTimeframeCounts(simPlays, side, { endInning: 5, topInningEnd: false })
-  };
-}
+export { calculateSidesCounts }
 
-function calculateTimeframeCounts(
-  simPlays: PlayResult[][],
-  side: 'home' | 'away',
-  timeframe: GameTimeframe
-) {
-  return {
-    '0': calculateSideProbability(simPlays, side, 0, timeframe),
-    '-1.5': calculateSideProbability(simPlays, side, -1.5, timeframe),
-    '1.5': calculateSideProbability(simPlays, side, 1.5, timeframe)
-  };
+// ---------- Helper functions ----------
+
+function calculateSingleSideCounts(simPlays: PlayResult[][], side: 'home' | 'away', statCaptureConfig: SavedConfiguration): TeamSidesCountsMLB {
+  const sidesMarkets = statCaptureConfig.mainMarkets.filter(market => market.marketType === 'Spread');
+  const results: TeamSidesCountsMLB = {};
+  
+  for (const market of sidesMarkets) {
+    // Initialize
+    const originalStrike = parseFloat(market.strike);
+    const periodKey: PeriodKey = getPeriodKey(market.periodTypeCode, market.periodNumber);
+    
+    if (!results[periodKey]) {
+      results[periodKey] = {};
+    }
+    
+    // Get lines 
+    const positiveResult = calculateSideProbability(
+      simPlays, 
+      side, 
+      originalStrike, 
+      market.periodTypeCode, 
+      market.periodNumber
+    );
+    results[periodKey][originalStrike.toString()] = positiveResult;
+    
+    if (originalStrike > 0) {
+      const negativeResult = calculateSideProbability(
+        simPlays, 
+        side, 
+        -originalStrike, 
+        market.periodTypeCode, 
+        market.periodNumber
+      );
+      results[periodKey][(-originalStrike).toString()] = negativeResult;
+    }
+  }
+  
+  return results;
 }
 
 function calculateSideProbability(
   simPlays: PlayResult[][],
   side: 'home' | 'away',
   line: number,
-  timeframe: GameTimeframe
+  periodTypeCode: PeriodTypeCode,
+  periodNumber: number
 ): OutcomeCounts {
   let success = 0;
   let failure = 0;
@@ -40,7 +74,7 @@ function calculateSideProbability(
   const totalGames = simPlays.length;
 
   for (const game of simPlays) {
-    const { homeScore, awayScore } = getScoreAtTimeframe(game, timeframe);
+    const { homeScore, awayScore } = getScoreForPeriod(game, periodTypeCode, periodNumber);
     const margin = side === 'home' ? awayScore - homeScore : homeScore - awayScore;
     
     if (margin < line) {
@@ -59,3 +93,22 @@ function calculateSideProbability(
     total: totalGames
   };
 } 
+
+function adjustStatCaptureConfig(statCaptureConfig: SavedConfiguration): SavedConfiguration {
+  const adjustedConfig = { ...statCaptureConfig };
+
+  // If no moneyline market, add it
+  if (!adjustedConfig.mainMarkets.find(market => (
+    market.marketType === 'Spread' && market.periodTypeCode === 'M' && market.periodNumber === 0 && market.strike === '0'
+  ))) {
+    adjustedConfig.mainMarkets.push({
+      marketType: 'Spread',
+      periodTypeCode: 'M',
+      periodNumber: 0,
+      strike: '0'
+    });
+  }
+
+  return adjustedConfig;
+}
+

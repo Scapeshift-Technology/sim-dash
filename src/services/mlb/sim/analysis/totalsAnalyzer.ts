@@ -1,39 +1,71 @@
 import { PlayResult } from "@/types/mlb";
 import { TotalsCountsMLB, GamePeriodTotalsMLB, OutcomeCounts } from "@/types/bettingResults";
-import { getScoreForType } from "./scoreTracker";
+import { SavedConfiguration, PeriodTypeCode, PeriodKey, MarketType, MainMarketConfig } from "@/types/statCaptureConfig";
+import { getScoreForPeriod } from "./scoreTracker";
+import { getPeriodKey, periodKeyToCodeAndNumber } from "../../../statCaptureConfig/utils";
 
-export function calculateTotalsCounts(simPlays: PlayResult[][]): TotalsCountsMLB {
+// ---------- Main function ----------
+
+function calculateTotalsCounts(simPlays: PlayResult[][], statCaptureConfig: SavedConfiguration): TotalsCountsMLB {
+  const adjustedStatCaptureConfig = adjustStatCaptureConfig(simPlays, statCaptureConfig);
+
   return {
-    combined: calculateGamePeriodTotals(simPlays, 'combined'),
-    home: calculateGamePeriodTotals(simPlays, 'home'),
-    away: calculateGamePeriodTotals(simPlays, 'away')
+    combined: calculateSingleTypeTotals(simPlays, 'combined', adjustedStatCaptureConfig),
+    home: calculateSingleTypeTotals(simPlays, 'home', adjustedStatCaptureConfig),
+    away: calculateSingleTypeTotals(simPlays, 'away', adjustedStatCaptureConfig)
   };
 }
 
-function calculateGamePeriodTotals(
+export { calculateTotalsCounts }
+
+// ---------- Helper functions ----------
+
+function calculateSingleTypeTotals(
   simPlays: PlayResult[][],
-  type: 'combined' | 'home' | 'away'
+  type: 'combined' | 'home' | 'away',
+  statCaptureConfig: SavedConfiguration
 ): GamePeriodTotalsMLB {
-  return {
-    fullGame: {
-      over: calculateTotalLines(simPlays, type, 'fullGame', 'over'),
-      under: calculateTotalLines(simPlays, type, 'fullGame', 'under')
-    },
-    firstFive: {
-      over: calculateTotalLines(simPlays, type, 'firstFive', 'over'),
-      under: calculateTotalLines(simPlays, type, 'firstFive', 'under')
+
+  let marketType: MarketType;
+  if (type === 'combined') {
+    marketType = 'Total';
+  } else {
+    marketType = 'TeamTotal';
+  }
+
+  const markets = statCaptureConfig.mainMarkets.filter(market => market.marketType === marketType);
+  const periods = [...new Set(markets.map(market => {
+    return getPeriodKey(market.periodTypeCode, market.periodNumber);
+  }))];
+
+  const results: GamePeriodTotalsMLB = {};
+
+  for (const period of periods) {
+    const lines = getLines2(markets, period);
+
+    if (!results[period]) {
+      results[period] = {
+        over: {},
+        under: {}
+      };
     }
-  };
+
+    results[period].over = calculateTotalLines(simPlays, type, period, 'over', lines);
+    results[period].under = calculateTotalLines(simPlays, type, period, 'under', lines);
+  }
+
+  return results;
 }
 
 function calculateTotalLines(
   simPlays: PlayResult[][],
   type: 'combined' | 'home' | 'away',
-  period: 'fullGame' | 'firstFive',
-  direction: 'over' | 'under'
+  period: PeriodKey,
+  direction: 'over' | 'under',
+  lines: number[]
 ): { [key: number]: OutcomeCounts } {
-  const lines = getLines(type, period);
   const results: { [key: number]: OutcomeCounts } = {};
+  const { periodTypeCode, periodNumber } = periodKeyToCodeAndNumber(period);
 
   for (const line of lines) {
     let success = 0;
@@ -42,7 +74,7 @@ function calculateTotalLines(
     const totalGames = simPlays.length;
 
     for (const game of simPlays) {
-      const score = getScoreForType(game, type, period);
+      const score = getScoreForType(game, type, periodTypeCode, periodNumber);
       
       if (direction === 'over') {
         if (score > line) success++;
@@ -81,3 +113,77 @@ function getLines(type: 'combined' | 'home' | 'away', period: 'fullGame' | 'firs
     }
   }
 } 
+
+function getLines2(markets: MainMarketConfig[], targetPeriod: PeriodKey): number[] {
+  const periodMarkets = markets.filter(market => {
+    const marketPeriod = getPeriodKey(market.periodTypeCode, market.periodNumber);
+    return marketPeriod === targetPeriod;
+  });
+  
+  const marketLines = periodMarkets.map(market => {
+    return parseFloat(market.strike);
+  });
+
+  return [...new Set(marketLines)].sort((a, b) => a - b);
+}
+
+function getScoreForType(
+  game: PlayResult[],
+  type: 'combined' | 'home' | 'away',
+  periodTypeCode: PeriodTypeCode,
+  periodNumber: number
+): number {
+  const { homeScore, awayScore } = getScoreForPeriod(game, periodTypeCode, periodNumber);
+  
+  switch (type) {
+    case 'combined':
+      return homeScore + awayScore;
+    case 'home':
+      return homeScore;
+    case 'away':
+      return awayScore;
+    default:
+      throw new Error(`Unknown type: ${type}`);
+  }
+};
+
+function adjustStatCaptureConfig(simPlays: PlayResult[][], statCaptureConfig: SavedConfiguration): SavedConfiguration {
+  const adjustedConfig = { ...statCaptureConfig };
+
+  const meanRunsScored = getMeanRunsScore(simPlays);
+
+  // Add closest full-game totals lines to mean runs scored
+  const baseTotal = Math.round(meanRunsScored * 2) / 2;
+  const totalsToAdd = [
+    baseTotal - 1,
+    baseTotal - 0.5,
+    baseTotal,
+    baseTotal + 0.5,
+    baseTotal + 1
+  ];
+  
+  totalsToAdd.forEach(total => { // Duplicated lines do not cause issues for now, but maybe keep an eye out if there are big changes made
+    adjustedConfig.mainMarkets.push({
+      marketType: 'Total',
+      periodTypeCode: 'M',
+      periodNumber: 0,
+      strike: total.toString(),
+    });
+  });
+
+  return adjustedConfig;
+};
+
+function getMeanRunsScore(simPlays: PlayResult[][]): number {
+  // Find the last play of each game
+  const lastPlays = simPlays.map(game => game[game.length - 1]);
+
+  // Get the runs scored in the last play
+  const runsScored = lastPlays.map(play => play.homeScore + play.awayScore + play.runsOnPlay);
+
+  // Get the mean total scored
+  const meanRunsScored = runsScored.reduce((acc, runs) => acc + runs, 0) / runsScored.length;
+
+  return meanRunsScored;
+}
+

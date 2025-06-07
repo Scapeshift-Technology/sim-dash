@@ -1,26 +1,63 @@
 import { PlayResult } from "@/types/mlb";
+import { PeriodTypeCode, PeriodKey } from "@/types/statCaptureConfig";
 
-export interface GameTimeframe {
-  endInning?: number;  // undefined means full game
-  topInningEnd?: boolean;  // true means include top of inning
+// ---------- New types ----------
+
+export type ScoreAtPeriod = {
+    homeScore: number;
+    awayScore: number;
 }
 
-export function getScoreAtTimeframe(plays: PlayResult[], timeframe: GameTimeframe): { homeScore: number, awayScore: number } {
-  if (!timeframe.endInning) {
-    // Full game - use last play's score
-    const lastPlay = plays[plays.length - 1];
-    return {
-      homeScore: lastPlay.homeScore + (!lastPlay.topInning ? lastPlay.runsOnPlay : 0),
-      awayScore: lastPlay.awayScore + (lastPlay.topInning ? lastPlay.runsOnPlay : 0),
-    };
-  }
+// ---------- Main function ----------
 
-  // Find the last play before or at the specified inning
+export function getScoreForPeriod(
+  plays: PlayResult[], 
+  periodTypeCode: PeriodTypeCode, 
+  periodNumber: number
+): ScoreAtPeriod {
+  switch (periodTypeCode) {
+    case 'M':
+      if (periodNumber === 0) {
+        return getFullGameScore(plays);
+      }
+      throw new Error(`Invalid period number ${periodNumber} for Match period type`);
+    
+    case 'H':
+      if (periodNumber === 1) {
+        return getScoreAtInning(plays, 5);
+      }
+      throw new Error(`Invalid period number ${periodNumber} for Half period type`);
+    
+    case 'I':
+      if (periodNumber === 99) { // Case of innings 1-3
+        return getScoreAtInning(plays, 3);
+      } else {
+        return getScoreInInning(plays, periodNumber);
+      }
+    default:
+      throw new Error(`Unknown period type code: ${periodTypeCode}`);
+  }
+}
+
+function getFullGameScore(plays: PlayResult[]): ScoreAtPeriod {
+  if (plays.length === 0) {
+    return { homeScore: 0, awayScore: 0 };
+  }
+  
+  const lastPlay = plays[plays.length - 1];
+  return {
+    homeScore: lastPlay.homeScore + (!lastPlay.topInning ? lastPlay.runsOnPlay : 0),
+    awayScore: lastPlay.awayScore + (lastPlay.topInning ? lastPlay.runsOnPlay : 0),
+  };
+}
+
+function getScoreAtInning(
+  plays: PlayResult[], 
+  endInning: number
+): ScoreAtPeriod {
   for (let i = plays.length - 1; i >= 0; i--) {
     const play = plays[i];
-    if (play.inning < timeframe.endInning || 
-        (play.inning === timeframe.endInning && 
-         (!timeframe.topInningEnd || !play.topInning))) {
+    if (play.inning <= endInning) {
       return {
         homeScore: play.homeScore + (!play.topInning ? play.runsOnPlay : 0),
         awayScore: play.awayScore + (play.topInning ? play.runsOnPlay : 0),
@@ -28,21 +65,40 @@ export function getScoreAtTimeframe(plays: PlayResult[], timeframe: GameTimefram
     }
   }
 
-  // Shouldn't get here if plays array is valid
-  console.error('getScoreAtTimeframe: No play found at or before specified inning');
+  console.error(`getScoreAtInning: No play found at or before inning ${endInning}`);
   return { homeScore: 0, awayScore: 0 };
 }
 
-export function getScoreForType(
+function getScoreInInning(
+  plays: PlayResult[],
+  inning: number
+): ScoreAtPeriod {
+  let homeRuns = 0;
+  let awayRuns = 0;
+
+  for (const play of plays) {
+    if (play.inning === inning) {
+      if (play.topInning) {
+        awayRuns += play.runsOnPlay;
+      } else {
+        homeRuns += play.runsOnPlay;
+      }
+    }
+  }
+
+  return {
+    homeScore: homeRuns,
+    awayScore: awayRuns
+  };
+}
+
+export function getScoreForTypeAndPeriod(
   plays: PlayResult[],
   type: 'combined' | 'home' | 'away',
-  period: 'fullGame' | 'firstFive'
+  periodTypeCode: PeriodTypeCode,
+  periodNumber: number
 ): number {
-  const timeframe: GameTimeframe = period === 'fullGame' 
-    ? {} 
-    : { endInning: 5, topInningEnd: false };
-
-  const { homeScore, awayScore } = getScoreAtTimeframe(plays, timeframe);
+  const { homeScore, awayScore } = getScoreForPeriod(plays, periodTypeCode, periodNumber);
 
   switch (type) {
     case 'combined':
