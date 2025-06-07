@@ -7,23 +7,16 @@ import {
     CardContent, 
     Checkbox, 
     FormControlLabel, 
-    TextField,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    Chip,
-    IconButton
+    TextField
 } from "@mui/material";
-import { Delete as DeleteIcon, Add as AddIcon } from "@mui/icons-material";
+import { Add as AddIcon } from "@mui/icons-material";
 
 import { getPeriodLabel } from "@@/services/statCaptureConfig/utils";
 
 import { BetType, Period, ValidationConfig, MainMarketConfig, PeriodTypeCode, MarketType } from '@@/types/statCaptureConfig';
+
 import HierarchicalPeriodSelector, { HierarchyConfig } from './HierarchicalPeriodSelector';
+import ConfigurationTable, { ColumnConfig } from './ConfigurationTable';
 
 // ---------- Types ----------
 
@@ -345,48 +338,31 @@ const MainMarketsConfiguration: React.FC<MainMarketsConfigurationProps> = ({
             </Card>
 
             {/* Results Table */}
-            {existingConfigurations.length > 0 && (
-                <TableContainer component={Paper}>
-                    <Table size="small">
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>Bet Type</TableCell>
-                                <TableCell>Period</TableCell>
-                                <TableCell>Line</TableCell>
-                                <TableCell width={50}>Action</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {sortedConfigurations.map((row, index) => (
-                                <TableRow key={`${row.marketType}-${row.periodTypeCode}-${row.periodNumber}-${row.strike}-${index}`}>
-                                    <TableCell>
-                                        <Chip label={getBetTypeLabel(row.marketType)} size="small" />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Chip label={getPeriodDisplayLabelFromId(row.periodTypeCode + '-' + row.periodNumber.toString())} variant="outlined" size="small" />
-                                    </TableCell>
-                                    <TableCell>{row.strike}</TableCell>
-                                    <TableCell>
-                                        <IconButton 
-                                            size="small" 
-                                            onClick={() => handleRemoveRow(index)}
-                                            color="error"
-                                        >
-                                            <DeleteIcon />
-                                        </IconButton>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            )}
-
-            {existingConfigurations.length === 0 && (
-                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 4 }}>
-                    No configurations added yet. Select bet types, periods, and enter a range to get started.
-                </Typography>
-            )}
+            <ConfigurationTable
+                configurations={sortedConfigurations}
+                columns={[
+                    {
+                        header: 'Bet Type',
+                        accessor: (row: MainMarketConfig) => row.marketType,
+                        displayType: 'chip',
+                        formatter: (value: string | number) => getBetTypeLabel(value.toString())
+                    },
+                    {
+                        header: 'Period',
+                        accessor: (row: MainMarketConfig) => `${row.periodTypeCode}-${row.periodNumber}`,
+                        displayType: 'chip-outlined',
+                        formatter: (value: string | number) => getPeriodDisplayLabelFromId(value.toString())
+                    },
+                    {
+                        header: 'Line',
+                        accessor: (row: MainMarketConfig) => row.strike,
+                        displayType: 'text'
+                    }
+                ] as ColumnConfig<MainMarketConfig>[]}
+                onRemoveRow={handleRemoveRow}
+                emptyMessage="No configurations added yet. Select bet types, periods, and enter a range to get started."
+                getRowKey={(row: MainMarketConfig, index: number) => `${row.marketType}-${row.periodTypeCode}-${row.periodNumber}-${row.strike}-${index}`}
+            />
         </Box>
     );
 };

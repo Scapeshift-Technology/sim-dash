@@ -8,22 +8,15 @@ import {
     Checkbox, 
     FormControlLabel, 
     TextField,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    Chip,
-    IconButton,
     Alert,
     Collapse,
     Divider
 } from "@mui/material";
-import { Delete as DeleteIcon, Add as AddIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from "@mui/icons-material";
+import { Add as AddIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from "@mui/icons-material";
 
 import { LeagueOUProps, PropOUConfig, ValidationConfig } from '@@/types/statCaptureConfig';
+
+import ConfigurationTable, { ColumnConfig } from './ConfigurationTable';
 
 // ---------- Types ----------
 
@@ -379,48 +372,29 @@ const OUPropsConfiguration: React.FC<OUPropsConfigurationProps> = ({
                     </Card>
 
                     {/* Results Table */}
-                    {existingConfigurations.length > 0 && (
-                        <TableContainer component={Paper}>
-                            <Table size="small">
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell>Contestant Type</TableCell>
-                                        <TableCell>Prop</TableCell>
-                                        <TableCell>Strike</TableCell>
-                                        <TableCell width={50}>Action</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {sortedConfigurations.map((row, index) => (
-                                        <TableRow key={`${row.contestantType}-${row.prop}-${row.strike}-${index}`}>
-                                            <TableCell>
-                                                <Chip label={row.contestantType} size="small" />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Chip label={row.prop} variant="outlined" size="small" />
-                                            </TableCell>
-                                            <TableCell>{row.strike}</TableCell>
-                                            <TableCell>
-                                                <IconButton 
-                                                    size="small" 
-                                                    onClick={() => handleRemoveRow(index)}
-                                                    color="error"
-                                                >
-                                                    <DeleteIcon />
-                                                </IconButton>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    )}
-
-                    {existingConfigurations.length === 0 && (
-                        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 4 }}>
-                            No props configured yet. Select props and enter a strike value range to get started.
-                        </Typography>
-                    )}
+                    <ConfigurationTable
+                        configurations={sortedConfigurations}
+                        columns={[
+                            {
+                                header: 'Contestant Type',
+                                accessor: (row: PropOUConfig) => row.contestantType,
+                                displayType: 'chip'
+                            },
+                            {
+                                header: 'Prop',
+                                accessor: (row: PropOUConfig) => row.prop,
+                                displayType: 'chip-outlined'
+                            },
+                            {
+                                header: 'Strike',
+                                accessor: (row: PropOUConfig) => row.strike,
+                                displayType: 'text'
+                            }
+                        ] as ColumnConfig<PropOUConfig>[]}
+                        onRemoveRow={handleRemoveRow}
+                        emptyMessage="No props configured yet. Select props and enter a strike value range to get started."
+                        getRowKey={(row: PropOUConfig, index: number) => `${row.contestantType}-${row.prop}-${row.strike}-${index}`}
+                    />
                 </>
             )}
         </Box>

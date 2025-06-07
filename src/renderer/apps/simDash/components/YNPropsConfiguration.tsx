@@ -7,22 +7,15 @@ import {
     CardContent, 
     Checkbox, 
     FormControlLabel, 
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
-    Chip,
-    IconButton,
     Alert,
     Collapse,
     Divider
 } from "@mui/material";
-import { Delete as DeleteIcon, Add as AddIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from "@mui/icons-material";
+import { Add as AddIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from "@mui/icons-material";
 
 import { PropYNConfig, LeagueYNProps, YNContestantType, YNProp } from '@@/types/statCaptureConfig';
+
+import ConfigurationTable, { ColumnConfig } from './ConfigurationTable';
 
 // ---------- Types ----------
 
@@ -263,49 +256,24 @@ const YNPropsConfiguration: React.FC<YNPropsConfigurationProps> = ({
                     </Card>
 
                     {/* Results Table */}
-                    {existingConfigurations.length > 0 && (
-                        <TableContainer component={Paper}>
-                            <Table size="small">
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell>Contestant Type</TableCell>
-                                        <TableCell>Prop</TableCell>
-                                        <TableCell width={50}>Action</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {sortedConfigurations.map((row, index) => {
-                                        console.log('Table row:', row, 'index:', index);
-                                        return (
-                                            <TableRow key={`${row.contestantType}-${row.prop}-${index}`}>
-                                                <TableCell>
-                                                    <Chip label={row.contestantType} size="small" />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Chip label={row.prop} variant="outlined" size="small" />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <IconButton 
-                                                        size="small" 
-                                                        onClick={() => handleRemoveRow(index)}
-                                                        color="error"
-                                                    >
-                                                        <DeleteIcon />
-                                                    </IconButton>
-                                                </TableCell>
-                                            </TableRow>
-                                        );
-                                    })}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    )}
-
-                    {existingConfigurations.length === 0 && (
-                        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 4 }}>
-                            No props configured yet. Select props above to get started.
-                        </Typography>
-                    )}
+                    <ConfigurationTable
+                        configurations={sortedConfigurations}
+                        columns={[
+                            {
+                                header: 'Contestant Type',
+                                accessor: (row: PropYNConfig) => row.contestantType,
+                                displayType: 'chip'
+                            },
+                            {
+                                header: 'Prop',
+                                accessor: (row: PropYNConfig) => row.prop,
+                                displayType: 'chip-outlined'
+                            }
+                        ] as ColumnConfig<PropYNConfig>[]}
+                        onRemoveRow={handleRemoveRow}
+                        emptyMessage="No props configured yet. Select props above to get started."
+                        getRowKey={(row: PropYNConfig, index: number) => `${row.contestantType}-${row.prop}-${index}`}
+                    />
                 </>
             )}
         </Box>
