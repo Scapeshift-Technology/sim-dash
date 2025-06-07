@@ -93,8 +93,9 @@ function awayTeamFirstComparator<T extends { teamName: string }>(a: T, b: T, con
 
 // For prop type ordering (first before last)
 function propTypeOrderComparator<T extends { propType: string }>(a: T, b: T): number {
+  console.log('propTypeOrderComparator', a.propType, b.propType);
   if (a.propType !== b.propType) {
-    return a.propType === 'first' ? -1 : 1;
+    return a.propType === 'FirstToScore' ? -1 : 1;
   }
   return 0;
 }

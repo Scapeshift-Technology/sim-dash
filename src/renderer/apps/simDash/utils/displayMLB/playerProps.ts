@@ -13,6 +13,7 @@ import {
   lineComparator,
   type SortConfig 
 } from "./sorting";
+import { teamNameToAbbreviationMLB } from "@@/services/mlb/utils/teamName";
 
 
 // ---------- Main function ----------
@@ -33,7 +34,7 @@ function transformAllPlayerCountsMLB(propsCounts: AllPlayersPropsCountsMLB): Pla
   for (const playerID of Object.keys(propsCounts)) {
     const playerData = propsCounts[Number(playerID)];
     const playerName = playerData.playerName;
-    const teamName = playerData.teamName;
+    const teamName = teamNameToAbbreviationMLB(playerData.teamName);
     // Loop through the player's stats
     for (const stat of Object.keys(playerData.stats)) {
       // Loop through the stat's lines

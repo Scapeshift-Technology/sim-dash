@@ -64,9 +64,11 @@ export interface PlayerPropsData {
   varianceOdds: number;
 }
 
+export type PropType = 'FirstToScore' | 'LastToScore';
+
 export interface ScoringOrderPropsData {
   team: string;
-  propType: 'first' | 'last';
+  propType: PropType;
   percent: number;
   marginOfError: number;
   usaFair: number;
@@ -110,7 +112,7 @@ export interface ComparisonPlayerPropsData {
 
 export interface ComparisonScoringOrderPropsData {
   team: string;
-  propType: 'first' | 'last';
+  propType: PropType;
   percent: number;
 }
 

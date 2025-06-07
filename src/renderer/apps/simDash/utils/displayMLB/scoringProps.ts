@@ -31,17 +31,17 @@ function processTeamScoringOrderData(teamData: { first?: OutcomeCounts; last?: O
     const results: ScoringOrderPropsData[] = [];
     
     if (teamData.first) {
-        results.push(transformScoringOrderTeamCountsMLB(teamData.first, teamName, 'first'));
+        results.push(transformScoringOrderTeamCountsMLB(teamData.first, teamName, 'FirstToScore'));
     }
     
     if (teamData.last) {
-        results.push(transformScoringOrderTeamCountsMLB(teamData.last, teamName, 'last'));
+        results.push(transformScoringOrderTeamCountsMLB(teamData.last, teamName, 'LastToScore'));
     }
     
     return results;
 }
 
-function transformScoringOrderTeamCountsMLB(outcomeCounts: OutcomeCounts, teamName: string, propType: 'first' | 'last'): ScoringOrderPropsData {
+function transformScoringOrderTeamCountsMLB(outcomeCounts: OutcomeCounts, teamName: string, propType: 'FirstToScore' | 'LastToScore'): ScoringOrderPropsData {
     const { success, failure, push, total } = outcomeCounts;
     
     const teamAbbrev = teamNameToAbbreviationMLB(teamName);
