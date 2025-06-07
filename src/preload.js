@@ -37,7 +37,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     fetchLeagues: () => ipcRenderer.invoke('fetch-leagues'),
     fetchSchedule: (args) => ipcRenderer.invoke('fetch-schedule', args),
     getLeaguePeriods: (leagueName) => ipcRenderer.invoke('get-league-periods', leagueName),
-    getLeagueOUProps: (leagueName) => ipcRenderer.invoke('get-league-ou-props', leagueName),
+    getLeagueProps: (leagueName, propType) => ipcRenderer.invoke('get-league-props', leagueName, propType),
 
     // Stat capture config
     fetchLeagueStatCaptureConfigurations: (leagueName) => ipcRenderer.invoke('fetch-league-stat-capture-configurations', leagueName),

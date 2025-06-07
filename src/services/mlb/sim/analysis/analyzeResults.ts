@@ -7,7 +7,6 @@ import { calculateTotalsCounts } from "./totalsAnalyzer2";
 import { calculatePropsCounts } from "./propsAnalyzer2";
 import { pastPlaysToSimPlays } from "./pastPlaysAnalyzer";
 
-
 // ---------- Main function ----------
 
 function calculateSimCounts(simPlays: PlayResult[][], matchup: MatchupLineups, statCaptureConfig: SavedConfiguration, liveGameData?: MlbLiveDataApiResponse): SimResultsMLB {

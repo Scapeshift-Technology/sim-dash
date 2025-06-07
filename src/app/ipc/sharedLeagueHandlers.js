@@ -115,11 +115,11 @@ const specialMLBPeriods = [
     }
 ];
 
-const getLeagueOUProps = async (event, leagueName, getCurrentPool) => {
-    log.info(`IPC received: get-league-ou-props for ${leagueName}`);
+const getLeagueProps = async (event, leagueName, propType, getCurrentPool) => {
+    log.info(`IPC received: get-league-props for ${leagueName} with prop type ${propType}`);
     const currentPool = getCurrentPool();
     if (!currentPool) {
-        log.error('get-league-ou-props: No active SQL Server connection.');
+        log.error('get-league-props: No active SQL Server connection.');
         throw new Error('Not connected to database.');
     }
 
@@ -139,13 +139,13 @@ const getLeagueOUProps = async (event, leagueName, getCurrentPool) => {
                 SELECT 1
                 FROM dbo.Prop P
                 WHERE P.Prop = PSCT.Prop
-                    AND P.PropType = 'OvrUnd'
+                    AND P.PropType = '${propType}'
                 )
         `);
 
         return result.recordset;
     } catch (err) {
-        log.error(`Error fetching league OU props for ${leagueName}:`, err);
+        log.error(`Error fetching league ${propType} props for ${leagueName}:`, err);
         throw err; // Rethrow the error to be caught by the renderer
     }
 };
@@ -167,8 +167,8 @@ const registerSharedLeagueHandlers = ({ getCurrentPool }) => {
     // League periods handler
     ipcMain.handle('get-league-periods', (event, leagueName) => getLeaguePeriods(event, leagueName, getCurrentPool));
 
-    // League OU props handler
-    ipcMain.handle('get-league-ou-props', (event, leagueName) => getLeagueOUProps(event, leagueName, getCurrentPool));
+    // League props handler
+    ipcMain.handle('get-league-props', (event, leagueName, propType) => getLeagueProps(event, leagueName, propType, getCurrentPool));
 
     log.info('Shared league IPC handlers registered');
 };

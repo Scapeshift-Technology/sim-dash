@@ -20,8 +20,8 @@ export interface PropOUConfig {
 }
 
 export interface PropYNConfig {
-    name: string;
-    contestantType: string;
+    prop: 'FirstToScore' | 'LastToScore';
+    contestantType: 'TeamLeague';
 }
 
 export interface SavedConfiguration extends LeagueSavedConfiguration {
@@ -66,5 +66,13 @@ export interface ConfigurationRow {
 export interface LeagueOUProps {
     ContestantType: string;
     Prop: string;
+}
+
+export type YNProp = 'FirstToScore' | 'LastToScore';
+export type YNContestantType = 'TeamLeague';
+
+export interface LeagueYNProps {
+    Prop: 'FirstToScore' | 'LastToScore';
+    ContestantType: 'TeamLeague';
 }
 

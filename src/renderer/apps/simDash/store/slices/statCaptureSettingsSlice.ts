@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
 import { LeagueName } from '@@/types/league';
-import { LeagueOUProps, LeagueSavedConfiguration, Period } from '@@/types/statCaptureConfig';
+import { LeagueOUProps, LeagueYNProps, LeagueSavedConfiguration, Period } from '@@/types/statCaptureConfig';
 import { SavedConfiguration } from '@@/types/statCaptureConfig';
 import { MainMarketConfig, PropOUConfig, PropYNConfig } from '@@/types/statCaptureConfig';
 
@@ -31,6 +31,11 @@ export interface StatCaptureLeagueState {
     overUnderPropsLoading: boolean;
     overUnderPropsError: string | null;
     overUnderProps: LeagueOUProps[];
+
+    // Yes/No props loading
+    yesNoPropsLoading: boolean;
+    yesNoPropsError: string | null;
+    yesNoProps: LeagueYNProps[];
 
     // League configurations thunk
     leagueConfigurationsLoading: boolean;
@@ -129,21 +134,13 @@ function compareConfigurations(config1: SavedConfiguration | null, config2: Save
         }));
     };
     
-    // Helper function to normalize PropYNConfig objects
-    const normalizePropYN = (props: PropYNConfig[]) => {
-        return props.map(prop => ({
-            name: prop.name,
-            contestantType: prop.contestantType
-        }));
-    };
-    
     // Create comparison objects excluding system-generated properties
     const compareObj1 = {
         name: config1.name,
         league: config1.league,
         mainMarkets: normalizeMainMarkets(config1.mainMarkets || []),
         propsOU: normalizePropOU(config1.propsOU || []),
-        propsYN: normalizePropYN(config1.propsYN || [])
+        propsYN: config1.propsYN || []
     };
     
     const compareObj2 = {
@@ -151,7 +148,7 @@ function compareConfigurations(config1: SavedConfiguration | null, config2: Save
         league: config2.league,
         mainMarkets: normalizeMainMarkets(config2.mainMarkets || []),
         propsOU: normalizePropOU(config2.propsOU || []),
-        propsYN: normalizePropYN(config2.propsYN || [])
+        propsYN: config2.propsYN || []
     };
     
     return deepEqual(compareObj1, compareObj2);
@@ -181,15 +178,15 @@ export const getLeaguePeriods = createAsyncThunk<
     }
 );
 
-export const getLeagueOUProps = createAsyncThunk<
-    LeagueOUProps[],
-    LeagueName,
+export const getLeagueProps = createAsyncThunk<
+    LeagueOUProps[] | LeagueYNProps[],
+    { leagueName: LeagueName, propType: 'OvrUnd' | 'YesNo' },
     { rejectValue: string }
     >(
-    'statCaptureSettings/getLeagueOUProps',
-    async (leagueName, { rejectWithValue }) => {
+    'statCaptureSettings/getLeagueProps',
+    async ({ leagueName, propType }, { rejectWithValue }) => {
         try {
-            const result = await window.electronAPI.getLeagueOUProps(leagueName);
+            const result = await window.electronAPI.getLeagueProps(leagueName, propType);
             return result;
         } catch (err: any) {
             return rejectWithValue(err.message || 'An unexpected error occurred while fetching league periods.');
@@ -297,6 +294,9 @@ const statCaptureSettingsSlice = createSlice({
                     overUnderPropsLoading: false,
                     overUnderPropsError: null,
                     overUnderProps: [],
+                    yesNoPropsLoading: false,
+                    yesNoPropsError: null,
+                    yesNoProps: [],
                     leagueSavedConfigurations: [],
                     currentlyLoadedConfiguration: null,
                     leagueConfigurationsLoading: false,
@@ -363,6 +363,13 @@ const statCaptureSettingsSlice = createSlice({
             }
         },
 
+        updateCurrentDraftYNProps: (state, action: PayloadAction<{ leagueName: string; ynProps: any[] }>) => {
+            const { leagueName, ynProps } = action.payload;
+            if (state[leagueName]) {
+                state[leagueName].currentDraft.propsYN = ynProps;
+            }
+        },
+
         updateSaveConfigName: (state, action: PayloadAction<{ leagueName: string; saveConfigName: string }>) => {
             const { leagueName, saveConfigName } = action.payload;
             if (state[leagueName]) {
@@ -410,26 +417,41 @@ const statCaptureSettingsSlice = createSlice({
                 }
             })
 
-            // Get league OU props actions
-            .addCase(getLeagueOUProps.pending, (state, action) => {
-                const leagueName = action.meta.arg;
+            // Get league props actions
+            .addCase(getLeagueProps.pending, (state, action) => {
+                const { leagueName, propType } = action.meta.arg;
                 if (state[leagueName]) {
-                    state[leagueName].overUnderPropsLoading = true;
-                    state[leagueName].overUnderPropsError = null;
+                    if (propType === 'OvrUnd') {
+                        state[leagueName].overUnderPropsLoading = true;
+                        state[leagueName].overUnderPropsError = null;
+                    } else {
+                        state[leagueName].yesNoPropsLoading = true;
+                        state[leagueName].yesNoPropsError = null;
+                    }
                 }
             })
-            .addCase(getLeagueOUProps.fulfilled, (state, action) => {
-                const leagueName = action.meta.arg;
+            .addCase(getLeagueProps.fulfilled, (state, action) => {
+                const { leagueName, propType } = action.meta.arg;
                 if (state[leagueName]) {
-                    state[leagueName].overUnderPropsLoading = false;
-                    state[leagueName].overUnderProps = action.payload;
+                    if (propType === 'OvrUnd') {
+                        state[leagueName].overUnderPropsLoading = false;
+                        state[leagueName].overUnderProps = action.payload;
+                    } else {
+                        state[leagueName].yesNoPropsLoading = false;
+                        state[leagueName].yesNoProps = action.payload;
+                    }
                 }
             })
-            .addCase(getLeagueOUProps.rejected, (state, action) => {
-                const leagueName = action.meta.arg;
+            .addCase(getLeagueProps.rejected, (state, action) => {
+                const { leagueName, propType } = action.meta.arg;
                 if (state[leagueName]) {
-                    state[leagueName].overUnderPropsLoading = false;
-                    state[leagueName].overUnderPropsError = action.payload ?? 'Failed to fetch league OU props';
+                    if (propType === 'OvrUnd') {
+                        state[leagueName].overUnderPropsLoading = false;
+                        state[leagueName].overUnderPropsError = action.payload ?? 'Failed to fetch league OU props';
+                    } else {
+                        state[leagueName].yesNoPropsLoading = false;
+                        state[leagueName].yesNoPropsError = action.payload ?? 'Failed to fetch league YN props';
+                    }
                 }
             })
 
@@ -576,6 +598,7 @@ export const {
     clearPeriodsError,
     updateCurrentDraftMainMarkets,
     updateCurrentDraftOUProps,
+    updateCurrentDraftYNProps,
     updateCurrentDraft,
     updateSaveConfigName,
     clearCurrentDraft
@@ -605,6 +628,14 @@ export const selectLeagueOUPropsLoading = (state: { simDash: { settings: StatCap
     state.simDash?.settings?.[leagueName]?.overUnderPropsLoading ?? false;
 export const selectLeagueOUPropsError = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): string | null => 
     state.simDash?.settings?.[leagueName]?.overUnderPropsError ?? null;
+
+// League YN props selectors
+export const selectLeagueYNProps = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): LeagueYNProps[] => 
+    state.simDash?.settings?.[leagueName]?.yesNoProps ?? [];
+export const selectLeagueYNPropsLoading = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): boolean => 
+    state.simDash?.settings?.[leagueName]?.yesNoPropsLoading ?? false;
+export const selectLeagueYNPropsError = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): string | null => 
+    state.simDash?.settings?.[leagueName]?.yesNoPropsError ?? null;
 
 // League stat capture configurations selectors
 export const selectLeagueStatCaptureConfigurations = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): LeagueSavedConfiguration[] => 

@@ -13,7 +13,7 @@ import {
     selectLeagueOUProps, 
     selectLeagueOUPropsLoading, 
     selectLeagueOUPropsError,
-    getLeagueOUProps,
+    getLeagueProps,
     updateCurrentDraftOUProps,
     selectCurrentDraft
 } from "@/apps/simDash/store/slices/statCaptureSettingsSlice";
@@ -65,7 +65,7 @@ const OUPropsTab: React.FC<{ leagueName: LeagueName }> = ({ leagueName }) => {
 
     useEffect(() => {
         if (leagueOUProps.length === 0 && !ouPropsLoading) {
-            dispatch(getLeagueOUProps(leagueName));
+            dispatch(getLeagueProps({ leagueName, propType: 'OvrUnd' }));
         }
     }, [dispatch, leagueName, leagueOUProps.length, ouPropsLoading]);
 
@@ -97,7 +97,7 @@ const OUPropsTab: React.FC<{ leagueName: LeagueName }> = ({ leagueName }) => {
                 <Tooltip title="Try again">
                     <IconButton 
                         color="primary" 
-                        onClick={() => dispatch(getLeagueOUProps(leagueName))}
+                        onClick={() => dispatch(getLeagueProps({ leagueName, propType: 'OvrUnd' }))}
                         sx={{ 
                             border: '2px solid',
                             borderColor: 'primary.main',

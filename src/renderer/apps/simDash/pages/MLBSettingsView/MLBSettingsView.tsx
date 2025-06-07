@@ -171,7 +171,7 @@ const MLBSettingsView: React.FC = () => {
         {
             id: 'yesno-props',
             label: 'Yes/No Props',
-            content: <YesNoTab/>
+            content: <YesNoTab leagueName={LEAGUE_NAME}/>
         }
     ];
 

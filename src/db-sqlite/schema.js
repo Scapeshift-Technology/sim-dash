@@ -219,8 +219,24 @@ async function addDefaultConfiguration(db) {
                  VALUES ('default', ?, ?, ?)`,
                 [prop.prop, prop.contestantType, prop.strike]
             );
-        }
+        };
 
+        // Define the default Y/N props
+        const defaultYNProps = [
+            { contestantType: 'TeamLeague', prop: 'FirstToScore' },
+            { contestantType: 'TeamLeague', prop: 'LastToScore' }
+        ];
+
+        // Insert all default Y/N props
+        for (const prop of defaultYNProps) {
+            await db.runAsync(
+                `INSERT INTO strike_configuration_props_yn (name, prop, contestant_type)
+                 VALUES ('default', ?, ?)`,
+                [prop.prop, prop.contestantType]
+            );
+        };
+
+        // Log the action
         const action = existingConfig ? "Reset" : "Created";
         console.log(`${action} default configuration with ${defaultMainMarkets.length} main market entries.`);
     } catch (err) {

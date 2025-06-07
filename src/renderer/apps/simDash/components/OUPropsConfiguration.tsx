@@ -64,7 +64,6 @@ const OUPropsConfiguration: React.FC<OUPropsConfigurationProps> = ({
     leagueName,
     validationConfig
 }) => {
-    console.log('availableProps', availableProps);
 
     // ---------- State ----------
 
@@ -76,9 +75,7 @@ const OUPropsConfiguration: React.FC<OUPropsConfigurationProps> = ({
     // ---------- Memoized data ----------
 
     const groupedProps = useMemo(() => groupPropsByContestantType(availableProps), [availableProps]);
-    console.log('groupedProps', groupedProps);
     const contestantTypes = useMemo(() => Object.keys(groupedProps).sort(), [groupedProps]);
-    console.log('contestantTypes', contestantTypes);
 
     const sortedConfigurations = useMemo(() => {
         return [...existingConfigurations].sort((a, b) => {

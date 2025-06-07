@@ -25,10 +25,11 @@ import {
   teamNameToAbbreviationMLB
 } from "@@/services/mlb/utils/teamName";
 
-import { calculateUsaDiff, countsToAmericanOdds, countsToProbability, marginOfError, proportionToAmericanOdds } from "./oddsCalculations";
+import { countsToAmericanOdds, countsToProbability, marginOfError, proportionToAmericanOdds } from "./oddsCalculations";
 import { sortSidesData, analyzeSidesCountsMLB } from "./displayMLB/sides";
 import { analyzeTotalsCountsMLB, sortTotalsData } from "./displayMLB/totals";
 import { analyzeAllPlayerCountsMLB } from "./displayMLB/playerProps";
+import { analyzeScoringOrderCountsMLB } from "./displayMLB/scoringProps";
 
 export { teamNameToAbbreviationMLB };
 
@@ -79,46 +80,13 @@ export { transformSeriesProbsMLB };
 function transformPropsCountsMLB(propsCounts: PropsCountsMLB, awayTeamName: string, homeTeamName: string): PropsData {
   const firstInningPropData = transformFirstInningCountsMLB(propsCounts.firstInning, awayTeamName, homeTeamName);
   const playerPropData = analyzeAllPlayerCountsMLB(propsCounts.player, awayTeamName, homeTeamName);
-  const scoringOrderPropData = propsCounts.scoringOrder ? transformScoringOrderCountsMLB(propsCounts.scoringOrder, awayTeamName, homeTeamName) : undefined;
+  const scoringOrderPropData = propsCounts.scoringOrder ? analyzeScoringOrderCountsMLB(propsCounts.scoringOrder, awayTeamName, homeTeamName) : undefined;
 
   return {
     firstInning: firstInningPropData,
     player: playerPropData,
     scoringOrder: scoringOrderPropData
   }
-}
-
-// -- Scoring order props --
-
-function transformScoringOrderCountsMLB(scoringOrderCounts: ScoringOrderCountsMLB, awayTeamName: string, homeTeamName: string): ScoringOrderPropsData[] {
-  const awayFirstData = transformScoringOrderTeamCountsMLB(scoringOrderCounts.away.first, awayTeamName, 'first');
-  const homeFirstData = transformScoringOrderTeamCountsMLB(scoringOrderCounts.home.first, homeTeamName, 'first');
-  const awayLastData = transformScoringOrderTeamCountsMLB(scoringOrderCounts.away.last, awayTeamName, 'last');
-  const homeLastData = transformScoringOrderTeamCountsMLB(scoringOrderCounts.home.last, homeTeamName, 'last');
-
-  return [awayFirstData, homeFirstData, awayLastData, homeLastData];
-}
-
-function transformScoringOrderTeamCountsMLB(outcomeCounts: OutcomeCounts, teamName: string, propType: 'first' | 'last'): ScoringOrderPropsData {
-  const { success, failure, push, total } = outcomeCounts;
-  
-  const teamAbbrev = teamNameToAbbreviationMLB(teamName);
-
-  const pushCt = push || 0;
-  const percent = countsToProbability(success, failure, pushCt);
-  const moe = marginOfError(total - pushCt, percent);
-  const usaFair = proportionToAmericanOdds(percent);
-  const varianceProportion = Math.min(Math.max(percent - moe, 0), 1);
-  const varianceOdds = proportionToAmericanOdds(varianceProportion);
-
-  return {
-    team: teamAbbrev,
-    propType: propType,
-    percent: percent,
-    marginOfError: moe,
-    usaFair: usaFair,
-    varianceOdds: varianceOdds
-  };
 }
 
 // -- First inning props --
@@ -385,8 +353,8 @@ function transformComparisonScoringOrderPropsCountsMLB(scoringOrderCounts1: Scor
     return [];
   }
 
-  const sim1ScoringOrderData: ScoringOrderPropsData[] = transformScoringOrderCountsMLB(scoringOrderCounts1, awayTeamName, homeTeamName);
-  const sim2ScoringOrderData: ScoringOrderPropsData[] = transformScoringOrderCountsMLB(scoringOrderCounts2, awayTeamName, homeTeamName);
+  const sim1ScoringOrderData: ScoringOrderPropsData[] = analyzeScoringOrderCountsMLB(scoringOrderCounts1, awayTeamName, homeTeamName);
+  const sim2ScoringOrderData: ScoringOrderPropsData[] = analyzeScoringOrderCountsMLB(scoringOrderCounts2, awayTeamName, homeTeamName);
 
   const diffData = createComparisonScoringOrderPropsData(sim1ScoringOrderData, sim2ScoringOrderData);
   return diffData;

@@ -198,8 +198,8 @@ export interface ScoringOrderCountsMLB {
 }
 
 export interface ScoringOrderTeamCountsMLB {
-  first: OutcomeCounts;
-  last: OutcomeCounts;
+  first?: OutcomeCounts;
+  last?: OutcomeCounts;
 }
 
 // ----- Totals -----
