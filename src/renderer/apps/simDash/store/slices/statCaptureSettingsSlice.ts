@@ -435,10 +435,10 @@ const statCaptureSettingsSlice = createSlice({
                 if (state[leagueName]) {
                     if (propType === 'OvrUnd') {
                         state[leagueName].overUnderPropsLoading = false;
-                        state[leagueName].overUnderProps = action.payload;
+                        state[leagueName].overUnderProps = action.payload as LeagueOUProps[];
                     } else {
                         state[leagueName].yesNoPropsLoading = false;
-                        state[leagueName].yesNoProps = action.payload;
+                        state[leagueName].yesNoProps = action.payload as LeagueYNProps[];
                     }
                 }
             })
