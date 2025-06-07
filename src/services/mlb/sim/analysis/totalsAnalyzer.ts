@@ -150,16 +150,12 @@ function getScoreForType(
 function adjustStatCaptureConfig(simPlays: PlayResult[][], statCaptureConfig: SavedConfiguration): SavedConfiguration {
   const adjustedConfig = { ...statCaptureConfig };
 
-  const meanRunsScored = getMeanRunsScore(simPlays);
-
-  // Add closest full-game totals lines to mean runs scored
-  const baseTotal = Math.round(meanRunsScored * 2) / 2;
-  const totalsToAdd = [
-    baseTotal - 1,
-    baseTotal - 0.5,
-    baseTotal,
-    baseTotal + 0.5,
-    baseTotal + 1
+  const centerLine = getOptimalCenterLine(simPlays);  const totalsToAdd = [
+    centerLine - 1,
+    centerLine - 0.5,
+    centerLine,
+    centerLine + 0.5,
+    centerLine + 1
   ];
   
   totalsToAdd.forEach(total => { // Duplicated lines do not cause issues for now, but maybe keep an eye out if there are big changes made
@@ -174,16 +170,44 @@ function adjustStatCaptureConfig(simPlays: PlayResult[][], statCaptureConfig: Sa
   return adjustedConfig;
 };
 
-function getMeanRunsScore(simPlays: PlayResult[][]): number {
-  // Find the last play of each game
+function getOptimalCenterLine(simPlays: PlayResult[][]): number {
   const lastPlays = simPlays.map(game => game[game.length - 1]);
-
-  // Get the runs scored in the last play
-  const runsScored = lastPlays.map(play => play.homeScore + play.awayScore + play.runsOnPlay);
-
-  // Get the mean total scored
-  const meanRunsScored = runsScored.reduce((acc, runs) => acc + runs, 0) / runsScored.length;
-
-  return meanRunsScored;
+  const totalRuns = lastPlays.map(play => play.homeScore + play.awayScore + play.runsOnPlay);
+  
+  // Find median
+  const sortedRuns = [...totalRuns].sort((a, b) => a - b);
+  const median = sortedRuns[Math.floor(sortedRuns.length / 2)];
+  
+  // Test candidate lines around median (in 0.5 increments)
+  const candidateLines = [
+    Math.floor(median * 2) / 2 - 1,
+    Math.floor(median * 2) / 2 - 0.5,
+    Math.floor(median * 2) / 2,        // median (rounded to 0.5)
+    Math.floor(median * 2) / 2 + 0.5,
+    Math.floor(median * 2) / 2 + 1
+  ];
+  
+  let bestLine = candidateLines[2]; // default to median
+  let bestRatioDifference = Infinity;
+  
+  for (const line of candidateLines) {
+    let overCount = 0;
+    let underCount = 0;
+    
+    for (const total of totalRuns) {
+      if (total > line) overCount++;
+      else if (total < line) underCount++;
+    }
+    
+    const ratio = underCount === 0 ? Infinity : overCount / underCount;
+    const ratioDifference = Math.abs(1 - ratio);
+    
+    if (ratioDifference < bestRatioDifference) {
+      bestRatioDifference = ratioDifference;
+      bestLine = line;
+    }
+  }
+  
+  return bestLine;
 }
 
