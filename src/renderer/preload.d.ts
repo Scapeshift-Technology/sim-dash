@@ -13,6 +13,7 @@ import type {
   FetchedLeague,
   FetchMlbLineupArgs
 } from '@/types/sqlite';
+import type { TreeRootParams } from '@@/types/statCaptureConfig';
 
 // --- Add types for MLB Lineups (Imported where needed) ---
 // Re-exporting from here for simplicity in preload, adjust if needed
@@ -38,8 +39,10 @@ declare global {
       // League data
       fetchLeagues: () => Promise<FetchedLeague[]>;
       fetchSchedule: (args: { league: string; date: string }) => Promise<ScheduleItem[]>;
-      getLeaguePeriods: (leagueName: string) => Promise<Period[]>;
       getLeagueProps: (leagueName: string, propType: 'OvrUnd' | 'YesNo') => Promise<LeagueOUProps[] | LeagueYNProps[]>;
+
+      // NEW: Tree-based period data
+      getLeaguePeriodTree: (params: TreeRootParams) => Promise<any[]>;
 
       // Stat capture config
       fetchLeagueStatCaptureConfigurations: (leagueName: string) => Promise<LeagueSavedConfiguration[]>;

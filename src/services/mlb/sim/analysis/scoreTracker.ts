@@ -24,16 +24,20 @@ export function getScoreForPeriod(
     
     case 'H':
       if (periodNumber === 1) {
+        // H1 = First 5 innings
         return getScoreAtInning(plays, 5);
+      } else if (periodNumber === 13) {
+        // H13 = First 3 innings
+        return getScoreAtInning(plays, 3);
+      } else if (periodNumber === 17) {
+        // H17 = First 7 innings
+        return getScoreAtInning(plays, 7);
       }
       throw new Error(`Invalid period number ${periodNumber} for Half period type`);
     
     case 'I':
-      if (periodNumber === 99) { // Case of innings 1-3
-        return getScoreAtInning(plays, 3);
-      } else {
-        return getScoreInInning(plays, periodNumber);
-      }
+      return getScoreInInning(plays, periodNumber);
+    
     default:
       throw new Error(`Unknown period type code: ${periodTypeCode}`);
   }

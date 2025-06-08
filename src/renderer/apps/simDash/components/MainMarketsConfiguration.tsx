@@ -13,41 +13,52 @@ import { Add as AddIcon } from "@mui/icons-material";
 
 import { getPeriodLabel } from "@@/services/statCaptureConfig/utils";
 
-import { BetType, Period, ValidationConfig, MainMarketConfig, PeriodTypeCode, MarketType } from '@@/types/statCaptureConfig';
+import { BetType, ValidationConfig, MainMarketConfig, PeriodTypeCode, MarketType, TreePeriodNode } from '@@/types/statCaptureConfig';
+import { LeagueName } from '@@/types/league';
 
-import HierarchicalPeriodSelector, { HierarchyConfig } from './HierarchicalPeriodSelector';
+import PeriodTreeSelector from './PeriodTreeSelector';
 import ConfigurationTable, { ColumnConfig } from './ConfigurationTable';
 
 // ---------- Types ----------
 
 export interface MainMarketsConfigurationProps {
     betTypes: BetType[];
-    periods: Period[];
     validationConfig: ValidationConfig;
     existingConfigurations: MainMarketConfig[];
     onConfigurationChange: (configurations: MainMarketConfig[]) => void;
     leagueName: string;
 }
 
-// ---------- Helper functions ----------
-
-const generateLines = (min: number, max: number, increment: number): number[] => {
-    const lines: number[] = [];
-    for (let i = min; i <= max; i += increment) {
-        lines.push(Math.round(i / increment) * increment); // Round to avoid floating point issues
+// Generate unique ID for tree nodes (used for selection)
+function getTreePeriodId(period: TreePeriodNode): string {
+    // Use PeriodTypeCode and PeriodNumber if available (from LeaguePeriodShortcode join)
+    if (period.PeriodTypeCode && period.PeriodNumber !== undefined) {
+        return `${period.PeriodTypeCode}-${period.PeriodNumber}`;
     }
-    return lines;
-};
+    // Fall back to SubPeriodType and SubPeriodNumber for leaf nodes without shortcode
+    return `${period.SubPeriodType}-${period.SubPeriodNumber}`;
+}
 
-function getPeriodId(period: Period): string {
-    return `${period.PeriodTypeCode}-${period.PeriodNumber}`;
+// Convert TreePeriodNode to period info for MainMarketConfig
+function treeNodeToPeriodInfo(node: TreePeriodNode): { periodTypeCode: PeriodTypeCode, periodNumber: number } {
+    // Use PeriodTypeCode and PeriodNumber if available (from LeaguePeriodShortcode join)
+    if (node.PeriodTypeCode && node.PeriodNumber !== undefined) {
+        return {
+            periodTypeCode: node.PeriodTypeCode as PeriodTypeCode,
+            periodNumber: node.PeriodNumber
+        };
+    }
+    // Fall back to SubPeriodType and SubPeriodNumber for leaf nodes
+    return {
+        periodTypeCode: node.SubPeriodType as PeriodTypeCode,
+        periodNumber: node.SubPeriodNumber
+    };
 }
 
 // ---------- Main component ----------
 
 const MainMarketsConfiguration: React.FC<MainMarketsConfigurationProps> = ({
     betTypes,
-    periods,
     validationConfig,
     existingConfigurations,
     onConfigurationChange,
@@ -93,16 +104,7 @@ const MainMarketsConfiguration: React.FC<MainMarketsConfigurationProps> = ({
         setSelectedPeriods([]);
         setMinValue('');
         setMaxValue('');
-    }, [betTypes, periods, validationConfig]);
-
-    // ---------- Hierarchy Configuration ----------
-
-    const hierarchyConfig: HierarchyConfig = {
-        superPeriodTypeField: 'SuperPeriodType',
-        superPeriodNumberField: 'SuperPeriodNumber', 
-        getSuperPeriodTypeLabel: (value: string) => value,
-        getSuperPeriodNumberLabel: (superPeriodType: string, superPeriodNumber: string) => `${superPeriodType} ${superPeriodNumber}`
-    };
+    }, [betTypes, validationConfig]);
 
     // ---------- Validation functions ----------
 
@@ -128,8 +130,8 @@ const MainMarketsConfiguration: React.FC<MainMarketsConfigurationProps> = ({
         );
     };
 
-    const handlePeriodChange = (period: Period) => {
-        const periodId = getPeriodId(period);
+    const handleTreePeriodChange = (period: TreePeriodNode) => {
+        const periodId = getTreePeriodId(period);
         setSelectedPeriods(prev =>
             prev.includes(periodId)
                 ? prev.filter(p => p !== periodId)
@@ -197,8 +199,8 @@ const MainMarketsConfiguration: React.FC<MainMarketsConfigurationProps> = ({
             return 'Full Game';
         }
         
-        const period = periods.find(p => p.PeriodTypeCode === typeCode && p.PeriodNumber === periodNumber);
-        return period ? getPeriodLabel(period) : periodId;
+        // For tree-based periods, create a simple display label
+        return `${typeCode} ${periodNumber}`;
     };
 
     const getValidationHelperText = (field: 'min' | 'max', value: string): string => {
@@ -247,17 +249,12 @@ const MainMarketsConfiguration: React.FC<MainMarketsConfigurationProps> = ({
                         ))}
                     </Box>
 
-                    {/* Periods */}
-                    <Typography variant="subtitle1" gutterBottom>
-                        Periods
-                    </Typography>
-                    <HierarchicalPeriodSelector
-                        periods={periods}
+                    {/* NEW: Tree-based Period Selector */}
+                    <PeriodTreeSelector
+                        leagueName={leagueName as LeagueName}
                         selectedPeriods={selectedPeriods}
-                        onPeriodChange={handlePeriodChange}
-                        getPeriodId={getPeriodId}
-                        getPeriodLabel={getPeriodLabel}
-                        hierarchyConfig={hierarchyConfig}
+                        onPeriodChange={handleTreePeriodChange}
+                        getPeriodId={getTreePeriodId}
                     />
 
                     {/* Range Inputs */}
@@ -366,5 +363,16 @@ const MainMarketsConfiguration: React.FC<MainMarketsConfigurationProps> = ({
         </Box>
     );
 };
+
+// ---------- Helper function for generating lines ----------
+
+function generateLines(min: number, max: number, increment: number): number[] {
+    const lines: number[] = [];
+    for (let value = min; value <= max; value += increment) {
+        // Round to avoid floating point precision issues
+        lines.push(Math.round(value * 100) / 100);
+    }
+    return lines;
+}
 
 export default MainMarketsConfiguration;

@@ -36,8 +36,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // League/Schedule/Lineup data
     fetchLeagues: () => ipcRenderer.invoke('fetch-leagues'),
     fetchSchedule: (args) => ipcRenderer.invoke('fetch-schedule', args),
-    getLeaguePeriods: (leagueName) => ipcRenderer.invoke('get-league-periods', leagueName),
     getLeagueProps: (leagueName, propType) => ipcRenderer.invoke('get-league-props', leagueName, propType),
+
+    // NEW: Tree-based period data
+    getLeaguePeriodTree: (params) => ipcRenderer.invoke('get-league-period-tree', params),
 
     // Stat capture config
     fetchLeagueStatCaptureConfigurations: (leagueName) => ipcRenderer.invoke('fetch-league-stat-capture-configurations', leagueName),

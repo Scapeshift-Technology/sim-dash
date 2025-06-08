@@ -1,9 +1,10 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
 import { LeagueName } from '@@/types/league';
-import { LeagueOUProps, LeagueYNProps, LeagueSavedConfiguration, Period } from '@@/types/statCaptureConfig';
+import { LeagueOUProps, LeagueYNProps, LeagueSavedConfiguration } from '@@/types/statCaptureConfig';
 import { SavedConfiguration } from '@@/types/statCaptureConfig';
 import { MainMarketConfig, PropOUConfig, PropYNConfig } from '@@/types/statCaptureConfig';
+import { TreePeriodNode, TreeExpansionState, TreeRootParams } from '@@/types/statCaptureConfig';
 
 
 // ---------- Types ----------
@@ -22,10 +23,11 @@ export interface StatCaptureLeagueState {
     // Active tab
     activeTab: number;
 
-    // Period loading
-    periodsLoading: boolean;
-    periodsError: string | null;
-    periods: Period[];
+    // NEW: Tree-based period state
+    periodTree: TreePeriodNode[];
+    periodTreeLoading: boolean;
+    periodTreeError: string | null;
+    expandedNodes: TreeExpansionState;
 
     // Over/Under props loading
     overUnderPropsLoading: boolean;
@@ -154,6 +156,159 @@ function compareConfigurations(config1: SavedConfiguration | null, config2: Save
     return deepEqual(compareObj1, compareObj2);
 }
 
+// Generate unique key for tree nodes
+function generateNodeKey(node: Partial<TreePeriodNode>): string {
+    return `${node.Sport}-${node.League}-${node.SuperPeriodType}-${node.SuperPeriodNumber}-${node.SubPeriodType}-${node.SubPeriodNumber}`;
+}
+
+// Generate display name for tree nodes
+function generateDisplayName(node: Partial<TreePeriodNode>): string {
+    // Special case for root Match node (Full Game)
+    if (node.SuperPeriodType === 'Match' && 
+        node.SuperPeriodNumber === 1 && 
+        node.SubPeriodType?.charAt(0) === '\0' && 
+        node.SubPeriodNumber === 0) {
+        return 'Full Game incl. Overtime (FG)';
+    }
+    
+    if (node.TreeType === 'Branch') {
+        if (node.SubPeriodType?.charAt(0) === '\0') {
+            // Special display cases for Half periods
+            if (node.SuperPeriodType === 'Half') {
+                switch (node.SuperPeriodNumber) {
+                    case 1:
+                        return 'First 5 Innings (H1)';
+                    case 13:
+                        return 'First 3 Innings (H13)';
+                    case 17:
+                        return 'First 7 Innings (H17)';
+                    default:
+                        return `${node.SuperPeriodType} ${node.SuperPeriodNumber}`;
+                }
+            }
+            return `${node.SuperPeriodType} ${node.SuperPeriodNumber}`;
+        } else {
+            return `${node.SubPeriodType} ${node.SubPeriodNumber}`;
+        }
+    } else {
+        // For leaf nodes, use SubPeriodType and SubPeriodNumber
+        return `${node.SubPeriodType} ${node.SubPeriodNumber}`;
+    }
+}
+
+// Transform raw database result to TreePeriodNode
+function transformToTreeNode(raw: any): TreePeriodNode {
+    const node: TreePeriodNode = {
+        Sport: raw.Sport.trim(),
+        League: raw.League.trim(),
+        SuperPeriodType: raw.SuperPeriodType.trim(),
+        SuperPeriodNumber: raw.SuperPeriodNumber,
+        SubPeriodType: raw.SubPeriodType.trim(),
+        SubPeriodNumber: raw.SubPeriodNumber,
+        
+        // Parent relationship fields (from recursive CTE)
+        Sport_Parent: raw.Sport_Parent?.trim(),
+        League_Parent: raw.League_Parent?.trim(),
+        SuperPeriodType_Parent: raw.SuperPeriodType_Parent?.trim(),
+        SuperPeriodNumber_Parent: raw.SuperPeriodNumber_Parent,
+        SubPeriodType_Parent: raw.SubPeriodType_Parent?.trim(),
+        SubPeriodNumber_Parent: raw.SubPeriodNumber_Parent,
+        
+        // Hierarchy information
+        HierarchyLevel: raw.HierarchyLevel || 0,
+        
+        // Fields from LeaguePeriodShortcode join
+        PeriodTypeCode: raw.PeriodTypeCode?.trim(),
+        PeriodNumber: raw.PeriodNumber,
+        
+        TreeType: raw.TreeType as 'Branch' | 'Node',
+        DisplayName: '',
+        NodeKey: '',
+        isExpanded: false,
+        children: []
+    };
+    
+    node.NodeKey = generateNodeKey(node);
+    node.DisplayName = generateDisplayName(node);
+    
+    return node;
+}
+
+// Build tree structure from flat hierarchy data
+function buildTreeFromFlatData(flatNodes: TreePeriodNode[]): TreePeriodNode[] {
+    // Create a map for quick lookup by node key
+    const nodeMap = new Map<string, TreePeriodNode>();
+    flatNodes.forEach(node => {
+        nodeMap.set(node.NodeKey, { ...node, children: [] });
+    });
+
+    // Build the tree structure
+    const rootNodes: TreePeriodNode[] = [];
+    
+    flatNodes.forEach(node => {
+        const currentNode = nodeMap.get(node.NodeKey)!;
+        
+        // If this is a root node (HierarchyLevel 0), add it to root nodes
+        if (node.HierarchyLevel === 0) {
+            rootNodes.push(currentNode);
+        } else {
+            // Find the parent node
+            const parentKey = generateNodeKey({
+                Sport: node.Sport_Parent,
+                League: node.League_Parent,
+                SuperPeriodType: node.SuperPeriodType_Parent,
+                SuperPeriodNumber: node.SuperPeriodNumber_Parent,
+                SubPeriodType: node.SubPeriodType_Parent,
+                SubPeriodNumber: node.SubPeriodNumber_Parent
+            });
+            
+            const parentNode = nodeMap.get(parentKey);
+            if (parentNode) {
+                parentNode.children = parentNode.children || [];
+                parentNode.children.push(currentNode);
+            }
+        }
+    });
+
+    // Sort children at each level (branches before leaves, then by name)
+    const sortChildren = (nodes: TreePeriodNode[]) => {
+        nodes.forEach(node => {
+            if (node.children && node.children.length > 0) {
+                node.children.sort((a, b) => {
+                    // Branches before leaves
+                    if (a.TreeType !== b.TreeType) {
+                        return a.TreeType === 'Branch' ? -1 : 1;
+                    }
+                    // Then by SuperPeriodType, SuperPeriodNumber, SubPeriodType, SubPeriodNumber
+                    const typeCompare = a.SuperPeriodType.localeCompare(b.SuperPeriodType);
+                    if (typeCompare !== 0) return typeCompare;
+                    
+                    const numberCompare = a.SuperPeriodNumber - b.SuperPeriodNumber;
+                    if (numberCompare !== 0) return numberCompare;
+                    
+                    const subTypeCompare = a.SubPeriodType.localeCompare(b.SubPeriodType);
+                    if (subTypeCompare !== 0) return subTypeCompare;
+                    
+                    return a.SubPeriodNumber - b.SubPeriodNumber;
+                });
+                sortChildren(node.children);
+            }
+        });
+    };
+
+    // Sort root nodes and their children
+    rootNodes.sort((a, b) => {
+        if (a.TreeType !== b.TreeType) {
+            return a.TreeType === 'Branch' ? -1 : 1;
+        }
+        return a.SuperPeriodType.localeCompare(b.SuperPeriodType);
+    });
+    
+    sortChildren(rootNodes);
+    
+    return rootNodes;
+}
+
 // ---------- Initial state ----------
 
 const initialState: StatCaptureSettingsState = {};
@@ -162,18 +317,20 @@ const initialState: StatCaptureSettingsState = {};
 
 // ---- League fetching -----
 
-export const getLeaguePeriods = createAsyncThunk<
-    Period[],
-    LeagueName,
+// NEW: Tree-based period fetching - single consolidated method
+export const getLeaguePeriodTree = createAsyncThunk<
+    TreePeriodNode[],
+    { league: LeagueName },
     { rejectValue: string }
 >(
-    'statCaptureSettings/getLeaguePeriods',
-    async (leagueName, { rejectWithValue }) => {
+    'statCaptureSettings/getLeaguePeriodTree',
+    async ({ league }, { rejectWithValue }) => {
         try {
-            const result = await window.electronAPI.getLeaguePeriods(leagueName);
-            return result;
+            const result = await window.electronAPI.getLeaguePeriodTree({ league });
+            const transformedNodes = result.map(transformToTreeNode);
+            return buildTreeFromFlatData(transformedNodes);
         } catch (err: any) {
-            return rejectWithValue(err.message || 'An unexpected error occurred while fetching league periods.');
+            return rejectWithValue(err.message || 'An unexpected error occurred while fetching period tree.');
         }
     }
 );
@@ -288,9 +445,6 @@ const statCaptureSettingsSlice = createSlice({
             if (!state[leagueName]) {
                 state[leagueName] = {
                     activeTab: 0,
-                    periodsLoading: false,
-                    periodsError: null,
-                    periods: [],
                     overUnderPropsLoading: false,
                     overUnderPropsError: null,
                     overUnderProps: [],
@@ -318,7 +472,11 @@ const statCaptureSettingsSlice = createSlice({
                     activeConfigLoading: false,
                     activeConfigError: null,
                     activeConfig: null,
-                    saveConfigName: ''
+                    saveConfigName: '',
+                    periodTree: [],
+                    periodTreeLoading: false,
+                    periodTreeError: null,
+                    expandedNodes: {}
                 };
             }
         },
@@ -333,13 +491,6 @@ const statCaptureSettingsSlice = createSlice({
         removeLeague: (state, action: PayloadAction<string>) => {
             const leagueName = action.payload;
             delete state[leagueName];
-        },
-
-        clearPeriodsError: (state, action: PayloadAction<string>) => {
-            const leagueName = action.payload;
-            if (state[leagueName]) {
-                state[leagueName].periodsError = null;
-            }
         },
 
         updateCurrentDraft: (state, action: PayloadAction<{ leagueName: string; currentDraft: SavedConfiguration }>) => {
@@ -370,6 +521,15 @@ const statCaptureSettingsSlice = createSlice({
             }
         },
 
+        // NEW: Tree state management actions
+        toggleTreeNodeExpansion: (state, action: PayloadAction<{ leagueName: string; nodeKey: string }>) => {
+            const { leagueName, nodeKey } = action.payload;
+            if (state[leagueName]) {
+                const currentExpanded = state[leagueName].expandedNodes[nodeKey] || false;
+                state[leagueName].expandedNodes[nodeKey] = !currentExpanded;
+            }
+        },
+
         updateSaveConfigName: (state, action: PayloadAction<{ leagueName: string; saveConfigName: string }>) => {
             const { leagueName, saveConfigName } = action.payload;
             if (state[leagueName]) {
@@ -394,29 +554,6 @@ const statCaptureSettingsSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            // Get league periods actions
-            .addCase(getLeaguePeriods.pending, (state, action) => {
-                const leagueName = action.meta.arg;
-                if (state[leagueName]) {
-                    state[leagueName].periodsLoading = true;
-                    state[leagueName].periodsError = null;
-                }
-            })
-            .addCase(getLeaguePeriods.fulfilled, (state, action) => {
-                const leagueName = action.meta.arg;
-                if (state[leagueName]) {
-                    state[leagueName].periodsLoading = false;
-                    state[leagueName].periods = action.payload;
-                }
-            })
-            .addCase(getLeaguePeriods.rejected, (state, action) => {
-                const leagueName = action.meta.arg;
-                if (state[leagueName]) {
-                    state[leagueName].periodsLoading = false;
-                    state[leagueName].periodsError = action.payload ?? 'Failed to fetch league periods';
-                }
-            })
-
             // Get league props actions
             .addCase(getLeagueProps.pending, (state, action) => {
                 const { leagueName, propType } = action.meta.arg;
@@ -586,6 +723,30 @@ const statCaptureSettingsSlice = createSlice({
                     state[leagueName].activeConfigError = action.payload ?? 'Failed to fetch active stat capture configuration';
                 }
             })
+
+            // NEW: Tree operations
+            .addCase(getLeaguePeriodTree.pending, (state, action) => {
+                const { league } = action.meta.arg;
+                if (state[league]) {
+                    state[league].periodTreeLoading = true;
+                    state[league].periodTreeError = null;
+                }
+            })
+            .addCase(getLeaguePeriodTree.fulfilled, (state, action) => {
+                const { league } = action.meta.arg;
+                if (state[league]) {
+                    state[league].periodTreeLoading = false;
+                    state[league].periodTree = action.payload;
+                    // Keep expansion state - users may want their tree state preserved
+                }
+            })
+            .addCase(getLeaguePeriodTree.rejected, (state, action) => {
+                const { league } = action.meta.arg;
+                if (state[league]) {
+                    state[league].periodTreeLoading = false;
+                    state[league].periodTreeError = action.payload ?? 'Failed to fetch period tree';
+                }
+            })
     }
 });
 
@@ -595,13 +756,13 @@ export const {
     initializeLeague,
     setActiveTab,
     removeLeague,
-    clearPeriodsError,
     updateCurrentDraftMainMarkets,
     updateCurrentDraftOUProps,
     updateCurrentDraftYNProps,
     updateCurrentDraft,
     updateSaveConfigName,
-    clearCurrentDraft
+    clearCurrentDraft,
+    toggleTreeNodeExpansion
 } = statCaptureSettingsSlice.actions;
 
 // ---------- Selectors ----------
@@ -613,13 +774,7 @@ export const selectActiveTab = (state: { simDash: { settings: StatCaptureSetting
 export const selectAllLeagues = (state: { simDash: { settings: StatCaptureSettingsState } }): string[] => 
     Object.keys(state.simDash?.settings || {});
 
-// League periods selectors
-export const selectLeaguePeriods = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): any[] => 
-    state.simDash?.settings?.[leagueName]?.periods ?? [];
-export const selectLeaguePeriodsLoading = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): boolean => 
-    state.simDash?.settings?.[leagueName]?.periodsLoading ?? false;
-export const selectLeaguePeriodsError = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): string | null => 
-    state.simDash?.settings?.[leagueName]?.periodsError ?? null;
+// Legacy period selectors removed - use tree-based selectors instead
 
 // League OU props selectors
 export const selectLeagueOUProps = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): LeagueOUProps[] => 
@@ -692,6 +847,16 @@ export const selectHasUnsavedChanges = (state: { simDash: { settings: StatCaptur
     
     return !compareConfigurations(currentDraft, loadedConfig);
 };
+
+// NEW: Tree-based period selectors
+export const selectPeriodTree = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): TreePeriodNode[] => 
+    state.simDash?.settings?.[leagueName]?.periodTree ?? [];
+export const selectPeriodTreeLoading = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): boolean => 
+    state.simDash?.settings?.[leagueName]?.periodTreeLoading ?? false;
+export const selectPeriodTreeError = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): string | null => 
+    state.simDash?.settings?.[leagueName]?.periodTreeError ?? null;
+export const selectExpandedNodes = (state: { simDash: { settings: StatCaptureSettingsState } }, leagueName: string): TreeExpansionState => 
+    state.simDash?.settings?.[leagueName]?.expandedNodes ?? {};
 
 // ---------- Reducer ----------
 
