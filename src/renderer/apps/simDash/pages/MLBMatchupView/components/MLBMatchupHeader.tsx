@@ -8,11 +8,24 @@ import {
     Tooltip
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
+
 import MLBSimulationResultsSummary from '@/simDash/components/simulation/MLBSimulationResultsSummary';
-import type { SimHistoryEntry } from '@/types/simHistory';
 import SimulationButton from './SimulationButton';
+import AdvancedSimulationSettings from './AdvancedSimulationSettings';
+import NumberOfGamesSettings from './NumberOfGamesSettings';
+import CaptureConfigDropdown from '@/apps/simDash/components/CaptureConfigDropdown';
+
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/store/store';
+import { selectNumGames } from '@/apps/simDash/store/slices/simulationStatusSlice';
+import { selectActiveConfig } from '@/apps/simDash/store/slices/statCaptureSettingsSlice';
+
 import { MlbLiveDataApiResponse } from '@@/types/mlb';
 import { SimType } from '@@/types/mlb/mlb-sim';
+import { LeagueName } from '@@/types/league';
+import type { SimHistoryEntry } from '@/types/simHistory';
+
+// ---------- Main component ----------
 
 interface MLBMatchupHeaderProps {
     participant1: string;
@@ -28,6 +41,7 @@ interface MLBMatchupHeaderProps {
     hasInvalidLeans: boolean;
     seriesGames?: { [key: string]: any };
     liveGameData: MlbLiveDataApiResponse | undefined;
+    leagueName: LeagueName;
     onRefresh: () => void;
     onRunSimulation: (simType: SimType) => void;
     onChangeSimType: (simType: SimType) => void;
@@ -47,14 +61,44 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
     hasInvalidLeans,
     seriesGames,
     liveGameData,
+    leagueName,
     onRefresh,
     onRunSimulation,
     onChangeSimType
 }) => {
-    // Convert UTC datetime to local time
+    const dispatch = useDispatch<AppDispatch>();
+    
+    // ---------- State ----------
+
     const localDateTime = new Date(dateTime);
     const timeString = localDateTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     const dateString = localDateTime.toLocaleDateString();
+
+    const numGames = useSelector((state: RootState) => selectNumGames(state));
+    const currentConfig = useSelector((state: RootState) => selectActiveConfig(state, leagueName));
+
+    // ---------- Helper functions ----------
+
+    const formatNumGames = (num: number): string => {
+        if (num >= 1000000) {
+            return `${(num / 1000000).toFixed(num % 1000000 === 0 ? 0 : 1)}M`;
+        } else if (num >= 1000) {
+            return `${(num / 1000).toFixed(num % 1000 === 0 ? 0 : 1)}K`;
+        }
+        return num.toString();
+    };
+
+    const createLabel = (): string => {
+        const numGamesPart = formatNumGames(numGames);
+        const configPart = currentConfig?.name || 'No Config';
+        const fullLabel = `Advanced settings - ${numGamesPart} games • ${configPart}`;
+
+       return fullLabel;
+    };
+
+    // ---------- Event handlers ----------
+
+    // ---------- Rendering ----------
 
     return (
         <Paper 
@@ -79,16 +123,17 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
                         {dateString} • {timeString}
                     </Typography>
                 </Box>
-                <Tooltip title="Reload lineups">
-                    <IconButton 
-                        onClick={onRefresh}
-                        size="small"
-                        sx={{ ml: 2 }}
-                        disabled={!lineupData}
-                    >
-                        <RefreshIcon />
-                    </IconButton>
-                </Tooltip>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Tooltip title="Reload lineups">
+                        <IconButton 
+                            onClick={onRefresh}
+                            size="small"
+                            disabled={!lineupData}
+                        >
+                            <RefreshIcon />
+                        </IconButton>
+                    </Tooltip>
+                </Box>
             </Box>
             {simError && (
                 <Alert severity="error" sx={{ mb: 2 }}>
@@ -110,6 +155,7 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
                         disabled={isSimulating || !lineupData || hasInvalidLeans}
                         seriesGames={seriesGames}
                         liveGameData={liveGameData}
+                        leagueName={leagueName}
                         onRunSimulation={onRunSimulation}
                         onChangeSimType={onChangeSimType}
                     />
@@ -127,6 +173,14 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
                         isLoading={simStatus === 'loading'}
                     />
                 </Box>
+            </Box>
+            
+            {/* Advanced Settings */}
+            <Box sx={{ maxWidth: '420px', mt: 2 }}>
+                <AdvancedSimulationSettings caption={createLabel()}>
+                    <NumberOfGamesSettings leagueName={leagueName} />
+                    <CaptureConfigDropdown leagueName={leagueName} />
+                </AdvancedSimulationSettings>
             </Box>
         </Paper>
     );

@@ -38,6 +38,15 @@ declare global {
       // League data
       fetchLeagues: () => Promise<FetchedLeague[]>;
       fetchSchedule: (args: { league: string; date: string }) => Promise<ScheduleItem[]>;
+      getLeaguePeriods: (leagueName: string) => Promise<Period[]>;
+      getLeagueProps: (leagueName: string, propType: 'OvrUnd' | 'YesNo') => Promise<LeagueOUProps[] | LeagueYNProps[]>;
+
+      // Stat capture config
+      fetchLeagueStatCaptureConfigurations: (leagueName: string) => Promise<LeagueSavedConfiguration[]>;
+      fetchStatCaptureConfiguration: (configName: string) => Promise<SavedConfiguration>;
+      saveStatCaptureConfiguration: (config: SavedConfiguration) => Promise<any>;
+      setActiveStatCaptureConfiguration: (configName: string, leagueName: string) => Promise<SavedConfiguration>;
+      getActiveStatCaptureConfiguration: (leagueName: string) => Promise<SavedConfiguration>;
 
       // ---------- MLB-specific functions ----------
       // Fetching data
@@ -45,7 +54,7 @@ declare global {
       fetchMlbGamePlayerStats: (args: { matchupLineups: MatchupLineups, date: string }) => Promise<MatchupLineups>;
 
       // Simulations
-      simulateMatchupMLB: (args: { matchupLineups: MatchupLineups, numGames: number, gameId: number | undefined, liveGameData?: MlbLiveDataApiResponse }) => Promise<SimResults>;
+      simulateMatchupMLB: (args: { matchupLineups: MatchupLineups, numGames: number, gameId: number | undefined, statCaptureConfig: SavedConfiguration, liveGameData?: MlbLiveDataApiResponse }) => Promise<SimResults>;
 
       // Live data (MLB)
       connectToWebSocketMLB: (args: { gameId: number }) => Promise<void>;

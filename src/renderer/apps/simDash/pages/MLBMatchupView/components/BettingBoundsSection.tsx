@@ -107,55 +107,59 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
     };
 
     const handleFindLeans = async () => {
-        // Reset all errors
-        const errorFields = ['awayML', 'homeML', 'totalLine', 'overOdds', 'underOdds'] as const;
-        errorFields.forEach(field => handleErrorChange(null, field));
+        try {
+            // Reset all errors
+            const errorFields = ['awayML', 'homeML', 'totalLine', 'overOdds', 'underOdds'] as const;
+            errorFields.forEach(field => handleErrorChange(null, field));
 
-        // Validate all inputs
-        const parsedValues = {
-            awayML: validateAndParseInput(bounds.awayML, 'awayML'),
-            homeML: validateAndParseInput(bounds.homeML, 'homeML'),
-            totalLine: validateAndParseInput(bounds.totalLine, 'totalLine'),
-            overOdds: validateAndParseInput(bounds.overOdds, 'overOdds'),
-            underOdds: validateAndParseInput(bounds.underOdds, 'underOdds')
-        };
+            // Validate all inputs
+            const parsedValues = {
+                awayML: validateAndParseInput(bounds.awayML, 'awayML'),
+                homeML: validateAndParseInput(bounds.homeML, 'homeML'),
+                totalLine: validateAndParseInput(bounds.totalLine, 'totalLine'),
+                overOdds: validateAndParseInput(bounds.overOdds, 'overOdds'),
+                underOdds: validateAndParseInput(bounds.underOdds, 'underOdds')
+            };
 
-        // Check if any validation failed
-        if (Object.values(parsedValues).some(value => value === null)) {
-            return; // Stop if any validation failed
-        }
-
-        const marketLines: MarketLinesMLB = {
-            awayML: parsedValues.awayML!,
-            homeML: parsedValues.homeML!,
-            over: {
-                line: parsedValues.totalLine!,
-                odds: parsedValues.overOdds!
-            },
-            under: {
-                line: parsedValues.totalLine!,
-                odds: parsedValues.underOdds!
+            // Check if any validation failed
+            if (Object.values(parsedValues).some(value => value === null)) {
+                return; // Stop if any validation failed
             }
-        };
 
-        dispatch(updateMLBMarketLines({
-            league: 'MLB',
-            matchId,
-            marketLines: marketLines
-        }));
+            const marketLines: MarketLinesMLB = {
+                awayML: parsedValues.awayML!,
+                homeML: parsedValues.homeML!,
+                over: {
+                    line: parsedValues.totalLine!,
+                    odds: parsedValues.overOdds!
+                },
+                under: {
+                    line: parsedValues.totalLine!,
+                    odds: parsedValues.underOdds!
+                }
+            };
 
-        const optimalLeansResult = await dispatch(findLeansThunk({
-            league: 'MLB',
-            matchId,
-            lineups: gameContainer?.currentGame?.lineups as MatchupLineups,
-            marketLines: marketLines
-        })).unwrap();
+            dispatch(updateMLBMarketLines({
+                league: 'MLB',
+                matchId,
+                marketLines: marketLines
+            }));
 
-        dispatch(updateMLBAutomatedLeans({
-            league: 'MLB',
-            matchId,
-            automatedLeans: optimalLeansResult
-        }));
+            const optimalLeansResult = await dispatch(findLeansThunk({
+                league: 'MLB',
+                matchId,
+                lineups: gameContainer?.currentGame?.lineups as MatchupLineups,
+                marketLines: marketLines
+            })).unwrap();
+
+            dispatch(updateMLBAutomatedLeans({
+                league: 'MLB',
+                matchId,
+                automatedLeans: optimalLeansResult
+            }));
+        } catch (error) {
+            console.error('Error finding optimal leans:', error);
+        }
     };
 
     const handleApplyLeans = () => {

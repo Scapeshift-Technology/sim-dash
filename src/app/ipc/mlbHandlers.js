@@ -104,7 +104,7 @@ const handleFetchInitialMLBLiveData = async (event, { gameId }) => {
 // ---------- Simulations ----------
 
 // Handler for simulating MLB matchups
-const handleSimulateMatchup = async (event, { numGames, matchupLineups, gameId, liveGameData }) => {
+const handleSimulateMatchup = async (event, { numGames, matchupLineups, gameId, statCaptureConfig, liveGameData }) => {
     if (gameId) {
         log.info(`Simulating ${numGames} MLB games - Game ${gameId}`);
     } else {
@@ -112,7 +112,7 @@ const handleSimulateMatchup = async (event, { numGames, matchupLineups, gameId, 
     }
 
     try {
-        return await runParallelSimulation(matchupLineups, numGames, liveGameData);
+        return await runParallelSimulation(matchupLineups, numGames, statCaptureConfig, liveGameData);
     } catch (err) {
         log.error('Error simulating MLB matchup:', err);
         throw err;

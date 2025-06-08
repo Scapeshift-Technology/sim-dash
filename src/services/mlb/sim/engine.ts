@@ -9,6 +9,7 @@ import {
   EventType,
   MlbLiveDataApiResponse
 } from "@/types/mlb";
+import { SavedConfiguration } from "@/types/statCaptureConfig";
 import { leagueAvgStats } from "./exampleMatchup";
 import { getMatchupProbabilities } from "./probabilities";
 import { initializeHomeFieldMultipliers } from "./homeFieldAdvantage";
@@ -29,11 +30,9 @@ async function simulateMatchupMLB(
   matchup: MatchupLineups,
 //   leagueAvgStats: LeagueAvgStats,
   num_games: number = 50000,
+  statCaptureConfig: SavedConfiguration,
   liveGameData?: MlbLiveDataApiResponse
 ) {
-  // const gameState = initializeGameState(matchup, liveGameData);
-  // log.info('Game state:', JSON.stringify(gameState));
-  
   try {
     // Matchup probabilities
     await initializeHomeFieldMultipliers();
@@ -41,7 +40,7 @@ async function simulateMatchupMLB(
     // Simulate games
     const simPlays = await simulateGames(matchup, leagueAvgStats, num_games, liveGameData);
     // Get results
-    const outputResults: SimResultsMLB = calculateSimCounts(simPlays, matchup, liveGameData);
+    const outputResults: SimResultsMLB = calculateSimCounts(simPlays, matchup, statCaptureConfig, liveGameData);
 
     return outputResults;
   } catch (error) {

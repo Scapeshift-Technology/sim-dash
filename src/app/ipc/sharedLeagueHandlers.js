@@ -70,17 +70,105 @@ const handleFetchSchedule = async (event, { league, date }, getCurrentPool) => {
     }
 };
 
+// Handler for fetching league periods
+const getLeaguePeriods = async (event, leagueName, getCurrentPool) => {
+    log.info(`IPC received: get-league-periods for ${leagueName}`);
+    const currentPool = getCurrentPool();
+    if (!currentPool) {
+        log.error('get-league-periods: No active SQL Server connection.');
+        throw new Error('Not connected to database.'); // Throw error to be caught by renderer
+    }
+
+    try {
+        // fetch the actual periods
+        const result = await currentPool.request().query(`
+            SELECT TRIM(SuperPeriodType) AS SuperPeriodType
+                , SuperPeriodNumber
+                , TRIM(PeriodTypeCode) AS PeriodTypeCode
+                , PeriodNumber
+                , TRIM(IIF(SubPeriodType = CHAR(0), SuperPeriodType, SubPeriodType)) AS PeriodName
+            FROM LeaguePeriodShortcode
+            WHERE league = '${leagueName}'
+        `);
+
+        // Potentially add special periods
+        let results = result.recordset;
+        if (leagueName === 'MLB') {
+            results = [...results, ...specialMLBPeriods];
+        }
+
+        // Return the results
+        return results;
+    } catch (err) {
+        log.error(`Error fetching league periods for ${leagueName}:`, err);
+        throw err; // Rethrow the error to be caught by the renderer
+    }
+};
+
+const specialMLBPeriods = [
+    {
+        SuperPeriodType: 'Half',
+        SuperPeriodNumber: 1,
+        PeriodTypeCode: 'I',
+        PeriodNumber: 99, // Used because no inning 99 is used elsewhere. This will need to be transformed across the app.
+        PeriodName: 'Innings 1-3'
+    }
+];
+
+const getLeagueProps = async (event, leagueName, propType, getCurrentPool) => {
+    log.info(`IPC received: get-league-props for ${leagueName} with prop type ${propType}`);
+    const currentPool = getCurrentPool();
+    if (!currentPool) {
+        log.error('get-league-props: No active SQL Server connection.');
+        throw new Error('Not connected to database.');
+    }
+
+    try {
+        // Fetch the actual props
+        const result = await currentPool.request().query(`
+            SELECT TRIM(ContestantType) AS ContestantType
+                , TRIM(Prop) AS Prop
+            FROM dbo.PropSportContestantType PSCT
+            WHERE EXISTS(
+                SELECT 1
+                FROM dbo.League L
+                WHERE L.Sport = PSCT.Sport
+                    AND L.League = '${leagueName}'
+                )
+            AND EXISTS(
+                SELECT 1
+                FROM dbo.Prop P
+                WHERE P.Prop = PSCT.Prop
+                    AND P.PropType = '${propType}'
+                )
+        `);
+
+        return result.recordset;
+    } catch (err) {
+        log.error(`Error fetching league ${propType} props for ${leagueName}:`, err);
+        throw err; // Rethrow the error to be caught by the renderer
+    }
+};
+
+// ---------- Register the handlers ----------
+
 /**
  * Register all shared league IPC handlers
  * @param {Object} params - Parameters needed for handler registration
  * @param {Function} params.getCurrentPool - Function to get current SQL Server connection pool
  */
 const registerSharedLeagueHandlers = ({ getCurrentPool }) => {
-    // League Data Handlers
+    // League Data Handler
     ipcMain.handle('fetch-leagues', (event) => handleFetchLeagues(event, getCurrentPool));
 
-    // Schedule handlers
+    // Schedule handler
     ipcMain.handle('fetch-schedule', (event, { league, date }) => handleFetchSchedule(event, { league, date }, getCurrentPool));
+
+    // League periods handler
+    ipcMain.handle('get-league-periods', (event, leagueName) => getLeaguePeriods(event, leagueName, getCurrentPool));
+
+    // League props handler
+    ipcMain.handle('get-league-props', (event, leagueName, propType) => getLeagueProps(event, leagueName, propType, getCurrentPool));
 
     log.info('Shared league IPC handlers registered');
 };

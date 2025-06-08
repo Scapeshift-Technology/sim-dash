@@ -6,6 +6,7 @@ import { runSeriesSimulation, runSimulation } from "@/simDash/pages/MLBMatchupVi
 import { findOptimalLeans } from "@/simDash/pages/MLBMatchupView/functions/optimalLeans";
 import { MatchupLineups } from "@/preload";
 import { MarketLinesMLB, MlbLiveDataApiResponse } from "@@/types/mlb";
+import { SavedConfiguration } from "@@/types/statCaptureConfig";
 
 // --------------------
 // This slice contains data that is used to display the status of a simulation in the UI
@@ -39,6 +40,8 @@ export type LeagueToStatusMap = {
 }
 
 export type SimulationStatusState = {
+  numGames: number;
+} & {
   [Key in LeagueName]?: {
     [matchId: number]: LeagueToStatusMap[Key & keyof LeagueToStatusMap];
   };
@@ -46,7 +49,9 @@ export type SimulationStatusState = {
 
 // ----- Initializers -----
 
-const initialState: SimulationStatusState = {};
+const initialState: SimulationStatusState = {
+  numGames: 90000
+};
 
 const getInitialLeagueMatchState = (league: keyof LeagueToStatusMap) => {
   function createSimState(status: SimStatus = 'idle'): SimState {
@@ -73,15 +78,18 @@ export const runSimulationThunk = createAsyncThunk(
     matchId,
     gameInputs,
     numGames = 90000,
-    liveGameData
+    liveGameData,
+    activeConfig
   }: {
     league: LeagueName;
     matchId: number;
     gameInputs: MLBGameInputs2;
     numGames?: number;
     liveGameData?: MlbLiveDataApiResponse;
+    activeConfig?: SavedConfiguration;
   }) => {
-    const results = await runSimulation(gameInputs, numGames, liveGameData);
+    console.log('Running simulation thunk!', activeConfig);
+    const results = await runSimulation(gameInputs, numGames, liveGameData, activeConfig);
     return results;
   }
 );
@@ -92,14 +100,16 @@ export const runSeriesSimulationThunk = createAsyncThunk(
     league, // These inputs are necessary for the thunk reducers
     matchId,
     gameInputs,
-    numGames = 90000
+    numGames = 90000,
+    activeConfig
   }: {
     league: LeagueName;
     matchId: number;
     gameInputs: SeriesGameInputs;
     numGames?: number;
+    activeConfig?: SavedConfiguration;
   }) => {
-    const results = await runSeriesSimulation(gameInputs, numGames);
+    const results = await runSeriesSimulation(gameInputs, numGames, activeConfig);
     return results;
   }
 );
@@ -141,7 +151,11 @@ const handleSimulationState = (
 const simulationStatusSlice = createSlice({
   name: 'simulationStatus',
   initialState,
-  reducers: {},
+  reducers: {
+    updateNumGames: (state, action: { payload: number }) => {
+      state.numGames = action.payload;
+    }
+  },
   extraReducers: (builder) => {
     // Traditional simulation
     builder
@@ -185,10 +199,14 @@ const simulationStatusSlice = createSlice({
 // ---------- Actions ----------
 
 export const { 
-  
+  updateNumGames
 } = simulationStatusSlice.actions;
 
 // ---------- Selectors ----------
+
+export const selectNumGames = (state: RootState) => {
+  return state.simDash.simulationStatus.numGames;
+};
 
 export const selectTraditionalSimulationStatus = (state: RootState, league: keyof LeagueToStatusMap, matchId: number) => {
   return state.simDash.simulationStatus[league]?.[matchId]?.traditional?.simStatus ?? 'idle';

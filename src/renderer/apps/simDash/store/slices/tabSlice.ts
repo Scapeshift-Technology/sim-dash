@@ -1,7 +1,9 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '@/store/store';
-import { LeagueName, LeagueTab, MatchupTab, Tab } from '@/types/league';
+import { LeagueName, LeagueTab, MatchupTab, SettingsTab, Tab } from '@/types/league';
 import { teamNameToAbbreviationMLB } from '@/simDash/utils/displayMLB';
+
+// ---------- Types ----------
 
 interface TabState {
     openTabs: Tab[];
@@ -13,9 +15,15 @@ const initialState: TabState = {
     activeTabId: null,
 };
 
+// ---------- Helper functions ----------
+
 // Helper function to generate a unique ID for matchup tabs
 const generateMatchupTabId = (details: Omit<MatchupTab, 'id' | 'type' | 'label'>): string => {
     return `${details.league}_${details.date}_${details.participant1}@${details.participant2}` + (details.daySequence ? `_${details.daySequence}` : '');
+};
+
+const generateSettingsTabId = (details: Omit<SettingsTab, 'id' | 'type' | 'label'>): string => {
+    return `${details.league}_settings`;
 };
 
 // Helper function to format date from YYYY-MM-DD to M/D/YY
@@ -23,6 +31,8 @@ const formatDateToShort = (dateStr: string): string => {
     const [year, month, day] = dateStr.split('-');
     return `${parseInt(month)}/${parseInt(day)}/${year.slice(-2)}`;
 };
+
+// ---------- Slice ----------
 
 const tabSlice = createSlice({
     name: 'tabs',
@@ -70,6 +80,24 @@ const tabSlice = createSlice({
             state.activeTabId = tabId;
         },
 
+        openSettingsTab(state, action: PayloadAction<Omit<SettingsTab, 'id' | 'type' | 'label'>>) {
+            const details = action.payload;
+            const tabId = generateSettingsTabId(details);
+            const tabLabel = `${details.league} Capture Configuration`;
+            const existingTab = state.openTabs.find(tab => tab.id === tabId);
+
+            if (!existingTab) {
+                const newTab: SettingsTab = {
+                    ...details,
+                    id: tabId,
+                    type: 'settings',
+                    label: tabLabel
+                };
+                state.openTabs.push(newTab);
+            }
+            state.activeTabId = tabId;
+        },
+
         // Action to close any tab by its ID
         closeTab(state, action: PayloadAction<string>) {
             const tabIdToClose = action.payload;
@@ -100,8 +128,10 @@ const tabSlice = createSlice({
     },
 });
 
+// ---------- Selectors & Reducer ----------
+
 // Export actions and selectors
-export const { openLeagueTab, openMatchupTab, closeTab, setActiveTab } = tabSlice.actions;
+export const { openLeagueTab, openMatchupTab, openSettingsTab, closeTab, setActiveTab } = tabSlice.actions;
 
 // Selectors for tabs
 export const selectOpenTabs = (state: RootState) => state.simDash.tabs.openTabs;

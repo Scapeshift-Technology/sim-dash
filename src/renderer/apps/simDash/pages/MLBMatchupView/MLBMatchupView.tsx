@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
     Box, 
@@ -14,10 +14,12 @@ import {
     Tooltip
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import type { MatchupLineups, MlbLiveDataApiResponse, Player, Position } from '@/types/mlb';
+
 import DraggableLineup from './components/DraggableLineup';
 import MLBMatchupHeader from './components/MLBMatchupHeader';
 import BettingBoundsSection from './components/BettingBoundsSection';
+import MLBGameBanner from './components/MLBGameBanner';
+
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchSimResults, selectMatchSimResults, selectMatchSimStatus } from '@/simDash/store/slices/scheduleSlice';
 import {
@@ -48,26 +50,38 @@ import {
     selectGameCustomModeDataGameState,
     updateCustomModeGameState
 } from '@/simDash/store/slices/simInputsSlice';
-import { LeagueName } from '@@/types/league';
 import { useLeanValidation } from './hooks/leanValidation';
 import { 
     runSeriesSimulationThunk, 
     runSimulationThunk, 
+    selectNumGames, 
     selectSeriesSimulationError, 
     selectSeriesSimulationStatus, 
     selectTraditionalSimulationError, 
     selectTraditionalSimulationStatus 
 } from '@/simDash/store/slices/simulationStatusSlice';
+import { 
+    initializeLeague,
+    getActiveStatCaptureConfiguration,
+    selectActiveConfig,
+    selectActiveConfigLoading,
+    selectActiveConfigError
+} from '@/simDash/store/slices/statCaptureSettingsSlice';
+
+import { LeagueName } from '@@/types/league';
 import { MLBGameInputs2 } from '@@/types/simInputs';
 import { MLBGameSimInputData } from '@@/types/simHistory';
 import { SimHistoryEntry } from '@@/types/simHistory';
-import { transformMLBGameInputs2ToDB } from '@/simDash/utils/transformers';
 import { SimResultsMLB } from '@@/types/bettingResults';
-import { convertLineupsToTSV } from '@/simDash/utils/copyUtils';
-import MLBGameBanner from './components/MLBGameBanner';
-import { useMLBMatchupData } from './hooks/useMLBMatchupData';
 import { SimType } from '@@/types/mlb/mlb-sim';
+import type { MatchupLineups, MlbLiveDataApiResponse, Player, Position } from '@/types/mlb';
+
+import { transformMLBGameInputs2ToDB } from '@/simDash/utils/transformers';
+import { convertLineupsToTSV } from '@/simDash/utils/copyUtils';
+
+import { useMLBMatchupData } from './hooks/useMLBMatchupData';
 import { useLineupFinder } from './hooks/useLineupFinder';
+
 import { convertGameStateWithLineupsToLiveData } from '@@/services/mlb/utils/gameState';
 
 // ---------- Sub-components ----------
@@ -142,6 +156,10 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const traditionalSimulationError = useSelector((state: RootState) => selectTraditionalSimulationError(state, league, matchId));
     const seriesSimulationStatus = useSelector((state: RootState) => selectSeriesSimulationStatus(state, league, matchId));
     const seriesSimulationError = useSelector((state: RootState) => selectSeriesSimulationError(state, league, matchId));
+    const activeConfig = useSelector((state: RootState) => selectActiveConfig(state, league));
+    const activeConfigLoading = useSelector((state: RootState) => selectActiveConfigLoading(state, league));
+    const activeConfigError = useSelector((state: RootState) => selectActiveConfigError(state, league));
+    const numGames = useSelector((state: RootState) => selectNumGames(state));
 
     const [selectedGameTab, setSelectedGameTab] = useState(0);
     const [showCopySuccess, setShowCopySuccess] = useState(false);
@@ -184,6 +202,13 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         mlbGameId,
         setLiveGameData
     });
+
+    useEffect(() => {
+        dispatch(initializeLeague(league)); // Only initializes if no league yet; won't overwrite anything
+        if (!activeConfig && !activeConfigLoading && !activeConfigError) {
+            dispatch(getActiveStatCaptureConfiguration(league));
+        }
+    }, [dispatch, league, activeConfig, activeConfigLoading, activeConfigError]);
 
     // ---------- Handlers ----------
     const handleTeamLeanUpdate = (teamType: 'home' | 'away', leanType: 'offense' | 'defense', value: number) => {
@@ -245,7 +270,9 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             result = await dispatch(runSeriesSimulationThunk({
                 league,
                 matchId,
-                gameInputs: gameContainer.seriesGames
+                gameInputs: gameContainer.seriesGames,
+                numGames: numGames,
+                activeConfig: activeConfig || undefined
             })).unwrap();
         } else if (simType === 'live') {
             if (!gameContainer.currentGame) return;
@@ -253,7 +280,9 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 league,
                 matchId,
                 gameInputs: gameInputs,
-                liveGameData: liveGameData
+                numGames: numGames,
+                liveGameData: liveGameData,
+                activeConfig: activeConfig || undefined
             })).unwrap();
 
             await saveAndUpdateHistory(result, gameContainer.currentGame as MLBGameInputs2, liveGameData);
@@ -264,7 +293,9 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 league,
                 matchId,
                 gameInputs: gameInputs,
-                liveGameData: bannerLiveGameData
+                numGames: numGames,
+                liveGameData: bannerLiveGameData,
+                activeConfig: activeConfig || undefined
             })).unwrap();
             console.log('result', result);
 
@@ -275,7 +306,9 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             result = await dispatch(runSimulationThunk({
                 league,
                 matchId,
-                gameInputs: gameContainer.currentGame
+                gameInputs: gameContainer.currentGame,
+                numGames: numGames,
+                activeConfig: activeConfig || undefined
             })).unwrap();
         }
 
@@ -484,6 +517,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 hasInvalidLeans={hasInvalidLeans}
                 seriesGames={seriesGames}
                 liveGameData={liveGameData}
+                leagueName={league}
                 onRefresh={handleRefresh}
                 onRunSimulation={handleRunSimulation}
                 onChangeSimType={handleChangeSimType}

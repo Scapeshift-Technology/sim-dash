@@ -1,12 +1,15 @@
 import type { 
-    MarketLinesMLB, 
-    MarketLineDifferenceMLB,
-    MatchupLineups
-  } from "@/types/mlb";
-  import type { MLBGameInputs2, MLBGameSimInputs, MLBGameSimInputsTeam } from "@/types/simInputs";
-  import { runSimulation } from "./simulation";
-  import { SimResultsMLB } from "@@/types/bettingResults";
-  import { americanOddsToProbability, countsToProbability } from "@/simDash/utils/oddsCalculations";
+  MarketLinesMLB, 
+  MarketLineDifferenceMLB,
+  MatchupLineups
+} from "@/types/mlb";
+import type { MLBGameInputs2, MLBGameSimInputs, MLBGameSimInputsTeam } from "@/types/simInputs";
+import { SimResultsMLB } from "@@/types/bettingResults";
+import { MarketType, PeriodTypeCode, SavedConfiguration } from '@@/types/statCaptureConfig';
+import { LeagueName } from '@@/types/league';
+
+import { runSimulation } from "./simulation";
+import { americanOddsToProbability, countsToProbability } from "@/simDash/utils/oddsCalculations";
   
   // ---------- Main function ----------
   
@@ -31,6 +34,28 @@ import type {
       away: initialTeamLean,
       home: initialTeamLean
     }
+
+    const leansConfig: SavedConfiguration = {
+      league: 'MLB' as LeagueName,
+      name: ' optimalLeans',
+      isActive: true,
+      mainMarkets: [
+      { marketType: 'Spread' as MarketType,
+        periodTypeCode: 'M' as PeriodTypeCode,
+        periodNumber: 0,
+        strike: '0' },
+      { marketType: 'Total' as MarketType,
+        periodTypeCode: 'M' as PeriodTypeCode,
+        periodNumber: 0,
+        strike: marketLines.over.line.toString() },
+      { marketType: 'Total' as MarketType,
+        periodTypeCode: 'M' as PeriodTypeCode,
+        periodNumber: 0,
+        strike: marketLines.under.line.toString() }
+      ],
+      propsOU: [],
+      propsYN: []
+    }
     
     // Iteratively find leans that work
     let iterations = 0;
@@ -44,7 +69,7 @@ import type {
       }
   
       // Run the sim
-      const simResults = await runSimulation(gameInputs);
+      const simResults = await runSimulation(gameInputs, 90000, undefined, leansConfig);
   
       // Find where the lines and sim results differ(or are close)
       const diffs = findLineDifferences(simResults, marketLines);

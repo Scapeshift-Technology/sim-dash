@@ -64,9 +64,11 @@ export interface PlayerPropsData {
   varianceOdds: number;
 }
 
+export type PropType = 'FirstToScore' | 'LastToScore';
+
 export interface ScoringOrderPropsData {
   team: string;
-  propType: 'first' | 'last';
+  propType: PropType;
   percent: number;
   marginOfError: number;
   usaFair: number;
@@ -110,7 +112,7 @@ export interface ComparisonPlayerPropsData {
 
 export interface ComparisonScoringOrderPropsData {
   team: string;
-  propType: 'first' | 'last';
+  propType: PropType;
   percent: number;
 }
 
@@ -141,9 +143,13 @@ export interface SidesPeriodCountsMLB {
   [key: string]: OutcomeCounts;
 }
 
-export interface TeamSidesCountsMLB {
-  fullGame: SidesPeriodCountsMLB;
-  firstFive: SidesPeriodCountsMLB;
+// export interface TeamSidesCountsMLB {  // Old version of TeamSidesCountsMLB for reference
+//   fullGame: SidesPeriodCountsMLB;
+//   firstFive: SidesPeriodCountsMLB;
+// }
+
+export type TeamSidesCountsMLB = {
+  [key: string]: SidesPeriodCountsMLB // Really PeriodKey type, but typescript gets mad when I put that
 }
   
 export interface SidesCountsMLB {
@@ -194,8 +200,8 @@ export interface ScoringOrderCountsMLB {
 }
 
 export interface ScoringOrderTeamCountsMLB {
-  first: OutcomeCounts;
-  last: OutcomeCounts;
+  first?: OutcomeCounts;
+  last?: OutcomeCounts;
 }
 
 // ----- Totals -----
@@ -207,8 +213,7 @@ export interface TotalsCountsMLB {
 }
 
 export interface GamePeriodTotalsMLB {
-  fullGame: TotalsLinesMLB,
-  firstFive: TotalsLinesMLB
+  [key: string]: TotalsLinesMLB; // Really PeriodKey type, but typescript gets mad when I put that
 }
 
 export interface TotalsLinesMLB {
