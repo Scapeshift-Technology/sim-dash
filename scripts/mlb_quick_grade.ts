@@ -2,110 +2,19 @@
 
 const fs = require('fs');
 const path = require('path');
-const sql = require('mssql'); // SQL Server driver
-// Type Definitions
 
-export interface Match {
-    Date: Date;
-    Team1: string;
-    Team2?: string;
-    DaySequence?: number; // DaySequence is optional
+// Import chat-bet-parse package
+import { parseChat, ChatBetGradingClient, type ParseResult, type ChatFillResult, type ChatOrderResult } from 'chat-bet-parse';
+
+// Type Definitions for our internal processing
+export interface ProcessedBet {
+    rawInput: string;
+    executionDtm: Date;
+    parseResult?: ParseResult;
+    parseError?: string;
+    price?: number;
+    size?: number;
 }
-
-export interface Period {
-    PeriodTypeCode: string; // CHAR(2)
-    PeriodNumber: number;
-}
-
-export interface Contract_Match_Base {
-    Period: Period;
-    Match: Match;
-}
-
-export interface Contract_Match_Total extends Contract_Match_Base {
-    Line: number; // Must be divisible by 0.5 (runtime validation)
-    IsOver: boolean;
-}
-
-export interface Contract_Match_TeamTotal extends Contract_Match_Total {
-    Team: string;
-}
-
-export type Contract_Match = Contract_Match_Total | Contract_Match_TeamTotal;
-
-export interface Bet {
-    ExecutionDtm: Date;
-    Price: number; // Assuming money is represented as a number
-    Size: number; // Assuming money is represented as a number
-    ContractMatch: Contract_Match;
-}
-
-// Default value for DaySequence can be handled in functions creating Match objects
-// const defaultMatch: Match = { Date: new Date(), Team1: "Team A", DaySequence: 1 };
-
-// --- BEGIN toString UTILITY FUNCTIONS ---
-
-export function periodToString(period: Period): string {
-    return `${period.PeriodTypeCode}${period.PeriodNumber}`;
-}
-
-export function matchToString(match: Match): string {
-    const dateStr = `${match.Date.getMonth() + 1}/${match.Date.getDate()}/${match.Date.getFullYear()}`;
-    let str = `${dateStr} ${match.Team1}`;
-    if (match.Team2) {
-        str += `/${match.Team2}`;
-    }
-    if (match.DaySequence && match.DaySequence > 1) {
-        str += ` #${match.DaySequence}`;
-    }
-    return str;
-}
-
-export function contractMatchToString(contract: Contract_Match): string {
-    const matchStr = matchToString(contract.Match);
-    const overUnder = contract.IsOver ? 'o' : 'u';
-
-    if ('Team' in contract) { // Contract_Match_TeamTotal
-        // Example: "5/12/2025 MIL #2: MIL u4.5"
-        // Period is not shown for TeamTotal in this format based on user example.
-        return `${matchStr}: ${contract.Team} ${overUnder}${contract.Line}`;
-    } else { // Contract_Match_Total
-        // Example: "5/12/2025 MIL/CLE: H1 o5"
-        const periodStr = periodToString(contract.Period);
-        return `${matchStr}: ${periodStr} ${overUnder}${contract.Line}`;
-    }
-}
-
-// --- END toString UTILITY FUNCTIONS ---
-
-// --- BEGIN NEW HELPER FUNCTION for Risk/ToWin ---
-
-export function calculateRiskAndToWin(price: number, betSize: number): { risk: number; toWin: number } | null {
-    let risk: number;
-    let toWin: number;
-
-    if (price >= 100) {
-        risk = betSize;
-        toWin = betSize * (price / 100);
-    } else if (price <= -100) {
-        // For negative odds, 'betSize' is the 'toWin' amount.
-        // Risk = ToWin / (100 / abs(Price)) = ToWin * (abs(Price) / 100)
-        toWin = betSize;
-        risk = betSize * (Math.abs(price) / 100);
-    } else {
-        // Price is not in the specified ranges (e.g. -99 to 99, excluding 0, or 0 itself).
-        // The user's definition of 'betSize' interpretation doesn't apply.
-        console.warn(`[calculateRiskAndToWin WARN] Price ${price} is not >= 100 or <= -100. Cannot determine Risk/ToWin based on standard American odds interpretation of Size.`);
-        return null;
-    }
-    // Round to 4 decimal places to avoid floating point inaccuracies
-    risk = parseFloat(risk.toFixed(4));
-    toWin = parseFloat(toWin.toFixed(4));
-
-    return { risk, toWin };
-}
-
-// --- END NEW HELPER FUNCTION for Risk/ToWin ---
 
 // --- BEGIN SUMMARY HELPER FUNCTIONS ---
 
@@ -197,7 +106,7 @@ function printWeeklySummary(pnlSummariesData: { date: Date, pnl: number }[]) {
 function printTotalSummary(pnlSummariesData: { date: Date, pnl: number }[]) {
     if (pnlSummariesData.length === 0) {
       // Print total as $0 if no PNL data, to match example structure if sections are always shown
-      console.log("\n--- TOTAL: +$    0 ---");
+      console.log("\n--- TOTAL: +$    0.00 ---");
       return;
     }
     const totalPnl = pnlSummariesData.reduce((sum, item) => sum + item.pnl, 0);
@@ -206,215 +115,97 @@ function printTotalSummary(pnlSummariesData: { date: Date, pnl: number }[]) {
 
 // --- END SUMMARY HELPER FUNCTIONS ---
 
-// --- BEGIN NEW PARSING LOGIC ---
+// --- BEGIN NEW HELPER FUNCTION for Risk/ToWin ---
 
-// Function to parse USA style odds
-// Based on user's Python snippet and examples, handles "ev", "even" and numeric odds (including decimals).
-export function parse_usa_price(rawPriceStr: string): number {
-    const cleanedPriceStr = rawPriceStr.trim().toLowerCase();
+export function calculateRiskAndToWin(price: number, betSize: number): { risk: number; toWin: number } | null {
+    let risk: number;
+    let toWin: number;
 
-    if (cleanedPriceStr === 'ev' || cleanedPriceStr === 'even') {
-        return 100;
+    if (price >= 100) {
+        risk = betSize;
+        toWin = betSize * (price / 100);
+    } else if (price <= -100) {
+        // For negative odds, 'betSize' is the 'toWin' amount.
+        // Risk = ToWin / (100 / abs(Price)) = ToWin * (abs(Price) / 100)
+        toWin = betSize;
+        risk = betSize * (Math.abs(price) / 100);
+    } else {
+        // Price is not in the specified ranges (e.g. -99 to 99, excluding 0, or 0 itself).
+        // The user's definition of 'betSize' interpretation doesn't apply.
+        console.warn(`[calculateRiskAndToWin WARN] Price ${price} is not >= 100 or <= -100. Cannot determine Risk/ToWin based on standard American odds interpretation of Size.`);
+        return null;
     }
+    // Round to 4 decimal places to avoid floating point inaccuracies
+    risk = parseFloat(risk.toFixed(4));
+    toWin = parseFloat(toWin.toFixed(4));
 
-    // Matches standard odds like +150, -200, or decimal odds like -115.5
-    // User regex was: /(?P<usa_price>[+-]?\\d{3,}|ev(?:en)?(?: |$))/
-    // This version is more aligned with the example Price: -115.5
-    const pricePattern = /^[+-]?\d+(\.\d+)?$/;
-    if (pricePattern.test(cleanedPriceStr)) {
-        const price = parseFloat(cleanedPriceStr);
-        if (isNaN(price)) {
-            throw new Error(`Price string "${rawPriceStr}" resulted in NaN after parseFloat.`);
-        }
-        return price;
-    }
-    throw new Error(`Invalid USA price format: "${rawPriceStr}"`);
+    return { risk, toWin };
 }
 
-const periodStringMap: { [key: string]: Period } = {
-    "1st inning": { PeriodTypeCode: 'I', PeriodNumber: 1 },
-    "f5": { PeriodTypeCode: 'H', PeriodNumber: 1 },
-    "fg": { PeriodTypeCode: 'M', PeriodNumber: 0 }
-};
-const defaultPeriodDetails: Period = { PeriodTypeCode: 'M', PeriodNumber: 0 };
+// --- END NEW HELPER FUNCTION for Risk/ToWin ---
 
-// Regex for OU_PATT based on user: /(?P<over_or_under>[ou])(?P<line>\d+(?:[.]5)?)( *runs)?/
-// JS version, matching at the end of the relevant string segment.
-// Assumes 'o' or 'u' must be lowercase as per examples.
-const ouPatternRegex = /(?<over_or_under>[ou])(?<line>\d+(?:\.5)?)(?: *runs)?$/;
+// --- BEGIN CONCURRENCY LIMITER ---
 
-export function parseBetDetails(dateOnlyStr: string, timeOnlyStr: string, rawDetailsYg: string): Bet | null {
+async function processWithConcurrencyLimit<T, R>(
+    items: T[],
+    processor: (item: T) => Promise<R>,
+    maxConcurrency: number = 10
+): Promise<R[]> {
+    const results: R[] = [];
+    console.log(`Processing ${items.length} bets with max concurrency of ${maxConcurrency}, dtm = ${new Date().toISOString()}`);
+    // Process items in batches
+    for (let i = 0; i < items.length; i += maxConcurrency) {
+        const batch = items.slice(i, i + maxConcurrency);
+        const batchResults = await Promise.all(batch.map(processor));
+        results.push(...batchResults);
+        console.log(`Processed ${i + maxConcurrency} of ${items.length} bets, dtm = ${new Date().toISOString()}`);
+    }
+    
+    return results;
+}
+
+// --- END CONCURRENCY LIMITER ---
+
+// --- BEGIN NEW PARSING LOGIC WITH CHAT-BET-PARSE ---
+
+export function parseBetDetailsWithChatBetParse(dateOnlyStr: string, timeOnlyStr: string, rawDetailsYg: string): ProcessedBet | null {
     try {
-        // Create date in local timezone then adjust to UTC
+        // Create date in local timezone
         const localDate = new Date(`${dateOnlyStr} ${timeOnlyStr}`);
         if (isNaN(localDate.getTime())) {
             console.warn(`[DetailParse WARN] Invalid date/time for ExecutionDtm: ${dateOnlyStr} ${timeOnlyStr} from line part: ${rawDetailsYg}`);
             return null;
         }
-        // Keep ExecutionDtm as is (local timezone interpretation)
         const executionDtm = localDate;
 
-        // For Match.Date, we only care about the date portion, not the time
-        const matchDate = new Date(dateOnlyStr);
-        if (isNaN(matchDate.getTime())) {
-            console.warn(`[DetailParse WARN] Invalid date for Match.Date: ${dateOnlyStr} from line part: ${rawDetailsYg}`);
-            return null;
-        }
+        const fullRawInput = `${dateOnlyStr}, ${timeOnlyStr}, ${rawDetailsYg}`;
 
-        if (!rawDetailsYg.toUpperCase().startsWith("YG")) {
-            // This should be caught by validateLine logic, but as a safeguard.
-            console.warn(`[DetailParse WARN] Details string does not start with YG (should be pre-validated): ${rawDetailsYg}`);
-            return null;
-        }
-        let details = rawDetailsYg.substring(2).trimStart(); // Remove "YG" and leading spaces
-
-        const atSplit = details.split(/ @ /);
-        if (atSplit.length !== 2) {
-            console.warn(`[DetailParse WARN] Details string missing ' @ ' separator or has too many: "${details}"`);
-            return null;
-        }
-        let teamPeriodLineInfo = atSplit[0].trim();
-        const priceAndSizeInfo = atSplit[1].trim();
-
-        const eqSplit = priceAndSizeInfo.split(/ = /);
-        if (eqSplit.length !== 2) {
-            console.warn(`[DetailParse WARN] Price/Size string missing ' = ' separator or has too many: "${priceAndSizeInfo}"`);
-            return null;
-        }
-        const priceStr = eqSplit[0].trim();
-        const sizeStr = eqSplit[1].trim();
-
-        const betPrice = parse_usa_price(priceStr); // Can throw error
-
-        const rawSize = parseFloat(sizeStr);
-        if (isNaN(rawSize)) {
-            console.warn(`[DetailParse WARN] Invalid size (not a number): ${sizeStr}`);
-            return null;
-        }
-        const betSize = rawSize * 1000;
-
-
-        const ouMatch = teamPeriodLineInfo.match(ouPatternRegex);
-        if (!ouMatch || !ouMatch.groups) {
-            console.warn(`[DetailParse WARN] Details string does not match Over/Under pattern: "${teamPeriodLineInfo}"`);
-            return null;
-        }
-        const { over_or_under, line: lineStr } = ouMatch.groups;
-        const isOver = over_or_under === 'o'; // Assumes 'o' or 'u' (lowercase)
-        const parsedLineVal = parseFloat(lineStr);
-
-        if (isNaN(parsedLineVal) || parsedLineVal < 0 || parsedLineVal * 10 % 5 !== 0) { // check for divisibility by 0.5
-            console.warn(`[DetailParse WARN] Invalid line value "${lineStr}" (not a non-negative number divisible by 0.5). Input: ${rawDetailsYg}`);
-            return null;
-        }
-
-        // ---- Start of refactored section for team, period, TT, game number ----
-        let baseTeamPeriodString = teamPeriodLineInfo.substring(0, ouMatch.index).trim();
-
-        let currentPeriod: Period = defaultPeriodDetails;
-        let daySequence: number | undefined = undefined;
-        let team1: string;
-        let team2: string | undefined;
-        let isTeamTotal = false;
-
-        const gameNumberPattern = /(?:\s+(?:GM?|#)([12]))$/i; // Matches " G1", " GM2", " #1" at the end of a segment
-
-        const ttIndex = baseTeamPeriodString.toUpperCase().indexOf(" TT");
-        
-        // Check if " TT" is found and is a standalone marker (followed by space or end of string)
-        if (ttIndex !== -1 && (baseTeamPeriodString.length === ttIndex + 3 || baseTeamPeriodString.charAt(ttIndex + 3) === ' ')) {
-            isTeamTotal = true;
-            let prefixBeforeTT = baseTeamPeriodString.substring(0, ttIndex).trim(); // e.g., "MIA F5", "SEA G2"
-            let teamProcessingString = prefixBeforeTT;
-
-            // 1. Extract Period from the string before TT
-            for (const key in periodStringMap) {
-                if (teamProcessingString.toLowerCase().endsWith(key)) {
-                    currentPeriod = periodStringMap[key];
-                    teamProcessingString = teamProcessingString.substring(0, teamProcessingString.toLowerCase().lastIndexOf(key)).trim();
-                    break;
-                }
-            }
-
-            // 2. Extract Game Number from the remaining string
-            const gameMatch = teamProcessingString.match(gameNumberPattern);
-            if (gameMatch && gameMatch[1]) {
-                daySequence = parseInt(gameMatch[1], 10);
-                teamProcessingString = teamProcessingString.substring(0, gameMatch.index).trim();
-            }
+        try {
+            // Use chat-bet-parse to parse the contract details
+            const parseResult = parseChat(rawDetailsYg);
             
-            // 3. The rest is the team for TT
-            const ttTeams = teamProcessingString.split("/").map(t => t.trim()).filter(t => t.length > 0);
-            if (ttTeams.length === 1) {
-                team1 = ttTeams[0];
-                // team2 remains undefined for TT
-            } else {
-                console.warn(`[DetailParse WARN] Invalid team specification for TT: "${teamProcessingString}" (expected one team). Original: "${baseTeamPeriodString}". Input: ${rawDetailsYg}`);
-                return null;
-            }
-        } else { // Not a Team Total
-            isTeamTotal = false; // Explicitly set
-            let nonTTProcessingStr = baseTeamPeriodString; // e.g., "Padres/Pirates 1st inning", "COL gm2 F5"
+            // Extract price and size from the parse result
+            const price = parseResult.bet.Price;
+            const size = parseResult.bet.Size;
 
-            // 1. Extract Period
-            for (const key in periodStringMap) {
-                if (nonTTProcessingStr.toLowerCase().endsWith(key)) {
-                    currentPeriod = periodStringMap[key];
-                    nonTTProcessingStr = nonTTProcessingStr.substring(0, nonTTProcessingStr.toLowerCase().lastIndexOf(key)).trim();
-                    break;
-                }
-            }
+            return {
+                rawInput: fullRawInput,
+                executionDtm: executionDtm,
+                parseResult: parseResult,
+                price: price,
+                size: size
+            };
 
-            // 2. Extract Game Number
-            const gameMatch = nonTTProcessingStr.match(gameNumberPattern);
-            if (gameMatch && gameMatch[1]) {
-                daySequence = parseInt(gameMatch[1], 10);
-                nonTTProcessingStr = nonTTProcessingStr.substring(0, gameMatch.index).trim();
-            }
-
-            // 3. The rest is team(s)
-            const gameTeams = nonTTProcessingStr.split("/").map(t => t.trim()).filter(t => t.length > 0);
-            if (gameTeams.length === 0) {
-                console.warn(`[DetailParse WARN] No teams found in: "${nonTTProcessingStr}". Original: "${baseTeamPeriodString}". Input: ${rawDetailsYg}`);
-                return null;
-            }
-            team1 = gameTeams[0];
-            team2 = gameTeams.length > 1 ? gameTeams[1] : undefined;
+        } catch (error) {
+            // If parsing fails, capture the error
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            
+            return {
+                rawInput: fullRawInput,
+                executionDtm: executionDtm,
+                parseError: errorMessage
+            };
         }
-        // ---- End of refactored section ----
-        
-        const matchInfo: Match = {
-            Date: matchDate,
-            Team1: team1,
-            Team2: team2,
-            DaySequence: daySequence // Use extracted or undefined DaySequence
-        };
-
-        let contractMatch: Contract_Match;
-        if (isTeamTotal) {
-            contractMatch = {
-                Period: currentPeriod,
-                Match: matchInfo,
-                Line: parsedLineVal,
-                IsOver: isOver,
-                Team: team1
-            } as Contract_Match_TeamTotal;
-        } else {
-            contractMatch = {
-                Period: currentPeriod,
-                Match: matchInfo,
-                Line: parsedLineVal,
-                IsOver: isOver
-            } as Contract_Match_Total;
-        }
-
-        const bet: Bet = {
-            ExecutionDtm: executionDtm,
-            Price: betPrice,
-            Size: betSize,
-            ContractMatch: contractMatch
-        };
-        return bet;
 
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -461,7 +252,7 @@ export function validateLine(line: string): { date: string; time: string; detail
 
     const dateRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
     const timeRegex = /^\d{1,2}:\d{2} [AP]M$/;
-    const detailsRegex = /^YG/;
+    const detailsRegex = /^(YG|IW)/; // Accept both YG (fills) and IW (orders)
 
     if (dateRegex.test(dateStr) && timeRegex.test(timeStr) && detailsRegex.test(detailsStr)) {
         return { date: dateStr, time: timeStr, details: detailsStr };
@@ -469,8 +260,59 @@ export function validateLine(line: string): { date: string; time: string; detail
     return null;
 }
 
-// Modified to be async and accept sql.ConnectionPool
-export async function processFile(filePath: string, pool: import('mssql').ConnectionPool) {
+// Helper function to create a compact JSON representation of the parsed contract
+function createContractJson(parseResult: ParseResult): string {
+    const contract = parseResult.contract;
+    
+    // Create a simplified representation
+    const contractData: any = {
+        type: parseResult.contractType,
+        sport: contract.Sport,
+        league: contract.League,
+        teams: {
+            team1: contract.Match.Team1,
+            team2: contract.Match.Team2
+        }
+    };
+
+    // Add period only for match contracts (not series)
+    if ('Period' in contract) {
+        contractData.period = {
+            type: contract.Period.PeriodTypeCode,
+            number: contract.Period.PeriodNumber
+        };
+    }
+
+    // Add DaySequence if present
+    if (contract.Match.DaySequence) {
+        contractData.teams.daySeq = contract.Match.DaySequence;
+    }
+
+    // Add type-specific properties
+    if ('Line' in contract) {
+        contractData.line = contract.Line;
+    }
+    if ('IsOver' in contract) {
+        contractData.isOver = contract.IsOver;
+    }
+    if ('Contestant' in contract) {
+        contractData.contestant = contract.Contestant;
+    }
+    if ('SeriesLength' in contract) {
+        contractData.seriesLength = contract.SeriesLength;
+    }
+    if ('Prop' in contract) {
+        contractData.prop = contract.Prop;
+    }
+    if ('IsYes' in contract) {
+        contractData.isYes = contract.IsYes;
+    }
+
+    return JSON.stringify(contractData);
+}
+
+// Modified to include grading with ChatBetGradingClient
+export async function processFile(filePath: string, gradingClient?: ChatBetGradingClient) {
     if (!fs.existsSync(filePath)) {
         console.error(`Error: File not found at ${filePath}`);
         return;
@@ -479,7 +321,7 @@ export async function processFile(filePath: string, pool: import('mssql').Connec
     const fileContent = fs.readFileSync(filePath, 'utf-8');
     const lines = fileContent.split('\n');
 
-    const parsedBets: Bet[] = []; // Store successfully parsed Bet objects
+    const processedBets: ProcessedBet[] = []; // Store successfully parsed Bet objects
     const linesToWarnBasicFormat: string[] = []; // For lines failing basic CSV structure
 
     // Define regex patterns for conditions
@@ -497,12 +339,12 @@ export async function processFile(filePath: string, pool: import('mssql').Connec
         const validatedParts = validateLine(trimmedLine); // validateLine returns { date, time, details } | null
         
         if (validatedParts) {
-            // Line has basic valid structure, now try to parse into Bet object
-            const bet = parseBetDetails(validatedParts.date, validatedParts.time, validatedParts.details);
+            // Line has basic valid structure, now try to parse into ProcessedBet object
+            const bet = parseBetDetailsWithChatBetParse(validatedParts.date, validatedParts.time, validatedParts.details);
             if (bet) {
-                parsedBets.push(bet);
+                processedBets.push(bet);
             } else {
-                // parseBetDetails already logged a warning with specifics via console.warn
+                // parseBetDetailsWithChatBetParse already logged a warning with specifics via console.warn
                 // Log the problematic line for context if detailed parsing fails
                 console.log(`INFO: Line failed detailed parsing (see warnings above): '${trimmedLine}'`);
             }
@@ -537,7 +379,7 @@ export async function processFile(filePath: string, pool: import('mssql').Connec
         console.log(`WARNING: invalid line (basic format): '${line}'`);
     });
 
-    if (linesToWarnBasicFormat.length > 0 && parsedBets.length > 0) {
+    if (linesToWarnBasicFormat.length > 0 && processedBets.length > 0) {
         console.log('\n'); // Separator
     }
 
@@ -576,129 +418,81 @@ export async function processFile(filePath: string, pool: import('mssql').Connec
         console.log(finalStringToPrint);
     };
 
-    if (parsedBets.length > 0) {
-        const headers = ['Contract', 'Price', 'Size', 'Grade', 'PNL'];
+    // Extract just the filename from the full path for display
+    const filename = path.basename(filePath);
+
+    if (processedBets.length > 0) {
+        const headers = ['Input', 'Contract', 'Price', 'Size', 'Grade', 'PNL'];
         
-        const rowsData = await Promise.all(parsedBets.map(async (bet) => {
-            const contractStr = contractMatchToString(bet.ContractMatch);
-            let grade = 'N/A'; // Default grade
-            const matchDate = bet.ContractMatch.Match.Date; // Common for both types
-            const formattedMatchDate = `${matchDate.getFullYear()}-${String(matchDate.getMonth() + 1).padStart(2, '0')}-${String(matchDate.getDate()).padStart(2, '0')}`;
-
-            try {
-                if ('Team' in bet.ContractMatch) { // It's a Contract_Match_TeamTotal
-                    const contractMatch = bet.ContractMatch as Contract_Match_TeamTotal;
-                    let daySequenceSqlArgument = 'DEFAULT';
-                    const request = pool.request()
-                        .input('MatchScheduledDate', sql.Date, formattedMatchDate)
-                        .input('SelectedTeam', sql.Char(50), contractMatch.Team)
-                        .input('PeriodTypeCode', sql.Char(2), contractMatch.Period.PeriodTypeCode)
-                        .input('PeriodNumber', sql.TinyInt, contractMatch.Period.PeriodNumber)
-                        .input('Line', sql.Decimal(5, 2), contractMatch.Line)
-                        .input('IsOver', sql.Bit, contractMatch.IsOver ? 1 : 0);
-
-                    if (typeof contractMatch.Match.DaySequence === 'number') {
-                        request.input('DaySequenceParam', sql.TinyInt, contractMatch.Match.DaySequence);
-                        daySequenceSqlArgument = '@DaySequenceParam';
-                    }
-
-                    const query = `
-                        SELECT dbo.UserAPICall_Contract_TeamTotal_Grade_fn(
-                            @MatchScheduledDate,
-                            @SelectedTeam,
-                            @PeriodTypeCode,
-                            @PeriodNumber,
-                            @Line,
-                            @IsOver,
-                            ${daySequenceSqlArgument}
-                        ) AS GradeValue;`;
-
-                    const result = await request.query(query);
-                    if (result.recordset && result.recordset.length > 0 && result.recordset[0] && result.recordset[0].GradeValue !== null && result.recordset[0].GradeValue !== undefined) {
-                        grade = String(result.recordset[0].GradeValue).trim();
-                    } else {
-                        console.warn(`[Grade WARN] No grade returned or unexpected SQL result for TeamTotal: ${contractMatch.Team} on ${formattedMatchDate}, Line: ${contractMatch.Line}, Over: ${contractMatch.IsOver}`);
-                    }
-                } else { // It's a Contract_Match_Total
-                    const contractMatch = bet.ContractMatch as Contract_Match_Total;
-                    let daySequenceSqlArgument = 'DEFAULT';
-                    const request = pool.request()
-                        .input('MatchScheduledDate', sql.Date, formattedMatchDate)
-                        .input('Team1', sql.Char(50), contractMatch.Match.Team1)
-                        .input('Team2', sql.Char(50), contractMatch.Match.Team2 ?? null)
-                        .input('PeriodTypeCode', sql.Char(2), contractMatch.Period.PeriodTypeCode)
-                        .input('PeriodNumber', sql.TinyInt, contractMatch.Period.PeriodNumber)
-                        .input('Line', sql.Decimal(5, 2), contractMatch.Line)
-                        .input('IsOver', sql.Bit, contractMatch.IsOver ? 1 : 0);
-
-                    if (typeof contractMatch.Match.DaySequence === 'number') {
-                        request.input('DaySequenceParam', sql.TinyInt, contractMatch.Match.DaySequence);
-                        daySequenceSqlArgument = '@DaySequenceParam';
-                    }
-
-                    const query = `
-                        SELECT dbo.UserAPICall_Contract_MatchTotal_Grade_fn(
-                            @MatchScheduledDate,
-                            @Team1,
-                            @Team2,
-                            @PeriodTypeCode,
-                            @PeriodNumber,
-                            @Line,
-                            @IsOver,
-                            ${daySequenceSqlArgument}
-                        ) AS GradeValue;`;
-                        
-                    const result = await request.query(query);
-                    if (result.recordset && result.recordset.length > 0 && result.recordset[0] && result.recordset[0].GradeValue !== null && result.recordset[0].GradeValue !== undefined) {
-                        grade = String(result.recordset[0].GradeValue).trim();
-                    } else {
-                        console.warn(`[Grade WARN] No grade returned or unexpected SQL result for Total: ${contractMatch.Match.Team1}/${contractMatch.Match.Team2 || 'N/A'} on ${formattedMatchDate}, Line: ${contractMatch.Line}, Over: ${contractMatch.IsOver}`);
-                    }
-                }
-            } catch (err) {
-                const message = err instanceof Error ? err.message : String(err);
-                // Construct a more informative error message using the contract string
-                console.error(`[Grade ERROR] Failed to fetch grade for ${contractMatchToString(bet.ContractMatch)}: ${message}`);
-                grade = 'ERR';
-            }
-
+        const rowsData = await processWithConcurrencyLimit(processedBets, async (bet) => {
+            let contractDisplay: string;
+            let price: string | number = '';
+            let size: string | number = '';
+            let grade = '?'; // Default grade
             let pnlDisplay: string | number = '';
-            const riskAndToWin = calculateRiskAndToWin(bet.Price, bet.Size);
 
-            if (riskAndToWin) {
-                const { risk, toWin } = riskAndToWin;
-                if (grade === 'L') {
-                    pnlDisplay = -risk;
-                } else if (grade === 'W') {
-                    pnlDisplay = toWin;
-                } else if (grade === 'P' || grade === 'C' || grade === 'T') {
-                    pnlDisplay = 0;
+            // Determine contract display
+            if (bet.parseResult) {
+                contractDisplay = createContractJson(bet.parseResult);
+                price = bet.price ?? '';
+                if (bet.size !== undefined) {
+                    size = bet.size.toFixed(2);
                 }
-            }
-            // Format PNL if it's a number
-            if (typeof pnlDisplay === 'number') {
-                pnlDisplay = pnlDisplay.toFixed(2);
-            }
 
-            const formattedSize = bet.Size.toFixed(2); // Format Size to two decimal places
+                // Try to grade the bet if we have a grading client
+                if (gradingClient) {
+                    try {
+                        // Extract match date from execution date (just the date part)
+                        const matchDate = new Date(bet.executionDtm);
+                        matchDate.setHours(0, 0, 0, 0); // Set to start of day
+                        
+                        grade = await gradingClient.grade(bet.parseResult, {
+                            matchScheduledDate: matchDate
+                        });
+                    } catch (error) {
+                        const errorMessage = error instanceof Error ? error.message : String(error);
+                        grade = `ERR: ${errorMessage}`;
+                    }
+                }
+
+                // Calculate PNL if we have a valid grade and bet details
+                if (bet.price !== undefined && bet.size !== undefined) {
+                    const riskAndToWin = calculateRiskAndToWin(bet.price, bet.size);
+                    if (riskAndToWin) {
+                        const { risk, toWin } = riskAndToWin;
+                        if (grade === 'L') {
+                            pnlDisplay = (-risk).toFixed(2);
+                        } else if (grade === 'W') {
+                            pnlDisplay = toWin.toFixed(2);
+                        } else if (grade === 'P' || grade === 'C' || grade === 'T') {
+                            pnlDisplay = '0.00';
+                        }
+                        // For grades like '?' or errors, leave PNL empty
+                    }
+                }
+            } else {
+                contractDisplay = `PARSE_ERROR: ${bet.parseError || 'Unknown error'}`;
+            }
 
             return [
-                contractMatchToString(bet.ContractMatch),
-                bet.Price,
-                formattedSize, // Use the formatted Size string
+                bet.rawInput,
+                contractDisplay,
+                price,
+                size,
                 grade,
                 pnlDisplay
             ];
-        }));
-        printFormattedTable("--- Processed Bets ---", headers, rowsData);
+        });
+
+        printFormattedTable(`--- Processed Bets for ${filename} ---`, headers, rowsData);
 
         // --- BEGIN SUMMARY CALCULATIONS AND PRINTING ---
         const pnlSummariesData: { date: Date, pnl: number }[] = [];
-        if (rowsData.length === parsedBets.length) { // Ensure rowsData is populated and matches parsedBets
-            for (let i = 0; i < parsedBets.length; i++) {
-                const bet = parsedBets[i];
+        if (rowsData.length === processedBets.length) { // Ensure rowsData is populated and matches processedBets
+            for (let i = 0; i < processedBets.length; i++) {
+                const bet = processedBets[i];
                 const row = rowsData[i] as (string | number | Date | boolean | undefined)[]; // Type assertion
-                const pnlDisplay = row[4]; // pnlDisplay is the 5th element (string or number)
+                const pnlDisplay = row[5]; // pnlDisplay is the 6th element (string or number)
 
                 let pnlValue: number | undefined = undefined;
 
@@ -713,7 +507,7 @@ export async function processFile(filePath: string, pool: import('mssql').Connec
 
                 if (pnlValue !== undefined) {
                     pnlSummariesData.push({
-                        date: new Date(bet.ContractMatch.Match.Date.valueOf()), 
+                        date: new Date(bet.executionDtm.valueOf()), 
                         pnl: pnlValue
                     });
                 }
@@ -726,64 +520,63 @@ export async function processFile(filePath: string, pool: import('mssql').Connec
         // --- END SUMMARY CALCULATIONS AND PRINTING ---
 
     } else {
-        console.log("No processable bets found in the file after detailed parsing.");
+        console.log(`No processable bets found in ${filename} after detailed parsing.`);
     }
 }
 
-// New async function to manage database operations and subsequent file processing
+// New function to manage file processing with optional grading
 async function runOperations() {
-    const dbConnectionString = process.env.DB_CONNECTION_STRING;
-    if (!dbConnectionString) {
-        console.error('Error: DB_CONNECTION_STRING environment variable is not set.');
+    const args = process.argv.slice(2);
+    if (args.length > 0 && (args[0] === '-h' || args[0] === '--help')) {
+        console.log("Usage: ts-node scripts/mlb_quick_grade.ts <file_path1> [file_path2] [...]");
+        console.log("Processes CSV-like files, parsing lines into Bet objects using chat-bet-parse.");
+        console.log("Multiple files can be specified and each will generate a separate report.");
+        console.log("Set DB_CONNECTION_STRING environment variable to enable grading.");
+        process.exit(0);
+    }
+
+    if (args.length === 0) {
+        console.error("Usage: ./mlb_quick_grade.js <file_path1> [file_path2] [...] or node mlb_quick_grade.js <file_path1> [file_path2] [...]");
+        console.error("At least one file path must be provided.");
         process.exit(1);
     }
 
-    let pool: import('mssql').ConnectionPool | undefined;
+    let gradingClient: ChatBetGradingClient | undefined;
+
     try {
-        pool = await sql.connect(dbConnectionString);
-        console.log("connection succeeded");
-
-        if (!pool) { // Guard for TypeScript CFA
-            throw new Error("Database pool not initialized after connect call.");
+        // Initialize grading client if connection string is available
+        const dbConnectionString = process.env.DB_CONNECTION_STRING;
+        if (dbConnectionString) {
+            gradingClient = new ChatBetGradingClient(dbConnectionString);
+            console.log("Grading client initialized with database connection.");
+        } else {
+            console.log("No DB_CONNECTION_STRING found. Grading will be disabled (grades will show as '?').");
         }
 
-        const args = process.argv.slice(2);
-        if (args.length > 0 && (args[0] === '-h' || args[0] === '--help')) {
-            console.log("Usage: ts-node scripts/mlb_quick_grade.ts <file_path>");
-            console.log("Processes a CSV-like file, parsing lines into Bet objects.");
-            console.log("Connects to DB specified by DB_CONNECTION_STRING and runs a test query before file processing.");
-            process.exit(0);
+        // Process each file separately
+        for (let i = 0; i < args.length; i++) {
+            const filePath = args[i];
+            
+            // Add separator between files (except for the first file)
+            if (i > 0) {
+                console.log('\n' + '='.repeat(80) + '\n');
+            }
+            
+            await processFile(filePath, gradingClient);
         }
-
-        if (args.length !== 1) {
-            console.error("Usage: ./mlb_quick_grade.js <file_path> or node mlb_quick_grade.js <file_path>");
-            process.exit(1);
-        }
-        const filePath = args[0];
-
-        if (!pool) { // Guard for TypeScript CFA before passing to processFile
-            throw new Error("Database pool is not available for file processing due to an unexpected state.");
-        }
-        await processFile(filePath, pool);
-
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         console.error('Operation failed:', message);
-        if (err && typeof err === 'object' && 'originalError' in err && err.originalError && typeof err.originalError === 'object' && 'message' in err.originalError) {
-             console.error('Original error:', err.originalError.message);
-        }
-        // No explicit process.exit(1) here; error will propagate to main catch
-        // or if not caught, finally will run and then process will exit with error status.
-        // Forcing re-throw to ensure main catch handler is invoked for consistent exit code management.
         throw err;
     } finally {
-        if (pool && pool.connected) { // Check if pool exists and is connected
+        // Close grading client if it was initialized
+        if (gradingClient) {
             try {
-                await pool.close();
-                console.log("Database connection closed.");
+                await gradingClient.close();
+                console.log("Grading client connection closed.");
             } catch (closeErr: unknown) {
                 const message = closeErr instanceof Error ? closeErr.message : String(closeErr);
-                console.error('Error closing database connection:', message);
+                console.error('Error closing grading client connection:', message);
             }
         }
     }
@@ -791,17 +584,11 @@ async function runOperations() {
 
 if (require.main === module) {
     runOperations().catch(err => {
-        // Catch any unhandled errors from the async runOperations function
-        // Error message is already logged by runOperations' catch block
-        // console.error("Unhandled error during script execution:", err.message || String(err));
         process.exit(1);
     });
 }
 
 // For CommonJS compatibility
 module.exports = {
-    processFile, validateLine, parseBetDetails, parse_usa_price,
-    periodToString, matchToString, contractMatchToString,
-    calculateRiskAndToWin
+    processFile, validateLine, parseBetDetailsWithChatBetParse, calculateRiskAndToWin
 };
-// This export ensures compatibility with both ES modules and CommonJS 

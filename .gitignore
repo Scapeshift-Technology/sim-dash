@@ -61,7 +61,7 @@ test-results/
 .yarn-integrity
 
 # dotenv environment variables file
-.env*
+*.env*
 !.env.example
 
 # macOS specific
