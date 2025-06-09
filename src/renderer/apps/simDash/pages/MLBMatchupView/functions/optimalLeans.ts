@@ -69,7 +69,7 @@ import { americanOddsToProbability, countsToProbability } from "@/simDash/utils/
       }
   
       // Run the sim
-      const simResults = await runSimulation(gameInputs, 90000, undefined, leansConfig);
+      const simResults = await runSimulation(gameInputs, 50000, undefined, leansConfig);
   
       // Find where the lines and sim results differ(or are close)
       const diffs = findLineDifferences(simResults, marketLines);
