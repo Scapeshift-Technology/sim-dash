@@ -1,14 +1,14 @@
 import React, { useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { 
-    Typography, 
-    Box, 
-    Checkbox, 
-    FormControlLabel, 
+    Typography,
+    Box,
+    Checkbox,
+    FormControlLabel,
     Collapse,
     CircularProgress,
     Alert,
-    Snackbar
+    Button
 } from "@mui/material";
 import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from "@mui/icons-material";
 
@@ -32,7 +32,7 @@ export interface PeriodTreeSelectorProps {
     selectedPeriods: string[];
     onPeriodChange: (period: TreePeriodNode) => void;
     getPeriodId: (period: TreePeriodNode) => string;
-}
+};
 
 // ---------- Individual Tree Node Component ----------
 
@@ -44,7 +44,7 @@ interface TreeNodeProps {
     getPeriodId: (period: TreePeriodNode) => string;
     expandedNodes: { [key: string]: boolean };
     depth: number;
-}
+};
 
 const TreeNode: React.FC<TreeNodeProps> = ({
     node,
@@ -169,32 +169,29 @@ const PeriodTreeSelector: React.FC<PeriodTreeSelectorProps> = ({
 }) => {
     const dispatch = useDispatch<AppDispatch>();
 
+    // ---------- State ----------
+
     // Redux state
     const periodTree = useSelector((state: RootState) => selectPeriodTree(state, leagueName));
     const loading = useSelector((state: RootState) => selectPeriodTreeLoading(state, leagueName));
     const error = useSelector((state: RootState) => selectPeriodTreeError(state, leagueName));
     const expandedNodes = useSelector((state: RootState) => selectExpandedNodes(state, leagueName));
 
-    // Error snackbar state
-    const [showError, setShowError] = React.useState(false);
-
-    // Load tree root on mount
-    useEffect(() => {
-        if (periodTree.length === 0 && !loading) {
+    // ---------- Effects ----------
+    
+    useEffect(() => { // Load tree root on mount
+        if (periodTree.length === 0 && !loading && !error) {
             dispatch(getLeaguePeriodTree({ league: leagueName }));
         }
     }, [dispatch, leagueName, periodTree.length, loading]);
 
-    // Show error snackbar when error occurs
-    useEffect(() => {
-        if (error) {
-            setShowError(true);
-        }
-    }, [error]);
+    // ---------- Event handlers ----------
 
-    const handleCloseError = () => {
-        setShowError(false);
-    };
+    const handleRetry = useCallback(() => {
+        dispatch(getLeaguePeriodTree({ league: leagueName }));
+    }, [dispatch, leagueName]);
+
+    // ---------- Render ----------
 
     if (loading && periodTree.length === 0) {
         return (
@@ -206,7 +203,20 @@ const PeriodTreeSelector: React.FC<PeriodTreeSelectorProps> = ({
 
     if (error && periodTree.length === 0) {
         return (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <Alert 
+                severity="error" 
+                sx={{ mb: 2 }}
+                action={
+                    <Button 
+                        color="inherit" 
+                        size="small" 
+                        onClick={handleRetry}
+                        disabled={loading}
+                    >
+                        Retry
+                    </Button>
+                }
+            >
                 Failed to load periods: {error}
             </Alert>
         );
@@ -233,22 +243,6 @@ const PeriodTreeSelector: React.FC<PeriodTreeSelectorProps> = ({
                     ))}
                 </Box>
             </Box>
-
-            {/* Error Snackbar */}
-            <Snackbar
-                open={showError}
-                autoHideDuration={6000}
-                onClose={handleCloseError}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-            >
-                <Alert 
-                    onClose={handleCloseError} 
-                    severity="error" 
-                    sx={{ width: '100%' }}
-                >
-                    {error || 'An error occurred while loading tree data'}
-                </Alert>
-            </Snackbar>
         </>
     );
 };
