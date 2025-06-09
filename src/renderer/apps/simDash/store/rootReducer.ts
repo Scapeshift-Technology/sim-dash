@@ -1,5 +1,4 @@
 import { combineReducers } from '@reduxjs/toolkit';
-// import authReducer from '../../../store/slices/authSlice';
 import profilesReducer from './slices/profilesSlice';
 import leagueReducer from './slices/leagueSlice';
 import tabReducer from './slices/tabSlice';

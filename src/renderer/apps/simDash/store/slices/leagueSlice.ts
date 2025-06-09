@@ -23,7 +23,6 @@ export const fetchLeagues = createAsyncThunk<
     try {
         console.log('Dispatching fetchLeagues...');
         const leaguesData = await window.electronAPI.fetchLeagues();
-        console.log('Leagues received in thunk:', leaguesData);
         return leaguesData as League[];
     } catch (error: any) {
         console.error('Error fetching leagues in thunk:', error);

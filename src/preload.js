@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     testConnection: (config) => ipcRenderer.invoke('test-connection', config),
     login: (config) => ipcRenderer.invoke('login', config),
     logout: () => ipcRenderer.invoke('logout'),
+    attemptReconnect: (args) => ipcRenderer.invoke('reconnect-to-db', args),
 
     // SQL execution
     executeSqlQuery: (query) => ipcRenderer.invoke('execute-sql-query', query),

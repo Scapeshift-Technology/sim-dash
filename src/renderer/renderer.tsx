@@ -1,8 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
 import { ThemeProvider, CssBaseline } from '@mui/material';
-import { store } from './store/store'; // Import the Redux store
+import { store, persistor } from './store/store'; // Import the Redux store and persistor
 import { theme } from './theme/theme';
 import App from './App';
 import './styles.css'; // Keep global styles if needed, or rely solely on MUI/Emotion
@@ -21,10 +22,12 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <Provider store={store}>       {/* Redux Provider */}
-      <ThemeProvider theme={theme}> {/* MUI Theme Provider */}
-        <CssBaseline />            {/* MUI basic CSS reset */}
-        <App />
-      </ThemeProvider>
+      <PersistGate loading={null} persistor={persistor}> {/* Redux Persist Gate */}
+        <ThemeProvider theme={theme}> {/* MUI Theme Provider */}
+          <CssBaseline />            {/* MUI basic CSS reset */}
+          <App />
+        </ThemeProvider>
+      </PersistGate>
     </Provider>
   </React.StrictMode>
 ); 

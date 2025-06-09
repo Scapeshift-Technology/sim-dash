@@ -57,6 +57,9 @@ export interface AuthState {
   telegramTokenExpiration: string | null;
   isTelegramTokenLoading: boolean;
   
+  // Database Connection
+  databaseConnectionStatus: 'idle' | 'attempting' | 'connected' | 'failed';
+  
   // Party Management
   userDefaultParty: string | null;
   currentParty: string | null;

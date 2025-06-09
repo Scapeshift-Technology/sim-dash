@@ -1,6 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '@/store/store';
+
 import { LeagueName, LeagueTab, MatchupTab, SettingsTab, Tab } from '@/types/league';
+
 import { teamNameToAbbreviationMLB } from '@/simDash/utils/displayMLB';
 
 // ---------- Types ----------
