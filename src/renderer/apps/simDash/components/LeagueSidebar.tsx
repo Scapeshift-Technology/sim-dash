@@ -4,12 +4,18 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
     List, ListItemButton, ListItemText, CircularProgress, Typography, Box
 } from '@mui/material';
+
 import { AppDispatch } from '@/store/store';
 import { fetchLeagues, selectAllLeagues, selectLeaguesLoading, selectLeaguesError } from '@/simDash/store/slices/leagueSlice';
 import { initializeLeague } from '@/simDash/store/slices/scheduleSlice';
 import { initializeLeagueSimInputs } from '@/simDash/store/slices/simInputsSlice';
+import { selectIsAuthenticated, selectDatabaseConnectionStatus } from '@/store/slices/authSlice';
+
 import { League, LeagueName } from '@@/types/league';
+
 import GenericSidebar from '@/layouts/components/GenericSidebar';
+
+// ---------- Main component ----------
 
 interface LeagueSidebarProps {
     currentWidth: number;
@@ -26,6 +32,8 @@ const LeagueSidebar: React.FC<LeagueSidebarProps> = ({ currentWidth, onResize })
     const leagues = useSelector(selectAllLeagues);
     const loading = useSelector(selectLeaguesLoading);
     const error = useSelector(selectLeaguesError);
+    const isAuthenticated = useSelector(selectIsAuthenticated);
+    const databaseStatus = useSelector(selectDatabaseConnectionStatus);
 
     // ---------- Handlers ----------
 
@@ -37,13 +45,13 @@ const LeagueSidebar: React.FC<LeagueSidebarProps> = ({ currentWidth, onResize })
 
     // ---------- useEffect ----------
 
-    useEffect(() => {
-        // Fetch leagues only if the state is idle (initial load)
-        if (loading === 'idle') {
-            console.log("LeagueSidebar useEffect: Dispatching fetchLeagues");
+    useEffect(() => {    
+        const canFetch = loading === 'idle' && isAuthenticated && databaseStatus === 'connected';
+        
+        if (canFetch) {
             dispatch(fetchLeagues());
         }
-    }, [dispatch, loading]);
+    }, [dispatch, loading, isAuthenticated, databaseStatus, leagues.length]);
 
     useEffect(() => { // Effect to initialize schedule state for leagues
         if (loading === 'succeeded' && leagues.length > 0) {

@@ -32,6 +32,7 @@ declare global {
       testConnection: (config: LoginConfig) => Promise<boolean>;
       login: (config: LoginConfig) => Promise<LoginResult>;
       logout: () => Promise<LogoutResult>;
+      attemptReconnect: (args: { username: string }) => Promise<{ success: boolean; username?: string; error?: string }>;
 
       // SQL execution
       executeSqlQuery: (query: string) => Promise<{ recordset: any[] }>;

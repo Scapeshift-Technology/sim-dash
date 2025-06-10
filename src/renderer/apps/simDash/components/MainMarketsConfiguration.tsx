@@ -152,12 +152,19 @@ const MainMarketsConfiguration: React.FC<MainMarketsConfigurationProps> = ({
             selectedPeriods.forEach(periodId => {
                 const [periodTypeCode, periodNumber] = periodId.split('-');
                 generatedLines.forEach(line => {
-                    newRows.push({
-                        marketType: betType as MarketType,
-                        periodTypeCode: periodTypeCode as PeriodTypeCode,
-                        periodNumber: parseInt(periodNumber),
-                        strike: line.toString()
-                    });
+                    const periodNumberInt = parseInt(periodNumber);
+                    const lineString = line.toString();
+
+                    const configExists = isConfigurationExists(betType, periodTypeCode, periodNumberInt, lineString);
+
+                    if (!configExists) {
+                        newRows.push({
+                            marketType: betType as MarketType,
+                            periodTypeCode: periodTypeCode as PeriodTypeCode,
+                            periodNumber: periodNumberInt,
+                            strike: lineString
+                        });
+                    };
                 });
             });
         });
@@ -214,6 +221,12 @@ const MainMarketsConfiguration: React.FC<MainMarketsConfigurationProps> = ({
         }
         
         return '';
+    };
+
+    const isConfigurationExists = (marketType: string, periodTypeCode: string, periodNumber: number, strike: string): boolean => {
+        return existingConfigurations.some(config => {
+            return config.marketType === marketType && config.periodTypeCode === periodTypeCode && config.periodNumber === periodNumber && config.strike.toString() === strike;
+        });
     };
 
     // ---------- Render ----------

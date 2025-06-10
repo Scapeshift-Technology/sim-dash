@@ -35,9 +35,7 @@ export const fetchProfiles = createAsyncThunk<
     if (!window.electronAPI?.getProfiles) {
       throw new Error('getProfiles API is not available.');
     }
-    console.log('[profilesSlice] Calling window.electronAPI.getProfiles...');
     const result: Profile[] = await window.electronAPI.getProfiles();
-    console.log('[profilesSlice] Profiles received from main process:', result); // Log result from IPC
     return result;
   } catch (err: any) {
     console.error('[profilesSlice] Error calling getProfiles:', err);
@@ -138,19 +136,15 @@ const profilesSlice = createSlice({
     builder
       // Fetch profiles
       .addCase(fetchProfiles.pending, (state) => {
-        console.log('[profilesSlice] fetchProfiles pending...');
         state.isLoading = true;
         state.error = null;
         state.statusMessage = null;
       })
       .addCase(fetchProfiles.fulfilled, (state, action: PayloadAction<Profile[]>) => {
-        console.log('[profilesSlice] fetchProfiles fulfilled. Payload:', action.payload);
         state.isLoading = false;
         state.profiles = action.payload; // Check if this line is correctly updating the state
-        console.log('[profilesSlice] State after update:', current(state)); // Log state using current
       })
       .addCase(fetchProfiles.rejected, (state, action) => {
-        console.log('[profilesSlice] fetchProfiles rejected. Payload:', action.payload);
         state.isLoading = false;
         state.error = action.payload ?? 'Failed to load profiles';
       })

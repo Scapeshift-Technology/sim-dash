@@ -178,7 +178,7 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
             {/* Advanced Settings */}
             <Box sx={{ maxWidth: '420px', mt: 2 }}>
                 <AdvancedSimulationSettings caption={createLabel()}>
-                    <NumberOfGamesSettings leagueName={leagueName} />
+                    <NumberOfGamesSettings />
                     <CaptureConfigDropdown leagueName={leagueName} />
                 </AdvancedSimulationSettings>
             </Box>

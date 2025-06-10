@@ -17,7 +17,7 @@ import { openMatchupTab } from '@/simDash/store/slices/tabSlice';
 import type { AppDispatch, RootState } from '@/store/store';
 import { 
     selectLeagueScheduleData, 
-    selectLeagueScheduleDate, 
+    selectLeagueScheduleDate,
     selectLeagueScheduleStatus,
     selectLeagueScheduleError,
     updateLeagueDate,
@@ -26,6 +26,7 @@ import {
     selectMatchSimResults,
     selectMatchSimStatus
 } from '@/simDash/store/slices/scheduleSlice';
+import { selectDatabaseConnectionStatus } from '@/store/slices/authSlice';
 import { calculateResultsSummaryDisplayMLB } from '@/simDash/utils/oddsUtilsMLB';
 import { usePrevious } from '@dnd-kit/utilities';
 import { 
@@ -176,6 +177,7 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
     const selectedDate = useMemo(() => dayjs(dateString), [dateString]);
     const scheduleData = useSelector((state: RootState) => selectLeagueScheduleData(state, league));
     const leagueScheduleStatus = useSelector((state: RootState) => selectLeagueScheduleStatus(state, league));
+    const databaseStatus = useSelector((state: RootState) => selectDatabaseConnectionStatus(state));
     const error = useSelector((state: RootState) => selectLeagueScheduleError(state, league));
     const [currentDate, setCurrentDate] = useState<Dayjs | null>(null);
 
@@ -186,14 +188,14 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
     // ---------- UseEffects ----------
 
     useEffect(() => {
-        if (selectedDate && currentDate !== selectedDate) {
+        if (selectedDate && currentDate !== selectedDate && databaseStatus === 'connected') {
             dispatch(fetchSchedule({ 
                 league, 
                 date: selectedDate.format('YYYY-MM-DD')
             }));
             setCurrentDate(selectedDate);
         }
-    }, [dispatch, league, selectedDate]);
+    }, [dispatch, league, selectedDate, databaseStatus]);
 
     const prevStatus = usePrevious(leagueScheduleStatus);
     useEffect(() => {
@@ -255,7 +257,7 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
     // ---------- Render Functions ----------
 
     const renderScheduleTable = () => {
-        if (leagueScheduleStatus === 'loading') return <CircularProgress />;
+        if (leagueScheduleStatus === 'loading' || databaseStatus === 'attempting') return <CircularProgress />;
         if (error) return <Alert severity="error">{error}</Alert>;
 
         return (

@@ -6,6 +6,7 @@ const url = require('url'); // Import url module
 const log = require('electron-log/main'); // <-- Import electron-log
 const dbHelper = require('./db-sqlite/db'); // Local SQLite helper
 const sql = require('mssql'); // SQL Server driver
+const { connectToSqlServer } = require('./app/profiles/connectionUtils');
 const { createMLBSimResultsWindow2 } = require('./services/mlb/electron/createSimResultsWindows');
 const { createMLBComparisonWindow } = require('./services/mlb/electron/createComparisonWindow');
 const { testConnection } = require('./services/login/connection');
@@ -14,6 +15,7 @@ const { registerMLBHandlers } = require('./app/ipc/mlbHandlers');
 const { registerSharedLeagueHandlers } = require('./app/ipc/sharedLeagueHandlers');
 const { registerProfileHandlers } = require('./app/ipc/profileHandlers');
 const { registerStatCaptureConfigHandlers } = require('./app/ipc/statCaptureConfigHandlers');
+const { registerConnectionHandlers } = require('./app/ipc/connectionHandlers');
 
 // Force the app name at the system level for macOS menu
 app.name = 'SimDash'; // Directly set app.name property
@@ -298,61 +300,24 @@ ipcMain.handle('login', async (event, config) => {
         ...config,
         password: '********'
     };
-    console.log('Attempting login with config:', maskedConfig);
-
-    // Close previous connection if exists
-    if (currentPool) {
-        try {
-            await currentPool.close();
-            console.log('Previous connection pool closed.');
-        } catch (err) {
-            console.error('Error closing previous connection pool:', err);
-            // Continue regardless, try to establish new connection
-        } finally {
-             currentPool = null;
-        }
-    }
-
-    const sqlConfig = {
-        user: config.user,
-        password: config.password,
-        server: config.host,
-        database: config.database,
-        port: parseInt(config.port, 10), // Ensure port is an integer
-        options: {
-            encrypt: true, // Use encryption - adjust as needed for your server setup
-            trustServerCertificate: true // Change to true for local dev / self-signed certs ONLY
-        },
-        pool: {
-            max: 10,
-            min: 0,
-            idleTimeoutMillis: 30000
-        }
-    };
+    log.info('Attempting login with config:', maskedConfig);
 
     try {
-        // Connect using the SQL config
-        currentPool = await new sql.ConnectionPool(sqlConfig).connect();
-        console.log('Connected to SQL Server.');
+        const result = await connectToSqlServer(config, currentPool, 'Login');
 
-        // Test connection with SELECT SUSER_SNAME()
-        const result = await currentPool.request().query('SELECT SUSER_SNAME() AS username');
-
-        if (result.recordset && result.recordset.length > 0) {
-            const username = result.recordset[0].username;
-            console.log('SQL Server User:', username);
-            return { success: true, username: username };
+        if (result.success) {
+            log.info('SUCCESS')
+            currentPool = result.pool;
+            return { success: true, username: result.username };
         } else {
-            console.error('SQL Server connection error: Could not retrieve username.'); // Log the specific reason
-            // If the connection succeeded but username retrieval failed, we might not want to nullify the pool here.
-            // Let's keep the pool open but return failure. Nullifying happens in the outer catch for actual connection errors.
-            // currentPool = null; // Removed this line
-            return { success: false, error: 'Could not retrieve username.' };
+            log.info('FAILED')
+            currentPool = null;
+            return { success: false, error: result.error };
         }
 
-    } catch (err) { // This catch block now only handles errors from connect() or query()
-        console.error('SQL Server connection error:', err);
-        currentPool = null; // Ensure pool is null on error
+    } catch (err) {
+        console.error('Login error:', err);
+        currentPool = null;
         return { success: false, error: err.message };
     }
 });
@@ -595,6 +560,15 @@ app.whenReady().then(async () => {
         getDb: () => db
     });
     log.info("Stat capture config IPC handlers registered.");
+
+    // Register connection handlers
+    registerConnectionHandlers({
+        getDbHelper: () => dbHelper,
+        getDb: () => db,
+        getCurrentPool: () => currentPool,
+        setCurrentPool: (pool) => { currentPool = pool; }
+    });
+    log.info("Connection IPC handlers registered.");
 
     // Register MLB handlers with required dependencies
     registerMLBHandlers({

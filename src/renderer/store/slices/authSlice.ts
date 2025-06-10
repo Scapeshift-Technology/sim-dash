@@ -1,5 +1,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { persistReducer } from 'redux-persist';
+import { authPersistConfig } from '@/store/persistConfig';
 import type { RootState } from '@/store/store'; // Import RootState for selector typing
+
 import {
   LoginConfig,
   LoginResult,
@@ -13,6 +16,8 @@ import {
   RemoveUserPermissionRequest
 } from '@/types/auth';
 
+// ---------- Initial State ----------
+
 const initialState: AuthState = {
   isAuthenticated: false,
   username: null,
@@ -22,6 +27,9 @@ const initialState: AuthState = {
   telegramToken: null,
   telegramTokenExpiration: null,
   isTelegramTokenLoading: false,
+  
+  // Database Connection
+  databaseConnectionStatus: 'idle',
   
   // Party Management
   userDefaultParty: null,
@@ -83,7 +91,7 @@ export const logoutUser = createAsyncThunk<
     { rejectValue: string }
 >(
     'auth/logoutUser',
-    async (_, { rejectWithValue }) => {
+    async (_, { dispatch, rejectWithValue }) => {
         try {
             if (!window.electronAPI?.logout) {
                 throw new Error('Logout API is not available.');
@@ -96,6 +104,7 @@ export const logoutUser = createAsyncThunk<
                 // Optionally reject, but typically we want the UI to reflect logged out state anyway
                 // return rejectWithValue(result.error || 'Logout failed on backend.');
             }
+
             return result; // Contains { success: boolean, error?: string }
         } catch (err: any) {
             return rejectWithValue(err.message || 'An unexpected error occurred during logout.');
@@ -373,6 +382,10 @@ const authSlice = createSlice({
     clearFetchPermissionsError: (state) => {
       state.fetchPermissionsError = null;
     },
+    // Database connection actions
+    setConnectionStatus: (state, action: PayloadAction<'idle' | 'attempting' | 'connected' | 'failed'>) => {
+      state.databaseConnectionStatus = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -386,6 +399,7 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.username = action.payload.username || null;
         state.error = null;
+        state.databaseConnectionStatus = 'connected';
         // Auth state will be loaded by the dispatched loadAuthState thunk
       })
       .addCase(loginUser.rejected, (state, action) => {
@@ -410,7 +424,6 @@ const authSlice = createSlice({
         state.telegramToken = null;
         state.telegramTokenExpiration = null;
         state.isTelegramTokenLoading = false;
-        
         // Reset party and agent state
         state.userDefaultParty = null;
         state.currentParty = null;
@@ -555,7 +568,7 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearAuthError, setCurrentParty, clearAddUserPermissionError, clearRemoveUserPermissionError, clearRoleTypesError, clearFetchPermissionsError } = authSlice.actions;
+export const { clearAuthError, setCurrentParty, clearAddUserPermissionError, clearRemoveUserPermissionError, clearRoleTypesError, clearFetchPermissionsError, setConnectionStatus } = authSlice.actions;
 
 // Selector to get the entire auth state
 export const selectAuthState = (state: RootState) => state.auth;
@@ -575,6 +588,8 @@ export const selectTelegramToken = (state: RootState) => state.auth.telegramToke
 export const selectTelegramTokenExpiration = (state: RootState) => state.auth.telegramTokenExpiration;
 // Selector for telegram token loading state
 export const selectTelegramTokenLoading = (state: RootState) => state.auth.isTelegramTokenLoading;
+// Selector for database connection status
+export const selectDatabaseConnectionStatus = (state: RootState) => state.auth.databaseConnectionStatus;
 
 // Party Management Selectors
 export const selectUserDefaultParty = (state: RootState) => state.auth.userDefaultParty;
@@ -622,4 +637,5 @@ export const selectAvailableParties = (state: RootState) => {
   return Array.from(parties);
 };
 
-export default authSlice.reducer; 
+const authReducer = authSlice.reducer;
+export default persistReducer(authPersistConfig, authReducer); 

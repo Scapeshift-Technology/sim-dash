@@ -156,6 +156,44 @@ function compareConfigurations(config1: SavedConfiguration | null, config2: Save
     return deepEqual(compareObj1, compareObj2);
 }
 
+// ----- Deduplication helper functions -----
+
+function deduplicateMainMarkets(markets: MainMarketConfig[]): MainMarketConfig[] {
+    const seen = new Set<string>();
+    return markets.filter(market => {
+        const key = `${market.marketType}-${market.periodTypeCode}-${market.periodNumber}-${market.strike}`;
+        if (seen.has(key)) {
+            return false;
+        }
+        seen.add(key);
+        return true;
+    });
+}
+
+function deduplicateOUProps(props: PropOUConfig[]): PropOUConfig[] {
+    const seen = new Set<string>();
+    return props.filter(prop => {
+        const key = `${prop.contestantType}-${prop.prop}-${prop.strike}`;
+        if (seen.has(key)) {
+            return false;
+        }
+        seen.add(key);
+        return true;
+    });
+}
+
+function deduplicateYNProps(props: PropYNConfig[]): PropYNConfig[] {
+    const seen = new Set<string>();
+    return props.filter(prop => {
+        const key = `${prop.contestantType}-${prop.prop}`;
+        if (seen.has(key)) {
+            return false;
+        }
+        seen.add(key);
+        return true;
+    });
+}
+
 // Generate unique key for tree nodes
 function generateNodeKey(node: Partial<TreePeriodNode>): string {
     return `${node.Sport}-${node.League}-${node.SuperPeriodType}-${node.SuperPeriodNumber}-${node.SubPeriodType}-${node.SubPeriodNumber}`;
@@ -500,24 +538,24 @@ const statCaptureSettingsSlice = createSlice({
             }
         },
 
-        updateCurrentDraftMainMarkets: (state, action: PayloadAction<{ leagueName: string; mainMarkets: any[] }>) => {
+        updateCurrentDraftMainMarkets: (state, action: PayloadAction<{ leagueName: string; mainMarkets: MainMarketConfig[] }>) => {
             const { leagueName, mainMarkets } = action.payload;
             if (state[leagueName]) {
-                state[leagueName].currentDraft.mainMarkets = mainMarkets;
+                state[leagueName].currentDraft.mainMarkets = deduplicateMainMarkets(mainMarkets);
             }
         },
 
-        updateCurrentDraftOUProps: (state, action: PayloadAction<{ leagueName: string; ouProps: any[] }>) => {
+        updateCurrentDraftOUProps: (state, action: PayloadAction<{ leagueName: string; ouProps: PropOUConfig[] }>) => {
             const { leagueName, ouProps } = action.payload;
             if (state[leagueName]) {
-                state[leagueName].currentDraft.propsOU = ouProps;
+                state[leagueName].currentDraft.propsOU = deduplicateOUProps(ouProps);
             }
         },
 
-        updateCurrentDraftYNProps: (state, action: PayloadAction<{ leagueName: string; ynProps: any[] }>) => {
+        updateCurrentDraftYNProps: (state, action: PayloadAction<{ leagueName: string; ynProps: PropYNConfig[] }>) => {
             const { leagueName, ynProps } = action.payload;
             if (state[leagueName]) {
-                state[leagueName].currentDraft.propsYN = ynProps;
+                state[leagueName].currentDraft.propsYN = deduplicateYNProps(ynProps);
             }
         },
 
