@@ -16,7 +16,7 @@ import { initializeHomeFieldMultipliers } from "./homeFieldAdvantage";
 import { calculateSimCounts } from "./analysis/analyzeResults";
 import { SimResultsMLB } from "@/types/bettingResults";
 import { evaluatePitchingSubstitution } from "./pitcherSubstitution";
-import { processEvent } from "./baserunning2";
+import { processEvent } from "./baserunning";
 import { initializeGameState } from "./gameState";
 import log from "electron-log";
 
