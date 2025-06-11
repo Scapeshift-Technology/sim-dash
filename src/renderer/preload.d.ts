@@ -58,13 +58,16 @@ declare global {
       fetchMlbGamePlayerStats: (args: { matchupLineups: MatchupLineups, date: string }) => Promise<MatchupLineups>;
 
       // Simulations
-      simulateMatchupMLB: (args: { matchupLineups: MatchupLineups, numGames: number, gameId: number | undefined, statCaptureConfig: SavedConfiguration, liveGameData?: MlbLiveDataApiResponse }) => Promise<SimResults>;
+      simulateMatchupMLB: (args: { matchupLineups: MatchupLineups, numGames: number, gameId: number | undefined, statCaptureConfig: SavedConfiguration, liveGameData?: MlbLiveDataApiResponse, parkEffects?: ParkEffectsResponse }) => Promise<SimResults>;
 
       // Live data (MLB)
       connectToWebSocketMLB: (args: { gameId: number }) => Promise<void>;
       disconnectFromWebSocketMLB: (args: { gameId: number }) => Promise<void>;
       onMLBGameUpdate: (callback: (gameData: { data: MlbLiveDataApiResponse, gameId: number }) => void) => () => void; // Returns cleanup function
       fetchInitialMLBLiveData: (args: { gameId: number }) => Promise<MlbGameApiResponse>; // Used before websockets for quick data infusion
+
+      // Park Effects API
+      parkEffectsApi: (args: ParkEffectsRequest) => Promise<ParkEffectsResponse>;
       
       // ---------- Simulation Windows ----------
       createSimWindow: (args: { 
