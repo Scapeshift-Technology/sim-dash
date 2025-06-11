@@ -278,6 +278,9 @@ export interface MlbScheduleApiGame {
     home: MlbScheduleApiTeam;
   };
   seriesGameNumber: number;
+  venue: {
+    id: number;
+  }
 }
 
 export interface MlbScheduleApiDate {

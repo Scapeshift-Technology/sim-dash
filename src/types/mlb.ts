@@ -19,6 +19,7 @@ export interface GameMetadataMLB {
   automatedLeans?: MLBGameSimInputs;
   mlbGameId?: number;
   gameTimestamp?: string;
+  venueId?: number;
 }
 
 export interface MLBGameData { // Very similar to MLBGameInputs2(type in simInputs.ts), but with less info
