@@ -48,7 +48,9 @@ import {
     selectGameCustomModeDataLineups,
     updateSimMode,
     selectGameCustomModeDataGameState,
-    updateCustomModeGameState
+    updateCustomModeGameState,
+    selectGameParkEffectsStatus,
+    selectGameParkEffectsError
 } from '@/simDash/store/slices/simInputsSlice';
 import { useLeanValidation } from './hooks/leanValidation';
 import { 
@@ -145,6 +147,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const dataError = useSelector((state: RootState) => selectGameDataError(state, league, matchId));
     const playerStatsStatus = useSelector((state: RootState) => selectGamePlayerStatsStatus(state, league, matchId));
     const playerStatsError = useSelector((state: RootState) => selectGamePlayerStatsError(state, league, matchId));
+    const parkEffectsStatus = useSelector((state: RootState) => selectGameParkEffectsStatus(state, league, matchId));
+    const parkEffectsError = useSelector((state: RootState) => selectGameParkEffectsError(state, league, matchId));
     const teamInputs = useSelector((state: RootState) => selectTeamInputs(state, league, matchId));
     const seriesGames = useSelector((state: RootState) => selectGameSeriesGames(state, league, matchId));
     const simType = useSelector((state: RootState) => selectGameSimMode(state, league, matchId));
@@ -195,6 +199,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         participant2,
         daySequence,
         playerStatsStatus,
+        parkEffectsStatus,
+        gameDataStatus: dataStatus,
         gameLineups,
         gameContainer,
         simHistoryStatus,
@@ -264,6 +270,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             ...gameContainer.currentGame,
             lineups: usedLineups as MatchupLineups
         } as MLBGameInputs2;
+        const parkEffects = gameContainer.parkEffectsEnabled ? gameContainer.parkEffects : undefined;
         
         if (simType === 'series') {
             if (!gameContainer.seriesGames) return;
@@ -272,7 +279,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 matchId,
                 gameInputs: gameContainer.seriesGames,
                 numGames: numGames,
-                activeConfig: activeConfig || undefined
+                activeConfig: activeConfig || undefined,
+                parkEffects: parkEffects
             })).unwrap();
         } else if (simType === 'live') {
             if (!gameContainer.currentGame) return;
@@ -282,7 +290,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 gameInputs: gameInputs,
                 numGames: numGames,
                 liveGameData: liveGameData,
-                activeConfig: activeConfig || undefined
+                activeConfig: activeConfig || undefined,
+                parkEffects: parkEffects
             })).unwrap();
 
             await saveAndUpdateHistory(result, gameContainer.currentGame as MLBGameInputs2, liveGameData);
@@ -295,7 +304,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 gameInputs: gameInputs,
                 numGames: numGames,
                 liveGameData: bannerLiveGameData,
-                activeConfig: activeConfig || undefined
+                activeConfig: activeConfig || undefined,
+                parkEffects: parkEffects
             })).unwrap();
             console.log('result', result);
 
@@ -308,7 +318,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 matchId,
                 gameInputs: gameContainer.currentGame,
                 numGames: numGames,
-                activeConfig: activeConfig || undefined
+                activeConfig: activeConfig || undefined,
+                parkEffects: parkEffects
             })).unwrap();
         }
 
@@ -518,6 +529,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 seriesGames={seriesGames}
                 liveGameData={liveGameData}
                 leagueName={league}
+                matchId={matchId}
                 onRefresh={handleRefresh}
                 onRunSimulation={handleRunSimulation}
                 onChangeSimType={handleChangeSimType}

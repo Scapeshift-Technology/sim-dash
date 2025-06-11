@@ -1,9 +1,10 @@
-import { MLBGameInputs2, SeriesGameInputs } from "@@/types/simInputs";
 import { applyMatchupLeansMLB } from "./leans";
-import { SimResultsMLB } from "@@/types/bettingResults";
 import { calculateSeriesWinProbability } from "@@/services/mlb/sim/analysis/seriesAnalyzer";
+import { MLBGameInputs2, SeriesGameInputs } from "@@/types/simInputs";
+import { SimResultsMLB } from "@@/types/bettingResults";
 import { MlbLiveDataApiResponse } from "@@/types/mlb";
 import { SavedConfiguration } from "@/types/statCaptureConfig";
+import { ParkEffectsResponse } from "@@/types/mlb/mlb-sim";
 
 // ---------- Main functions ----------
 
@@ -11,7 +12,8 @@ export async function runSimulation(
     gameInputs: MLBGameInputs2,
     numGames: number = 90000,
     liveGameData?: MlbLiveDataApiResponse,
-    activeConfig?: SavedConfiguration
+    activeConfig?: SavedConfiguration,
+    parkEffects?: ParkEffectsResponse
 ): Promise<SimResultsMLB> {
     const config = activeConfig || await window.electronAPI.getActiveStatCaptureConfiguration('MLB');
 
@@ -22,7 +24,8 @@ export async function runSimulation(
         numGames: numGames,
         gameId: gameInputs.gameInfo.mlbGameId,
         statCaptureConfig: config,
-        liveGameData: liveGameData
+        liveGameData: liveGameData,
+        parkEffects: parkEffects
     });
 
     return results;
@@ -31,7 +34,8 @@ export async function runSimulation(
 export async function runSeriesSimulation(
     gameInputs: SeriesGameInputs,
     numGames: number = 90000,
-    activeConfig?: SavedConfiguration
+    activeConfig?: SavedConfiguration,
+    parkEffects?: ParkEffectsResponse
 ): Promise<SimResultsMLB> {
     const simResults: {[key: number]: SimResultsMLB} = {};
     
@@ -40,7 +44,7 @@ export async function runSeriesSimulation(
       .filter(game => game.gameInfo.seriesGameNumber <= 3);
     
     for (const game of seriesGames) {
-      const gameSimResults = await runSimulation(game, numGames, undefined, activeConfig);
+      const gameSimResults = await runSimulation(game, numGames, undefined, activeConfig, parkEffects);
       simResults[game.gameInfo.seriesGameNumber] = gameSimResults;
     }
 

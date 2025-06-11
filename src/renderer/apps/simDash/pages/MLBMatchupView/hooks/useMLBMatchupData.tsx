@@ -1,12 +1,16 @@
 import { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/store/store';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/store/store';
 // ----- Slices -----
-import { fetchMlbGameData, fetchMlbGamePlayerStats, selectGameDataStatus } from '@/simDash/store/slices/simInputsSlice';
+import { 
+    fetchMlbGameData, 
+    fetchMlbGamePlayerStats, 
+    fetchMlbGameParkEffects
+} from '@/simDash/store/slices/simInputsSlice';
 import { fetchSimResults } from '@/apps/simDash/store/slices/scheduleSlice';
 // ----- Types
 import { LeagueName } from '@@/types/league';
-import { MatchupLineups, MlbLiveDataApiResponse } from '@@/types/mlb';
+import { MatchupLineups, MlbLiveDataApiResponse, Player, TeamLineup } from '@@/types/mlb';
 import { MLBGameContainer } from '@@/types/simInputs';
 
 
@@ -18,6 +22,8 @@ export interface UseMLBMatchupDataProps {
     participant2: string;
     daySequence?: number;
     playerStatsStatus: string;
+    parkEffectsStatus: string;
+    gameDataStatus: string;
     gameLineups: MatchupLineups | undefined;
     gameContainer: MLBGameContainer | undefined;
     simHistoryStatus: string;
@@ -32,18 +38,17 @@ export const useMLBMatchupData = (props: UseMLBMatchupDataProps) => {
 
     const { 
         matchId, league, date, participant1, participant2, daySequence, 
-        playerStatsStatus, gameLineups, gameContainer,
-        simHistoryStatus,
+        playerStatsStatus, parkEffectsStatus, gameDataStatus, gameLineups, 
+        gameContainer, simHistoryStatus,
         setHasHistoricalStats,
         mlbGameId, setLiveGameData
     } = props;
     const dispatch = useDispatch<AppDispatch>();
-    const dataStatus = useSelector((state: RootState) => selectGameDataStatus(state, league, matchId));
 
     // ---------- Effects ----------
 
     useEffect(() => { // Fetch game data
-        if (dataStatus === 'idle') {
+        if (gameDataStatus === 'idle') {
             dispatch(fetchMlbGameData({
                 league,
                 date,
@@ -53,10 +58,10 @@ export const useMLBMatchupData = (props: UseMLBMatchupDataProps) => {
                 matchId
             }));
         }
-    }, [dispatch, league, date, participant1, participant2, daySequence, matchId, dataStatus]);
+    }, [dispatch, league, date, participant1, participant2, daySequence, matchId, gameDataStatus]);
 
     useEffect(() => { // Fetch player stats
-        if (dataStatus === 'succeeded' && playerStatsStatus === 'idle' && gameLineups) {
+        if (gameDataStatus === 'succeeded' && playerStatsStatus === 'idle' && gameLineups) {
             dispatch(fetchMlbGamePlayerStats({
                 matchId: matchId,
                 matchupLineups: (gameLineups),
@@ -64,7 +69,34 @@ export const useMLBMatchupData = (props: UseMLBMatchupDataProps) => {
                 seriesGames: gameContainer?.seriesGames
             }));
         }
-    }, [dispatch, dataStatus, playerStatsStatus, gameLineups, matchId]);
+    }, [dispatch, gameDataStatus, playerStatsStatus, gameLineups, matchId]);
+
+    useEffect(() => { // Fetch park effects
+        if (gameDataStatus === 'succeeded' && parkEffectsStatus === 'idle' && gameLineups && gameContainer?.currentGame?.gameInfo?.venueId) {
+            const getTeamPlayers = (team: TeamLineup | undefined): Player[] => {
+                if (!team) return [];
+                return [
+                    ...(team.lineup || []),
+                    ...(team.bench || []),
+                    ...(team.bullpen || []),
+                    team.startingPitcher,
+                    ...(team.unavailableHitters || []),
+                    ...(team.unavailablePitchers || [])
+                ].filter(Boolean) as Player[];
+            };
+
+            const playerList = [
+                ...getTeamPlayers(gameLineups.away),
+                ...getTeamPlayers(gameLineups.home)
+            ];
+
+            dispatch(fetchMlbGameParkEffects({
+                matchId: matchId,
+                venueId: gameContainer.currentGame.gameInfo.venueId,
+                players: playerList
+            }));
+        }
+    }, [dispatch, gameDataStatus, parkEffectsStatus, gameLineups, gameContainer?.currentGame?.gameInfo?.venueId, matchId]);
 
     useEffect(() => { // Fetch sim history
         if (!matchId) return;

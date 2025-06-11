@@ -10,12 +10,14 @@ import { LeagueName } from '@@/types/league';
 
 import { runSimulation } from "./simulation";
 import { americanOddsToProbability, countsToProbability } from "@/simDash/utils/oddsCalculations";
+import { ParkEffectsResponse } from "@@/types/mlb/mlb-sim";
   
   // ---------- Main function ----------
   
   async function findOptimalLeans(
       lineups: MatchupLineups,
-      marketLines: MarketLinesMLB
+      marketLines: MarketLinesMLB,
+      parkEffects?: ParkEffectsResponse
   ) {
     // Set up before finding the optimal leans
     const initialTeamLean: MLBGameSimInputsTeam = {
@@ -69,7 +71,7 @@ import { americanOddsToProbability, countsToProbability } from "@/simDash/utils/
       }
   
       // Run the sim
-      const simResults = await runSimulation(gameInputs, 50000, undefined, leansConfig);
+      const simResults = await runSimulation(gameInputs, 50000, undefined, leansConfig, parkEffects);
   
       // Find where the lines and sim results differ(or are close)
       const diffs = findLineDifferences(simResults, marketLines);
