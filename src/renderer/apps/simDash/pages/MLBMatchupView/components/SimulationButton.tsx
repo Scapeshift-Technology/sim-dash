@@ -5,7 +5,8 @@ import {
     Menu,
     MenuItem,
     CircularProgress,
-    Box
+    Box,
+    Tooltip
 } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
@@ -20,12 +21,16 @@ import {
     initializeLeague,
     getActiveStatCaptureConfiguration,
     getLeagueStatCaptureConfigurations,
-    setActiveStatCaptureConfiguration,
     selectActiveConfig,
     selectActiveConfigLoading,
     selectLeagueStatCaptureConfigurations,
     selectLeagueStatCaptureConfigurationsLoading
 } from '@/simDash/store/slices/statCaptureSettingsSlice';
+import {
+    selectParkEffectsEnabled,
+    selectGameParkEffectsStatus,
+    selectGameParkEffectsError
+} from '@/simDash/store/slices/simInputsSlice';
 
 interface SimulationButtonProps {
     simType: SimType | undefined;
@@ -34,6 +39,7 @@ interface SimulationButtonProps {
     seriesGames?: { [key: string]: any };
     liveGameData: MlbLiveDataApiResponse | undefined;
     leagueName: LeagueName;
+    matchId: number;
     onRunSimulation: (simType: SimType) => void;
     onChangeSimType: (simType: SimType) => void;
 }
@@ -45,6 +51,7 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
     seriesGames,
     liveGameData,
     leagueName,
+    matchId,
     onRunSimulation,
     onChangeSimType
 }) => {
@@ -57,6 +64,9 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
     const activeConfigLoading = useSelector((state: RootState) => selectActiveConfigLoading(state, leagueName));
     const leagueConfigurations = useSelector((state: RootState) => selectLeagueStatCaptureConfigurations(state, leagueName));
     const leagueConfigurationsLoading = useSelector((state: RootState) => selectLeagueStatCaptureConfigurationsLoading(state, leagueName));
+    const parkEffectsEnabled = useSelector((state: RootState) => selectParkEffectsEnabled(state, leagueName, matchId));
+    const parkEffectsStatus = useSelector((state: RootState) => selectGameParkEffectsStatus(state, leagueName, matchId));
+    const parkEffectsError = useSelector((state: RootState) => selectGameParkEffectsError(state, leagueName, matchId));
 
     // ---------- State ----------
 
@@ -93,9 +103,14 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
     // ---------- Render ----------
 
     const isGameLive = liveGameData && liveGameData.gameData.status.abstractGameState === 'Live';
+    const isParkEffectsLoading = parkEffectsEnabled && parkEffectsStatus === 'loading';
+    const isParkEffectsError = parkEffectsEnabled && (parkEffectsStatus === 'failed' || !!parkEffectsError);
+    const isButtonDisabled = disabled || isParkEffectsLoading || isParkEffectsError;
 
     const getButtonText = () => {
         if (isSimulating) return 'Running...';
+        if (isParkEffectsLoading) return 'Loading Park Effects...';
+        if (isParkEffectsError) return 'Park Effects Error';
         switch (simType) {
             case 'series':
                 return 'Simulate Series';
@@ -109,38 +124,62 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
         }
     };
 
-    return (
-        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 1 }}>
+    const getTooltipText = () => {
+        if (isParkEffectsLoading) {
+            return 'Waiting for park effects to load...';
+        }
+        if (isParkEffectsError) {
+            return 'Park effects failed to load. Please refresh to try again.';
+        }
+        return '';
+    };
 
-
-            {/* Simulation Button */}
-            <ButtonGroup
-                variant="contained"
-                color="primary"
-                size="large"
-                disabled={disabled}
+    const buttonGroup = (
+        <ButtonGroup
+            variant="contained"
+            color="primary"
+            size="large"
+            disabled={isButtonDisabled}
+            sx={{ 
+                flexGrow: 1,
+                '& .MuiButton-root': {
+                    height: '100%'
+                }
+            }}
+        >
+            <Button
+                onClick={() => onRunSimulation(simType)}
+                startIcon={(isSimulating || isParkEffectsLoading) ? <CircularProgress size={20} color="inherit" /> : <PlayArrowIcon />}
+                sx={{ flexGrow: 1 }}
+            >
+                {getButtonText()}
+            </Button>
+            <Button
+                size="small"
+                onClick={handleClick}
                 sx={{ 
-                    flexGrow: 1,
-                    '& .MuiButton-root': {
-                        height: '100%'
-                    }
+                    width: '32px', 
+                    minWidth: '32px',
+                    height: '100% !important',
+                    minHeight: '100% !important'
                 }}
             >
-                <Button
-                    onClick={() => onRunSimulation(simType)}
-                    startIcon={isSimulating ? <CircularProgress size={20} color="inherit" /> : <PlayArrowIcon />}
-                    sx={{ flexGrow: 1 }}
-                >
-                    {getButtonText()}
-                </Button>
-                <Button
-                    size="small"
-                    onClick={handleClick}
-                    sx={{ width: '32px', minWidth: '32px' }}
-                >
-                    <ArrowDropDownIcon />
-                </Button>
-            </ButtonGroup>
+                <ArrowDropDownIcon />
+            </Button>
+        </ButtonGroup>
+    );
+
+    return (
+        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {(isParkEffectsLoading || isParkEffectsError) ? (
+                <Tooltip title={getTooltipText()} arrow placement="top">
+                    <div style={{ flexGrow: 1, height: '100%', display: 'flex' }}>
+                        {buttonGroup}
+                    </div>
+                </Tooltip>
+            ) : (
+                buttonGroup
+            )}
 
             {/* Simulation Type Menu */}
             <Menu

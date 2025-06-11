@@ -149,7 +149,8 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                 league: 'MLB',
                 matchId,
                 lineups: gameContainer?.currentGame?.lineups as MatchupLineups,
-                marketLines: marketLines
+                marketLines: marketLines,
+                parkEffects: gameContainer?.parkEffects
             })).unwrap();
 
             dispatch(updateMLBAutomatedLeans({
