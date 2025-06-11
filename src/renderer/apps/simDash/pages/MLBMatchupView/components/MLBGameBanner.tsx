@@ -5,6 +5,8 @@ import Linescore from './Linescore';
 import ScoreDisplay from './ScoreDisplay';
 import InningDisplay from './InningDisplay';
 import PlayerSelector from './PlayerSelector';
+import UmpiresDisplay from './UmpiresDisplay';
+import LiveWeatherDisplay from './LiveWeatherDisplay';
 
 import { MlbLiveDataApiResponse } from '@@/types/mlb';
 import { MlbLiveDataApiLinescoreInning } from '@@/types/mlb/mlb-api';
@@ -37,6 +39,8 @@ const MLBGameBanner = ({ liveGameData, lineupData, isEditable = false, onGameSta
   const awayErrors = liveGameData.liveData.linescore.teams.away.errors;
   const homeErrors = liveGameData.liveData.linescore.teams.home.errors;
   const lineScoreInnings: MlbLiveDataApiLinescoreInning[] = liveGameData.liveData.linescore.innings;
+  const officials = liveGameData.liveData.boxscore.officials;
+  const weather = liveGameData.gameData.weather;
   
   // Variables that are conditional on gameStatus === "Live"
   let inningStr: string | undefined;
@@ -363,6 +367,34 @@ const MLBGameBanner = ({ liveGameData, lineupData, isEditable = false, onGameSta
           awayErrors={awayErrors}
           homeErrors={homeErrors}
         />
+      )}
+      
+      {/* Officials Strip */}
+      {officials && officials.length > 0 && (
+        <Box sx={{ 
+          mt: 0.5, 
+          px: 2, 
+          py: 0
+        }}>
+          <UmpiresDisplay
+            officials={officials}
+            textAlign="left"
+          />
+        </Box>
+      )}
+
+      {/* Weather Strip */}
+      {weather && (
+        <Box sx={{ 
+          mt: 0.25, 
+          px: 2, 
+          py: 0
+        }}>
+          <LiveWeatherDisplay
+            weather={weather}
+            textAlign="left"
+          />
+        </Box>
       )}
     </Paper>
   );
