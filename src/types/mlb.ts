@@ -20,6 +20,8 @@ export interface GameMetadataMLB {
   mlbGameId?: number;
   gameTimestamp?: string;
   venueId?: number;
+  officials?: MlbApiOfficial[];
+  weather?: MlbApiWeather;
 }
 
 export interface MLBGameData { // Very similar to MLBGameInputs2(type in simInputs.ts), but with less info
@@ -93,7 +95,9 @@ import {
   MlbRosterApiPlayer,
   MlbRosterApiStatus,
   MlbRosterApiResponse,
-  MlbPeopleApiResponse
+  MlbPeopleApiResponse,
+  MlbApiOfficial,
+  MlbApiWeather
 } from "./mlb/mlb-api";
 
 export {

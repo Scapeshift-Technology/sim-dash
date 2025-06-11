@@ -38,12 +38,23 @@ export interface MlbGameApiPlayer {
 export interface MlbGameApiTeamData {
   players: { [key: string]: MlbGameApiPlayer };
 }
+
+export type OfficialType = 'Home Plate' | 'First Base' | 'Second Base' | 'Third Base' | 'Left Field' | 'Right Field';
+
+export interface MlbApiOfficial {
+  official: {
+    id: number;
+    fullName: string;
+  }
+  officialType: OfficialType;
+}
   
 export interface MlbGameApiBoxscore {
   teams: {
     away: MlbGameApiTeamData;
     home: MlbGameApiTeamData;
   };
+  officials?: MlbApiOfficial[];
 }
   
 export interface MlbGameApiTeam {
@@ -97,6 +108,7 @@ interface MlbLiveDataApiGameData {
     abstractGameState: "Preview" | "Live" | "Final" | "Postponed" | "Delayed" | "Suspended" | "Cancelled";
     detailedState: "Warmup" | "Final" | "In Progress";
   }
+  weather?: MlbApiWeather;
 };
 
 interface MlbLiveDataApiTeamBoxscorePlayerGameStatus {
@@ -136,6 +148,7 @@ interface MlbLiveDataApiBoxscore {
     away: MlbLiveDataApiTeamBoxscoreData;
     home: MlbLiveDataApiTeamBoxscoreData;
   }
+  officials?: MlbApiOfficial[];
 }
 
 export interface MlbLiveDataApiResponse {  // Similar to MlbGameApiResponse, but different liveData
@@ -281,6 +294,14 @@ export interface MlbScheduleApiGame {
   venue: {
     id: number;
   }
+  officials?: MlbApiOfficial[];
+  weather?: MlbApiWeather;
+}
+
+export interface MlbApiWeather {
+  condition: string;
+  temp: string;
+  wind: string;
 }
 
 export interface MlbScheduleApiDate {

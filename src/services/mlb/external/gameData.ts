@@ -72,7 +72,9 @@ async function fetchBasicGameData(
     lineupsSource,
     mlbGameId: game.gamePk,
     gameTimestamp: game.gameDate,
-    venueId: game.venue.id
+    venueId: game.venue.id,
+    officials: game.officials,
+    weather: game.weather
   }
 
   return {

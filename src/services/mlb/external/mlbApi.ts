@@ -41,7 +41,7 @@ async function getMlbScheduleApiGame(date: string, awayTeam: string, homeTeam: s
   try {
     // Find gamePk given info
     const formattedDate = formatDateMlbApi(date);
-    const scheduleUrl = `${BASE_MLB_API_URL}/schedule?startDate=${formattedDate}&endDate=${formattedDate}&sportId=1&hydrate=team,game(seriesStatus)`;
+    const scheduleUrl = `${BASE_MLB_API_URL}/schedule?startDate=${formattedDate}&endDate=${formattedDate}&sportId=1&hydrate=team,game(seriesStatus),officials,weather`;
     const scheduleResponse = await fetch(scheduleUrl);
     const scheduleData = await scheduleResponse.json();
     
