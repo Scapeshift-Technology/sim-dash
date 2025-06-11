@@ -103,14 +103,9 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
     // ---------- Render ----------
 
     const isGameLive = liveGameData && liveGameData.gameData.status.abstractGameState === 'Live';
-    const isParkEffectsLoading = parkEffectsEnabled && parkEffectsStatus === 'loading';
-    const isParkEffectsError = parkEffectsEnabled && (parkEffectsStatus === 'failed' || !!parkEffectsError);
-    const isButtonDisabled = disabled || isParkEffectsLoading || isParkEffectsError;
 
     const getButtonText = () => {
         if (isSimulating) return 'Running...';
-        if (isParkEffectsLoading) return 'Loading Park Effects...';
-        if (isParkEffectsError) return 'Park Effects Error';
         switch (simType) {
             case 'series':
                 return 'Simulate Series';
@@ -124,22 +119,12 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
         }
     };
 
-    const getTooltipText = () => {
-        if (isParkEffectsLoading) {
-            return 'Waiting for park effects to load...';
-        }
-        if (isParkEffectsError) {
-            return 'Park effects failed to load. Please refresh to try again.';
-        }
-        return '';
-    };
-
     const buttonGroup = (
         <ButtonGroup
             variant="contained"
             color="primary"
             size="large"
-            disabled={isButtonDisabled}
+            disabled={disabled}
             sx={{ 
                 flexGrow: 1,
                 '& .MuiButton-root': {
@@ -149,7 +134,7 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
         >
             <Button
                 onClick={() => onRunSimulation(simType)}
-                startIcon={(isSimulating || isParkEffectsLoading) ? <CircularProgress size={20} color="inherit" /> : <PlayArrowIcon />}
+                startIcon={isSimulating ? <CircularProgress size={20} color="inherit" /> : <PlayArrowIcon />}
                 sx={{ flexGrow: 1 }}
             >
                 {getButtonText()}
@@ -171,15 +156,7 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
 
     return (
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {(isParkEffectsLoading || isParkEffectsError) ? (
-                <Tooltip title={getTooltipText()} arrow placement="top">
-                    <div style={{ flexGrow: 1, height: '100%', display: 'flex' }}>
-                        {buttonGroup}
-                    </div>
-                </Tooltip>
-            ) : (
-                buttonGroup
-            )}
+            {buttonGroup}
 
             {/* Simulation Type Menu */}
             <Menu

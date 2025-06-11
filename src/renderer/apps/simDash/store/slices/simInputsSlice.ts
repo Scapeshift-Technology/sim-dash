@@ -50,7 +50,7 @@ const initialMLBGameContainer: MLBGameContainer = {
   parkEffectsError: null,
 
   simMode: 'game',
-  parkEffectsEnabled: true
+  parkEffectsEnabled: false
 }
 
 // ---------- Helpers ----------
@@ -524,6 +524,7 @@ const simInputsSlice = createSlice({
           state['MLB'][matchId].parkEffectsStatus = 'succeeded';
           state['MLB'][matchId].parkEffectsError = null;
           state['MLB'][matchId].parkEffects = parkEffects;
+          state['MLB'][matchId].parkEffectsEnabled = true;
         }
       })
       .addCase(fetchMlbGameParkEffects.rejected, (state, action) => {
@@ -531,6 +532,7 @@ const simInputsSlice = createSlice({
         if (state['MLB']?.[matchId]) {
           state['MLB'][matchId].parkEffectsStatus = 'failed';
           state['MLB'][matchId].parkEffectsError = action.error.message ?? 'Failed to fetch park effects';
+          state['MLB'][matchId].parkEffectsEnabled = false;
         }
       });
   }

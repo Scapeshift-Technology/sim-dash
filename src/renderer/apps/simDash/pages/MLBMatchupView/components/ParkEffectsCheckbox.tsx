@@ -35,8 +35,6 @@ const ParkEffectsCheckbox: React.FC<ParkEffectsCheckboxProps> = ({ matchId, leag
     // ---------- Handlers ----------
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const newValue = event.target.checked;
-        console.log('Park Effects toggled:', newValue);
         dispatch(toggleParkEffects({ league: leagueName, matchId }));
     };
 
@@ -61,6 +59,7 @@ const ParkEffectsCheckbox: React.FC<ParkEffectsCheckboxProps> = ({ matchId, leag
                     checked={enabled}
                     onChange={handleChange}
                     size="small"
+                    disabled={isLoading || hasError}
                 />
             }
             label={
