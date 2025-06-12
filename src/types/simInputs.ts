@@ -1,5 +1,5 @@
 import type { MatchupLineups, GameMetadataMLB, GameStateMLB } from './mlb';
-import type { ParkEffectsResponse, SimType } from './mlb/mlb-sim';
+import type { ParkEffectsResponse, SimType, UmpireEffectsResponse } from './mlb/mlb-sim';
 import type { LeagueName } from './league';
 
 // ---------- Types ----------
@@ -53,6 +53,8 @@ export interface MLBGameContainer { // Very similar to MLBGameDataResponse(type 
   statsError: string | null;
   parkEffectsStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
   parkEffectsError: string | null;
+  umpireEffectsStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
+  umpireEffectsError: string | null;
 
   // Sim mode
   simMode: SimType
@@ -63,5 +65,9 @@ export interface MLBGameContainer { // Very similar to MLBGameDataResponse(type 
   // Park effects
   parkEffects?: ParkEffectsResponse;
   parkEffectsEnabled: boolean;
+
+  // Umpire effects
+  umpireEffects?: UmpireEffectsResponse;
+  umpireEffectsEnabled: boolean;
 }
 

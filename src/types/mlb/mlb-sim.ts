@@ -136,6 +136,21 @@ export interface ParkEffectsResponse {
   errorMessage?: string;
 }
 
+export interface Umpire {
+  id: number;
+  K_multiplier: number;
+  BB_multiplier: number;
+}
+
+export interface UmpireEffectsRequest {
+  umpireId: number;
+}
+
+export interface UmpireEffectsResponse {
+  umpire: Umpire;
+  errorMessage?: string;
+}
+
 export interface LeagueAverageParkEffects {
   RhitVsAll: StatsMultiplier;  // Average RHB at this park
   LhitVsAll: StatsMultiplier; // Average LHB at this park  
