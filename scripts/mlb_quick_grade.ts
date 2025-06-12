@@ -50,8 +50,11 @@ function formatPnlForSummary(pnl: number): string {
 function getMonday(d: Date): Date {
     const date = new Date(d.valueOf()); // Clone date
     const dayOfWeek = date.getDay(); // Sunday = 0, Monday = 1, ..., Saturday = 6
-    const diff = date.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust for Sunday
-    return new Date(date.setDate(diff));
+    // Calculate days to subtract to get to the most recent Monday
+    // Sunday (0) -> subtract 6, Monday (1) -> subtract 0, Tuesday (2) -> subtract 1, etc.
+    const daysToSubtract = (dayOfWeek + 6) % 7;
+    date.setDate(date.getDate() - daysToSubtract);
+    return date;
 }
 
 function printDailySummary(pnlSummariesData: { date: Date, pnl: number }[]) {
@@ -84,7 +87,11 @@ function printWeeklySummary(pnlSummariesData: { date: Date, pnl: number }[]) {
 
     for (const item of pnlSummariesData) {
         const monday = getMonday(item.date);
-        const mondayKey = monday.toISOString().split('T')[0];
+        // Use local date formatting instead of toISOString() to avoid timezone issues
+        const year = monday.getFullYear();
+        const month = String(monday.getMonth() + 1).padStart(2, '0');
+        const day = String(monday.getDate()).padStart(2, '0');
+        const mondayKey = `${year}-${month}-${day}`;
         weeklyTotals.set(mondayKey, (weeklyTotals.get(mondayKey) || 0) + item.pnl);
     }
 
@@ -149,7 +156,7 @@ export function calculateRiskAndToWin(price: number, betSize: number): { risk: n
 async function processWithConcurrencyLimit<T, R>(
     items: T[],
     processor: (item: T) => Promise<R>,
-    maxConcurrency: number = 10
+    maxConcurrency: number = 50
 ): Promise<R[]> {
     const results: R[] = [];
     console.log(`Processing ${items.length} bets with max concurrency of ${maxConcurrency}, dtm = ${new Date().toISOString()}`);
@@ -451,7 +458,7 @@ export async function processFile(filePath: string, gradingClient?: ChatBetGradi
                         });
                     } catch (error) {
                         const errorMessage = error instanceof Error ? error.message : String(error);
-                        grade = `ERR: ${errorMessage}`;
+                        grade = `ERR: ${errorMessage.trim()}`;
                     }
                 }
 
