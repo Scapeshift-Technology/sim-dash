@@ -5,7 +5,8 @@ import { AppDispatch } from '@/store/store';
 import { 
     fetchMlbGameData, 
     fetchMlbGamePlayerStats, 
-    fetchMlbGameParkEffects
+    fetchMlbGameParkEffects,
+    fetchMlbGameUmpireEffects
 } from '@/simDash/store/slices/simInputsSlice';
 import { fetchSimResults } from '@/apps/simDash/store/slices/scheduleSlice';
 // ----- Types
@@ -13,6 +14,7 @@ import { LeagueName } from '@@/types/league';
 import { MatchupLineups, MlbLiveDataApiResponse, Player, TeamLineup } from '@@/types/mlb';
 import { MLBGameContainer } from '@@/types/simInputs';
 
+// ---------- Main hook ----------
 
 export interface UseMLBMatchupDataProps {
     matchId: number;
@@ -97,6 +99,17 @@ export const useMLBMatchupData = (props: UseMLBMatchupDataProps) => {
             }));
         }
     }, [dispatch, gameDataStatus, parkEffectsStatus, gameLineups, gameContainer?.currentGame?.gameInfo?.venueId, matchId]);
+
+    useEffect(() => { // Fetch umpires
+        const hpUmp = gameContainer?.currentGame?.gameInfo?.officials?.find(ump => ump.officialType === 'Home Plate');
+        if (hpUmp && hpUmp.official?.id && gameDataStatus === 'succeeded') {
+            console.log('HP umpire:', hpUmp)
+            dispatch(fetchMlbGameUmpireEffects({
+                matchId: matchId,
+                umpireId: hpUmp.official.id
+            }));
+        }
+    }, [dispatch, gameDataStatus, gameContainer?.currentGame?.gameInfo?.officials, matchId]);
 
     useEffect(() => { // Fetch sim history
         if (!matchId) return;
