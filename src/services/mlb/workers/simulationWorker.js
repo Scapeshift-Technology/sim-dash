@@ -8,8 +8,8 @@ if (!parentPort) {
 // Listen for messages from the main thread
 parentPort.on('message', async (data) => {
   try {
-    const { matchupLineups, numGames, statCaptureConfig, liveGameData, parkEffects } = data;
-    const results = await simulateMatchupMLB(matchupLineups, numGames, statCaptureConfig, liveGameData, parkEffects);
+    const { matchupLineups, numGames, statCaptureConfig, liveGameData, parkEffects, umpireEffects } = data;
+    const results = await simulateMatchupMLB(matchupLineups, numGames, statCaptureConfig, liveGameData, parkEffects, umpireEffects);
     parentPort.postMessage({ success: true, results });
   } catch (error) {
     parentPort.postMessage({ success: false, error: error instanceof Error ? error.message : 'Unknown error' });

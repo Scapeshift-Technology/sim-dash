@@ -271,6 +271,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             lineups: usedLineups as MatchupLineups
         } as MLBGameInputs2;
         const parkEffects = gameContainer.parkEffectsEnabled ? gameContainer.parkEffects : undefined;
+        const umpireEffects = gameContainer.umpireEffectsEnabled ? gameContainer.umpireEffects : undefined;
         
         if (simType === 'series') {
             if (!gameContainer.seriesGames) return;
@@ -280,7 +281,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 gameInputs: gameContainer.seriesGames,
                 numGames: numGames,
                 activeConfig: activeConfig || undefined,
-                parkEffects: parkEffects
+                parkEffects: parkEffects,
+                umpireEffects: umpireEffects
             })).unwrap();
         } else if (simType === 'live') {
             if (!gameContainer.currentGame) return;
@@ -291,7 +293,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 numGames: numGames,
                 liveGameData: liveGameData,
                 activeConfig: activeConfig || undefined,
-                parkEffects: parkEffects
+                parkEffects: parkEffects,
+                umpireEffects: umpireEffects
             })).unwrap();
 
             await saveAndUpdateHistory(result, gameContainer.currentGame as MLBGameInputs2, liveGameData);
@@ -305,7 +308,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 numGames: numGames,
                 liveGameData: bannerLiveGameData,
                 activeConfig: activeConfig || undefined,
-                parkEffects: parkEffects
+                parkEffects: parkEffects,
+                umpireEffects: umpireEffects
             })).unwrap();
             console.log('result', result);
 
@@ -319,7 +323,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 gameInputs: gameContainer.currentGame,
                 numGames: numGames,
                 activeConfig: activeConfig || undefined,
-                parkEffects: parkEffects
+                parkEffects: parkEffects,
+                umpireEffects: umpireEffects
             })).unwrap();
         }
 

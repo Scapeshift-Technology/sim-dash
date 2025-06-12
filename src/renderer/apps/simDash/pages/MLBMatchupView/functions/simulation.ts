@@ -4,7 +4,7 @@ import { MLBGameInputs2, SeriesGameInputs } from "@@/types/simInputs";
 import { SimResultsMLB } from "@@/types/bettingResults";
 import { MlbLiveDataApiResponse } from "@@/types/mlb";
 import { SavedConfiguration } from "@/types/statCaptureConfig";
-import { ParkEffectsResponse } from "@@/types/mlb/mlb-sim";
+import { ParkEffectsResponse, UmpireEffectsResponse } from "@@/types/mlb/mlb-sim";
 
 // ---------- Main functions ----------
 
@@ -13,7 +13,8 @@ export async function runSimulation(
     numGames: number = 90000,
     liveGameData?: MlbLiveDataApiResponse,
     activeConfig?: SavedConfiguration,
-    parkEffects?: ParkEffectsResponse
+    parkEffects?: ParkEffectsResponse,
+    umpireEffects?: UmpireEffectsResponse
 ): Promise<SimResultsMLB> {
     const config = activeConfig || await window.electronAPI.getActiveStatCaptureConfiguration('MLB');
 
@@ -25,7 +26,8 @@ export async function runSimulation(
         gameId: gameInputs.gameInfo.mlbGameId,
         statCaptureConfig: config,
         liveGameData: liveGameData,
-        parkEffects: parkEffects
+        parkEffects: parkEffects,
+        umpireEffects: umpireEffects
     });
 
     return results;
@@ -35,7 +37,8 @@ export async function runSeriesSimulation(
     gameInputs: SeriesGameInputs,
     numGames: number = 90000,
     activeConfig?: SavedConfiguration,
-    parkEffects?: ParkEffectsResponse
+    parkEffects?: ParkEffectsResponse,
+    umpireEffects?: UmpireEffectsResponse
 ): Promise<SimResultsMLB> {
     const simResults: {[key: number]: SimResultsMLB} = {};
     
@@ -44,7 +47,14 @@ export async function runSeriesSimulation(
       .filter(game => game.gameInfo.seriesGameNumber <= 3);
     
     for (const game of seriesGames) {
-      const gameSimResults = await runSimulation(game, numGames, undefined, activeConfig, parkEffects);
+      const gameSimResults = await runSimulation(
+        game, 
+        numGames, 
+        undefined, 
+        activeConfig, 
+        parkEffects, 
+        game.gameInfo.seriesGameNumber === 1 ? umpireEffects : undefined
+      );
       simResults[game.gameInfo.seriesGameNumber] = gameSimResults;
     }
 

@@ -147,7 +147,7 @@ const handleUmpireEffectsApi = async (event, args) => {
 // ---------- Simulations ----------
 
 // Handler for simulating MLB matchups
-const handleSimulateMatchup = async (event, { numGames, matchupLineups, gameId, statCaptureConfig, liveGameData, parkEffects }) => {
+const handleSimulateMatchup = async (event, { numGames, matchupLineups, gameId, statCaptureConfig, liveGameData, parkEffects, umpireEffects }) => {
     if (gameId) {
         log.info(`Simulating ${numGames} MLB games - Game ${gameId}`);
     } else {
@@ -155,7 +155,7 @@ const handleSimulateMatchup = async (event, { numGames, matchupLineups, gameId, 
     }
 
     try {
-        return await runParallelSimulation(matchupLineups, numGames, statCaptureConfig, liveGameData, parkEffects);
+        return await runParallelSimulation(matchupLineups, numGames, statCaptureConfig, liveGameData, parkEffects, umpireEffects);
     } catch (err) {
         log.error('Error simulating MLB matchup:', err);
         throw err;

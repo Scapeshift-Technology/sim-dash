@@ -7,7 +7,7 @@ import { findOptimalLeans } from "@/simDash/pages/MLBMatchupView/functions/optim
 import { MatchupLineups } from "@/preload";
 import { MarketLinesMLB, MlbLiveDataApiResponse } from "@@/types/mlb";
 import { SavedConfiguration } from "@@/types/statCaptureConfig";
-import { ParkEffectsResponse } from "@@/types/mlb/mlb-sim";
+import { ParkEffectsResponse, UmpireEffectsResponse } from "@@/types/mlb/mlb-sim";
 
 // --------------------
 // This slice contains data that is used to display the status of a simulation in the UI
@@ -81,7 +81,8 @@ export const runSimulationThunk = createAsyncThunk(
     numGames = 90000,
     liveGameData,
     activeConfig,
-    parkEffects
+    parkEffects,
+    umpireEffects
   }: {
     league: LeagueName;
     matchId: number;
@@ -90,8 +91,9 @@ export const runSimulationThunk = createAsyncThunk(
     liveGameData?: MlbLiveDataApiResponse;
     activeConfig?: SavedConfiguration;
     parkEffects?: ParkEffectsResponse;
+    umpireEffects?: UmpireEffectsResponse;
   }) => {
-    const results = await runSimulation(gameInputs, numGames, liveGameData, activeConfig, parkEffects);
+    const results = await runSimulation(gameInputs, numGames, liveGameData, activeConfig, parkEffects, umpireEffects);
     return results;
   }
 );
@@ -104,7 +106,8 @@ export const runSeriesSimulationThunk = createAsyncThunk(
     gameInputs,
     numGames = 90000,
     activeConfig,
-    parkEffects
+    parkEffects,
+    umpireEffects
   }: {
     league: LeagueName;
     matchId: number;
@@ -112,8 +115,9 @@ export const runSeriesSimulationThunk = createAsyncThunk(
     numGames?: number;
     activeConfig?: SavedConfiguration;
     parkEffects?: ParkEffectsResponse;
+    umpireEffects?: UmpireEffectsResponse;
   }) => {
-    const results = await runSeriesSimulation(gameInputs, numGames, activeConfig, parkEffects);
+    const results = await runSeriesSimulation(gameInputs, numGames, activeConfig, parkEffects, umpireEffects);
     return results;
   }
 );
@@ -125,15 +129,17 @@ export const findLeansThunk = createAsyncThunk(
     matchId,
     lineups,
     marketLines,
-    parkEffects
+    parkEffects,
+    umpireEffects
   }: {
     league: LeagueName;
     matchId: number;
     lineups: MatchupLineups;
     marketLines: MarketLinesMLB;
     parkEffects?: ParkEffectsResponse;
+    umpireEffects?: UmpireEffectsResponse;
   }) => {
-    const results = await findOptimalLeans(lineups, marketLines, parkEffects);
+    const results = await findOptimalLeans(lineups, marketLines, parkEffects, umpireEffects);
     return results;
   }
 );
