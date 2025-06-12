@@ -47,7 +47,6 @@ const DraggableLineup: React.FC<DraggableLineupProps> = ({
     const teamInputs = useSelector((state: RootState) => selectTeamInputs(state, league, matchId))?.[teamType];
     const hitterAdjustment = useSelector((state: RootState) => selectTeamInputs(state, league, matchId))?.[teamType].teamHitterLean || 0;
     const pitcherAdjustment = useSelector((state: RootState) => selectTeamInputs(state, league, matchId))?.[teamType].teamPitcherLean || 0;
-    console.log('teamData', teamData);
 
     // ---------- Variables ----------
 
