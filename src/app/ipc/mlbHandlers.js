@@ -125,6 +125,25 @@ const handleParkEffectsApi = async (event, args) => {
     }
 };
 
+const handleUmpireEffectsApi = async (event, args) => {
+    try {
+        const response = await fetch('http://127.0.0.1:8000/umpires', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ umpireId: args.umpireId })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        throw error;
+    }
+};
+
 // ---------- Simulations ----------
 
 // Handler for simulating MLB matchups
@@ -209,8 +228,9 @@ const registerMLBHandlers = ({ getMlbWebSocketManager, getDbHelper, getDb, getCu
     ipcMain.handle('simulate-matchup-mlb', handleSimulateMatchup);
     ipcMain.handle('get-mlb-sim-data', (event) => handleGetMLBSimData(event, getDbHelper, getDb));
 
-    // Park Effects API
+    // Effects API
     ipcMain.handle('park-effects-api', (event, args) => handleParkEffectsApi(event, args));
+    ipcMain.handle('umpire-effects-api', (event, args) => handleUmpireEffectsApi(event, args));
 
     log.info('MLB IPC handlers registered');
 };

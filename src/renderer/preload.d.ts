@@ -66,8 +66,9 @@ declare global {
       onMLBGameUpdate: (callback: (gameData: { data: MlbLiveDataApiResponse, gameId: number }) => void) => () => void; // Returns cleanup function
       fetchInitialMLBLiveData: (args: { gameId: number }) => Promise<MlbGameApiResponse>; // Used before websockets for quick data infusion
 
-      // Park Effects API
+      // Effects API
       parkEffectsApi: (args: ParkEffectsRequest) => Promise<ParkEffectsResponse>;
+      umpireEffectsApi: (args: UmpireEffectsRequest) => Promise<UmpireEffectsResponse>;
       
       // ---------- Simulation Windows ----------
       createSimWindow: (args: { 
