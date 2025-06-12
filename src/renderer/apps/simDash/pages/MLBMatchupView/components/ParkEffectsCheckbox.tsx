@@ -1,19 +1,18 @@
 import React from 'react';
-import {
-    FormControlLabel,
-    Checkbox,
-    Typography,
-    CircularProgress
-} from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
 import { 
     toggleParkEffects, 
+    fetchMlbGameParkEffects,
     selectParkEffectsEnabled,
     selectGameParkEffectsStatus,
-    selectGameParkEffectsError
+    selectGameParkEffectsError,
+    selectGameLineups,
+    selectGameMetadata
 } from '@/simDash/store/slices/simInputsSlice';
 import { LeagueName } from '@@/types/league';
+import { Player, TeamLineup } from '@@/types/mlb';
+import EffectsCheckbox from './EffectsCheckbox';
 
 interface ParkEffectsCheckboxProps {
     matchId: number;
@@ -26,58 +25,54 @@ const ParkEffectsCheckbox: React.FC<ParkEffectsCheckboxProps> = ({ matchId, leag
     // ---------- State ----------
 
     const enabled = useSelector((state: RootState) => selectParkEffectsEnabled(state, leagueName, matchId));
-    const parkEffectsStatus = useSelector((state: RootState) => selectGameParkEffectsStatus(state, leagueName, matchId));
-    const parkEffectsError = useSelector((state: RootState) => selectGameParkEffectsError(state, leagueName, matchId));
-
-    const isLoading = parkEffectsStatus === 'loading';
-    const hasError = parkEffectsStatus === 'failed' || !!parkEffectsError;
+    const status = useSelector((state: RootState) => selectGameParkEffectsStatus(state, leagueName, matchId));
+    const error = useSelector((state: RootState) => selectGameParkEffectsError(state, leagueName, matchId));
+    const gameLineups = useSelector((state: RootState) => selectGameLineups(state, leagueName, matchId));
+    const gameMetadata = useSelector((state: RootState) => selectGameMetadata(state, leagueName, matchId));
 
     // ---------- Handlers ----------
 
-    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleToggle = () => {
         dispatch(toggleParkEffects({ league: leagueName, matchId }));
+    };
+
+    const handleRetry = () => {
+        if (!gameLineups || !gameMetadata?.venueId) return;
+
+        const getTeamPlayers = (team: TeamLineup | undefined): Player[] => {
+            if (!team) return [];
+            return [
+                ...(team.lineup || []),
+                ...(team.bench || []),
+                ...(team.bullpen || []),
+                team.startingPitcher,
+                ...(team.unavailableHitters || []),
+                ...(team.unavailablePitchers || [])
+            ].filter(Boolean) as Player[];
+        };
+
+        const playerList = [
+            ...getTeamPlayers(gameLineups.away),
+            ...getTeamPlayers(gameLineups.home)
+        ];
+
+        dispatch(fetchMlbGameParkEffects({
+            matchId,
+            venueId: gameMetadata.venueId,
+            players: playerList
+        }));
     };
 
     // ---------- Render ----------
 
-    const getLabelText = () => {
-        if (isLoading) return 'Park Effects (Loading...)';
-        if (hasError) return 'Park Effects (Error)';
-        return 'Park Effects';
-    };
-
-    const getLabelColor = () => {
-        if (hasError) return 'error.main';
-        if (isLoading) return 'text.secondary';
-        return 'text.primary';
-    };
-
     return (
-        <FormControlLabel
-            control={
-                <Checkbox
-                    checked={enabled}
-                    onChange={handleChange}
-                    size="small"
-                    disabled={isLoading || hasError}
-                />
-            }
-            label={
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Typography 
-                        variant="body2" 
-                        sx={{ 
-                            fontSize: '0.875rem',
-                            color: getLabelColor()
-                        }}
-                    >
-                        {getLabelText()}
-                    </Typography>
-                    {isLoading && (
-                        <CircularProgress size={12} />
-                    )}
-                </div>
-            }
+        <EffectsCheckbox
+            effectType="Park Effects"
+            enabled={enabled}
+            status={status}
+            error={error}
+            onToggle={handleToggle}
+            onRetry={handleRetry}
         />
     );
 };
