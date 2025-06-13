@@ -16,6 +16,28 @@ interface UseDragAndDropParams {
     onPitcherReorder: (teamType: TeamType, newStartingPitcher: Player | null, newBullpen: Player[], newUnavailablePitchers?: Player[]) => void;
 }
 
+// ---------- Helper functions ----------
+
+const transformPlayerForRole = (player: Player, newRole: 'SP' | 'RP'): Player => {
+    if (!player.alternateRoleStats || player.position === newRole) {
+      return { ...player, position: newRole };
+    }
+    
+    const currentStats = player.stats;
+    const newRoleStats = player.alternateRoleStats[newRole];
+    const { [newRole]: removedRole, ...remainingAlternateStats } = player.alternateRoleStats;
+    
+    return {
+      ...player,
+      position: newRole,
+      stats: newRoleStats || currentStats,
+      alternateRoleStats: {
+        ...remainingAlternateStats,
+        ...(currentStats && player.position && { [player.position]: currentStats })
+      }
+    };
+};
+
 // ---------- Main hook ----------
 
 const useDragAndDrop = ({
@@ -144,23 +166,11 @@ const useDragAndDrop = ({
             let newStartingPitcher: Player | null = null;
             
             if (sourceList === 'starter') {
-                newBullpen[targetIndex] = {
-                    ...sourcePlayer,
-                    position: 'RP'
-                };
-                newStartingPitcher = {
-                    ...targetPlayer,
-                    position: 'SP'
-                };
+                newBullpen[targetIndex] = transformPlayerForRole(sourcePlayer, 'RP');
+                newStartingPitcher = transformPlayerForRole(targetPlayer, 'SP');
             } else {
-                newBullpen[sourceIndex] = {
-                    ...targetPlayer,
-                    position: 'RP'
-                };
-                newStartingPitcher = {
-                    ...sourcePlayer,
-                    position: 'SP'
-                };
+                newBullpen[sourceIndex] = transformPlayerForRole(targetPlayer, 'RP');
+                newStartingPitcher = transformPlayerForRole(sourcePlayer, 'SP');
             }
 
             onPitcherReorder(teamType, newStartingPitcher, newBullpen);
@@ -170,10 +180,10 @@ const useDragAndDrop = ({
             let newStartingPitcher: Player | null = null;
             
             if (targetList === 'bullpen') {
-                const newReliever = { ...sourcePlayer, position: 'RP' }
+                const newReliever = transformPlayerForRole(sourcePlayer, 'RP');
                 newBullpen.push(newReliever);
             } else if (targetList === 'starter') {
-                newStartingPitcher = { ...sourcePlayer, position: 'SP' };
+                newStartingPitcher = transformPlayerForRole(sourcePlayer, 'SP');
                 newUnavailablePitchers.push(teamData.startingPitcher);
             }
 
@@ -189,15 +199,15 @@ const useDragAndDrop = ({
             } else if (sourceList === 'starter') {
                 // When starter goes unavailable, swap with target if dropping on existing player
                 if (targetIndex < teamData.unavailablePitchers.length) {
-                    newStartingPitcher = { ...targetPlayer, position: 'SP' };
-                    newUnavailablePitchers[targetIndex] = { ...sourcePlayer, position: 'RP' };
+                    newStartingPitcher = transformPlayerForRole(targetPlayer, 'SP');
+                    newUnavailablePitchers[targetIndex] = transformPlayerForRole(sourcePlayer, 'RP');
                 } else {
                     // If dropping at end, promote first bullpen pitcher or set to null
-                    newStartingPitcher = newBullpen.length > 0 ? { ...newBullpen[0], position: 'SP' } : null;
+                    newStartingPitcher = newBullpen.length > 0 ? transformPlayerForRole(newBullpen[0], 'SP') : null;
                     if (newBullpen.length > 0) {
                         newBullpen.splice(0, 1);
                     }
-                    newUnavailablePitchers.push({ ...sourcePlayer, position: 'RP' });
+                    newUnavailablePitchers.push(transformPlayerForRole(sourcePlayer, 'RP'));
                 }
             }
 

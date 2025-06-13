@@ -84,6 +84,10 @@ export interface Player {
     stats?: PlayerStats; // Include if stats are readily available
     battingSide?: Handedness; // 'L' or 'R'
     pitchingSide?: Handedness; // 'L' or 'R'
+
+    alternateRoleStats?: {
+      [role: string]: PlayerStats;
+    }
 }
 
 export interface TeamLineup {

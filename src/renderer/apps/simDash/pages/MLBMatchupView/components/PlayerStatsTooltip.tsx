@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
-  Paper
+  Paper,
+  Chip
 } from '@mui/material';
 import type { Player, Stats } from '@/types/mlb';
 
@@ -47,8 +48,13 @@ const formatTripleSlash = (value: number) => value.toFixed(3);
 // ---------- Sub-components ----------
 
 const StatsDisplay: React.FC<StatsDisplayProps> = ({ title, stats, isOpponentLine = false }) => {
+
+  // ---------- State ----------
+
   const slash = calculateTripleSlash(stats);
   const slashLabel = isOpponentLine ? 'Opponent Line' : 'Triple Slash';
+
+  // ---------- Render ----------
   
   return (
     <Box sx={{ mb: 2 }}>
@@ -93,11 +99,31 @@ const StatsDisplay: React.FC<StatsDisplayProps> = ({ title, stats, isOpponentLin
 // ---------- Main component ----------
 
 const PlayerStatsTooltip: React.FC<PlayerStatsTooltipProps> = ({ player }) => {
-  // Determine if player is a pitcher based on position
-  const isPitcher = player.position === 'SP' || player.position === 'RP';
+
+  // ---------- State ----------
+
+  const backupRoles = player.alternateRoleStats ? Object.keys(player.alternateRoleStats) : [];
+  const [selectedRole, setSelectedRole] = useState<string>(player.position || '');
+  const selectedIsPitcher = selectedRole === 'SP' || selectedRole === 'RP';
+
+  // ---------- Handlers ----------
+
+  const handlePositionClick = (position: string) => {
+    setSelectedRole(position);
+  };
+
+  // ---------- Helper functions ----------
   
-  // Check if player has any stats
-  const hasStats = player.stats?.hitVsL || player.stats?.hitVsR || player.stats?.pitchVsL || player.stats?.pitchVsR;
+  const getSelectedStats = () => { // Get stats for the selected role
+    if (selectedRole === player.position) {
+      return player.stats; // Current role stats
+    }
+    return player.alternateRoleStats?.[selectedRole]; // Backup role stats
+  };
+
+  // ---------- Render ----------
+
+  const selectedStats = getSelectedStats();
 
   return (
     <Paper 
@@ -110,30 +136,75 @@ const PlayerStatsTooltip: React.FC<PlayerStatsTooltipProps> = ({ player }) => {
         borderColor: 'divider'
       }}
     >
-      <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
-        {player.name}
-      </Typography>
+      {/* Header with name and positions */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+          {player.name}
+        </Typography>
+        
+        {/* Position chips in top right */}
+        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 0.5 }}>
+          {/* Current position */}
+          {player.position && (
+            <Chip
+              label={player.position}
+              size="small"
+              variant={selectedRole === player.position ? "filled" : "outlined"}
+              color={selectedRole === player.position ? "primary" : "default"}
+              onClick={() => handlePositionClick(player.position!)}
+              sx={{ 
+                height: 20,
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                '&:hover': {
+                  backgroundColor: selectedRole === player.position ? 'primary.dark' : 'action.hover'
+                }
+              }}
+            />
+          )}
+          
+          {/* Backup roles */}
+          {backupRoles.map((role) => (
+            <Chip
+              key={role}
+              label={role}
+              size="small"
+              variant={selectedRole === role ? "filled" : "outlined"}
+              color={selectedRole === role ? "secondary" : "default"}
+              onClick={() => handlePositionClick(role)}
+              sx={{ 
+                height: 20,
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                '&:hover': {
+                  backgroundColor: selectedRole === role ? 'secondary.dark' : 'action.hover'
+                }
+              }}
+            />
+          ))}
+        </Box>
+      </Box>
       
-      {hasStats ? (
+      {selectedStats && (selectedStats.hitVsL || selectedStats.hitVsR || selectedStats.pitchVsL || selectedStats.pitchVsR) ? (
         <Box>
           <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 1, color: 'primary.main' }}>
-            {isPitcher ? 'Pitching Stats' : 'Hitting Stats'}
+            {selectedIsPitcher ? `Pitching Stats (${selectedRole})` : `Hitting Stats (${selectedRole})`}
           </Typography>
           
-          {isPitcher ? (
-            // Pitcher Stats
+          {selectedIsPitcher ? (
+            // Pitcher Stats for selected role
             <>
-              {player.stats?.pitchVsL && (
+              {selectedStats?.pitchVsL && (
                 <StatsDisplay 
                   title="vs LHB" 
-                  stats={player.stats.pitchVsL} 
+                  stats={selectedStats.pitchVsL} 
                   isOpponentLine={true}
                 />
               )}
-              {player.stats?.pitchVsR && (
+              {selectedStats?.pitchVsR && (
                 <StatsDisplay 
                   title="vs RHB" 
-                  stats={player.stats.pitchVsR} 
+                  stats={selectedStats.pitchVsR} 
                   isOpponentLine={true}
                 />
               )}
@@ -141,16 +212,16 @@ const PlayerStatsTooltip: React.FC<PlayerStatsTooltipProps> = ({ player }) => {
           ) : (
             // Hitter Stats
             <>
-              {player.stats?.hitVsL && (
+              {selectedStats?.hitVsL && (
                 <StatsDisplay 
                   title="vs LHP" 
-                  stats={player.stats.hitVsL} 
+                  stats={selectedStats.hitVsL} 
                 />
               )}
-              {player.stats?.hitVsR && (
+              {selectedStats?.hitVsR && (
                 <StatsDisplay 
                   title="vs RHP" 
-                  stats={player.stats.hitVsR} 
+                  stats={selectedStats.hitVsR} 
                 />
               )}
             </>
@@ -158,7 +229,7 @@ const PlayerStatsTooltip: React.FC<PlayerStatsTooltipProps> = ({ player }) => {
         </Box>
       ) : (
         <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-          No stats available
+          No stats available for {selectedRole}
         </Typography>
       )}
     </Paper>

@@ -128,9 +128,9 @@ async function fetchPitcherStatsMLB(matchupLineups: MatchupLineups, pool: Connec
     'Pitchers'
   );
   
-  // Create validation function to match pitcher position with stat type
-  const validatePitcherType = (player: Player, stat: StatsResult): boolean => {
-    if (!stat.PitcherType) return false; // Only hitter stats would do this
+  // Create validation function for current role
+  const validateCurrentRole = (player: Player, stat: StatsResult): boolean => {
+    if (!stat.PitcherType) return false;
     
     const pitcherType = stat.PitcherType.trim();
     if (player.position === 'SP' && pitcherType === 'S') return true;
@@ -139,9 +139,39 @@ async function fetchPitcherStatsMLB(matchupLineups: MatchupLineups, pool: Connec
     return false;
   };
 
-  // Map stats back to players
-  const playersWithStats = mapStatsToPlayer(pitcherPlayers, allStats, 'pitch', validatePitcherType);
-  return playersWithStats;
+  // Create validation function for alternate role
+  const validateAlternateRole = (player: Player, stat: StatsResult): boolean => {
+    if (!stat.PitcherType) return false;
+    
+    const pitcherType = stat.PitcherType.trim();
+    if (player.position === 'SP' && pitcherType === 'R') return true;
+    if (player.position === 'RP' && pitcherType === 'S') return true;
+    
+    return false;
+  };
+
+  const playersWithCurrentStats = mapStatsToPlayer(pitcherPlayers, allStats, 'pitch', validateCurrentRole);
+  const playersWithAlternateStats = mapStatsToPlayer(pitcherPlayers, allStats, 'pitch', validateAlternateRole);
+
+  // Merge the results
+  const playersWithBothStats = playersWithCurrentStats.map(player => {
+    const alternatePlayer = playersWithAlternateStats.find((p: Player) => p.id === player.id);
+    
+    if (alternatePlayer && alternatePlayer.stats) {
+      const alternateRole = player.position === 'SP' ? 'RP' : 'SP';
+      
+      return {
+        ...player,
+        alternateRoleStats: {
+          [alternateRole]: alternatePlayer.stats
+        }
+      };
+    }
+    
+    return player;
+  });
+
+  return playersWithBothStats;
 }
 
 function mapPlayersToMatchupLineups(matchupLineups: MatchupLineups, hitterPlayers: Player[], pitcherPlayers: Player[]): MatchupLineups {
