@@ -15,7 +15,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import type { MLBGameContainer } from "@/types/simInputs";
 import { MarketLinesMLB, MatchupLineups } from '@@/types/mlb';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateMLBMarketLines, selectGameAutomatedLeans, updateMLBAutomatedLeans } from '@/simDash/store/slices/simInputsSlice';
+import { updateMLBMarketLines, selectGameAutomatedLeans, updateMLBAutomatedLeans, selectBaseRunningModel } from '@/simDash/store/slices/simInputsSlice';
 import { AppDispatch, RootState } from '@/store/store';
 import { findLeansThunk, selectFindLeansStatus, selectFindLeansError } from '@/simDash/store/slices/simulationStatusSlice';
 import { selectBettingBoundsValues, selectBettingBoundsErrors, setBettingBounds } from '@/simDash/store/slices/bettingBoundsSlice';
@@ -41,6 +41,7 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
     const automatedLeans = useSelector((state: RootState) => selectGameAutomatedLeans(state, 'MLB', matchId));
     const findLeansStatus = useSelector((state: RootState) => selectFindLeansStatus(state, 'MLB', matchId));
     const findLeansError = useSelector((state: RootState) => selectFindLeansError(state, 'MLB', matchId));
+    const baseRunningModel = useSelector((state: RootState) => selectBaseRunningModel(state, 'MLB', matchId));
     const bounds = useSelector((state: RootState) => selectBettingBoundsValues(state, 'MLB', matchId)) || {
         awayML: '',
         homeML: '',
@@ -151,6 +152,7 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
             const optimalLeansResult = await dispatch(findLeansThunk({
                 league: 'MLB',
                 matchId,
+                baseRunningModel: baseRunningModel,
                 lineups: gameContainer?.currentGame?.lineups as MatchupLineups,
                 marketLines: marketLines,
                 parkEffects: parkEffects,

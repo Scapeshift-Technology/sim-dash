@@ -16,10 +16,10 @@ import { initializeHomeFieldMultipliers } from "./homeFieldAdvantage";
 import { calculateSimCounts } from "./analysis/analyzeResults";
 import { SimResultsMLB } from "@/types/bettingResults";
 import { evaluatePitchingSubstitution } from "./pitcherSubstitution";
-import { processEvent } from "./baserunning";
+import { simulateStolenBase, processStolenBaseResult, processBattingEvent } from "./baserunning";
 import { initializeGameState } from "./gameState";
 import log from "electron-log";
-import { ParkEffectsResponse, UmpireEffectsResponse } from "@/types/mlb/mlb-sim";
+import { ParkEffectsResponse, UmpireEffectsResponse, BaseRunningModel } from "@/types/mlb/mlb-sim";
 
 // ---------- MLB sim engine ----------
 /**
@@ -31,17 +31,18 @@ async function simulateMatchupMLB(
   matchup: MatchupLineups,
 //   leagueAvgStats: LeagueAvgStats,
   num_games: number = 50000,
+  baseRunningModel: BaseRunningModel,
   statCaptureConfig: SavedConfiguration,
   liveGameData?: MlbLiveDataApiResponse,
   parkEffects?: ParkEffectsResponse,
-  umpireEffects?: UmpireEffectsResponse
+  umpireEffects?: UmpireEffectsResponse,
 ) {
   try {
     // Matchup probabilities
     await initializeHomeFieldMultipliers(); // Can we just remove this line???
 
     // Simulate games
-    const simPlays = await simulateGames(matchup, leagueAvgStats, num_games, liveGameData, parkEffects, umpireEffects);
+    const simPlays = await simulateGames(matchup, leagueAvgStats, num_games, baseRunningModel, liveGameData, parkEffects, umpireEffects);
     // Get results
     const outputResults: SimResultsMLB = calculateSimCounts(simPlays, matchup, statCaptureConfig, liveGameData);
 
@@ -51,12 +52,20 @@ async function simulateMatchupMLB(
   }
 }
 
-async function simulateGames(matchup: MatchupLineups, leagueAvgStats: LeagueAvgStats, num_games: number, liveGameData?: MlbLiveDataApiResponse, parkEffects?: ParkEffectsResponse, umpireEffects?: UmpireEffectsResponse): Promise<PlayResult[][]> {
+async function simulateGames(
+  matchup: MatchupLineups, 
+  leagueAvgStats: LeagueAvgStats, 
+  num_games: number, 
+  baseRunningModel: BaseRunningModel,
+  liveGameData?: MlbLiveDataApiResponse, 
+  parkEffects?: ParkEffectsResponse, 
+  umpireEffects?: UmpireEffectsResponse
+): Promise<PlayResult[][]> {
   const matchupProbabilities: GameMatchupProbabilities = getMatchupProbabilities(matchup, leagueAvgStats, parkEffects, umpireEffects);
   const allPlays: PlayResult[][] = [];
 
   for (let i = 0; i < num_games; i++) {
-    const gamePlays = simulateGame(matchup, matchupProbabilities, liveGameData);
+    const gamePlays = simulateGame(matchup, matchupProbabilities, baseRunningModel, liveGameData);
     allPlays.push(gamePlays);
     
     // Yield control every 100 games to allow worker termination
@@ -74,12 +83,31 @@ async function simulateGames(matchup: MatchupLineups, leagueAvgStats: LeagueAvgS
  * @param matchupProbabilities 
  * @returns {PlayResult[]} An array of plays that happened during the game
  */
-function simulateGame(matchup: MatchupLineups, matchupProbabilities: GameMatchupProbabilities, liveGameData?: MlbLiveDataApiResponse): PlayResult[] {
+function simulateGame(
+  matchup: MatchupLineups, 
+  matchupProbabilities: GameMatchupProbabilities, 
+  baseRunningModel: BaseRunningModel,
+  liveGameData?: MlbLiveDataApiResponse,
+): PlayResult[] {
   const plays: PlayResult[] = [];
   const gameState = initializeGameState(matchup, liveGameData);
 
   while (true) {
-    const playResult = simulatePlay(gameState, matchupProbabilities);
+    if (baseRunningModel === 'avg_stolen_bases' || baseRunningModel === 'ind_stolen_bases') {
+      const stolenBaseResult = simulateStolenBase(gameState);
+      if (stolenBaseResult) {
+        const stolenBasePlay = processStolenBaseResult(stolenBaseResult, gameState);
+        plays.push(stolenBasePlay);
+        
+        if (gameState.outs >= 3) {
+          handleInningEnd(gameState);
+          continue;
+        }
+      }
+    }
+
+    // Simulate the batting event
+    const playResult = simulatePlay(gameState, matchupProbabilities, baseRunningModel);
     plays.push(playResult);
 
     updateGameState(gameState, playResult);
@@ -144,7 +172,7 @@ function updateGameState(gameState: GameStateMLB, playResult: PlayResult) {
   gameState.outs += playResult.outsOnPlay;
 }
 
-function simulatePlay(gameState: GameStateMLB, matchupProbabilities: GameMatchupProbabilities): PlayResult {
+function simulatePlay(gameState: GameStateMLB, matchupProbabilities: GameMatchupProbabilities, baseRunningModel: BaseRunningModel): PlayResult {
   const { topInning } = gameState;
   let atBatMatchupProbabilities: Stats;
   let currentBatter: Player;
@@ -165,7 +193,7 @@ function simulatePlay(gameState: GameStateMLB, matchupProbabilities: GameMatchup
     }
 
     const playEvent = simulatePlayResult(atBatMatchupProbabilities);
-    const result = processEvent(playEvent, gameState);
+    const result = processBattingEvent(playEvent, gameState, baseRunningModel);
     const playResult: PlayResult = {
       batterID: currentBatter.id,
       pitcherID: currentPitcherID,
@@ -196,10 +224,10 @@ function simulatePlayResult(atBatMatchupProbabilities: Stats): EventType {
   const random = Math.random();
   let cumulativeProbability = 0;
   
-  // Order of events to check (matches Stats interface)
-  const events: EventType[] = ['K', 'BB', '1B', '2B', '3B', 'HR', 'OUT'];
+  // Order of batting events to check (excludes SB/CS which are handled separately)
+  const battingEvents: EventType[] = ['K', 'BB', '1B', '2B', '3B', 'HR', 'OUT'];
   
-  for (const event of events) {
+  for (const event of battingEvents) {
     const prob = atBatMatchupProbabilities[eventTypeToEventKey(event)];
     cumulativeProbability += prob;
     if (random < cumulativeProbability) {
