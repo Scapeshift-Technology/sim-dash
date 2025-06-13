@@ -48,7 +48,7 @@ export interface MlbApiOfficial {
   }
   officialType: OfficialType;
 }
-  
+
 export interface MlbGameApiBoxscore {
   teams: {
     away: MlbGameApiTeamData;
@@ -291,6 +291,9 @@ export interface MlbScheduleApiGame {
     home: MlbScheduleApiTeam;
   };
   seriesGameNumber: number;
+  venue: {
+    id: number;
+  }
   officials?: MlbApiOfficial[];
   weather?: MlbApiWeather;
 }

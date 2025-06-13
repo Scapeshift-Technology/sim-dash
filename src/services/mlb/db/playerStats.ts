@@ -131,22 +131,22 @@ async function fetchPitcherStatsMLB(matchupLineups: MatchupLineups, pool: Connec
   // Create validation function for current role
   const validateCurrentRole = (player: Player, stat: StatsResult): boolean => {
     if (!stat.PitcherType) return false;
-    
+
     const pitcherType = stat.PitcherType.trim();
     if (player.position === 'SP' && pitcherType === 'S') return true;
     if (player.position === 'RP' && pitcherType === 'R') return true;
-    
+
     return false;
   };
 
   // Create validation function for alternate role
   const validateAlternateRole = (player: Player, stat: StatsResult): boolean => {
     if (!stat.PitcherType) return false;
-    
+
     const pitcherType = stat.PitcherType.trim();
     if (player.position === 'SP' && pitcherType === 'R') return true;
     if (player.position === 'RP' && pitcherType === 'S') return true;
-    
+
     return false;
   };
 
@@ -156,10 +156,10 @@ async function fetchPitcherStatsMLB(matchupLineups: MatchupLineups, pool: Connec
   // Merge the results
   const playersWithBothStats = playersWithCurrentStats.map(player => {
     const alternatePlayer = playersWithAlternateStats.find((p: Player) => p.id === player.id);
-    
+
     if (alternatePlayer && alternatePlayer.stats) {
       const alternateRole = player.position === 'SP' ? 'RP' : 'SP';
-      
+
       return {
         ...player,
         alternateRoleStats: {
@@ -167,7 +167,7 @@ async function fetchPitcherStatsMLB(matchupLineups: MatchupLineups, pool: Connec
         }
       };
     }
-    
+
     return player;
   });
 

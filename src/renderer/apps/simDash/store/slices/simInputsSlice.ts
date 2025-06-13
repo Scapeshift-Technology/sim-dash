@@ -1,5 +1,16 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { GameMetadataMLB, MarketLinesMLB, MatchupLineups, MLBGameData, MLBGameDataResponse, Player, Position, SeriesInfoMLB, MlbLiveDataApiResponse, GameStateMLB } from '@/types/mlb';
+import type { 
+  GameMetadataMLB, 
+  MarketLinesMLB, 
+  MatchupLineups, 
+  MLBGameData, 
+  MLBGameDataResponse, 
+  Player, 
+  Position, 
+  SeriesInfoMLB, 
+  MlbLiveDataApiResponse, 
+  GameStateMLB 
+} from '@/types/mlb';
 import type { 
   MLBGameSimInputs, 
   MLBGameSimInputsTeam, 
@@ -10,7 +21,7 @@ import type {
 } from '@/types/simInputs';
 import { LeagueName } from '@@/types/league';
 import { RootState } from '@/store/store';
-import { SimType } from '@@/types/mlb/mlb-sim';
+import { SimType, ParkEffectsResponse, UmpireEffectsResponse } from '@@/types/mlb/mlb-sim';
 import { initializeGameState } from '@@/services/mlb/sim/gameState';
 
 // ---------- Initial States ----------
@@ -35,8 +46,14 @@ const initialMLBGameContainer: MLBGameContainer = {
   gameDataError: null,
   statsStatus: 'idle',
   statsError: null,
+  parkEffectsStatus: 'idle',
+  parkEffectsError: null,
+  umpireEffectsStatus: 'idle',
+  umpireEffectsError: null,
 
-  simMode: 'game'
+  simMode: 'game',
+  parkEffectsEnabled: false,
+  umpireEffectsEnabled: false
 }
 
 // ---------- Helpers ----------
@@ -145,6 +162,30 @@ export const fetchMlbGamePlayerStats = createAsyncThunk<
 
     const playerStats = await window.electronAPI.fetchMlbGamePlayerStats({ matchupLineups, date });
     return { matchId, playerStats };
+  }
+)
+
+export const fetchMlbGameParkEffects = createAsyncThunk<
+  { matchId: number; parkEffects: ParkEffectsResponse },
+  { matchId: number; venueId: number; players: Player[] }
+>(
+  'simInputs/fetchMlbGameParkEffects',
+  async ({ matchId, venueId, players }) => {
+    const parkEffects = await window.electronAPI.parkEffectsApi({ venueId, players });
+    console.log('Park effects:', parkEffects);
+    return { matchId, parkEffects };
+  }
+)
+
+export const fetchMlbGameUmpireEffects = createAsyncThunk<
+  { matchId: number; umpireEffects: UmpireEffectsResponse },
+  { matchId: number; umpireId: number }
+>(
+  'simInputs/fetchMlbGameUmpireEffects',
+  async ({ matchId, umpireId }) => {
+    const umpireEffects = await window.electronAPI.umpireEffectsApi({ umpireId });
+    console.log('Umpire effects:', umpireEffects);
+    return { matchId, umpireEffects };
   }
 )
 
@@ -389,6 +430,28 @@ const simInputsSlice = createSlice({
       if (league === 'MLB' && state[league]?.[matchId]?.customModeData) {
         state[league][matchId].customModeData.gameState = gameState;
       }
+    },
+    toggleParkEffects: (state, action: {
+      payload: {
+        league: LeagueName;
+        matchId: number;
+      }
+    }) => {
+      const { league, matchId } = action.payload;
+      if (league === 'MLB' && state[league]?.[matchId]) {
+        state[league][matchId].parkEffectsEnabled = !state[league][matchId].parkEffectsEnabled;
+      }
+    },
+    toggleUmpireEffects: (state, action: {
+      payload: {
+        league: LeagueName;
+        matchId: number;
+      }
+    }) => {
+      const { league, matchId } = action.payload;
+      if (league === 'MLB' && state[league]?.[matchId]) {
+        state[league][matchId].umpireEffectsEnabled = !state[league][matchId].umpireEffectsEnabled;
+      }
     }
   },
   extraReducers: (builder) => {
@@ -472,8 +535,59 @@ const simInputsSlice = createSlice({
           state['MLB'][matchId].statsStatus = 'failed';
           state['MLB'][matchId].statsError = action.error.message ?? 'Failed to fetch player stats';
         }
+      })
+      // ---------- Fetch MLB Game Park Effects ----------
+      .addCase(fetchMlbGameParkEffects.pending, (state, action) => {
+        const matchId = action.meta.arg.matchId;
+        if (state['MLB']?.[matchId]) {
+          state['MLB'][matchId].parkEffectsError = null;
+          state['MLB'][matchId].parkEffectsStatus = 'loading';
+        }
+      })
+      .addCase(fetchMlbGameParkEffects.fulfilled, (state, action) => {
+        const { matchId, parkEffects } = action.payload;
+        if (state['MLB']?.[matchId]) {
+          state['MLB'][matchId].parkEffectsStatus = 'succeeded';
+          state['MLB'][matchId].parkEffectsError = null;
+          state['MLB'][matchId].parkEffects = parkEffects;
+          state['MLB'][matchId].parkEffectsEnabled = true;
+        }
+      })
+      .addCase(fetchMlbGameParkEffects.rejected, (state, action) => {
+        const matchId = action.meta.arg.matchId;
+        if (state['MLB']?.[matchId]) {
+          state['MLB'][matchId].parkEffectsStatus = 'failed';
+          state['MLB'][matchId].parkEffectsError = action.error.message ?? 'Failed to fetch park effects';
+          state['MLB'][matchId].parkEffectsEnabled = false;
+        }
+      })
+
+      // ---------- Fetch MLB Game Umpire Effects ----------
+      .addCase(fetchMlbGameUmpireEffects.pending, (state, action) => {
+        const matchId = action.meta.arg.matchId;
+        if (state['MLB']?.[matchId]) {
+          state['MLB'][matchId].umpireEffectsError = null;
+          state['MLB'][matchId].umpireEffectsStatus = 'loading';
+        }
+      })
+      .addCase(fetchMlbGameUmpireEffects.fulfilled, (state, action) => {
+        const { matchId, umpireEffects } = action.payload;
+        if (state['MLB']?.[matchId]) {
+          state['MLB'][matchId].umpireEffectsStatus = 'succeeded';
+          state['MLB'][matchId].umpireEffectsError = null;
+          state['MLB'][matchId].umpireEffects = umpireEffects;
+          state['MLB'][matchId].umpireEffectsEnabled = true;
+        }
+      })
+      .addCase(fetchMlbGameUmpireEffects.rejected, (state, action) => {
+        const matchId = action.meta.arg.matchId;
+        if (state['MLB']?.[matchId]) {
+          state['MLB'][matchId].umpireEffectsStatus = 'failed';
+          state['MLB'][matchId].umpireEffectsError = action.error.message ?? 'Failed to fetch umpire effects';
+          state['MLB'][matchId].umpireEffectsEnabled = false;
+        }
       });
-  }
+    }
 });
 
 // ---------- Actions ----------
@@ -493,7 +607,9 @@ export const {
   updateMLBMarketLines,
   updateMLBAutomatedLeans,
   updateSimMode,
-  updateCustomModeGameState
+  updateCustomModeGameState,
+  toggleParkEffects,
+  toggleUmpireEffects
 } = simInputsSlice.actions;
 
 // ---------- Selectors ----------
@@ -525,11 +641,29 @@ export const selectGamePlayerStatsStatus = (state: RootState, league: LeagueName
   state.simDash.simInputs[league]?.[matchId]?.statsStatus ?? 'idle';
 export const selectGamePlayerStatsError = (state: RootState, league: LeagueName, matchId: number): string | null | undefined => 
   state.simDash.simInputs[league]?.[matchId]?.statsError;
+export const selectGameParkEffectsStatus = (state: RootState, league: LeagueName, matchId: number): 'idle' | 'loading' | 'succeeded' | 'failed' => 
+  state.simDash.simInputs[league]?.[matchId]?.parkEffectsStatus ?? 'idle';
+export const selectGameParkEffectsError = (state: RootState, league: LeagueName, matchId: number): string | null | undefined => 
+  state.simDash.simInputs[league]?.[matchId]?.parkEffectsError;
+export const selectGameUmpireEffectsStatus = (state: RootState, league: LeagueName, matchId: number): 'idle' | 'loading' | 'succeeded' | 'failed' => 
+  state.simDash.simInputs[league]?.[matchId]?.umpireEffectsStatus ?? 'idle';
+export const selectGameUmpireEffectsError = (state: RootState, league: LeagueName, matchId: number): string | null | undefined => 
+  state.simDash.simInputs[league]?.[matchId]?.umpireEffectsError;
 
 export const selectGameCustomModeDataLineups = (state: RootState, league: LeagueName, matchId: number): MatchupLineups | undefined => 
   state.simDash.simInputs[league]?.[matchId]?.customModeData?.lineups;
 export const selectGameCustomModeDataGameState = (state: RootState, league: LeagueName, matchId: number): GameStateMLB | undefined => 
   state.simDash.simInputs[league]?.[matchId]?.customModeData?.gameState;
+
+export const selectGameParkEffects = (state: RootState, league: LeagueName, matchId: number): ParkEffectsResponse | undefined => 
+  state.simDash.simInputs[league]?.[matchId]?.parkEffects;
+export const selectParkEffectsEnabled = (state: RootState, league: LeagueName, matchId: number): boolean => 
+  state.simDash.simInputs[league]?.[matchId]?.parkEffectsEnabled ?? true;
+
+export const selectGameUmpireEffects = (state: RootState, league: LeagueName, matchId: number): UmpireEffectsResponse | undefined => 
+  state.simDash.simInputs[league]?.[matchId]?.umpireEffects;
+export const selectUmpireEffectsEnabled = (state: RootState, league: LeagueName, matchId: number): boolean => 
+  state.simDash.simInputs[league]?.[matchId]?.umpireEffectsEnabled ?? false;
 
 export default simInputsSlice.reducer;
 

@@ -145,11 +145,16 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                 marketLines: marketLines
             }));
 
+            const parkEffects = gameContainer?.parkEffectsEnabled ? gameContainer?.parkEffects : undefined;
+            const umpireEffects = gameContainer?.umpireEffectsEnabled ? gameContainer?.umpireEffects : undefined;
+
             const optimalLeansResult = await dispatch(findLeansThunk({
                 league: 'MLB',
                 matchId,
                 lineups: gameContainer?.currentGame?.lineups as MatchupLineups,
-                marketLines: marketLines
+                marketLines: marketLines,
+                parkEffects: parkEffects,
+                umpireEffects: umpireEffects
             })).unwrap();
 
             dispatch(updateMLBAutomatedLeans({

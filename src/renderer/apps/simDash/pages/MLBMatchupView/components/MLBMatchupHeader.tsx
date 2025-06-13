@@ -14,6 +14,8 @@ import SimulationButton from './SimulationButton';
 import AdvancedSimulationSettings from './AdvancedSimulationSettings';
 import NumberOfGamesSettings from './NumberOfGamesSettings';
 import CaptureConfigDropdown from '@/apps/simDash/components/CaptureConfigDropdown';
+import ParkEffectsCheckbox from './ParkEffectsCheckbox';
+import UmpireEffectsCheckbox from './UmpireEffectsCheckbox';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
@@ -42,6 +44,7 @@ interface MLBMatchupHeaderProps {
     seriesGames?: { [key: string]: any };
     liveGameData: MlbLiveDataApiResponse | undefined;
     leagueName: LeagueName;
+    matchId: number;
     onRefresh: () => void;
     onRunSimulation: (simType: SimType) => void;
     onChangeSimType: (simType: SimType) => void;
@@ -62,6 +65,7 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
     seriesGames,
     liveGameData,
     leagueName,
+    matchId,
     onRefresh,
     onRunSimulation,
     onChangeSimType
@@ -156,6 +160,7 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
                         seriesGames={seriesGames}
                         liveGameData={liveGameData}
                         leagueName={leagueName}
+                        matchId={matchId}
                         onRunSimulation={onRunSimulation}
                         onChangeSimType={onChangeSimType}
                     />
@@ -180,6 +185,10 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
                 <AdvancedSimulationSettings caption={createLabel()}>
                     <NumberOfGamesSettings />
                     <CaptureConfigDropdown leagueName={leagueName} />
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                        <ParkEffectsCheckbox matchId={matchId} leagueName={leagueName} />
+                        <UmpireEffectsCheckbox matchId={matchId} leagueName={leagueName} />
+                    </Box>
                 </AdvancedSimulationSettings>
             </Box>
         </Paper>

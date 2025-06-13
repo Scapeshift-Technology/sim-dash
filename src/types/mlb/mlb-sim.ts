@@ -121,3 +121,56 @@ export interface GameMatchupProbabilities {
   away: TeamBatterMatchupProbabilities;
 }
 
+// Park Effects Types
+
+export interface ParkEffectsRequest {
+  players: Player[];
+  venueId: number;
+  weather?: { // This is not implemented yet
+    temperature: number;
+    wind_speed: number;
+    wind_direction: number;
+    humidity?: number;
+  };
+}
+
+export interface ParkEffectsResponse {
+  leagueAverage: LeagueAverageParkEffects;
+  players: PlayerParkEffects[];
+  errorMessage?: string;
+}
+
+export interface Umpire {
+  id: number;
+  K_multiplier: number;
+  BB_multiplier: number;
+}
+
+export interface UmpireEffectsRequest {
+  umpireId: number;
+}
+
+export interface UmpireEffectsResponse {
+  umpire: Umpire;
+  errorMessage?: string;
+}
+
+export interface LeagueAverageParkEffects {
+  RhitVsAll: StatsMultiplier;  // Average RHB at this park
+  LhitVsAll: StatsMultiplier; // Average LHB at this park  
+}
+
+export interface StatsMultiplier extends Stats {}
+
+export interface PlayerStatsMultiplier extends PlayerStats {
+  hitVsL?: StatsMultiplier;
+  hitVsR?: StatsMultiplier;
+  pitchVsL?: StatsMultiplier;
+  pitchVsR?: StatsMultiplier;
+}
+
+export interface PlayerParkEffects {
+  playerId: number;
+  parkEffects: PlayerStatsMultiplier;
+}
+

@@ -140,3 +140,6 @@ dist
 /run-ci-tests.sh
 # export DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
 # npm run test:e2e
+
+# CSV files
+*.csv

@@ -11,6 +11,7 @@ import {
   TeamBatterMatchupProbabilities
 } from "@/types/mlb";
 import { getHomeFieldMultipliers } from "./homeFieldAdvantage";
+import { ParkEffectsResponse, StatsMultiplier, UmpireEffectsResponse } from "@/types/mlb/mlb-sim";
 
 // ---------- Main matchup probability function ----------
 /**
@@ -19,10 +20,10 @@ import { getHomeFieldMultipliers } from "./homeFieldAdvantage";
  * @param leagueAvgStats - The league average stats
  * @returns The probabilities of the matchup
  */
-function getMatchupProbabilities(matchup: MatchupLineups, leagueAvgStats: LeagueAvgStats): GameMatchupProbabilities {
+function getMatchupProbabilities(matchup: MatchupLineups, leagueAvgStats: LeagueAvgStats, parkEffects?: ParkEffectsResponse, umpireEffects?: UmpireEffectsResponse): GameMatchupProbabilities {
   // Calculate for each team
-  const homeTeamProbabilities = getTeamMatchupProbabilities(matchup.home, matchup.away, leagueAvgStats, 'home');
-  const awayTeamProbabilities = getTeamMatchupProbabilities(matchup.away, matchup.home, leagueAvgStats, 'away');
+  const homeTeamProbabilities = getTeamMatchupProbabilities(matchup.home, matchup.away, leagueAvgStats, 'home', parkEffects, umpireEffects);
+  const awayTeamProbabilities = getTeamMatchupProbabilities(matchup.away, matchup.home, leagueAvgStats, 'away', parkEffects, umpireEffects);
 
   return {
     home: homeTeamProbabilities,
@@ -33,29 +34,24 @@ function getMatchupProbabilities(matchup: MatchupLineups, leagueAvgStats: League
 export { getMatchupProbabilities };
 
 // ---------- Helper functions ----------
-function getTeamMatchupProbabilities(teamLineup: TeamLineup, opponentLineup: TeamLineup, leagueAvgStats: LeagueAvgStats, teamType: TeamType): TeamBatterMatchupProbabilities {
+function getTeamMatchupProbabilities(teamLineup: TeamLineup, opponentLineup: TeamLineup, leagueAvgStats: LeagueAvgStats, teamType: TeamType, parkEffects?: ParkEffectsResponse, umpireEffects?: UmpireEffectsResponse): TeamBatterMatchupProbabilities {
   const teamBatterMatchupProbabilities: TeamBatterMatchupProbabilities = {
     batter: {}
   };
 
   // Calculate for each batter-pitcher matchup
   const allBatters = [...teamLineup.lineup, ...teamLineup.bench, ...teamLineup.unavailableHitters];
-  
-  for (const batter of allBatters) {
-    teamBatterMatchupProbabilities.batter[batter.id] = {};
-    // Calculate vs starting pitcher
-    const startingPitcherProbs = getBatterPitcherMatchupProbabilities(batter, opponentLineup.startingPitcher, leagueAvgStats, teamType);
-    teamBatterMatchupProbabilities.batter[batter.id][opponentLineup.startingPitcher.id] = startingPitcherProbs;
-    
-    // Calculate vs bullpen
-    for (const pitcher of opponentLineup.bullpen) {
-      const matchupProbabilities = getBatterPitcherMatchupProbabilities(batter, pitcher, leagueAvgStats, teamType);
-      teamBatterMatchupProbabilities.batter[batter.id][pitcher.id] = matchupProbabilities;
-    }
+  const allPitchers = [opponentLineup.startingPitcher, ...opponentLineup.bullpen, ...opponentLineup.unavailablePitchers];
 
-    // Calculate vs unavailable pitchers(as a fallback for lineup creation failure)
-    for (const pitcher of opponentLineup.unavailablePitchers) {
-      const matchupProbabilities = getBatterPitcherMatchupProbabilities(batter, pitcher, leagueAvgStats, teamType);
+  // Adjust stats
+  const adjustedLeagueAvgStats = adjustLeagueAvgStats(leagueAvgStats, parkEffects);
+  const adjustedBatters = adjustBatters(allBatters, parkEffects);
+  const adjustedPitchers = adjustPitchers(allPitchers, parkEffects);  
+  
+  for (const batter of adjustedBatters) {
+    teamBatterMatchupProbabilities.batter[batter.id] = {};
+    for (const pitcher of adjustedPitchers) {
+      const matchupProbabilities = getBatterPitcherMatchupProbabilities(batter, pitcher, adjustedLeagueAvgStats, teamType, umpireEffects);
       teamBatterMatchupProbabilities.batter[batter.id][pitcher.id] = matchupProbabilities;
     }
   }
@@ -70,7 +66,7 @@ function getTeamMatchupProbabilities(teamLineup: TeamLineup, opponentLineup: Tea
  * @param leagueAvgStats - The league average stats
  * @returns The probabilities of the matchup
  */
-function getBatterPitcherMatchupProbabilities(batter: Player, pitcher: Player, leagueAvgStats: LeagueAvgStats, batterTeamType: TeamType): Stats {
+function getBatterPitcherMatchupProbabilities(batter: Player, pitcher: Player, leagueAvgStats: LeagueAvgStats, batterTeamType: TeamType, umpireEffects?: UmpireEffectsResponse): Stats {
   // Determine which stats to use based on matchup
   const matchupHandedness = determineMatchupHandedness(batter, pitcher);
 
@@ -81,10 +77,6 @@ function getBatterPitcherMatchupProbabilities(batter: Player, pitcher: Player, l
   const batterStats = batter.stats?.[batterStatsKey] as Stats;
   const pitcherStatsKey = handednessToPlayerStatsString(matchupHandedness.battingSide, 'pitch')
   const pitcherStats = pitcher.stats?.[pitcherStatsKey] as Stats;
-
-  // console.log(`Batter stats: ${JSON.stringify(batterStats, null, 2)}`);
-  // console.log(`Pitcher stats: ${JSON.stringify(pitcherStats, null, 2)}`);
-  // console.log(`League avg probability: ${JSON.stringify(leagueAvgProbability, null, 2)}`);
 
   if (!batterStats || !pitcherStats || !leagueAvgProbability) {
     throw new Error('Missing required stats for matchup calculation');
@@ -107,7 +99,10 @@ function getBatterPitcherMatchupProbabilities(batter: Player, pitcher: Player, l
       outcomeProbs[statKey] *= awayMultipliers[statKey];
     });
   }
-  const normalizedOutcomeProbs = normalizeStats(outcomeProbs);
+
+  // Apply umpire effects
+  const umpireAdjustedProbs = applyUmpireEffects(outcomeProbs, umpireEffects);
+  const normalizedOutcomeProbs = normalizeStats(umpireAdjustedProbs);
   
   // Return the probabilities
   return normalizedOutcomeProbs;
@@ -197,4 +192,145 @@ function handednessToLeagueAvgString(battingSide: Handedness, pitchingSide: Hand
 
 function handednessToPlayerStatsString(side: Handedness, hitOrPitch: 'hit' | 'pitch'): keyof PlayerStats {
   return `${hitOrPitch}Vs${side}` as keyof PlayerStats;
+}
+
+/**
+ * Applies umpire effects to strikeouts and walks only
+ * After applying multipliers, normalizes all stats to ensure they sum to 1
+ */
+function applyUmpireEffects(baseStats: Stats, umpireEffects?: UmpireEffectsResponse): Stats {
+  if (!umpireEffects || !umpireEffects.umpire) {
+    return baseStats;
+  }
+
+  const { K_multiplier, BB_multiplier } = umpireEffects.umpire;
+
+  // Apply umpire multipliers to K and BB
+  const adjustedK = baseStats.adj_perc_K * K_multiplier;
+  const adjustedBB = baseStats.adj_perc_BB * BB_multiplier;
+
+  // Calculate the change in K and BB probabilities
+  const kChange = adjustedK - baseStats.adj_perc_K;
+  const bbChange = adjustedBB - baseStats.adj_perc_BB;
+  const totalChange = kChange + bbChange;
+
+  // Adjust hitting events proportionally to compensate for K/BB changes
+  const hittingTotal = baseStats.adj_perc_1B + baseStats.adj_perc_2B + baseStats.adj_perc_3B + baseStats.adj_perc_HR + baseStats.adj_perc_OUT;
+  const adjustmentFactor = hittingTotal > 0 ? (hittingTotal - totalChange) / hittingTotal : 1;
+
+  return {
+    adj_perc_K: adjustedK,
+    adj_perc_BB: adjustedBB,
+    adj_perc_1B: baseStats.adj_perc_1B * adjustmentFactor,
+    adj_perc_2B: baseStats.adj_perc_2B * adjustmentFactor,
+    adj_perc_3B: baseStats.adj_perc_3B * adjustmentFactor,
+    adj_perc_HR: baseStats.adj_perc_HR * adjustmentFactor,
+    adj_perc_OUT: baseStats.adj_perc_OUT * adjustmentFactor
+  };
+}
+
+/**
+ * Applies park effects multipliers to base stats
+ * Walks and strikeouts are adjusted first, then hitting events are normalized to fit remaining space
+ */
+function applyStatsMultipliers(baseStats: Stats, multipliers: StatsMultiplier): Stats {
+  // Apply walk & strikeout adjustments first
+  const adjustedK = baseStats.adj_perc_K * multipliers.adj_perc_K;
+  const adjustedBB = baseStats.adj_perc_BB * multipliers.adj_perc_BB;
+  
+  // Calculate remaining probability space for hitting events
+  const remainingHittingSpace = 1.0 - (adjustedK + adjustedBB);
+
+  // Apply multipliers to hitting events
+  const temp1B = baseStats.adj_perc_1B * multipliers.adj_perc_1B;
+  const temp2B = baseStats.adj_perc_2B * multipliers.adj_perc_2B;
+  const temp3B = baseStats.adj_perc_3B * multipliers.adj_perc_3B;
+  const tempHR = baseStats.adj_perc_HR * multipliers.adj_perc_HR;
+  const tempOUT = baseStats.adj_perc_OUT * multipliers.adj_perc_OUT;
+  
+  // Normalize hitting events to fit remaining space
+  const tempHittingTotal = temp1B + temp2B + temp3B + tempHR + tempOUT;
+  const scalingFactor = remainingHittingSpace / tempHittingTotal;
+  
+  return {
+    adj_perc_K: adjustedK,
+    adj_perc_BB: adjustedBB,
+    adj_perc_1B: temp1B * scalingFactor,
+    adj_perc_2B: temp2B * scalingFactor,
+    adj_perc_3B: temp3B * scalingFactor,
+    adj_perc_HR: tempHR * scalingFactor,
+    adj_perc_OUT: tempOUT * scalingFactor
+  };
+}
+
+function adjustLeagueAvgStats(leagueAvgStats: LeagueAvgStats, parkEffects?: ParkEffectsResponse): LeagueAvgStats {
+  if (!parkEffects) {
+    return leagueAvgStats;
+  }
+
+  return {
+    RhitLpitch: applyStatsMultipliers(leagueAvgStats.RhitLpitch, parkEffects.leagueAverage.RhitVsAll),
+    RhitRpitch: applyStatsMultipliers(leagueAvgStats.RhitRpitch, parkEffects.leagueAverage.RhitVsAll),
+    LhitLpitch: applyStatsMultipliers(leagueAvgStats.LhitLpitch, parkEffects.leagueAverage.LhitVsAll),
+    LhitRpitch: applyStatsMultipliers(leagueAvgStats.LhitRpitch, parkEffects.leagueAverage.LhitVsAll)
+  };
+}
+
+function adjustBatters(batters: Player[], parkEffects?: ParkEffectsResponse): Player[] {
+  if (!parkEffects) {
+    return batters;
+  }
+
+  return batters.map(batter => {
+    const playerParkEffects = parkEffects.players.find((player) => player.playerId === batter.id);
+    
+    if (batter.stats) {
+      const leagueEffectsVsL = batter.battingSide === 'S' || batter.battingSide == 'R'
+        ? parkEffects.leagueAverage.RhitVsAll 
+        : parkEffects.leagueAverage.LhitVsAll;
+      const leagueEffectsVsR = batter.battingSide === 'S' || batter.battingSide === 'L'
+        ? parkEffects.leagueAverage.LhitVsAll 
+        : parkEffects.leagueAverage.RhitVsAll;
+
+      return {
+        ...batter,
+        stats: {
+          ...batter.stats,
+          hitVsL: batter.stats.hitVsL 
+            ? applyStatsMultipliers(batter.stats.hitVsL, playerParkEffects?.parkEffects.hitVsL || leagueEffectsVsL)
+            : batter.stats.hitVsL,
+          hitVsR: batter.stats.hitVsR 
+            ? applyStatsMultipliers(batter.stats.hitVsR, playerParkEffects?.parkEffects.hitVsR || leagueEffectsVsR)
+            : batter.stats.hitVsR
+        }
+      };
+    }
+    return batter;
+  });
+}
+
+function adjustPitchers(pitchers: Player[], parkEffects?: ParkEffectsResponse): Player[] {
+  if (!parkEffects) {
+    return pitchers;
+  }
+
+  return pitchers.map(pitcher => {
+    const playerParkEffects = parkEffects.players.find((player) => player.playerId === pitcher.id);
+    
+    if (pitcher.stats) {
+      return {
+        ...pitcher,
+        stats: {
+          ...pitcher.stats,
+          pitchVsL: pitcher.stats.pitchVsL 
+            ? applyStatsMultipliers(pitcher.stats.pitchVsL, playerParkEffects?.parkEffects.pitchVsL || parkEffects.leagueAverage.LhitVsAll)
+            : pitcher.stats.pitchVsL,
+          pitchVsR: pitcher.stats.pitchVsR 
+            ? applyStatsMultipliers(pitcher.stats.pitchVsR, playerParkEffects?.parkEffects.pitchVsR || parkEffects.leagueAverage.RhitVsAll)
+            : pitcher.stats.pitchVsR
+        }
+      };
+    }
+    return pitcher;
+  });
 }

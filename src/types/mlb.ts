@@ -19,6 +19,7 @@ export interface GameMetadataMLB {
   automatedLeans?: MLBGameSimInputs;
   mlbGameId?: number;
   gameTimestamp?: string;
+  venueId?: number;
   officials?: MlbApiOfficial[];
   weather?: MlbApiWeather;
 }

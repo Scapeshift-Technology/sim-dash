@@ -71,6 +71,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
         };
     },
     fetchInitialMLBLiveData: (args) => ipcRenderer.invoke('fetch-initial-mlb-live-data', args),
+
+    // Effects API
+    parkEffectsApi: (args) => ipcRenderer.invoke('park-effects-api', args),
+    umpireEffectsApi: (args) => ipcRenderer.invoke('umpire-effects-api', args),
     
     // ---------- Simulation Windows ----------
     createSimWindow: (args) => ipcRenderer.invoke('create-sim-window', args),

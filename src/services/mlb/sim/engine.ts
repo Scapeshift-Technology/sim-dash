@@ -19,6 +19,7 @@ import { evaluatePitchingSubstitution } from "./pitcherSubstitution";
 import { processEvent } from "./baserunning";
 import { initializeGameState } from "./gameState";
 import log from "electron-log";
+import { ParkEffectsResponse, UmpireEffectsResponse } from "@/types/mlb/mlb-sim";
 
 // ---------- MLB sim engine ----------
 /**
@@ -31,14 +32,16 @@ async function simulateMatchupMLB(
 //   leagueAvgStats: LeagueAvgStats,
   num_games: number = 50000,
   statCaptureConfig: SavedConfiguration,
-  liveGameData?: MlbLiveDataApiResponse
+  liveGameData?: MlbLiveDataApiResponse,
+  parkEffects?: ParkEffectsResponse,
+  umpireEffects?: UmpireEffectsResponse
 ) {
   try {
     // Matchup probabilities
     await initializeHomeFieldMultipliers();
 
     // Simulate games
-    const simPlays = await simulateGames(matchup, leagueAvgStats, num_games, liveGameData);
+    const simPlays = await simulateGames(matchup, leagueAvgStats, num_games, liveGameData, parkEffects, umpireEffects);
     // Get results
     const outputResults: SimResultsMLB = calculateSimCounts(simPlays, matchup, statCaptureConfig, liveGameData);
 
@@ -48,8 +51,8 @@ async function simulateMatchupMLB(
   }
 }
 
-async function simulateGames(matchup: MatchupLineups, leagueAvgStats: LeagueAvgStats, num_games: number, liveGameData?: MlbLiveDataApiResponse): Promise<PlayResult[][]> {
-  const matchupProbabilities: GameMatchupProbabilities = getMatchupProbabilities(matchup, leagueAvgStats);
+async function simulateGames(matchup: MatchupLineups, leagueAvgStats: LeagueAvgStats, num_games: number, liveGameData?: MlbLiveDataApiResponse, parkEffects?: ParkEffectsResponse, umpireEffects?: UmpireEffectsResponse): Promise<PlayResult[][]> {
+  const matchupProbabilities: GameMatchupProbabilities = getMatchupProbabilities(matchup, leagueAvgStats, parkEffects, umpireEffects);
   const allPlays: PlayResult[][] = [];
 
   for (let i = 0; i < num_games; i++) {

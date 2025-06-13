@@ -101,10 +101,53 @@ const handleFetchInitialMLBLiveData = async (event, { gameId }) => {
     }
 };
 
+// Handler for hitting park effects api
+const handleParkEffectsApi = async (event, args) => {    
+    try {
+        const response = await fetch('http://127.0.0.1:8000/test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                venueId: args.venueId,
+                players: args.players,
+                weather: args.weather
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+const handleUmpireEffectsApi = async (event, args) => {
+    try {
+        const response = await fetch('http://127.0.0.1:8000/umpires', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ umpireId: args.umpireId })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        throw error;
+    }
+};
+
 // ---------- Simulations ----------
 
 // Handler for simulating MLB matchups
-const handleSimulateMatchup = async (event, { numGames, matchupLineups, gameId, statCaptureConfig, liveGameData }) => {
+const handleSimulateMatchup = async (event, { numGames, matchupLineups, gameId, statCaptureConfig, liveGameData, parkEffects, umpireEffects }) => {
     if (gameId) {
         log.info(`Simulating ${numGames} MLB games - Game ${gameId}`);
     } else {
@@ -112,7 +155,7 @@ const handleSimulateMatchup = async (event, { numGames, matchupLineups, gameId, 
     }
 
     try {
-        return await runParallelSimulation(matchupLineups, numGames, statCaptureConfig, liveGameData);
+        return await runParallelSimulation(matchupLineups, numGames, statCaptureConfig, liveGameData, parkEffects, umpireEffects);
     } catch (err) {
         log.error('Error simulating MLB matchup:', err);
         throw err;
@@ -184,6 +227,10 @@ const registerMLBHandlers = ({ getMlbWebSocketManager, getDbHelper, getDb, getCu
     // Simulation Handlers
     ipcMain.handle('simulate-matchup-mlb', handleSimulateMatchup);
     ipcMain.handle('get-mlb-sim-data', (event) => handleGetMLBSimData(event, getDbHelper, getDb));
+
+    // Effects API
+    ipcMain.handle('park-effects-api', (event, args) => handleParkEffectsApi(event, args));
+    ipcMain.handle('umpire-effects-api', (event, args) => handleUmpireEffectsApi(event, args));
 
     log.info('MLB IPC handlers registered');
 };
