@@ -57,7 +57,6 @@ export interface LeagueAvgHittingStats {
 export interface LeagueAvgStats extends LeagueAvgHittingStats {
   baserunning: BaserunningStats;
 }
-
 export type EventType = 'K' | 'BB' | '1B' | '2B' | '3B' | 'HR' | 'OUT' | 'SB' | 'CS';
 
 export interface Stats {
