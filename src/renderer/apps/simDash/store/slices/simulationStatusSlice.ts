@@ -7,7 +7,7 @@ import { findOptimalLeans } from "@/simDash/pages/MLBMatchupView/functions/optim
 import { MatchupLineups } from "@/preload";
 import { MarketLinesMLB, MlbLiveDataApiResponse } from "@@/types/mlb";
 import { SavedConfiguration } from "@@/types/statCaptureConfig";
-import { ParkEffectsResponse, UmpireEffectsResponse } from "@@/types/mlb/mlb-sim";
+import { BaseRunningModel, ParkEffectsResponse, UmpireEffectsResponse } from "@@/types/mlb/mlb-sim";
 
 // --------------------
 // This slice contains data that is used to display the status of a simulation in the UI
@@ -78,6 +78,7 @@ export const runSimulationThunk = createAsyncThunk(
     league, // These inputs are necessary for the thunk reducers
     matchId,
     gameInputs,
+    baseRunningModel,
     numGames = 90000,
     liveGameData,
     activeConfig,
@@ -87,13 +88,14 @@ export const runSimulationThunk = createAsyncThunk(
     league: LeagueName;
     matchId: number;
     gameInputs: MLBGameInputs2;
+    baseRunningModel: BaseRunningModel;
     numGames?: number;
     liveGameData?: MlbLiveDataApiResponse;
     activeConfig?: SavedConfiguration;
     parkEffects?: ParkEffectsResponse;
     umpireEffects?: UmpireEffectsResponse;
   }) => {
-    const results = await runSimulation(gameInputs, numGames, liveGameData, activeConfig, parkEffects, umpireEffects);
+    const results = await runSimulation(gameInputs, numGames, baseRunningModel, liveGameData, activeConfig, parkEffects, umpireEffects);
     return results;
   }
 );
@@ -104,6 +106,7 @@ export const runSeriesSimulationThunk = createAsyncThunk(
     league, // These inputs are necessary for the thunk reducers
     matchId,
     gameInputs,
+    baseRunningModel,
     numGames = 90000,
     activeConfig,
     parkEffects,
@@ -112,12 +115,13 @@ export const runSeriesSimulationThunk = createAsyncThunk(
     league: LeagueName;
     matchId: number;
     gameInputs: SeriesGameInputs;
+    baseRunningModel: BaseRunningModel;
     numGames?: number;
     activeConfig?: SavedConfiguration;
     parkEffects?: ParkEffectsResponse;
     umpireEffects?: UmpireEffectsResponse;
   }) => {
-    const results = await runSeriesSimulation(gameInputs, numGames, activeConfig, parkEffects, umpireEffects);
+    const results = await runSeriesSimulation(gameInputs, numGames, baseRunningModel, activeConfig, parkEffects, umpireEffects);
     return results;
   }
 );
@@ -127,6 +131,7 @@ export const findLeansThunk = createAsyncThunk(
   async ({
     league, // These inputs are necessary for the thunk reducers
     matchId,
+    baseRunningModel,
     lineups,
     marketLines,
     parkEffects,
@@ -134,6 +139,7 @@ export const findLeansThunk = createAsyncThunk(
   }: {
     league: LeagueName;
     matchId: number;
+    baseRunningModel: BaseRunningModel;
     lineups: MatchupLineups;
     marketLines: MarketLinesMLB;
     parkEffects?: ParkEffectsResponse;

@@ -50,7 +50,7 @@ import {
     selectGameCustomModeDataGameState,
     updateCustomModeGameState,
     selectGameParkEffectsStatus,
-    selectGameParkEffectsError
+    selectBaseRunningModel
 } from '@/simDash/store/slices/simInputsSlice';
 import { useLeanValidation } from './hooks/leanValidation';
 import { 
@@ -148,7 +148,6 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const playerStatsStatus = useSelector((state: RootState) => selectGamePlayerStatsStatus(state, league, matchId));
     const playerStatsError = useSelector((state: RootState) => selectGamePlayerStatsError(state, league, matchId));
     const parkEffectsStatus = useSelector((state: RootState) => selectGameParkEffectsStatus(state, league, matchId));
-    const parkEffectsError = useSelector((state: RootState) => selectGameParkEffectsError(state, league, matchId));
     const teamInputs = useSelector((state: RootState) => selectTeamInputs(state, league, matchId));
     const seriesGames = useSelector((state: RootState) => selectGameSeriesGames(state, league, matchId));
     const simType = useSelector((state: RootState) => selectGameSimMode(state, league, matchId));
@@ -164,6 +163,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const activeConfigLoading = useSelector((state: RootState) => selectActiveConfigLoading(state, league));
     const activeConfigError = useSelector((state: RootState) => selectActiveConfigError(state, league));
     const numGames = useSelector((state: RootState) => selectNumGames(state));
+    const baseRunningModel = useSelector((state: RootState) => selectBaseRunningModel(state, league, matchId));
 
     const [selectedGameTab, setSelectedGameTab] = useState(0);
     const [showCopySuccess, setShowCopySuccess] = useState(false);
@@ -279,6 +279,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 league,
                 matchId,
                 gameInputs: gameContainer.seriesGames,
+                baseRunningModel: baseRunningModel,
                 numGames: numGames,
                 activeConfig: activeConfig || undefined,
                 parkEffects: parkEffects,
@@ -290,6 +291,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 league,
                 matchId,
                 gameInputs: gameInputs,
+                baseRunningModel: baseRunningModel,
                 numGames: numGames,
                 liveGameData: liveGameData,
                 activeConfig: activeConfig || undefined,
@@ -305,6 +307,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 league,
                 matchId,
                 gameInputs: gameInputs,
+                baseRunningModel: baseRunningModel,
                 numGames: numGames,
                 liveGameData: bannerLiveGameData,
                 activeConfig: activeConfig || undefined,
@@ -321,6 +324,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 league,
                 matchId,
                 gameInputs: gameContainer.currentGame,
+                baseRunningModel: baseRunningModel,
                 numGames: numGames,
                 activeConfig: activeConfig || undefined,
                 parkEffects: parkEffects,

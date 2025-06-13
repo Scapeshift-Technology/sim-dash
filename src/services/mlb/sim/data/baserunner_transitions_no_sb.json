@@ -1,0 +1,4366 @@
+{
+  "1B": {
+    "OOO-0": [
+      {
+        "end_state": "OOO-1",
+        "probability": 0.008297789841023653,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-0",
+        "probability": 0.0007754943776657619,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-0",
+        "probability": 0.010701822411787515,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-0",
+        "probability": 0.9802248933695231,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOO-1": [
+      {
+        "end_state": "OOO-2",
+        "probability": 0.009300798774482985,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.000984790458474669,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.009300798774482985,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.9804136119925594,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOO-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.010351673284174702,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.00014180374361883155,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.008082813386273398,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.9814237095859331,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOX-0": [
+      {
+        "end_state": "OOO-1",
+        "probability": 0.02112676056338028,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOO-0",
+        "probability": 0.9507042253521126,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-0",
+        "probability": 0.028169014084507043,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOX-1": [
+      {
+        "end_state": "OOO-2",
+        "probability": 0.011804384485666104,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.003372681281618887,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.9713322091062394,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.013490725126475547,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOX-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.007518796992481203,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.0030075187969924814,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.016541353383458645,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.9699248120300752,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.0030075187969924814,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OXO-0": [
+      {
+        "end_state": "OOO-1",
+        "probability": 0.012392755004766444,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-0",
+        "probability": 0.0009532888465204957,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.0019065776930409914,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-0",
+        "probability": 0.029551954242135366,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.005719733079122974,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-0",
+        "probability": 0.012392755004766444,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-0",
+        "probability": 0.34509056244041947,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.005719733079122974,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-0",
+        "probability": 0.5386081982840801,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-0",
+        "probability": 0.047664442326024785,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OXO-1": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.0006618133686300463,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.019192587690271344,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.004632693580410324,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.0026472534745201853,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.0628722700198544,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.005294506949040371,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.010589013898080741,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.4447385837193911,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.0033090668431502318,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.4056915949702184,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-1",
+        "probability": 0.04037061548643282,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OXO-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.03592120509849363,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-0",
+        "probability": 0.03592120509849363,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.0005793742757821553,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.0017381228273464658,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.08342989571263036,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.0017381228273464658,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.6743916570104287,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.16512166859791425,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-2",
+        "probability": 0.0011587485515643105,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OXX-0": [
+      {
+        "end_state": "OOO-1",
+        "probability": 0.005025125628140704,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-0",
+        "probability": 0.07035175879396985,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.005025125628140704,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-0",
+        "probability": 0.01507537688442211,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-0",
+        "probability": 0.3065326633165829,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.005025125628140704,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-0",
+        "probability": 0.5527638190954773,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-0",
+        "probability": 0.03015075376884422,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXX-0",
+        "probability": 0.010050251256281407,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OXX-1": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.002028397565922921,
+        "runs_scored": 1,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.010141987829614604,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.002028397565922921,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.07302231237322515,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.010141987829614604,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.012170385395537525,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.4198782961460446,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.012170385395537525,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.4259634888438134,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-1",
+        "probability": 0.02636916835699797,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXX-1",
+        "probability": 0.006085192697768763,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OXX-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.030927835051546393,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-0",
+        "probability": 0.024742268041237112,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.002061855670103093,
+        "runs_scored": 3,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.002061855670103093,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.04742268041237113,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.004123711340206186,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.6701030927835051,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.21443298969072164,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXX-2",
+        "probability": 0.004123711340206186,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XOO-0": [
+      {
+        "end_state": "OOO-1",
+        "probability": 0.00031655587211142766,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-0",
+        "probability": 0.000949667616334283,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.0072807850585628366,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-0",
+        "probability": 0.0022158911047799935,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.0031655587211142765,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-0",
+        "probability": 0.021525799303577082,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-0",
+        "probability": 0.0012662234884457107,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.0034821145932257044,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-0",
+        "probability": 0.2389996834441279,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-0",
+        "probability": 0.7207977207977208,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XOO-1": [
+      {
+        "end_state": "OOO-1",
+        "probability": 0.00026483050847457627,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.0007944915254237289,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.0007944915254237289,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.0060911016949152545,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.0031779661016949155,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.0023834745762711866,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.018273305084745763,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.0005296610169491525,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.0060911016949152545,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.2627118644067797,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-1",
+        "probability": 0.6988877118644068,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XOO-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.01345668629100084,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-0",
+        "probability": 0.0002803476310625175,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.0002803476310625175,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.001682085786375105,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.005326604990187833,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.01569946733950098,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.007008690776562938,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.33697785253714607,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-2",
+        "probability": 0.6192879170171012,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XOX-0": [
+      {
+        "end_state": "OOX-0",
+        "probability": 0.002967359050445104,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.002967359050445104,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.002967359050445104,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-0",
+        "probability": 0.008902077151335312,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-0",
+        "probability": 0.002967359050445104,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.008902077151335312,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-0",
+        "probability": 0.2403560830860534,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-0",
+        "probability": 0.7210682492581603,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXX-0",
+        "probability": 0.008902077151335312,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XOX-1": [
+      {
+        "end_state": "OOX-1",
+        "probability": 0.0030721966205837174,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.006144393241167435,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.0015360983102918587,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.0030721966205837174,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.018433179723502304,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.0030721966205837174,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.007680491551459293,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.22427035330261136,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-1",
+        "probability": 0.7327188940092166,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "XOX-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.002702702702702703,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-0",
+        "probability": 0.014864864864864866,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.004054054054054054,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.0013513513513513514,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.022972972972972974,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.35135135135135137,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-2",
+        "probability": 0.6027027027027027,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "XXO-0": [
+      {
+        "end_state": "OOX-0",
+        "probability": 0.00261437908496732,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.00392156862745098,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-0",
+        "probability": 0.00261437908496732,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.00392156862745098,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.00130718954248366,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OXX-0",
+        "probability": 0.03137254901960784,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.00261437908496732,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-0",
+        "probability": 0.13071895424836602,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.006535947712418301,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXO-0",
+        "probability": 0.2601307189542484,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-1",
+        "probability": 0.00392156862745098,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXX-0",
+        "probability": 0.550326797385621,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XXO-1": [
+      {
+        "end_state": "OOO-1",
+        "probability": 0.0008130081300813008,
+        "runs_scored": 3,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.0008130081300813008,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.0032520325203252032,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.004878048780487805,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.0024390243902439024,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.0032520325203252032,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.04227642276422764,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.0016260162601626016,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.0065040650406504065,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.2252032520325203,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.004878048780487805,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXO-1",
+        "probability": 0.2983739837398374,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-2",
+        "probability": 0.01056910569105691,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXX-1",
+        "probability": 0.3951219512195122,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XXO-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.02857142857142857,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-0",
+        "probability": 0.03741496598639456,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.008843537414965987,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.006802721088435374,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.05714285714285714,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.004081632653061225,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.37142857142857144,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-2",
+        "probability": 0.29931972789115646,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXX-2",
+        "probability": 0.18639455782312925,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XXX-0": [
+      {
+        "end_state": "OOO-1",
+        "probability": 0.004524886877828055,
+        "runs_scored": 3,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-0",
+        "probability": 0.004524886877828055,
+        "runs_scored": 3,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.00904977375565611,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-0",
+        "probability": 0.004524886877828055,
+        "runs_scored": 3,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.004524886877828055,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-0",
+        "probability": 0.00904977375565611,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.00904977375565611,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-0",
+        "probability": 0.12669683257918551,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.004524886877828055,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXO-0",
+        "probability": 0.23529411764705882,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-1",
+        "probability": 0.00904977375565611,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXX-0",
+        "probability": 0.579185520361991,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "XXX-1": [
+      {
+        "end_state": "OOX-1",
+        "probability": 0.002304147465437788,
+        "runs_scored": 3,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.002304147465437788,
+        "runs_scored": 3,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.0069124423963133645,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.03917050691244239,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.002304147465437788,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.01152073732718894,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.1912442396313364,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.004608294930875576,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXO-1",
+        "probability": 0.22119815668202766,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-2",
+        "probability": 0.004608294930875576,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXX-1",
+        "probability": 0.5138248847926268,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "XXX-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.0018552875695732839,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-0",
+        "probability": 0.027829313543599257,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-0",
+        "probability": 0.03710575139146568,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.0074211502782931356,
+        "runs_scored": 3,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.04452690166975881,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.0037105751391465678,
+        "runs_scored": 3,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.39332096474953615,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-2",
+        "probability": 0.2857142857142857,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXX-2",
+        "probability": 0.19851576994434136,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ]
+  },
+  "2B": {
+    "OOO-0": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.0002492522432701894,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOO-1",
+        "probability": 0.003489531405782652,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-0",
+        "probability": 0.005732801595214357,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-0",
+        "probability": 0.9905284147557328,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOO-1": [
+      {
+        "end_state": "OOO-2",
+        "probability": 0.005608131791097091,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.004907115317209955,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.9894847528916929,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOO-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.0044822949350067235,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.00044822949350067237,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.0062752129090094125,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.9887942626624832,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOX-0": [
+      {
+        "end_state": "OXO-0",
+        "probability": 1.0,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "OOX-1": [
+      {
+        "end_state": "OOX-1",
+        "probability": 0.0064516129032258064,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.9935483870967742,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "OOX-2": [
+      {
+        "end_state": "OOX-2",
+        "probability": 0.013953488372093023,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.986046511627907,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "OXO-0": [
+      {
+        "end_state": "OOO-1",
+        "probability": 0.006779661016949152,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-0",
+        "probability": 0.006779661016949152,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-0",
+        "probability": 0.9084745762711864,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-0",
+        "probability": 0.07457627118644068,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-0",
+        "probability": 0.003389830508474576,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "OXO-1": [
+      {
+        "end_state": "OOO-2",
+        "probability": 0.007246376811594203,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.004830917874396135,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.966183574879227,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.0024154589371980675,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.01932367149758454,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OXO-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.00909090909090909,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.012727272727272728,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.9781818181818182,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "OXX-0": [
+      {
+        "end_state": "OOX-0",
+        "probability": 0.014285714285714285,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-0",
+        "probability": 0.9571428571428572,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-0",
+        "probability": 0.02857142857142857,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "OXX-1": [
+      {
+        "end_state": "OOX-1",
+        "probability": 0.006622516556291391,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.9470198675496688,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.046357615894039736,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "OXX-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.014184397163120567,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.9858156028368794,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ],
+    "XOO-0": [
+      {
+        "end_state": "OOO-1",
+        "probability": 0.005241090146750524,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-0",
+        "probability": 0.018867924528301886,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.005241090146750524,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-0",
+        "probability": 0.26519916142557654,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.013626834381551363,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-0",
+        "probability": 0.6918238993710691,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XOO-1": [
+      {
+        "end_state": "OOO-2",
+        "probability": 0.009398496240601503,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.03571428571428571,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.005639097744360902,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.28101503759398494,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.016917293233082706,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.6513157894736842,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XOO-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.046009389671361506,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-0",
+        "probability": 0.007511737089201878,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.03943661971830986,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.4460093896713615,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.4610328638497653,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XOX-0": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.01098901098901099,
+        "runs_scored": 3,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOO-1",
+        "probability": 0.02197802197802198,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-0",
+        "probability": 0.02197802197802198,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-0",
+        "probability": 0.25274725274725274,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.01098901098901099,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-0",
+        "probability": 0.6813186813186813,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "XOX-1": [
+      {
+        "end_state": "OOO-2",
+        "probability": 0.005405405405405406,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.03783783783783784,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.032432432432432434,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.2594594594594595,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.005405405405405406,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.6594594594594595,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "XOX-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.021834061135371178,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-0",
+        "probability": 0.017467248908296942,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.013100436681222707,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.5021834061135371,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.44541484716157204,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "XXO-0": [
+      {
+        "end_state": "OOX-0",
+        "probability": 0.017316017316017316,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-0",
+        "probability": 0.2510822510822511,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.008658008658008658,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-0",
+        "probability": 0.7186147186147186,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.004329004329004329,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "XXO-1": [
+      {
+        "end_state": "OOO-1",
+        "probability": 0.0023752969121140144,
+        "runs_scored": 3,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.0023752969121140144,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.023752969121140142,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.0023752969121140144,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.32304038004750596,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.0166270783847981,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.6294536817102138,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "XXO-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.020618556701030927,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-0",
+        "probability": 0.008247422680412371,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.002061855670103093,
+        "runs_scored": 3,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.03505154639175258,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.5278350515463918,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.4061855670103093,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "XXX-0": [
+      {
+        "end_state": "OXO-0",
+        "probability": 0.22033898305084745,
+        "runs_scored": 3,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.01694915254237288,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-0",
+        "probability": 0.7627118644067796,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ],
+    "XXX-1": [
+      {
+        "end_state": "OOO-2",
+        "probability": 0.013245033112582781,
+        "runs_scored": 3,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.039735099337748346,
+        "runs_scored": 3,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.2980132450331126,
+        "runs_scored": 3,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.006622516556291391,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.6423841059602649,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ],
+    "XXX-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.0058823529411764705,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-0",
+        "probability": 0.01764705882352941,
+        "runs_scored": 3,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.041176470588235294,
+        "runs_scored": 3,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.5352941176470588,
+        "runs_scored": 3,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.4,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ]
+  },
+  "3B": {
+    "OOO-0": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.015915119363395226,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-0",
+        "probability": 0.9840848806366048,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOO-1": [
+      {
+        "end_state": "OOO-1",
+        "probability": 0.007633587786259542,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.003816793893129771,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.9885496183206107,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOO-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.006060606060606061,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.012121212121212121,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.9818181818181818,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOX-0": [
+      {
+        "end_state": "OOX-0",
+        "probability": 1.0,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "OOX-1": [
+      {
+        "end_state": "OOX-1",
+        "probability": 1.0,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "OOX-2": [
+      {
+        "end_state": "OOX-2",
+        "probability": 1.0,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "OXO-0": [
+      {
+        "end_state": "OOX-0",
+        "probability": 1.0,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "OXO-1": [
+      {
+        "end_state": "OOX-1",
+        "probability": 1.0,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "OXO-2": [
+      {
+        "end_state": "OOO-2",
+        "probability": 0.038461538461538464,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.9615384615384616,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "OXX-0": [
+      {
+        "end_state": "OOX-0",
+        "probability": 1.0,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ],
+    "OXX-1": [
+      {
+        "end_state": "OOX-1",
+        "probability": 1.0,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ],
+    "OXX-2": [
+      {
+        "end_state": "OOX-2",
+        "probability": 1.0,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ],
+    "XOO-0": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.02702702702702703,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-0",
+        "probability": 0.972972972972973,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "XOO-1": [
+      {
+        "end_state": "OOO-1",
+        "probability": 0.010526315789473684,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.9894736842105263,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "XOO-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.010752688172043012,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.989247311827957,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "XOX-0": [
+      {
+        "end_state": "OOX-0",
+        "probability": 1.0,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ],
+    "XOX-1": [
+      {
+        "end_state": "OOX-1",
+        "probability": 1.0,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ],
+    "XOX-2": [
+      {
+        "end_state": "OOX-2",
+        "probability": 1.0,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ],
+    "XXO-0": [
+      {
+        "end_state": "OOX-0",
+        "probability": 1.0,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ],
+    "XXO-1": [
+      {
+        "end_state": "OOX-1",
+        "probability": 1.0,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ],
+    "XXO-2": [
+      {
+        "end_state": "OOX-2",
+        "probability": 1.0,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ],
+    "XXX-0": [
+      {
+        "end_state": "OOX-0",
+        "probability": 1.0,
+        "runs_scored": 3,
+        "outs_made": 0
+      }
+    ],
+    "XXX-1": [
+      {
+        "end_state": "OOO-1",
+        "probability": 0.05555555555555555,
+        "runs_scored": 4,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.05555555555555555,
+        "runs_scored": 3,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.8888888888888888,
+        "runs_scored": 3,
+        "outs_made": 0
+      }
+    ],
+    "XXX-2": [
+      {
+        "end_state": "OOO-2",
+        "probability": 0.08,
+        "runs_scored": 4,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.92,
+        "runs_scored": 3,
+        "outs_made": 0
+      }
+    ]
+  },
+  "BB": {
+    "OOO-0": [
+      {
+        "end_state": "XOO-0",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOO-1": [
+      {
+        "end_state": "XOO-1",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOO-2": [
+      {
+        "end_state": "XOO-2",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOX-0": [
+      {
+        "end_state": "XOX-0",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOX-1": [
+      {
+        "end_state": "XOX-1",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOX-2": [
+      {
+        "end_state": "XOO-2",
+        "probability": 0.0013227513227513227,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.9986772486772487,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OXO-0": [
+      {
+        "end_state": "XXO-0",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OXO-1": [
+      {
+        "end_state": "XXO-1",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OXO-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.0005115089514066496,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.0005115089514066496,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.0005115089514066496,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-2",
+        "probability": 0.99846547314578,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OXX-0": [
+      {
+        "end_state": "XXX-0",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OXX-1": [
+      {
+        "end_state": "XXX-1",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OXX-2": [
+      {
+        "end_state": "XXX-2",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XOO-0": [
+      {
+        "end_state": "XOX-0",
+        "probability": 0.0018832391713747645,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-0",
+        "probability": 0.9981167608286252,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XOO-1": [
+      {
+        "end_state": "XOO-2",
+        "probability": 0.00048146364949446316,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.0009629272989889263,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-1",
+        "probability": 0.9985556090515166,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XOO-2": [
+      {
+        "end_state": "XXO-2",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XOX-0": [
+      {
+        "end_state": "XXX-0",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XOX-1": [
+      {
+        "end_state": "XOX-1",
+        "probability": 0.0031847133757961785,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXX-1",
+        "probability": 0.9968152866242038,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XOX-2": [
+      {
+        "end_state": "XXX-2",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XXO-0": [
+      {
+        "end_state": "XXX-0",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XXO-1": [
+      {
+        "end_state": "XXX-1",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XXO-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.0009057971014492754,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXX-2",
+        "probability": 0.9990942028985508,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XXX-0": [
+      {
+        "end_state": "XXX-0",
+        "probability": 1.0,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "XXX-1": [
+      {
+        "end_state": "XXX-1",
+        "probability": 1.0,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "XXX-2": [
+      {
+        "end_state": "XXX-2",
+        "probability": 1.0,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ]
+  },
+  "HR": {
+    "OOO-0": [
+      {
+        "end_state": "OOO-0",
+        "probability": 1.0,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "OOO-1": [
+      {
+        "end_state": "OOO-1",
+        "probability": 1.0,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "OOO-2": [
+      {
+        "end_state": "OOO-2",
+        "probability": 1.0,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "OOX-0": [
+      {
+        "end_state": "OOO-0",
+        "probability": 1.0,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ],
+    "OOX-1": [
+      {
+        "end_state": "OOO-1",
+        "probability": 1.0,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ],
+    "OOX-2": [
+      {
+        "end_state": "OOO-2",
+        "probability": 1.0,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ],
+    "OXO-0": [
+      {
+        "end_state": "OOO-0",
+        "probability": 1.0,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ],
+    "OXO-1": [
+      {
+        "end_state": "OOO-1",
+        "probability": 1.0,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ],
+    "OXO-2": [
+      {
+        "end_state": "OOO-2",
+        "probability": 1.0,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ],
+    "OXX-0": [
+      {
+        "end_state": "OOO-0",
+        "probability": 1.0,
+        "runs_scored": 3,
+        "outs_made": 0
+      }
+    ],
+    "OXX-1": [
+      {
+        "end_state": "OOO-1",
+        "probability": 1.0,
+        "runs_scored": 3,
+        "outs_made": 0
+      }
+    ],
+    "OXX-2": [
+      {
+        "end_state": "OOO-2",
+        "probability": 1.0,
+        "runs_scored": 3,
+        "outs_made": 0
+      }
+    ],
+    "XOO-0": [
+      {
+        "end_state": "OOO-0",
+        "probability": 1.0,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ],
+    "XOO-1": [
+      {
+        "end_state": "OOO-1",
+        "probability": 1.0,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ],
+    "XOO-2": [
+      {
+        "end_state": "OOO-2",
+        "probability": 1.0,
+        "runs_scored": 2,
+        "outs_made": 0
+      }
+    ],
+    "XOX-0": [
+      {
+        "end_state": "OOO-0",
+        "probability": 1.0,
+        "runs_scored": 3,
+        "outs_made": 0
+      }
+    ],
+    "XOX-1": [
+      {
+        "end_state": "OOO-1",
+        "probability": 1.0,
+        "runs_scored": 3,
+        "outs_made": 0
+      }
+    ],
+    "XOX-2": [
+      {
+        "end_state": "OOO-2",
+        "probability": 1.0,
+        "runs_scored": 3,
+        "outs_made": 0
+      }
+    ],
+    "XXO-0": [
+      {
+        "end_state": "OOO-0",
+        "probability": 1.0,
+        "runs_scored": 3,
+        "outs_made": 0
+      }
+    ],
+    "XXO-1": [
+      {
+        "end_state": "OOO-1",
+        "probability": 1.0,
+        "runs_scored": 3,
+        "outs_made": 0
+      }
+    ],
+    "XXO-2": [
+      {
+        "end_state": "OOO-2",
+        "probability": 1.0,
+        "runs_scored": 3,
+        "outs_made": 0
+      }
+    ],
+    "XXX-0": [
+      {
+        "end_state": "OOO-0",
+        "probability": 1.0,
+        "runs_scored": 4,
+        "outs_made": 0
+      }
+    ],
+    "XXX-1": [
+      {
+        "end_state": "OOO-1",
+        "probability": 1.0,
+        "runs_scored": 4,
+        "outs_made": 0
+      }
+    ],
+    "XXX-2": [
+      {
+        "end_state": "OOO-2",
+        "probability": 1.0,
+        "runs_scored": 4,
+        "outs_made": 0
+      }
+    ]
+  },
+  "K": {
+    "OOO-0": [
+      {
+        "end_state": "OOO-1",
+        "probability": 0.9999511074170049,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOO-0",
+        "probability": 4.8892582995159634e-05,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOO-1": [
+      {
+        "end_state": "OOO-2",
+        "probability": 0.9999364877738964,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 6.351222610352493e-05,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOO-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "OOX-0": [
+      {
+        "end_state": "OOX-1",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "OOX-1": [
+      {
+        "end_state": "OOO-2",
+        "probability": 0.0013513513513513514,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.9986486486486487,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "OOX-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "OXO-0": [
+      {
+        "end_state": "OOX-1",
+        "probability": 0.003355704697986577,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.9966442953020134,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "OXO-1": [
+      {
+        "end_state": "OOX-2",
+        "probability": 0.0021579628830384117,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.9978420371169616,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "OXO-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "OXX-0": [
+      {
+        "end_state": "OXX-1",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "OXX-1": [
+      {
+        "end_state": "OOX-2",
+        "probability": 0.0015923566878980893,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.9984076433121019,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "OXX-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "XOO-0": [
+      {
+        "end_state": "OOO-2",
+        "probability": 0.0013185654008438818,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.9986814345991561,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "XOO-1": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.001686696183849884,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.0002108370229812355,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.9981024667931688,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "XOO-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "XOX-0": [
+      {
+        "end_state": "OXX-1",
+        "probability": 0.003236245954692557,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.9967637540453075,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "XOX-1": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.001524390243902439,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.001524390243902439,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.9969512195121951,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "XOX-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "XXO-0": [
+      {
+        "end_state": "OXX-1",
+        "probability": 0.0009009009009009009,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXO-1",
+        "probability": 0.9990990990990991,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "XXO-1": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.0005211047420531526,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "XXO-2",
+        "probability": 0.9994788952579469,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "XXO-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "XXX-0": [
+      {
+        "end_state": "XXX-1",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "XXX-1": [
+      {
+        "end_state": "XXX-2",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "XXX-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 1.0,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ]
+  },
+  "OUT": {
+    "OOO-0": [
+      {
+        "end_state": "OOO-1",
+        "probability": 0.9844490802199887,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-0",
+        "probability": 0.0002133510335672293,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-0",
+        "probability": 0.0018727479613123458,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-0",
+        "probability": 0.013464820785131804,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOO-1": [
+      {
+        "end_state": "OOO-2",
+        "probability": 0.9847913730374643,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 3.277721328132682e-05,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.0022944049296928777,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.01288144481956144,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOO-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.9852380162547686,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.00012439873942610716,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.002570907281472881,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.012066677724332394,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOX-0": [
+      {
+        "end_state": "OOO-1",
+        "probability": 0.4411764705882353,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.013368983957219251,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.5133689839572193,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.00267379679144385,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOO-0",
+        "probability": 0.013368983957219251,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.013368983957219251,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-0",
+        "probability": 0.00267379679144385,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOX-1": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.02585604472396925,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.4493361285814116,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.0006988120195667365,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.38504542278127185,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.009783368273934312,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.013277428371767994,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.04821802935010482,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.0649895178197065,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.002795248078266946,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OOX-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.9877482044782425,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.0004224757076468103,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.0008449514152936206,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.010984368398817067,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "OXO-0": [
+      {
+        "end_state": "OOO-1",
+        "probability": 0.0005836008170411438,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.008462211847096586,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.47359206302888823,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-0",
+        "probability": 0.0014590020426028597,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.4733002626203677,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-0",
+        "probability": 0.0008754012255617158,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-0",
+        "probability": 0.0023344032681645753,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.018967026553837175,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-0",
+        "probability": 0.01517362124306974,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-0",
+        "probability": 0.005252407353370295,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OXO-1": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.011496700021290185,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.0021290185224611454,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.00021290185224611454,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.3879071747924207,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.0017032148179689163,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.5597189695550351,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.0012774111134766872,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.0019161166702150309,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.017670853736427506,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.011070896316797956,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-1",
+        "probability": 0.0048967426016606344,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OXO-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.9790567001532436,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-0",
+        "probability": 0.00017027073046143367,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.000510812191384301,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.0027243316873829387,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.0054486633747658775,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.012089221862761792,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OXX-0": [
+      {
+        "end_state": "OOO-1",
+        "probability": 0.001658374792703151,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.003316749585406302,
+        "runs_scored": 1,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.28689883913764513,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.006633499170812604,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OXO-0",
+        "probability": 0.001658374792703151,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.175787728026534,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.008291873963515755,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OXX-0",
+        "probability": 0.001658374792703151,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.44776119402985076,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOO-0",
+        "probability": 0.001658374792703151,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.014925373134328358,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-0",
+        "probability": 0.011608623548922056,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.014925373134328358,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXO-0",
+        "probability": 0.006633499170812604,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-1",
+        "probability": 0.013266998341625208,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXX-0",
+        "probability": 0.003316749585406302,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OXX-1": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.030850263355906696,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OOO-0",
+        "probability": 0.005267118133935289,
+        "runs_scored": 1,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.0030097817908201654,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.3340857787810384,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.004514672686230248,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.19789315274642588,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.0007524454477050414,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.27840481565086533,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.0030097817908201654,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.005267118133935289,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.03310759969902182,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.07223476297968397,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXO-1",
+        "probability": 0.005267118133935289,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-2",
+        "probability": 0.022573363431151242,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXX-1",
+        "probability": 0.003762227238525207,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "OXX-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.983030303030303,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-0",
+        "probability": 0.0024242424242424242,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.0018181818181818182,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.006666666666666667,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.006060606060606061,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "XOO-0": [
+      {
+        "end_state": "OOO-1",
+        "probability": 0.00020569782988789467,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.23120436079399362,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.0028797696184305254,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-0",
+        "probability": 0.00020569782988789467,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.13648051013061813,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-0",
+        "probability": 0.0019541293839349994,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-0",
+        "probability": 0.00010284891494394734,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.607425691658953,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-0",
+        "probability": 0.0034968631080942096,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-0",
+        "probability": 0.016044430731255787,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XOO-1": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.2375032375032375,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.000172666839333506,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.000259000259000259,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.001985668652335319,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.000172666839333506,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.1249244582577916,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.002072002072002072,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.6152982819649486,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.004575671242337909,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-1",
+        "probability": 0.013036346369679703,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XOO-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.9870611653999276,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 9.048136083966703e-05,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.0009048136083966703,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.0011762576909156715,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.0002714440825190011,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.002262034020991676,
+        "runs_scored": 0,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-2",
+        "probability": 0.0082338038364097,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XOX-0": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.00245398773006135,
+        "runs_scored": 0,
+        "outs_made": 3
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.1312883435582822,
+        "runs_scored": 1,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.0036809815950920245,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.022085889570552148,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OXO-0",
+        "probability": 0.001226993865030675,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.09938650306748466,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.006134969325153374,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OXX-0",
+        "probability": 0.0049079754601227,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.051533742331288344,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.38773006134969323,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.0049079754601227,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "XOX-0",
+        "probability": 0.007361963190184049,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.2085889570552147,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXO-0",
+        "probability": 0.0196319018404908,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-1",
+        "probability": 0.04171779141104295,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXX-0",
+        "probability": 0.007361963190184049,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XOX-1": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.22630457933972312,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OOO-0",
+        "probability": 0.007454739084132056,
+        "runs_scored": 1,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OOO-2",
+        "probability": 0.0010649627263045794,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.0005324813631522897,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.004259850905218318,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.10862619808306709,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.004259850905218318,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.04792332268370607,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.35197018104366345,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.005857294994675187,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.1847710330138445,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXO-1",
+        "probability": 0.024494142705005325,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-2",
+        "probability": 0.03194888178913738,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXX-1",
+        "probability": 0.0005324813631522897,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XOX-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.9881332724783204,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-0",
+        "probability": 0.00045641259698767686,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.00045641259698767686,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.0022820629849383844,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.00045641259698767686,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.0022820629849383844,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-2",
+        "probability": 0.005933363760839799,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ],
+    "XXO-0": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.0007877116975187081,
+        "runs_scored": 0,
+        "outs_made": 3
+      },
+      {
+        "end_state": "OOO-1",
+        "probability": 0.00039385584875935406,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-0",
+        "probability": 0.00039385584875935406,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OOX-1",
+        "probability": 0.0007877116975187081,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.16699487987396613,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.0027569909413154787,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.014178810555336747,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OXX-0",
+        "probability": 0.0027569909413154787,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.19062623079952737,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOO-0",
+        "probability": 0.00039385584875935406,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.0019692792437967705,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.01536037810161481,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "XOX-0",
+        "probability": 0.0031508467900748325,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.21583300512012604,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXO-0",
+        "probability": 0.0031508467900748325,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-1",
+        "probability": 0.35368255218589995,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXX-0",
+        "probability": 0.02678219771563608,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XXO-1": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.24231761670185314,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.0007037297677691766,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.0002345765892563922,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.0025803424818203143,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.0018766127140511376,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.10837438423645321,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.005629838142153413,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.005160684963640629,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.2134646962233169,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXO-1",
+        "probability": 0.00211118930330753,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-2",
+        "probability": 0.4013605442176871,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXX-1",
+        "probability": 0.01618578465869106,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XXO-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.9870317002881844,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-0",
+        "probability": 0.0002058460271716756,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.0012350761630300535,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.0018526142445450802,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-2",
+        "probability": 0.001440922190201729,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXX-2",
+        "probability": 0.008233841086867023,
+        "runs_scored": 0,
+        "outs_made": 0
+      }
+    ],
+    "XXX-0": [
+      {
+        "end_state": "OOX-1",
+        "probability": 0.0013869625520110957,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.12482662968099861,
+        "runs_scored": 1,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.006934812760055479,
+        "runs_scored": 1,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OXX-0",
+        "probability": 0.004160887656033287,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.0970873786407767,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.038834951456310676,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "XOO-1",
+        "probability": 0.004160887656033287,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.005547850208044383,
+        "runs_scored": 1,
+        "outs_made": 2
+      },
+      {
+        "end_state": "XOX-0",
+        "probability": 0.0027739251040221915,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.217753120665742,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.009708737864077669,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "XXO-0",
+        "probability": 0.0027739251040221915,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-1",
+        "probability": 0.130374479889043,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXO-2",
+        "probability": 0.009708737864077669,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "XXX-0",
+        "probability": 0.020804438280166437,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXX-1",
+        "probability": 0.3231622746185853,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "XXX-1": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.22296843519140364,
+        "runs_scored": 0,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OOO-0",
+        "probability": 0.007387508394895903,
+        "runs_scored": 1,
+        "outs_made": 2
+      },
+      {
+        "end_state": "OOX-2",
+        "probability": 0.000671591672263264,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-1",
+        "probability": 0.000671591672263264,
+        "runs_scored": 3,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.0047011417058428475,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXX-1",
+        "probability": 0.001343183344526528,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.11954331766286098,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOO-2",
+        "probability": 0.005372733378106112,
+        "runs_scored": 2,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XOX-1",
+        "probability": 0.0020147750167897917,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.19879113498992612,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXO-1",
+        "probability": 0.0033579583613163196,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-2",
+        "probability": 0.16521155137676294,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "XXX-1",
+        "probability": 0.021490933512424447,
+        "runs_scored": 1,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXX-2",
+        "probability": 0.24647414372061788,
+        "runs_scored": 0,
+        "outs_made": 1
+      }
+    ],
+    "XXX-2": [
+      {
+        "end_state": "OOO-0",
+        "probability": 0.9787120808940926,
+        "runs_scored": 0,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OOO-0",
+        "probability": 0.0005321979776476849,
+        "runs_scored": 1,
+        "outs_made": 1
+      },
+      {
+        "end_state": "OXO-2",
+        "probability": 0.0031931878658861094,
+        "runs_scored": 3,
+        "outs_made": 0
+      },
+      {
+        "end_state": "OXX-2",
+        "probability": 0.0015965939329430547,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XOX-2",
+        "probability": 0.0037253858435337944,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXO-2",
+        "probability": 0.0010643959552953698,
+        "runs_scored": 2,
+        "outs_made": 0
+      },
+      {
+        "end_state": "XXX-2",
+        "probability": 0.011176157530601383,
+        "runs_scored": 1,
+        "outs_made": 0
+      }
+    ]
+  }
+}
