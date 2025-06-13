@@ -1,5 +1,5 @@
 import type { MatchupLineups, GameMetadataMLB, GameStateMLB } from './mlb';
-import type { ParkEffectsResponse, SimType, UmpireEffectsResponse } from './mlb/mlb-sim';
+import type { BaseRunningModel, ParkEffectsResponse, SimType, UmpireEffectsResponse } from './mlb/mlb-sim';
 import type { LeagueName } from './league';
 
 // ---------- Types ----------
@@ -69,5 +69,8 @@ export interface MLBGameContainer { // Very similar to MLBGameDataResponse(type 
   // Umpire effects
   umpireEffects?: UmpireEffectsResponse;
   umpireEffectsEnabled: boolean;
+
+  // Base running model
+  baseRunningModel: BaseRunningModel;
 }
 

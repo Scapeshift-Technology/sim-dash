@@ -16,6 +16,7 @@ import NumberOfGamesSettings from './NumberOfGamesSettings';
 import CaptureConfigDropdown from '@/apps/simDash/components/CaptureConfigDropdown';
 import ParkEffectsCheckbox from './ParkEffectsCheckbox';
 import UmpireEffectsCheckbox from './UmpireEffectsCheckbox';
+import BaseRunningModelSettings from './BaseRunningModelSettings';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
@@ -185,6 +186,7 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
                 <AdvancedSimulationSettings caption={createLabel()}>
                     <NumberOfGamesSettings />
                     <CaptureConfigDropdown leagueName={leagueName} />
+                    <BaseRunningModelSettings leagueName={leagueName} matchId={matchId} />
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                         <ParkEffectsCheckbox matchId={matchId} leagueName={leagueName} />
                         <UmpireEffectsCheckbox matchId={matchId} leagueName={leagueName} />

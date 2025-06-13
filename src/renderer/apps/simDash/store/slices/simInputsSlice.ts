@@ -19,9 +19,9 @@ import type {
   MLBGameContainer,
   MLBGameCustomModeData
 } from '@/types/simInputs';
+import { SimType, ParkEffectsResponse, UmpireEffectsResponse, BaseRunningModel } from '@@/types/mlb/mlb-sim';
 import { LeagueName } from '@@/types/league';
 import { RootState } from '@/store/store';
-import { SimType, ParkEffectsResponse, UmpireEffectsResponse } from '@@/types/mlb/mlb-sim';
 import { initializeGameState } from '@@/services/mlb/sim/gameState';
 
 // ---------- Initial States ----------
@@ -53,7 +53,8 @@ const initialMLBGameContainer: MLBGameContainer = {
 
   simMode: 'game',
   parkEffectsEnabled: false,
-  umpireEffectsEnabled: false
+  umpireEffectsEnabled: false,
+  baseRunningModel: 'avg_stolen_bases' as BaseRunningModel
 }
 
 // ---------- Helpers ----------
@@ -452,6 +453,18 @@ const simInputsSlice = createSlice({
       if (league === 'MLB' && state[league]?.[matchId]) {
         state[league][matchId].umpireEffectsEnabled = !state[league][matchId].umpireEffectsEnabled;
       }
+    },
+    updateBaseRunningModel: (state, action: {
+      payload: {
+        league: LeagueName;
+        matchId: number;
+        baseRunningModel: BaseRunningModel;
+      }
+    }) => {
+      const { league, matchId, baseRunningModel } = action.payload;
+      if (league === 'MLB' && state[league]?.[matchId]) {
+        state[league][matchId].baseRunningModel = baseRunningModel;
+      }
     }
   },
   extraReducers: (builder) => {
@@ -609,7 +622,8 @@ export const {
   updateSimMode,
   updateCustomModeGameState,
   toggleParkEffects,
-  toggleUmpireEffects
+  toggleUmpireEffects,
+  updateBaseRunningModel
 } = simInputsSlice.actions;
 
 // ---------- Selectors ----------
@@ -664,6 +678,9 @@ export const selectGameUmpireEffects = (state: RootState, league: LeagueName, ma
   state.simDash.simInputs[league]?.[matchId]?.umpireEffects;
 export const selectUmpireEffectsEnabled = (state: RootState, league: LeagueName, matchId: number): boolean => 
   state.simDash.simInputs[league]?.[matchId]?.umpireEffectsEnabled ?? false;
+
+export const selectBaseRunningModel = (state: RootState, league: LeagueName, matchId: number): BaseRunningModel => 
+  state.simDash.simInputs[league]?.[matchId]?.baseRunningModel ?? 'avg_stolen_bases';
 
 export default simInputsSlice.reducer;
 

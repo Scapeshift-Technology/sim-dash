@@ -54,7 +54,7 @@ export interface LeagueAvgStats {
   LhitRpitch: Stats;
 }
 
-export type EventType = 'K' | 'BB' | '1B' | '2B' | '3B' | 'HR' | 'OUT';
+export type EventType = 'K' | 'BB' | '1B' | '2B' | '3B' | 'HR' | 'OUT' | 'SB' | 'CS';
 
 export interface Stats {
   adj_perc_K: number;
@@ -173,4 +173,6 @@ export interface PlayerParkEffects {
   playerId: number;
   parkEffects: PlayerStatsMultiplier;
 }
+
+export type BaseRunningModel = 'state_transitions' | 'ind_stolen_bases' | 'avg_stolen_bases'
 

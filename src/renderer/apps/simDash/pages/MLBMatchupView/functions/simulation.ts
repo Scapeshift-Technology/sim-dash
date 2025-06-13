@@ -4,13 +4,14 @@ import { MLBGameInputs2, SeriesGameInputs } from "@@/types/simInputs";
 import { SimResultsMLB } from "@@/types/bettingResults";
 import { MlbLiveDataApiResponse } from "@@/types/mlb";
 import { SavedConfiguration } from "@/types/statCaptureConfig";
-import { ParkEffectsResponse, UmpireEffectsResponse } from "@@/types/mlb/mlb-sim";
+import { BaseRunningModel, ParkEffectsResponse, UmpireEffectsResponse } from "@@/types/mlb/mlb-sim";
 
 // ---------- Main functions ----------
 
 export async function runSimulation(
     gameInputs: MLBGameInputs2,
     numGames: number = 90000,
+    baseRunningModel: BaseRunningModel,
     liveGameData?: MlbLiveDataApiResponse,
     activeConfig?: SavedConfiguration,
     parkEffects?: ParkEffectsResponse,
@@ -23,6 +24,7 @@ export async function runSimulation(
     const results = await window.electronAPI.simulateMatchupMLB({
         matchupLineups: redoneLineups,
         numGames: numGames,
+        baseRunningModel: baseRunningModel,
         gameId: gameInputs.gameInfo.mlbGameId,
         statCaptureConfig: config,
         liveGameData: liveGameData,
@@ -36,6 +38,7 @@ export async function runSimulation(
 export async function runSeriesSimulation(
     gameInputs: SeriesGameInputs,
     numGames: number = 90000,
+    baseRunningModel: BaseRunningModel,
     activeConfig?: SavedConfiguration,
     parkEffects?: ParkEffectsResponse,
     umpireEffects?: UmpireEffectsResponse
@@ -50,6 +53,7 @@ export async function runSeriesSimulation(
       const gameSimResults = await runSimulation(
         game, 
         numGames, 
+        baseRunningModel,
         undefined, 
         activeConfig, 
         parkEffects, 

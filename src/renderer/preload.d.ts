@@ -58,7 +58,7 @@ declare global {
       fetchMlbGamePlayerStats: (args: { matchupLineups: MatchupLineups, date: string }) => Promise<MatchupLineups>;
 
       // Simulations
-      simulateMatchupMLB: (args: { matchupLineups: MatchupLineups, numGames: number, gameId: number | undefined, statCaptureConfig: SavedConfiguration, liveGameData?: MlbLiveDataApiResponse, parkEffects?: ParkEffectsResponse, umpireEffects?: UmpireEffectsResponse }) => Promise<SimResults>;
+      simulateMatchupMLB: (args: { matchupLineups: MatchupLineups, numGames: number, gameId: number | undefined, baseRunningModel: BaseRunningModel, statCaptureConfig: SavedConfiguration, liveGameData?: MlbLiveDataApiResponse, parkEffects?: ParkEffectsResponse, umpireEffects?: UmpireEffectsResponse }) => Promise<SimResults>;
 
       // Live data (MLB)
       connectToWebSocketMLB: (args: { gameId: number }) => Promise<void>;
