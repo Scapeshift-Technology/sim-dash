@@ -128,8 +128,19 @@ async function fetchPitcherStatsMLB(matchupLineups: MatchupLineups, pool: Connec
     'Pitchers'
   );
   
+  // Create validation function to match pitcher position with stat type
+  const validatePitcherType = (player: Player, stat: StatsResult): boolean => {
+    if (!stat.PitcherType) return false; // Only hitter stats would do this
+    
+    const pitcherType = stat.PitcherType.trim();
+    if (player.position === 'SP' && pitcherType === 'S') return true;
+    if (player.position === 'RP' && pitcherType === 'R') return true;
+    
+    return false;
+  };
+
   // Map stats back to players
-  const playersWithStats = mapStatsToPlayer(pitcherPlayers, allStats, 'pitch');
+  const playersWithStats = mapStatsToPlayer(pitcherPlayers, allStats, 'pitch', validatePitcherType);
   return playersWithStats;
 }
 
