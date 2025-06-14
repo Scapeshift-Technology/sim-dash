@@ -16,10 +16,10 @@ export function createGameStateFromLiveDataHelper<T extends TeamLineup | Reduced
   liveGameData: MlbLiveDataApiResponse,
   isReduced: boolean = false
 ) {
-  const bases = [
-    !!liveGameData.liveData.linescore.offense.first,
-    !!liveGameData.liveData.linescore.offense.second,
-    !!liveGameData.liveData.linescore.offense.third,
+  const baseRunners: (number | null)[] = [
+    liveGameData.liveData.linescore.offense.first?.id || null,
+    liveGameData.liveData.linescore.offense.second?.id || null,
+    liveGameData.liveData.linescore.offense.third?.id || null,
   ];
 
   const awayPitcher = findCurrentPitcher(awayTeam, liveGameData, false);
@@ -32,16 +32,19 @@ export function createGameStateFromLiveDataHelper<T extends TeamLineup | Reduced
   
   const inning = inningOver && isTopInningAdjusted ? liveGameData.liveData.linescore.currentInning + 1 : liveGameData.liveData.linescore.currentInning;
   const inExtras = inning > 9;
-  const adjustedBases = inningOver ? 
-    (inExtras ? [false, true, false] :
-      [false, false, false]) : 
-      bases;
+  const ghostRunner = inExtras ? isTopInningAdjusted ? 
+    awayTeam.lineup[liveGameData.liveData.linescore.offense.battingOrder - 1].id || null : 
+    homeTeam.lineup[liveGameData.liveData.linescore.offense.battingOrder - 1].id || null : null;
+  const adjustedBaseRunners: (number | null)[] = inningOver ? 
+    (inExtras ? [null, isTopInningAdjusted ? ghostRunner : null, null] :
+      [null, null, null]) : 
+      baseRunners;
 
   const baseGameState = {
     inning: inning,
     topInning: isTopInningAdjusted,
     outs: inningOver ? 0 : liveGameData.liveData.linescore.outs,
-    bases: adjustedBases,
+    baseRunners: adjustedBaseRunners,
     awayScore: liveGameData.liveData.linescore.teams.away.runs,
     homeScore: liveGameData.liveData.linescore.teams.home.runs,
     awayPitcher: awayPitcher,
@@ -445,16 +448,16 @@ export function convertGameStateWithLineupsToLiveData(
             fullName: findPlayerName(sittingPitcher.id)
           },
           // Base runners - simplified representation
-          first: gameState.bases[0] ? { 
-            id: 999999, // LIMITATION: Don't know which specific player is on base
+          first: gameState.baseRunners[0] ? { 
+            id: gameState.baseRunners[0],
             fullName: "Runner on 1st" 
           } : undefined,
-          second: gameState.bases[1] ? { 
-            id: 999998, // LIMITATION: Don't know which specific player is on base
+          second: gameState.baseRunners[1] ? { 
+            id: gameState.baseRunners[1],
             fullName: "Runner on 2nd" 
           } : undefined,
-          third: gameState.bases[2] ? { 
-            id: 999997, // LIMITATION: Don't know which specific player is on base
+          third: gameState.baseRunners[2] ? { 
+            id: gameState.baseRunners[2],
             fullName: "Runner on 3rd" 
           } : undefined
         },

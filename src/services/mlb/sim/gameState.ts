@@ -32,7 +32,7 @@ function createGameStateForNewGame(matchup: MatchupLineups): GameStateMLB {
     inning: 1,
     topInning: true,
     outs: 0,
-    bases: [false, false, false],  // [first, second, third]
+    baseRunners: [null, null, null],  // [1B player ID, 2B player ID, 3B player ID]
     awayScore: 0,
     homeScore: 0,
     
