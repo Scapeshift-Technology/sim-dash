@@ -5,8 +5,7 @@ import {
     Menu,
     MenuItem,
     CircularProgress,
-    Box,
-    Tooltip
+    Box
 } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
@@ -64,9 +63,6 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
     const activeConfigLoading = useSelector((state: RootState) => selectActiveConfigLoading(state, leagueName));
     const leagueConfigurations = useSelector((state: RootState) => selectLeagueStatCaptureConfigurations(state, leagueName));
     const leagueConfigurationsLoading = useSelector((state: RootState) => selectLeagueStatCaptureConfigurationsLoading(state, leagueName));
-    const parkEffectsEnabled = useSelector((state: RootState) => selectParkEffectsEnabled(state, leagueName, matchId));
-    const parkEffectsStatus = useSelector((state: RootState) => selectGameParkEffectsStatus(state, leagueName, matchId));
-    const parkEffectsError = useSelector((state: RootState) => selectGameParkEffectsError(state, leagueName, matchId));
 
     // ---------- State ----------
 
@@ -165,7 +161,7 @@ const SimulationButton: React.FC<SimulationButtonProps> = ({
                 onClose={handleClose}
             >
                 <MenuItem onClick={() => handleMenuItemClick('game')}>Simulate Game</MenuItem>
-                <MenuItem onClick={() => handleMenuItemClick('custom')}>Simulate Custom Game</MenuItem>
+                {/* <MenuItem onClick={() => handleMenuItemClick('custom')}>Simulate Custom Game</MenuItem> */}
                 {seriesGames && <MenuItem onClick={() => handleMenuItemClick('series')}>Simulate Series</MenuItem>}
                 {isGameLive && <MenuItem onClick={() => handleMenuItemClick('live')}>Simulate Live Game</MenuItem>}
             </Menu>
