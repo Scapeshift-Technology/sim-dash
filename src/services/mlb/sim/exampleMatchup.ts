@@ -37,6 +37,10 @@ const leagueAvgStats: LeagueAvgStats = {
     adj_perc_3B: 0.005110791463,
     adj_perc_HR: 0.03339695318,
     adj_perc_OUT: 0.4522957945
+  },
+  baserunning: {
+    sb_perc: 0.7781588683,
+    att_perc_sb: 0.08730729083
   }
 }
 
