@@ -16,7 +16,7 @@ export interface GameStateMLB {
   inning: number;
   topInning: boolean;
   outs: number;
-  bases: boolean[];
+  baseRunners: (number | null)[]; // [1B player ID, 2B player ID, 3B player ID]
   awayScore: number;
   homeScore: number;
 
@@ -43,15 +43,19 @@ export interface PlayResult {
   outsOnPlay: number;
   awayScore: number;
   homeScore: number;
-  basesBefore: boolean[];  // Represents base state before the play
-  basesAfter: boolean[];   // Represents base state after the play
+  baseRunnersBefore: (number | null)[];  // Represents baserunners before the play
+  baseRunnersAfter: (number | null)[];   // Represents baserunners after the play
 }
 
-export interface LeagueAvgStats {
+export interface LeagueAvgHittingStats {
   RhitLpitch: Stats;
   RhitRpitch: Stats;
   LhitLpitch: Stats;
   LhitRpitch: Stats;
+}
+
+export interface LeagueAvgStats extends LeagueAvgHittingStats {
+  baserunning: BaserunningStats;
 }
 
 export type EventType = 'K' | 'BB' | '1B' | '2B' | '3B' | 'HR' | 'OUT' | 'SB' | 'CS';
@@ -66,12 +70,18 @@ export interface Stats {
   adj_perc_OUT: number;
 }
 
+export interface BaserunningStats {
+  sb_perc: number;
+  att_perc_sb: number;
+}
+
 export interface PlayerStats {
   statsDate?: string; // Date that the stats came from in the DB
   hitVsL?: Stats; // Optional: A pitcher won't have hitting stats
   hitVsR?: Stats; // Optional: A pitcher won't have hitting stats
   pitchVsL?: Stats; // Optional: A batter won't have pitching stats
   pitchVsR?: Stats; // Optional: A batter won't have pitching stats
+  baserunning?: BaserunningStats; // Optional: A pitcher won't have baserunning stats
 }
 
 export type Handedness = 'L' | 'R' | 'S';
