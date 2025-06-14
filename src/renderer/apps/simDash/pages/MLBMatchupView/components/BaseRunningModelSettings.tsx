@@ -23,20 +23,20 @@ const BaseRunningModelSettings: React.FC<BaseRunningModelSettingsProps> = ({
     
     const baseRunningModels: { value: BaseRunningModel; label: string; description: string }[] = [
         {
+            value: 'ind_stolen_bases',
+            label: 'Individual Stolen Bases',
+            description: 'Player-specific baserunning'
+        },
+        {
             value: 'avg_stolen_bases',
             label: 'League Average Stolen Bases',
             description: 'Baserunning model with league average stolen base rates'
         },
-        {
-            value: 'state_transitions',
-            label: 'State Transitions',
-            description: 'Original approach with stolen bases baked into baserunning transitions'
-        },
-        {
-            value: 'ind_stolen_bases',
-            label: 'Individual Stolen Bases',
-            description: 'Player-specific baserunning'
-        }
+        // {
+        //     value: 'state_transitions',
+        //     label: 'State Transitions',
+        //     description: 'Original approach with stolen bases baked into baserunning transitions'
+        // }
     ];
 
     // ---------- Handlers ----------
@@ -69,7 +69,6 @@ const BaseRunningModelSettings: React.FC<BaseRunningModelSettingsProps> = ({
                         <MenuItem 
                             key={model.value} 
                             value={model.value}
-                            disabled={model.value === 'ind_stolen_bases'} // Disable until implemented
                         >
                             <Box>
                                 <Box sx={{ fontWeight: 500 }}>
