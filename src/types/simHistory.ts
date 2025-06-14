@@ -35,7 +35,7 @@ export interface ReducedGameStateMLB {
     inning: number;
     topInning: boolean;
     outs: number;
-    bases: boolean[];
+    baseRunners: (number | null)[];
     awayScore: number;
     homeScore: number;
   
