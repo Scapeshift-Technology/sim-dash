@@ -1,4 +1,4 @@
-import { MatchupLineups, Player, PlayerStats, Stats } from "@/types/mlb";
+import { MatchupLineups, Player, PlayerStats, Stats, BaserunningStats } from "@/types/mlb/mlb-sim";
 import { ConnectionPool } from "@/types/sql";
 
 // ---------- Types ----------
@@ -107,8 +107,9 @@ async function fetchHitterStatsMLB(matchupLineups: MatchupLineups, pool: Connect
   );
 
   // Map stats back to players
-  const playersWithStats = mapStatsToPlayer(hitterPlayers, allStats, 'hit');
-  return playersWithStats;
+  const playersWithHittingStats = mapStatsToPlayer(hitterPlayers, allStats, 'hit');
+  const playersWithBaserunning = mapBaserunningStatsToPlayer(playersWithHittingStats, allStats);
+  return playersWithBaserunning;
 }
 
 async function fetchPitcherStatsMLB(matchupLineups: MatchupLineups, pool: ConnectionPool, date: string): Promise<Player[]> {
@@ -342,4 +343,50 @@ function mapStatValue(targetStats: Stats, statName: string, value: number) {
   else if (statName === 'adj_perc_3B') targetStats.adj_perc_3B = value;
   else if (statName === 'adj_perc_HR') targetStats.adj_perc_HR = value;
   else if (statName === 'adj_perc_OUT') targetStats.adj_perc_OUT = value;
+}
+
+function mapBaserunningStatsToPlayer(players: Player[], stats: StatsResult[]): Player[] {
+  const baserunningStatsByPlayer = stats.reduce((acc, stat) => {
+    const playerId = stat.Player;
+    const statName = stat.Statistic.trim();
+    
+    // Only process baserunning statistics
+    if (statName !== 'sb_perc' && statName !== 'att_perc_sb') {
+      return acc;
+    }
+    
+    // Initialize player baserunning stats if not exists
+    if (!acc[playerId]) {
+      acc[playerId] = {
+        sb_perc: 0,
+        att_perc_sb: 0
+      };
+    }
+    
+    // Map the statistic value
+    if (statName === 'sb_perc') {
+      acc[playerId].sb_perc = stat.Value;
+    } else if (statName === 'att_perc_sb') {
+      acc[playerId].att_perc_sb = stat.Value;
+    }
+    
+    return acc;
+  }, {} as Record<number, BaserunningStats>);
+
+  return players.map(player => {
+    const baserunningStats = baserunningStatsByPlayer[player.id];
+    
+    if (!baserunningStats) {
+      // If no baserunning stats found, return player as-is
+      return player;
+    }
+
+    return {
+      ...player,
+      stats: {
+        ...player.stats!,
+        baserunning: baserunningStats
+      }
+    };
+  });
 }
