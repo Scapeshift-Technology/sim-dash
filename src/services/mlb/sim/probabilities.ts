@@ -2,14 +2,14 @@ import {
   MatchupLineups, 
   LeagueAvgStats, 
   GameMatchupProbabilities, 
-  TeamType, 
   TeamLineup,
   Handedness,
   PlayerStats,
   Player,
   Stats,
   TeamBatterMatchupProbabilities
-} from "@/types/mlb";
+} from "@/types/mlb/mlb-sim";
+import { TeamType } from "@/types/mlb";
 import { getHomeFieldMultipliers } from "./homeFieldAdvantage";
 import { ParkEffectsResponse, StatsMultiplier, UmpireEffectsResponse } from "@/types/mlb/mlb-sim";
 
@@ -72,7 +72,7 @@ function getBatterPitcherMatchupProbabilities(batter: Player, pitcher: Player, l
 
   // Get corresponding stats
   const leagueAvgMatchupString = handednessToLeagueAvgString(matchupHandedness.battingSide, matchupHandedness.pitchingSide);
-  const leagueAvgProbability = leagueAvgStats[leagueAvgMatchupString];
+  const leagueAvgProbability = leagueAvgStats[leagueAvgMatchupString] as Stats;
   const batterStatsKey = handednessToPlayerStatsString(matchupHandedness.pitchingSide, 'hit')
   const batterStats = batter.stats?.[batterStatsKey] as Stats;
   const pitcherStatsKey = handednessToPlayerStatsString(matchupHandedness.battingSide, 'pitch')
@@ -272,7 +272,8 @@ function adjustLeagueAvgStats(leagueAvgStats: LeagueAvgStats, parkEffects?: Park
     RhitLpitch: applyStatsMultipliers(leagueAvgStats.RhitLpitch, parkEffects.leagueAverage.RhitVsAll),
     RhitRpitch: applyStatsMultipliers(leagueAvgStats.RhitRpitch, parkEffects.leagueAverage.RhitVsAll),
     LhitLpitch: applyStatsMultipliers(leagueAvgStats.LhitLpitch, parkEffects.leagueAverage.LhitVsAll),
-    LhitRpitch: applyStatsMultipliers(leagueAvgStats.LhitRpitch, parkEffects.leagueAverage.LhitVsAll)
+    LhitRpitch: applyStatsMultipliers(leagueAvgStats.LhitRpitch, parkEffects.leagueAverage.LhitVsAll),
+    baserunning: leagueAvgStats.baserunning
   };
 }
 

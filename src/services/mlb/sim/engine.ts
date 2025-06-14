@@ -72,7 +72,7 @@ async function simulateGames(
     if (i % 100 === 0) {
       await new Promise(resolve => setImmediate(resolve)); // Prevent the CPU leakage bug
     }
-  }
+  };
 
   return allPlays;
 }
@@ -93,8 +93,8 @@ function simulateGame(
   const gameState = initializeGameState(matchup, liveGameData);
 
   while (true) {
-    if (baseRunningModel === 'avg_stolen_bases' || baseRunningModel === 'ind_stolen_bases') {
-      const stolenBaseResult = simulateStolenBase(gameState);
+    if (gameState.baseRunners[0] || gameState.baseRunners[1] || gameState.baseRunners[2]) {
+      const stolenBaseResult = simulateStolenBase(gameState, matchup, baseRunningModel);
       if (stolenBaseResult) {
         const stolenBasePlay = processStolenBaseResult(stolenBaseResult, gameState);
         plays.push(stolenBasePlay);
@@ -131,9 +131,17 @@ function handleInningEnd(gameState: GameStateMLB) {
   if (gameState.outs >= 3) {
     // In extra innings, runner starts on second base
     if (gameState.inning > 9) {
-      gameState.bases = [false, true, false];
+      let ghostRunnerID: number;
+      if (gameState.topInning) {
+        const lastBatterIndex = (gameState.awayLineupPos - 1 + 9) % 9;
+        ghostRunnerID = gameState.awayLineup[lastBatterIndex].id;
+      } else {
+        const lastBatterIndex = (gameState.homeLineupPos - 1 + 9) % 9;
+        ghostRunnerID = gameState.homeLineup[lastBatterIndex].id;
+      }
+      gameState.baseRunners = [null, ghostRunnerID, null]; // Put ghost runner on 2B
     } else {
-      gameState.bases = [false, false, false];
+      gameState.baseRunners = [null, null, null];
     }
     // If bottom of inning, increment inning counter
     if (!gameState.topInning) {
@@ -168,7 +176,7 @@ function updateGameState(gameState: GameStateMLB, playResult: PlayResult) {
     gameState.awayPitcher.battersFaced += 1;
   }
 
-  gameState.bases = playResult.basesAfter;
+  gameState.baseRunners = playResult.baseRunnersAfter;
   gameState.outs += playResult.outsOnPlay;
 }
 
@@ -194,6 +202,7 @@ function simulatePlay(gameState: GameStateMLB, matchupProbabilities: GameMatchup
 
     const playEvent = simulatePlayResult(atBatMatchupProbabilities);
     const result = processBattingEvent(playEvent, gameState, baseRunningModel);
+    
     const playResult: PlayResult = {
       batterID: currentBatter.id,
       pitcherID: currentPitcherID,
@@ -205,8 +214,8 @@ function simulatePlay(gameState: GameStateMLB, matchupProbabilities: GameMatchup
       outsOnPlay: result.outsOnPlay,
       awayScore: gameState.awayScore,
       homeScore: gameState.homeScore,
-      basesBefore: gameState.bases,
-      basesAfter: result.newBases
+      baseRunnersBefore: [...gameState.baseRunners],
+      baseRunnersAfter: result.newBaseRunners
     }
   
     return playResult;
