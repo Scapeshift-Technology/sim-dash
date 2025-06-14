@@ -28,18 +28,28 @@ export { pastPlaysToSimPlays };
 
 function pastPlayToSimPlay(pastPlay: MlbGameApiPlay): PlayResult {
   // Get bases before play
-  const runnerOriginBases = new Set(pastPlay.runners.map(runner => runner.movement.originBase || null).filter(base => base !== null));
-  const basesBefore = [
-    runnerOriginBases.has('1B'),
-    runnerOriginBases.has('2B'),
-    runnerOriginBases.has('3B')
-  ];
+  const baseRunnersBefore: (number | null)[] = [null, null, null]; // [1B, 2B, 3B]
+  for (const runner of pastPlay.runners) {
+    if (runner.movement.originBase && runner.details.runner.id) {
+      switch (runner.movement.originBase) {
+        case '1B':
+          baseRunnersBefore[0] = runner.details.runner.id;
+          break;
+        case '2B':
+          baseRunnersBefore[1] = runner.details.runner.id;
+          break;
+        case '3B':
+          baseRunnersBefore[2] = runner.details.runner.id;
+          break;
+      }
+    }
+  }
 
-  // Get bases after the play
-  const basesAfter = [
-    pastPlay.matchup.postOnFirst ? true : false,
-    pastPlay.matchup.postOnSecond ? true : false,
-    pastPlay.matchup.postOnThird ? true : false
+  // Get base runners after the play
+  const baseRunnersAfter: (number | null)[] = [
+    pastPlay.matchup.postOnFirst ? pastPlay.matchup.postOnFirst.id : null,
+    pastPlay.matchup.postOnSecond ? pastPlay.matchup.postOnSecond.id : null,
+    pastPlay.matchup.postOnThird ? pastPlay.matchup.postOnThird.id : null
   ]
 
   // Make play result
@@ -55,8 +65,8 @@ function pastPlayToSimPlay(pastPlay: MlbGameApiPlay): PlayResult {
     outsOnPlay: pastPlay.count.outs,
     awayScore: pastPlay.result.awayScore,
     homeScore: pastPlay.result.homeScore,
-    basesBefore: basesBefore,
-    basesAfter: basesAfter
+    baseRunnersBefore: baseRunnersBefore,
+    baseRunnersAfter: baseRunnersAfter
   }
 
   return simPlay;

@@ -169,6 +169,11 @@ interface MlbGameApiPlayRunner {
   movement: {
     originBase: string | null; // '1B', '2B', '3B', null
   }
+  details: {
+    runner: {
+      id: number;
+    }
+  }
 }
 
 interface MlbGameApiPlayResult {
