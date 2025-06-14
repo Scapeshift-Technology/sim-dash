@@ -1,5 +1,5 @@
 {
-  "OOO-0": {
+  "123-0": {
     "outcomes": [
       {
         "runners": [],
@@ -8,337 +8,43 @@
       }
     ]
   },
-  "OOO-1": {
-    "outcomes": [
-      {
-        "runners": [],
-        "probability": 1.0,
-        "success_rates": {}
-      }
-    ]
-  },
-  "OOO-2": {
-    "outcomes": [
-      {
-        "runners": [],
-        "probability": 1.0,
-        "success_rates": {}
-      }
-    ]
-  },
-  "OOX-0": {
-    "outcomes": [
-      {
-        "runners": [],
-        "probability": 1.0,
-        "success_rates": {}
-      }
-    ]
-  },
-  "OOX-1": {
+  "123-1": {
     "outcomes": [
       {
         "runners": [
           "3B"
         ],
-        "probability": 0.001135718341851221,
-        "success_rates": {
-          "3B": 0.25
-        }
-      },
-      {
-        "runners": [],
-        "probability": 0.9988642816581488,
-        "success_rates": {}
-      }
-    ]
-  },
-  "OOX-2": {
-    "outcomes": [
-      {
-        "runners": [
-          "3B"
-        ],
-        "probability": 0.001083815028901734,
-        "success_rates": {
-          "3B": 0.8333333333333334
-        }
-      },
-      {
-        "runners": [],
-        "probability": 0.9989161849710982,
-        "success_rates": {}
-      }
-    ]
-  },
-  "OXO-0": {
-    "outcomes": [
-      {
-        "runners": [
-          "2B"
-        ],
-        "probability": 0.012915129151291513,
-        "success_rates": {
-          "2B": 0.8163265306122449
-        }
-      },
-      {
-        "runners": [],
-        "probability": 0.9870848708487084,
-        "success_rates": {}
-      }
-    ]
-  },
-  "OXO-1": {
-    "outcomes": [
-      {
-        "runners": [
-          "2B"
-        ],
-        "probability": 0.032065023222579495,
-        "success_rates": {
-          "2B": 0.8105849582172702
-        }
-      },
-      {
-        "runners": [],
-        "probability": 0.9679349767774205,
-        "success_rates": {}
-      }
-    ]
-  },
-  "OXO-2": {
-    "outcomes": [
-      {
-        "runners": [
-          "2B"
-        ],
-        "probability": 0.017018616282300638,
-        "success_rates": {
-          "2B": 0.8693877551020408
-        }
-      },
-      {
-        "runners": [],
-        "probability": 0.9829813837176994,
-        "success_rates": {}
-      }
-    ]
-  },
-  "OXX-0": {
-    "outcomes": [
-      {
-        "runners": [],
-        "probability": 1.0,
-        "success_rates": {}
-      }
-    ]
-  },
-  "OXX-1": {
-    "outcomes": [
-      {
-        "runners": [
-          "3B"
-        ],
-        "probability": 0.00030892801977139327,
+        "probability": 0.00031456432840515884,
         "success_rates": {
           "3B": 0.1
         }
       },
       {
         "runners": [],
-        "probability": 0.9996910719802286,
+        "probability": 0.9996854356715948,
         "success_rates": {}
       }
     ]
   },
-  "OXX-2": {
+  "123-2": {
     "outcomes": [
       {
         "runners": [
           "3B"
         ],
-        "probability": 0.0004861448711716091,
+        "probability": 0.0002416626389560174,
         "success_rates": {
           "3B": 0.1
         }
       },
       {
         "runners": [],
-        "probability": 0.9995138551288284,
+        "probability": 0.999758337361044,
         "success_rates": {}
       }
     ]
   },
-  "XOO-0": {
-    "outcomes": [
-      {
-        "runners": [
-          "1B"
-        ],
-        "probability": 0.06950990710657576,
-        "success_rates": {
-          "1B": 0.781435154707044
-        }
-      },
-      {
-        "runners": [],
-        "probability": 0.9304900928934242,
-        "success_rates": {}
-      }
-    ]
-  },
-  "XOO-1": {
-    "outcomes": [
-      {
-        "runners": [
-          "1B"
-        ],
-        "probability": 0.08500055677220593,
-        "success_rates": {
-          "1B": 0.7393013100436682
-        }
-      },
-      {
-        "runners": [],
-        "probability": 0.914999443227794,
-        "success_rates": {}
-      }
-    ]
-  },
-  "XOO-2": {
-    "outcomes": [
-      {
-        "runners": [
-          "1B"
-        ],
-        "probability": 0.08796885800560265,
-        "success_rates": {
-          "1B": 0.7783291976840364
-        }
-      },
-      {
-        "runners": [],
-        "probability": 0.9120311419943974,
-        "success_rates": {}
-      }
-    ]
-  },
-  "XOX-0": {
-    "outcomes": [
-      {
-        "runners": [
-          "1B"
-        ],
-        "probability": 0.06204379562043796,
-        "success_rates": {
-          "1B": 0.8487394957983193
-        }
-      },
-      {
-        "runners": [
-          "1B",
-          "3B"
-        ],
-        "probability": 0.0005213764337851929,
-        "success_rates": {
-          "1B": 0.9,
-          "3B": 0.9
-        }
-      },
-      {
-        "runners": [
-          "3B"
-        ],
-        "probability": 0.0015641293013555788,
-        "success_rates": {
-          "3B": 0.3333333333333333
-        }
-      },
-      {
-        "runners": [],
-        "probability": 0.9358706986444213,
-        "success_rates": {}
-      }
-    ]
-  },
-  "XOX-1": {
-    "outcomes": [
-      {
-        "runners": [
-          "1B"
-        ],
-        "probability": 0.07872340425531915,
-        "success_rates": {
-          "1B": 0.9
-        }
-      },
-      {
-        "runners": [
-          "1B",
-          "3B"
-        ],
-        "probability": 0.003309692671394799,
-        "success_rates": {
-          "1B": 0.9,
-          "3B": 0.9
-        }
-      },
-      {
-        "runners": [
-          "3B"
-        ],
-        "probability": 0.0028368794326241137,
-        "success_rates": {
-          "3B": 0.16666666666666666
-        }
-      },
-      {
-        "runners": [],
-        "probability": 0.915130023640662,
-        "success_rates": {}
-      }
-    ]
-  },
-  "XOX-2": {
-    "outcomes": [
-      {
-        "runners": [
-          "1B"
-        ],
-        "probability": 0.12868269556383338,
-        "success_rates": {
-          "1B": 0.9
-        }
-      },
-      {
-        "runners": [
-          "1B",
-          "3B"
-        ],
-        "probability": 0.0037250253979004403,
-        "success_rates": {
-          "1B": 0.9,
-          "3B": 0.9
-        }
-      },
-      {
-        "runners": [
-          "3B"
-        ],
-        "probability": 0.0077886894683372844,
-        "success_rates": {
-          "3B": 0.1
-        }
-      },
-      {
-        "runners": [],
-        "probability": 0.8598035895699289,
-        "success_rates": {}
-      }
-    ]
-  },
-  "XXO-0": {
+  "12X-0": {
     "outcomes": [
       {
         "runners": [
@@ -376,7 +82,7 @@
       }
     ]
   },
-  "XXO-1": {
+  "12X-1": {
     "outcomes": [
       {
         "runners": [
@@ -414,7 +120,7 @@
       }
     ]
   },
-  "XXO-2": {
+  "12X-2": {
     "outcomes": [
       {
         "runners": [
@@ -452,6 +158,318 @@
       }
     ]
   },
+  "1X3-0": {
+    "outcomes": [
+      {
+        "runners": [
+          "1B"
+        ],
+        "probability": 0.06204379562043796,
+        "success_rates": {
+          "1B": 0.8487394957983193
+        }
+      },
+      {
+        "runners": [
+          "1B",
+          "3B"
+        ],
+        "probability": 0.0005213764337851929,
+        "success_rates": {
+          "1B": 0.9,
+          "3B": 0.9
+        }
+      },
+      {
+        "runners": [
+          "3B"
+        ],
+        "probability": 0.0015641293013555788,
+        "success_rates": {
+          "3B": 0.3333333333333333
+        }
+      },
+      {
+        "runners": [],
+        "probability": 0.9358706986444213,
+        "success_rates": {}
+      }
+    ]
+  },
+  "1X3-1": {
+    "outcomes": [
+      {
+        "runners": [
+          "1B"
+        ],
+        "probability": 0.07872340425531915,
+        "success_rates": {
+          "1B": 0.9
+        }
+      },
+      {
+        "runners": [
+          "1B",
+          "3B"
+        ],
+        "probability": 0.003309692671394799,
+        "success_rates": {
+          "1B": 0.9,
+          "3B": 0.9
+        }
+      },
+      {
+        "runners": [
+          "3B"
+        ],
+        "probability": 0.0028368794326241137,
+        "success_rates": {
+          "3B": 0.16666666666666666
+        }
+      },
+      {
+        "runners": [],
+        "probability": 0.915130023640662,
+        "success_rates": {}
+      }
+    ]
+  },
+  "1X3-2": {
+    "outcomes": [
+      {
+        "runners": [
+          "1B"
+        ],
+        "probability": 0.12868269556383338,
+        "success_rates": {
+          "1B": 0.9
+        }
+      },
+      {
+        "runners": [
+          "1B",
+          "3B"
+        ],
+        "probability": 0.0037250253979004403,
+        "success_rates": {
+          "1B": 0.9,
+          "3B": 0.9
+        }
+      },
+      {
+        "runners": [
+          "3B"
+        ],
+        "probability": 0.0077886894683372844,
+        "success_rates": {
+          "3B": 0.1
+        }
+      },
+      {
+        "runners": [],
+        "probability": 0.8598035895699289,
+        "success_rates": {}
+      }
+    ]
+  },
+  "1XX-0": {
+    "outcomes": [
+      {
+        "runners": [
+          "1B"
+        ],
+        "probability": 0.06950990710657576,
+        "success_rates": {
+          "1B": 0.781435154707044
+        }
+      },
+      {
+        "runners": [],
+        "probability": 0.9304900928934242,
+        "success_rates": {}
+      }
+    ]
+  },
+  "1XX-1": {
+    "outcomes": [
+      {
+        "runners": [
+          "1B"
+        ],
+        "probability": 0.08500055677220593,
+        "success_rates": {
+          "1B": 0.7393013100436682
+        }
+      },
+      {
+        "runners": [],
+        "probability": 0.914999443227794,
+        "success_rates": {}
+      }
+    ]
+  },
+  "1XX-2": {
+    "outcomes": [
+      {
+        "runners": [
+          "1B"
+        ],
+        "probability": 0.08796885800560265,
+        "success_rates": {
+          "1B": 0.7783291976840364
+        }
+      },
+      {
+        "runners": [],
+        "probability": 0.9120311419943974,
+        "success_rates": {}
+      }
+    ]
+  },
+  "X23-0": {
+    "outcomes": [
+      {
+        "runners": [],
+        "probability": 1.0,
+        "success_rates": {}
+      }
+    ]
+  },
+  "X23-1": {
+    "outcomes": [
+      {
+        "runners": [
+          "3B"
+        ],
+        "probability": 0.00030892801977139327,
+        "success_rates": {
+          "3B": 0.1
+        }
+      },
+      {
+        "runners": [],
+        "probability": 0.9996910719802286,
+        "success_rates": {}
+      }
+    ]
+  },
+  "X23-2": {
+    "outcomes": [
+      {
+        "runners": [
+          "3B"
+        ],
+        "probability": 0.0004861448711716091,
+        "success_rates": {
+          "3B": 0.1
+        }
+      },
+      {
+        "runners": [],
+        "probability": 0.9995138551288284,
+        "success_rates": {}
+      }
+    ]
+  },
+  "X2X-0": {
+    "outcomes": [
+      {
+        "runners": [
+          "2B"
+        ],
+        "probability": 0.012915129151291513,
+        "success_rates": {
+          "2B": 0.8163265306122449
+        }
+      },
+      {
+        "runners": [],
+        "probability": 0.9870848708487084,
+        "success_rates": {}
+      }
+    ]
+  },
+  "X2X-1": {
+    "outcomes": [
+      {
+        "runners": [
+          "2B"
+        ],
+        "probability": 0.032065023222579495,
+        "success_rates": {
+          "2B": 0.8105849582172702
+        }
+      },
+      {
+        "runners": [],
+        "probability": 0.9679349767774205,
+        "success_rates": {}
+      }
+    ]
+  },
+  "X2X-2": {
+    "outcomes": [
+      {
+        "runners": [
+          "2B"
+        ],
+        "probability": 0.017018616282300638,
+        "success_rates": {
+          "2B": 0.8693877551020408
+        }
+      },
+      {
+        "runners": [],
+        "probability": 0.9829813837176994,
+        "success_rates": {}
+      }
+    ]
+  },
+  "XX3-0": {
+    "outcomes": [
+      {
+        "runners": [],
+        "probability": 1.0,
+        "success_rates": {}
+      }
+    ]
+  },
+  "XX3-1": {
+    "outcomes": [
+      {
+        "runners": [
+          "3B"
+        ],
+        "probability": 0.001135718341851221,
+        "success_rates": {
+          "3B": 0.25
+        }
+      },
+      {
+        "runners": [],
+        "probability": 0.9988642816581488,
+        "success_rates": {}
+      }
+    ]
+  },
+  "XX3-2": {
+    "outcomes": [
+      {
+        "runners": [
+          "3B"
+        ],
+        "probability": 0.001083815028901734,
+        "success_rates": {
+          "3B": 0.8333333333333334
+        }
+      },
+      {
+        "runners": [],
+        "probability": 0.9989161849710982,
+        "success_rates": {}
+      }
+    ]
+  },
   "XXX-0": {
     "outcomes": [
       {
@@ -464,17 +482,8 @@
   "XXX-1": {
     "outcomes": [
       {
-        "runners": [
-          "3B"
-        ],
-        "probability": 0.00031456432840515884,
-        "success_rates": {
-          "3B": 0.1
-        }
-      },
-      {
         "runners": [],
-        "probability": 0.9996854356715948,
+        "probability": 1.0,
         "success_rates": {}
       }
     ]
@@ -482,17 +491,8 @@
   "XXX-2": {
     "outcomes": [
       {
-        "runners": [
-          "3B"
-        ],
-        "probability": 0.0002416626389560174,
-        "success_rates": {
-          "3B": 0.1
-        }
-      },
-      {
         "runners": [],
-        "probability": 0.999758337361044,
+        "probability": 1.0,
         "success_rates": {}
       }
     ]
