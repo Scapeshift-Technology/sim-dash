@@ -38,7 +38,7 @@ async function simulateMatchupMLB(
 ) {
   try {
     // Matchup probabilities
-    await initializeHomeFieldMultipliers();
+    await initializeHomeFieldMultipliers(); // Can we just remove this line???
 
     // Simulate games
     const simPlays = await simulateGames(matchup, leagueAvgStats, num_games, liveGameData, parkEffects, umpireEffects);
