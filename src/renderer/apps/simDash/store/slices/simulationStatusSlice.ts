@@ -145,7 +145,7 @@ export const findLeansThunk = createAsyncThunk(
     parkEffects?: ParkEffectsResponse;
     umpireEffects?: UmpireEffectsResponse;
   }) => {
-    const results = await findOptimalLeans(lineups, marketLines, parkEffects, umpireEffects);
+    const results = await findOptimalLeans(lineups, marketLines, baseRunningModel, parkEffects, umpireEffects);
     return results;
   }
 );
