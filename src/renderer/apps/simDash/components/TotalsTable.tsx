@@ -2,6 +2,7 @@ import React from 'react';
 import { ColumnConfig } from './Inline';
 import Inline from './Inline';
 import { displayAmericanOdds } from '@/simDash/utils/display';
+import { formatROIDemandPrice } from '@/simDash/utils/roiCalculations';
 import { TotalsData } from '@/types/bettingResults';
 
 // ---------- Types ----------
@@ -10,7 +11,7 @@ interface TotalsTableProps {
   data: TotalsData[];
 }
 
-interface FormattedTotalsData extends Omit<TotalsData, 'overPercent' | 'underPercent' | 'pushPercent' | 'marginOfError' | 'usaFairOver' | 'usaFairUnder' | 'varianceOddsOver' | 'varianceOddsUnder'> {
+interface FormattedTotalsData extends Omit<TotalsData, 'overPercent' | 'underPercent' | 'pushPercent' | 'marginOfError' | 'usaFairOver' | 'usaFairUnder' | 'varianceOddsOver' | 'varianceOddsUnder' | 'usaDemandPriceOver' | 'usaDemandPriceUnder'> {
   overPercent: string;
   underPercent: string;
   pushPercent: string;
@@ -19,6 +20,8 @@ interface FormattedTotalsData extends Omit<TotalsData, 'overPercent' | 'underPer
   usaFairUnder: string;
   varianceOddsOver: string;
   varianceOddsUnder: string;
+  usaDemandPriceOver: string;
+  usaDemandPriceUnder: string;
 }
 
 // ---------- Column config ----------
@@ -28,6 +31,8 @@ const totalsColumns: ColumnConfig[] = [
     name: 'team', 
     type: 'string', 
     label: 'Team',
+    width: 80,
+    frozen: true,
     display: {
       rules: [
         {
@@ -42,6 +47,8 @@ const totalsColumns: ColumnConfig[] = [
     name: 'period', 
     type: 'string', 
     label: 'Period',
+    width: 90,
+    frozen: true,
     display: {
       rules: [
         {
@@ -55,12 +62,15 @@ const totalsColumns: ColumnConfig[] = [
   { 
     name: 'line', 
     type: 'number', 
-    label: 'Line'
+    label: 'Line',
+    width: 70,
+    frozen: true
   },
   { 
     name: 'overPercent', 
     type: 'string', 
     label: 'Over %',
+    width: 80,
     display: {
       rules: [
         {
@@ -75,6 +85,7 @@ const totalsColumns: ColumnConfig[] = [
     name: 'underPercent', 
     type: 'string', 
     label: 'Under %',
+    width: 80,
     display: {
       rules: [
         {
@@ -89,6 +100,7 @@ const totalsColumns: ColumnConfig[] = [
     name: 'pushPercent', 
     type: 'string', 
     label: 'Push %',
+    width: 80,
     display: {
       rules: [
         {
@@ -103,6 +115,7 @@ const totalsColumns: ColumnConfig[] = [
     name: 'marginOfError', 
     type: 'string', 
     label: 'MOE',
+    width: 70,
     display: {
       rules: [
         {
@@ -116,22 +129,38 @@ const totalsColumns: ColumnConfig[] = [
   { 
     name: 'usaFairOver', 
     type: 'string', 
-    label: 'USA-Fair Over'
+    label: 'USA-Fair Over',
+    width: 110
   },
   { 
     name: 'usaFairUnder', 
     type: 'string', 
-    label: 'USA-Fair Under'
+    label: 'USA-Fair Under',
+    width: 110
   },
   { 
     name: 'varianceOddsOver', 
     type: 'string', 
-    label: 'USA-MOE-PESSIMISTIC Over'
+    label: 'USA-MOE-PESSIMISTIC Over',
+    width: 150
   },
   { 
     name: 'varianceOddsUnder', 
     type: 'string', 
-    label: 'USA-MOE-PESSIMISTIC Under'
+    label: 'USA-MOE-PESSIMISTIC Under',
+    width: 150
+  },
+  { 
+    name: 'usaDemandPriceOver', 
+    type: 'string', 
+    label: 'ROI Demand Price Over',
+    width: 140
+  },
+  { 
+    name: 'usaDemandPriceUnder', 
+    type: 'string', 
+    label: 'ROI Demand Price Under',
+    width: 140
   }
 ];
 
@@ -147,7 +176,9 @@ function formatTotalsData(data: TotalsData[]): FormattedTotalsData[] {
     usaFairOver: displayAmericanOdds(Number(row.usaFairOver.toFixed(2))),
     usaFairUnder: displayAmericanOdds(Number(row.usaFairUnder.toFixed(2))),
     varianceOddsOver: displayAmericanOdds(Number(row.varianceOddsOver.toFixed(2))),
-    varianceOddsUnder: displayAmericanOdds(Number(row.varianceOddsUnder.toFixed(2)))
+    varianceOddsUnder: displayAmericanOdds(Number(row.varianceOddsUnder.toFixed(2))),
+    usaDemandPriceOver: formatROIDemandPrice(row.usaDemandPriceOver),
+    usaDemandPriceUnder: formatROIDemandPrice(row.usaDemandPriceUnder)
   }));
 }
 

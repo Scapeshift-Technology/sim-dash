@@ -26,6 +26,7 @@ import {
 } from "@@/services/mlb/utils/teamName";
 
 import { countsToAmericanOdds, countsToProbability, marginOfError, proportionToAmericanOdds } from "./oddsCalculations";
+import { calculateROIDemandPrice } from "./roiCalculations";
 import { sortSidesData, analyzeSidesCountsMLB } from "./displayMLB/sides";
 import { analyzeTotalsCountsMLB, sortTotalsData } from "./displayMLB/totals";
 import { analyzeAllPlayerCountsMLB } from "./displayMLB/playerProps";
@@ -36,8 +37,8 @@ export { teamNameToAbbreviationMLB };
 // ---------- Tables ----------
 // ----- Sides -----
 
-function transformSidesCountsMLB(sidesCounts: SidesCountsMLB, awayTeamName: string, homeTeamName: string): SidesData[] {
-  const allData = analyzeSidesCountsMLB(sidesCounts, awayTeamName, homeTeamName);
+function transformSidesCountsMLB(sidesCounts: SidesCountsMLB, awayTeamName: string, homeTeamName: string, roiDemandDecimal?: number): SidesData[] {
+  const allData = analyzeSidesCountsMLB(sidesCounts, awayTeamName, homeTeamName, roiDemandDecimal);
   return sortSidesData(allData);
 }
 
@@ -45,8 +46,8 @@ export { transformSidesCountsMLB };
 
 // ----- Totals -----
 
-function transformTotalsCountsMLB(totalsCounts: TotalsCountsMLB, awayTeamName: string, homeTeamName: string): TotalsData[] {
-  const allData = analyzeTotalsCountsMLB(totalsCounts, awayTeamName, homeTeamName);
+function transformTotalsCountsMLB(totalsCounts: TotalsCountsMLB, awayTeamName: string, homeTeamName: string, roiDemandDecimal?: number): TotalsData[] {
+  const allData = analyzeTotalsCountsMLB(totalsCounts, awayTeamName, homeTeamName, roiDemandDecimal);
   return sortTotalsData(allData, awayTeamName, homeTeamName);
 }
 
@@ -54,22 +55,24 @@ export { transformTotalsCountsMLB };
 
 // ----- Series -----
 
-function transformSeriesProbsMLB(seriesProbs: SeriesProbsMLB, awayTeamName: string, homeTeamName: string): SeriesData[] {
+function transformSeriesProbsMLB(seriesProbs: SeriesProbsMLB, awayTeamName: string, homeTeamName: string, roiDemandDecimal?: number): SeriesData[] {
   const { home, away } = seriesProbs;
-  const homeData = transformTeamSeriesProbsMLB(home, homeTeamName);
-  const awayData = transformTeamSeriesProbsMLB(away, awayTeamName);
+  const homeData = transformTeamSeriesProbsMLB(home, homeTeamName, roiDemandDecimal);
+  const awayData = transformTeamSeriesProbsMLB(away, awayTeamName, roiDemandDecimal);
 
   return [homeData, awayData];
 }
 
-function transformTeamSeriesProbsMLB(teamSeriesProbs: TeamSeriesProbsMLB, teamName: string): SeriesData {
+function transformTeamSeriesProbsMLB(teamSeriesProbs: TeamSeriesProbsMLB, teamName: string, roiDemandDecimal?: number): SeriesData {
   const { winPercent } = teamSeriesProbs;
   const usaFair = proportionToAmericanOdds(winPercent);
+  const usaDemandPrice = typeof roiDemandDecimal === 'number' ? calculateROIDemandPrice(winPercent, 0, roiDemandDecimal) : null;
 
   return {
     team: teamName,
     winPercent: winPercent,
-    usaFair: usaFair
+    usaFair: usaFair,
+    usaDemandPrice: usaDemandPrice
   }
 }
 
@@ -77,10 +80,10 @@ export { transformSeriesProbsMLB };
 
 // ----- Props -----
 
-function transformPropsCountsMLB(propsCounts: PropsCountsMLB, awayTeamName: string, homeTeamName: string): PropsData {
-  const firstInningPropData = transformFirstInningCountsMLB(propsCounts.firstInning, awayTeamName, homeTeamName);
-  const playerPropData = analyzeAllPlayerCountsMLB(propsCounts.player, awayTeamName, homeTeamName);
-  const scoringOrderPropData = propsCounts.scoringOrder ? analyzeScoringOrderCountsMLB(propsCounts.scoringOrder, awayTeamName, homeTeamName) : undefined;
+function transformPropsCountsMLB(propsCounts: PropsCountsMLB, awayTeamName: string, homeTeamName: string, roiDemandDecimal?: number): PropsData {
+  const firstInningPropData = transformFirstInningCountsMLB(propsCounts.firstInning, awayTeamName, homeTeamName, roiDemandDecimal);
+  const playerPropData = analyzeAllPlayerCountsMLB(propsCounts.player, awayTeamName, homeTeamName, roiDemandDecimal);
+  const scoringOrderPropData = propsCounts.scoringOrder ? analyzeScoringOrderCountsMLB(propsCounts.scoringOrder, awayTeamName, homeTeamName, roiDemandDecimal) : undefined;
 
   return {
     firstInning: firstInningPropData,
@@ -91,15 +94,15 @@ function transformPropsCountsMLB(propsCounts: PropsCountsMLB, awayTeamName: stri
 
 // -- First inning props --
 
-function transformFirstInningCountsMLB(propsCounts: FirstInningScoreCountsMLB, awayTeamName: string, homeTeamName: string): FirstInningPropsData[] {
-  const awayData = transformFirstInningScoreCountsMLB(propsCounts.away, awayTeamName);
-  const homeData = transformFirstInningScoreCountsMLB(propsCounts.home, homeTeamName);
-  const overallData = transformFirstInningScoreCountsMLB(propsCounts.overall, 'Overall');
+function transformFirstInningCountsMLB(propsCounts: FirstInningScoreCountsMLB, awayTeamName: string, homeTeamName: string, roiDemandDecimal?: number): FirstInningPropsData[] {
+  const awayData = transformFirstInningScoreCountsMLB(propsCounts.away, awayTeamName, roiDemandDecimal);
+  const homeData = transformFirstInningScoreCountsMLB(propsCounts.home, homeTeamName, roiDemandDecimal);
+  const overallData = transformFirstInningScoreCountsMLB(propsCounts.overall, 'Overall', roiDemandDecimal);
 
   return [awayData, homeData, overallData];
 }
 
-function transformFirstInningScoreCountsMLB(outcomeCounts: OutcomeCounts, teamName: string): FirstInningPropsData {
+function transformFirstInningScoreCountsMLB(outcomeCounts: OutcomeCounts, teamName: string, roiDemandDecimal?: number): FirstInningPropsData {
   const { success, failure, push, total } = outcomeCounts;
   const pushCt = push || 0;
   const scorePercent = countsToProbability(success, failure, pushCt);
@@ -108,13 +111,15 @@ function transformFirstInningScoreCountsMLB(outcomeCounts: OutcomeCounts, teamNa
   const varianceProportion = Math.min(Math.max(scorePercent - moe, 0), 1);
   const varianceOdds = proportionToAmericanOdds(varianceProportion);
   const displayTeamName = teamName;
+  const usaDemandPrice = typeof roiDemandDecimal === 'number' ? calculateROIDemandPrice(scorePercent, moe, roiDemandDecimal) : null;
 
   return {
     team: displayTeamName,
     scorePercent: scorePercent,
     marginOfError: moe,
     usaFair: usaOdds,
-    varianceOdds: varianceOdds
+    varianceOdds: varianceOdds,
+    usaDemandPrice: usaDemandPrice
   };
 }
 

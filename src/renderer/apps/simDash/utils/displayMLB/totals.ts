@@ -2,6 +2,7 @@ import { TotalsLinesMLB, TotalsData, GamePeriodTotalsMLB, OutcomeCounts, TotalsC
 import { PeriodKey } from "@@/types/statCaptureConfig";
 
 import { countsToProbability, countsToAmericanOdds, marginOfError, proportionToAmericanOdds } from "../oddsCalculations";
+import { calculateROIDemandPrice } from "../roiCalculations";
 import { 
   sortWithConfig, 
   teamOrderComparator, 
@@ -15,11 +16,11 @@ import { periodKeyToDisplayPeriod } from "@@/services/statCaptureConfig/utils";
 
 // ---------- Main function ----------
 
-function analyzeTotalsCountsMLB(totalsCounts: TotalsCountsMLB, awayTeamName: string, homeTeamName: string): TotalsData[] {
+function analyzeTotalsCountsMLB(totalsCounts: TotalsCountsMLB, awayTeamName: string, homeTeamName: string, roiDemandDecimal?: number): TotalsData[] {
   const { combined, home, away } = totalsCounts;
-  const combinedData = transformGamePeriodTotalsMLB(combined, 'Combined');
-  const homeData = transformGamePeriodTotalsMLB(home, homeTeamName);
-  const awayData = transformGamePeriodTotalsMLB(away, awayTeamName);
+  const combinedData = transformGamePeriodTotalsMLB(combined, 'Combined', roiDemandDecimal);
+  const homeData = transformGamePeriodTotalsMLB(home, homeTeamName, roiDemandDecimal);
+  const awayData = transformGamePeriodTotalsMLB(away, awayTeamName, roiDemandDecimal);
 
   return [...combinedData, ...homeData, ...awayData];
 }
@@ -28,21 +29,21 @@ export { analyzeTotalsCountsMLB };
 
 // ---------- Helper functions ----------
 
-function transformGamePeriodTotalsMLB(gamePeriodTotals: GamePeriodTotalsMLB, teamName: string): TotalsData[] {
+function transformGamePeriodTotalsMLB(gamePeriodTotals: GamePeriodTotalsMLB, teamName: string, roiDemandDecimal?: number): TotalsData[] {
   const allData: TotalsData[] = [];
   
   for (const periodKey in gamePeriodTotals) {
     const typedPeriodKey = periodKey as PeriodKey;
     const totalsLines = gamePeriodTotals[typedPeriodKey];
     const displayPeriod = periodKeyToDisplayPeriod(typedPeriodKey);
-    const periodData = transformTotalsLinesMLB(totalsLines, teamName, displayPeriod);
+    const periodData = transformTotalsLinesMLB(totalsLines, teamName, displayPeriod, roiDemandDecimal);
     allData.push(...periodData);
   }
   
   return allData;
 }
   
-function transformTotalsLinesMLB(totalsLines: TotalsLinesMLB, teamName: string, period: string): TotalsData[] {
+function transformTotalsLinesMLB(totalsLines: TotalsLinesMLB, teamName: string, period: string, roiDemandDecimal?: number): TotalsData[] {
   // Convert keys to numbers and sort them numerically
   const lines = Object.keys(totalsLines.over)
     .map(Number)
@@ -55,7 +56,8 @@ function transformTotalsLinesMLB(totalsLines: TotalsLinesMLB, teamName: string, 
       totalsLines.under[lineNumber],
       teamName,
       period,
-      lineNumber.toString()
+      lineNumber.toString(),
+      roiDemandDecimal
     );
     data.push(lineData);
   }
@@ -68,7 +70,8 @@ function transformTotalsOutcomeCountsMLB(
   underCounts: OutcomeCounts,
   teamName: string,
   period: string,
-  line: string
+  line: string,
+  roiDemandDecimal?: number
 ): TotalsData {
   const overPercent = countsToProbability(overCounts.success, overCounts.failure, overCounts.push || 0);
   const underPercent = countsToProbability(underCounts.success, underCounts.failure, underCounts.push || 0);
@@ -85,6 +88,9 @@ function transformTotalsOutcomeCountsMLB(
   
   const lineNumber = parseFloat(line);
   const displayTeamName = teamName;
+  
+  const usaDemandPriceOver = typeof roiDemandDecimal === 'number' ? calculateROIDemandPrice(overPercent, moe, roiDemandDecimal) : null;
+  const usaDemandPriceUnder = typeof roiDemandDecimal === 'number' ? calculateROIDemandPrice(underPercent, moe, roiDemandDecimal) : null;
 
   return {
     team: displayTeamName,
@@ -97,7 +103,9 @@ function transformTotalsOutcomeCountsMLB(
     usaFairOver: usaFairOver,
     usaFairUnder: usaFairUnder,
     varianceOddsOver: varianceOddsOver,
-    varianceOddsUnder: varianceOddsUnder
+    varianceOddsUnder: varianceOddsUnder,
+    usaDemandPriceOver: usaDemandPriceOver,
+    usaDemandPriceUnder: usaDemandPriceUnder
   };
 }
 

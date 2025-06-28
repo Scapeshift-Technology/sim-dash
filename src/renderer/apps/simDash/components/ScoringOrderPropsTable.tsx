@@ -2,6 +2,7 @@ import React from 'react';
 import { ColumnConfig } from './Inline';
 import Inline from './Inline';
 import { displayAmericanOdds, formatDecimal } from '@/simDash/utils/display';
+import { formatROIDemandPrice } from '@/simDash/utils/roiCalculations';
 import { ScoringOrderPropsData } from '@/types/bettingResults';
 
 // ---------- Types ----------
@@ -10,11 +11,12 @@ interface ScoringOrderTableProps {
   data: ScoringOrderPropsData[];
 }
 
-interface FormattedScoringOrderPropsData extends Omit<ScoringOrderPropsData, 'percent' | 'usaFair' | 'varianceOdds' | 'marginOfError'> {
+interface FormattedScoringOrderPropsData extends Omit<ScoringOrderPropsData, 'percent' | 'usaFair' | 'varianceOdds' | 'marginOfError' | 'usaDemandPrice'> {
   percent: string;
   marginOfError: string;
   usaFair: string;
   varianceOdds: string;
+  usaDemandPrice: string;
 }
 
 // ---------- Column Config ----------
@@ -24,6 +26,7 @@ const scoringOrderPropsColumns: ColumnConfig[] = [
     name: 'team', 
     type: 'string', 
     label: 'Team',
+    width: 80,
     display: {
       rules: [
         {
@@ -38,6 +41,7 @@ const scoringOrderPropsColumns: ColumnConfig[] = [
     name: 'propType', 
     type: 'string', 
     label: 'Prop Type',
+    width: 120,
     display: {
       rules: [
         {
@@ -51,12 +55,14 @@ const scoringOrderPropsColumns: ColumnConfig[] = [
   { 
     name: 'percent', 
     type: 'string', 
-    label: 'Percent'
+    label: 'Percent',
+    width: 80
   },
   { 
     name: 'marginOfError', 
     type: 'string', 
     label: 'MOE',
+    width: 70,
     display: {
       rules: [
         {
@@ -70,12 +76,20 @@ const scoringOrderPropsColumns: ColumnConfig[] = [
   { 
     name: 'usaFair', 
     type: 'string', 
-    label: 'USA-Fair'
+    label: 'USA-Fair',
+    width: 90
   },
   { 
     name: 'varianceOdds', 
     type: 'string', 
-    label: 'USA-MOE-PESSIMISTIC'
+    label: 'USA-MOE-PESSIMISTIC',
+    width: 120
+  },
+  { 
+    name: 'usaDemandPrice', 
+    type: 'string', 
+    label: 'ROI Demand Price',
+    width: 120
   }
 ]
 
@@ -87,7 +101,8 @@ function formatScoringOrderPropsData(data: ScoringOrderPropsData[]): FormattedSc
     marginOfError: `${formatDecimal(100 * row.marginOfError)}%`,
     percent: `${formatDecimal(100 * row.percent)}%`,
     usaFair: displayAmericanOdds(Number(formatDecimal(row.usaFair))),
-    varianceOdds: displayAmericanOdds(Number(formatDecimal(row.varianceOdds)))
+    varianceOdds: displayAmericanOdds(Number(formatDecimal(row.varianceOdds))),
+    usaDemandPrice: formatROIDemandPrice(row.usaDemandPrice)
   }));
 
   return formattedData;

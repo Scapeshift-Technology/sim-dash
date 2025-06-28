@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import type { SimResultsMLB } from '@/types/bettingResults';
 import { 
   teamNameToAbbreviationMLB, 
@@ -20,10 +21,16 @@ import SimInputs from './components/SimInputs';
 import LineupSection from './components/LineupSection';
 import { copyAllResults } from './utils/copier';
 import ScoringOrderPropsTable from '../../components/ScoringOrderPropsTable';
+import ROIDemandInput from '@/simDash/components/ROIDemandInput';
+import { selectROIDemandDecimal } from '@/simDash/store/slices/userPreferencesSlice';
+import type { RootState } from '@/store/store';
 
 // ---------- Main component ----------
 
 const MLBSimulationView: React.FC = () => {
+  // ---------- Redux State ----------
+  const roiDemandDecimal = useSelector((state: RootState) => selectROIDemandDecimal(state));
+  
   // ---------- State ----------
   const [simData, setSimData] = useState<SimResultsMLB | null>(null);
   const [loading, setLoading] = useState(true);
@@ -148,10 +155,11 @@ const MLBSimulationView: React.FC = () => {
   }
 
   // Data for betting tables
-  const sidesData = transformSidesCountsMLB(simData.sides, awayTeamAbbreviation, homeTeamAbbreviation);
-  const totalsData = transformTotalsCountsMLB(simData.totals, awayTeamAbbreviation, homeTeamAbbreviation);
-  const propsData = transformPropsCountsMLB(simData.props, awayTeamAbbreviation, homeTeamAbbreviation);
-  const seriesData = simData.series ? transformSeriesProbsMLB(simData.series, awayTeamAbbreviation, homeTeamAbbreviation) : [];
+  console.log('MLBSimulationView - Render with roiDemandDecimal:', roiDemandDecimal);
+  const sidesData = transformSidesCountsMLB(simData.sides, awayTeamAbbreviation, homeTeamAbbreviation, roiDemandDecimal);
+  const totalsData = transformTotalsCountsMLB(simData.totals, awayTeamAbbreviation, homeTeamAbbreviation, roiDemandDecimal);
+  const propsData = transformPropsCountsMLB(simData.props, awayTeamAbbreviation, homeTeamAbbreviation, roiDemandDecimal);
+  const seriesData = simData.series ? transformSeriesProbsMLB(simData.series, awayTeamAbbreviation, homeTeamAbbreviation, roiDemandDecimal) : [];
 
   return (
     <div style={{ padding: '20px' }}>
@@ -170,7 +178,7 @@ const MLBSimulationView: React.FC = () => {
           <h5 style={{ marginTop: '0px', paddingTop: '0px', marginBottom: '8px' }}>Simulated at {new Date(simTimestamp).toLocaleString()}</h5>
         )}
 
-        <Box sx={{ display: 'flex', justifyContent: 'flex-start', gap: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 2 }}>
           <Button 
             variant="outlined" 
             color="primary" 
@@ -187,6 +195,7 @@ const MLBSimulationView: React.FC = () => {
           >
             Compare Simulations
           </Button>
+          <ROIDemandInput />
         </Box>
       </Box>
       

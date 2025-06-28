@@ -13,6 +13,7 @@ export interface SeriesData {
   team: string;
   winPercent: number;
   usaFair: number;
+  usaDemandPrice: number | null;
 }
 
 export interface SidesData {
@@ -23,6 +24,7 @@ export interface SidesData {
   marginOfError: number;
   usaFair: number;
   varianceOdds: number;
+  usaDemandPrice: number | null;
 }
 
 export interface TotalsData {
@@ -37,6 +39,8 @@ export interface TotalsData {
   usaFairUnder: number;
   varianceOddsOver: number;
   varianceOddsUnder: number;
+  usaDemandPriceOver: number | null;
+  usaDemandPriceUnder: number | null;
 }
 
 export interface PropsData {
@@ -51,6 +55,7 @@ export interface FirstInningPropsData {
   marginOfError: number;
   usaFair: number;
   varianceOdds: number;
+  usaDemandPrice: number | null;
 }
 
 export interface PlayerPropsData {
@@ -62,6 +67,7 @@ export interface PlayerPropsData {
   marginOfError: number;
   usaFair: number;
   varianceOdds: number;
+  usaDemandPrice: number | null;
 }
 
 export type PropType = 'FirstToScore' | 'LastToScore';
@@ -73,6 +79,7 @@ export interface ScoringOrderPropsData {
   marginOfError: number;
   usaFair: number;
   varianceOdds: number;
+  usaDemandPrice: number | null;
 }
 
 export interface ComparisonSidesData {

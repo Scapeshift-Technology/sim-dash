@@ -7,6 +7,7 @@ import {
 import { teamNameToAbbreviationMLB } from "@@/services/mlb/utils/teamName";
 
 import { countsToProbability, marginOfError, proportionToAmericanOdds } from "../oddsCalculations";
+import { calculateROIDemandPrice } from "../roiCalculations";
 import { 
   sortWithConfig, 
   propTypeOrderComparator, 
@@ -16,32 +17,32 @@ import {
 
 // ---------- Main function ----------
 
-export function analyzeScoringOrderCountsMLB(scoringOrderCounts: ScoringOrderCountsMLB, awayTeamName: string, homeTeamName: string): ScoringOrderPropsData[] {
+export function analyzeScoringOrderCountsMLB(scoringOrderCounts: ScoringOrderCountsMLB, awayTeamName: string, homeTeamName: string, roiDemandDecimal?: number): ScoringOrderPropsData[] {
     const results: ScoringOrderPropsData[] = [];
     
-    results.push(...processTeamScoringOrderData(scoringOrderCounts.away, awayTeamName));
-    results.push(...processTeamScoringOrderData(scoringOrderCounts.home, homeTeamName));
+    results.push(...processTeamScoringOrderData(scoringOrderCounts.away, awayTeamName, roiDemandDecimal));
+    results.push(...processTeamScoringOrderData(scoringOrderCounts.home, homeTeamName, roiDemandDecimal));
     
     return sortScoringOrderPropsData(results);
 }
 
 // ---------- Helper functions ----------
 
-function processTeamScoringOrderData(teamData: { first?: OutcomeCounts; last?: OutcomeCounts }, teamName: string): ScoringOrderPropsData[] {
+function processTeamScoringOrderData(teamData: { first?: OutcomeCounts; last?: OutcomeCounts }, teamName: string, roiDemandDecimal?: number): ScoringOrderPropsData[] {
     const results: ScoringOrderPropsData[] = [];
     
     if (teamData.first) {
-        results.push(transformScoringOrderTeamCountsMLB(teamData.first, teamName, 'FirstToScore'));
+        results.push(transformScoringOrderTeamCountsMLB(teamData.first, teamName, 'FirstToScore', roiDemandDecimal));
     }
     
     if (teamData.last) {
-        results.push(transformScoringOrderTeamCountsMLB(teamData.last, teamName, 'LastToScore'));
+        results.push(transformScoringOrderTeamCountsMLB(teamData.last, teamName, 'LastToScore', roiDemandDecimal));
     }
     
     return results;
 }
 
-function transformScoringOrderTeamCountsMLB(outcomeCounts: OutcomeCounts, teamName: string, propType: 'FirstToScore' | 'LastToScore'): ScoringOrderPropsData {
+function transformScoringOrderTeamCountsMLB(outcomeCounts: OutcomeCounts, teamName: string, propType: 'FirstToScore' | 'LastToScore', roiDemandDecimal?: number): ScoringOrderPropsData {
     const { success, failure, push, total } = outcomeCounts;
     
     const teamAbbrev = teamNameToAbbreviationMLB(teamName);
@@ -52,6 +53,7 @@ function transformScoringOrderTeamCountsMLB(outcomeCounts: OutcomeCounts, teamNa
     const usaFair = proportionToAmericanOdds(percent);
     const varianceProportion = Math.min(Math.max(percent - moe, 0), 1);
     const varianceOdds = proportionToAmericanOdds(varianceProportion);
+    const usaDemandPrice = typeof roiDemandDecimal === 'number' ? calculateROIDemandPrice(percent, moe, roiDemandDecimal) : null;
     
     return {
         team: teamAbbrev,
@@ -59,7 +61,8 @@ function transformScoringOrderTeamCountsMLB(outcomeCounts: OutcomeCounts, teamNa
         percent: percent,
         marginOfError: moe,
         usaFair: usaFair,
-        varianceOdds: varianceOdds
+        varianceOdds: varianceOdds,
+        usaDemandPrice: usaDemandPrice
     };
 }
 

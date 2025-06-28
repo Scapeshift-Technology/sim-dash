@@ -35,6 +35,8 @@ export interface ColumnConfig {
   type: SupportedTypes;
   label: string;
   mobile?: boolean;
+  width?: number; // Fixed column width in pixels
+  frozen?: boolean; // Whether this column should be frozen/sticky
   display?: {
     rules: DisplayRule[];
   };
@@ -46,8 +48,28 @@ interface InlineProps {
   onRowClick?: (row: Record<string, any>) => void;
 }
 
+// Helper function to calculate frozen column positions
+const calculateFrozenPositions = (columns: ColumnConfig[]): Record<string, number> => {
+  const positions: Record<string, number> = {};
+  let left = 0;
+  
+  for (const col of columns) {
+    if (col.frozen) {
+      positions[col.name] = left;
+      left += col.width || 120; // Default width of 120px if not specified
+    } else {
+      break; // Stop when we hit a non-frozen column
+    }
+  }
+  
+  return positions;
+};
+
 const Inline: React.FC<InlineProps> = ({ data, columns, onRowClick }) => {
   const [sorting, setSorting] = React.useState<SortingState>([]);
+  
+  // Calculate frozen column positions
+  const frozenPositions = React.useMemo(() => calculateFrozenPositions(columns), [columns]);
 
   const tableColumns = React.useMemo(
     () =>
@@ -55,6 +77,7 @@ const Inline: React.FC<InlineProps> = ({ data, columns, onRowClick }) => {
         id: col.name,
         accessorKey: col.name,
         header: col.label,
+        size: col.width || (col.frozen ? 120 : undefined), // Set width for frozen columns or use default
         cell: (info: any) => {
           const value = info.getValue();
           if (value === null || value === undefined) return '';
@@ -122,16 +145,36 @@ const Inline: React.FC<InlineProps> = ({ data, columns, onRowClick }) => {
           <Table stickyHeader size="small">
             <TableHead>
               <TableRow>
-                {table.getFlatHeaders().map((header, index) => (
-                  <React.Fragment key={header.id}>
+                {table.getFlatHeaders().map((header, index) => {
+                  const columnConfig = columns.find(col => col.name === header.id);
+                  const isFrozen = columnConfig?.frozen;
+                  const frozenLeft = isFrozen ? frozenPositions[header.id] : undefined;
+                  
+                  return (
                     <TableCell
+                      key={header.id}
                       onClick={header.column.getToggleSortingHandler()}
                       sx={{ 
                         cursor: 'pointer',
                         userSelect: 'none',
                         whiteSpace: 'nowrap',
+                        direction: 'rtl',
+                        textAlign: 'left',
                         borderRight: index < table.getFlatHeaders().length - 1 ? 1 : 0,
                         borderColor: 'divider',
+                        width: columnConfig?.width || (isFrozen ? 120 : 'auto'),
+                        minWidth: columnConfig?.width || (isFrozen ? 120 : 'auto'),
+                        maxWidth: columnConfig?.width || (isFrozen ? 120 : 'auto'),
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        ...(isFrozen && {
+                          position: 'sticky',
+                          left: frozenLeft,
+                          backgroundColor: 'background.paper',
+                          zIndex: 1,
+                          borderRight: '2px solid',
+                          borderRightColor: 'divider',
+                        }),
                       }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -157,8 +200,8 @@ const Inline: React.FC<InlineProps> = ({ data, columns, onRowClick }) => {
                         )}
                       </Box>
                     </TableCell>
-                  </React.Fragment>
-                ))}
+                  );
+                })}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -173,17 +216,36 @@ const Inline: React.FC<InlineProps> = ({ data, columns, onRowClick }) => {
                     },
                   }}
                 >
-                  {row.getVisibleCells().map((cell, index) => (
-                    <TableCell 
-                      key={cell.id}
-                      sx={{
-                        borderRight: index < row.getVisibleCells().length - 1 ? 1 : 0,
-                        borderColor: 'divider',
-                      }}
-                    >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
+                  {row.getVisibleCells().map((cell, index) => {
+                    const columnConfig = columns.find(col => col.name === cell.column.id);
+                    const isFrozen = columnConfig?.frozen;
+                    const frozenLeft = isFrozen ? frozenPositions[cell.column.id] : undefined;
+                    
+                    return (
+                      <TableCell 
+                        key={cell.id}
+                        sx={{
+                          borderRight: index < row.getVisibleCells().length - 1 ? 1 : 0,
+                          borderColor: 'divider',
+                          width: columnConfig?.width || (isFrozen ? 120 : 'auto'),
+                          minWidth: columnConfig?.width || (isFrozen ? 120 : 'auto'),
+                          maxWidth: columnConfig?.width || (isFrozen ? 120 : 'auto'),
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          ...(isFrozen && {
+                            position: 'sticky',
+                            left: frozenLeft,
+                            backgroundColor: 'background.paper',
+                            zIndex: 1,
+                            borderRight: '2px solid',
+                            borderRightColor: 'divider',
+                          }),
+                        }}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               ))}
             </TableBody>

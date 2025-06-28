@@ -2,22 +2,19 @@ import React from 'react';
 import { ColumnConfig } from './Inline';
 import Inline from './Inline';
 import { displayAmericanOdds, formatDecimal } from '@/simDash/utils/display';
+import { formatROIDemandPrice } from '@/simDash/utils/roiCalculations';
+import { SeriesData } from '@/types/bettingResults';
 
 // ---------- Types ----------
 
-interface SeriesPropsData {
-  team: string;
-  winPercent: number;
-  usaFair: number;
-}
-
 interface SeriesTableProps {
-  data: SeriesPropsData[];
+  data: SeriesData[];
 }
 
-interface FormattedSeriesData extends Omit<SeriesPropsData, 'winPercent' | 'usaFair'> {
+interface FormattedSeriesData extends Omit<SeriesData, 'winPercent' | 'usaFair' | 'usaDemandPrice'> {
   winPercent: string;
   usaFair: string;
+  usaDemandPrice: string;
 }
 
 // ---------- Column config ----------
@@ -27,6 +24,7 @@ const seriesColumns: ColumnConfig[] = [
     name: 'team', 
     type: 'string', 
     label: 'Team',
+    width: 80,
     display: {
       rules: [
         {
@@ -41,6 +39,7 @@ const seriesColumns: ColumnConfig[] = [
     name: 'winPercent', 
     type: 'string', 
     label: 'Win %',
+    width: 80,
     display: {
       rules: [
         {
@@ -54,17 +53,25 @@ const seriesColumns: ColumnConfig[] = [
   { 
     name: 'usaFair', 
     type: 'string', 
-    label: 'USA-Fair'
+    label: 'USA-Fair',
+    width: 90
+  },
+  { 
+    name: 'usaDemandPrice', 
+    type: 'string', 
+    label: 'ROI Demand Price',
+    width: 120
   }
 ];
 
 // ---------- Data format function ----------
 
-function formatSeriesData(data: SeriesPropsData[]): FormattedSeriesData[] {
+function formatSeriesData(data: SeriesData[]): FormattedSeriesData[] {
   return data.map(row => ({
     ...row,
     winPercent: `${formatDecimal(100 * row.winPercent)}%`,
-    usaFair: displayAmericanOdds(Number(formatDecimal(row.usaFair)))
+    usaFair: displayAmericanOdds(Number(formatDecimal(row.usaFair))),
+    usaDemandPrice: formatROIDemandPrice(row.usaDemandPrice)
   }));
 }
 

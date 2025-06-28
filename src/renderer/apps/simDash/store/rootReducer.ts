@@ -1,4 +1,6 @@
 import { combineReducers } from '@reduxjs/toolkit';
+import { persistReducer } from 'redux-persist';
+import { simDashPersistConfig } from '@/store/persistConfig';
 import profilesReducer from './slices/profilesSlice';
 import leagueReducer from './slices/leagueSlice';
 import tabReducer from './slices/tabSlice';
@@ -7,8 +9,9 @@ import simInputsReducer from './slices/simInputsSlice';
 import simulationStatusReducer from './slices/simulationStatusSlice';
 import bettingBoundsReducer from './slices/bettingBoundsSlice';
 import statCaptureSettingsReducer from './slices/statCaptureSettingsSlice';
+import userPreferencesReducer from './slices/userPreferencesSlice';
 
-const simDashReducer = combineReducers({
+const baseSimDashReducer = combineReducers({
   // auth: authReducer,
   profiles: profilesReducer,
   leagues: leagueReducer,
@@ -17,8 +20,11 @@ const simDashReducer = combineReducers({
   simInputs: simInputsReducer,
   simulationStatus: simulationStatusReducer,
   bettingBounds: bettingBoundsReducer,
-  settings: statCaptureSettingsReducer
+  settings: statCaptureSettingsReducer,
+  userPreferences: userPreferencesReducer
 });
 
-export type SimDashState = ReturnType<typeof simDashReducer>;
+const simDashReducer = persistReducer(simDashPersistConfig, baseSimDashReducer);
+
+export type SimDashState = ReturnType<typeof baseSimDashReducer>;
 export default simDashReducer; 

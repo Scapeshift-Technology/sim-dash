@@ -5,6 +5,7 @@ import {
 } from "@/types/bettingResults";
 
 import { countsToAmericanOdds, countsToProbability, marginOfError, proportionToAmericanOdds } from "@/apps/simDash/utils/oddsCalculations";
+import { calculateROIDemandPrice } from "@/apps/simDash/utils/roiCalculations";
 import { 
   sortWithConfig, 
   awayTeamFirstComparator, 
@@ -18,8 +19,8 @@ import { teamNameToAbbreviationMLB } from "@@/services/mlb/utils/teamName";
 
 // ---------- Main function ----------
 
-function analyzeAllPlayerCountsMLB(propsCounts: AllPlayersPropsCountsMLB, awayTeamName: string, homeTeamName: string): PlayerPropsData[] {
-  const data = transformAllPlayerCountsMLB(propsCounts);
+function analyzeAllPlayerCountsMLB(propsCounts: AllPlayersPropsCountsMLB, awayTeamName: string, homeTeamName: string, roiDemandDecimal?: number): PlayerPropsData[] {
+  const data = transformAllPlayerCountsMLB(propsCounts, roiDemandDecimal);
   return sortPlayerPropsData(data, awayTeamName);
 }
 
@@ -27,7 +28,7 @@ export { analyzeAllPlayerCountsMLB };
 
 // ---------- Helper functions ----------
 
-function transformAllPlayerCountsMLB(propsCounts: AllPlayersPropsCountsMLB): PlayerPropsData[] {
+function transformAllPlayerCountsMLB(propsCounts: AllPlayersPropsCountsMLB, roiDemandDecimal?: number): PlayerPropsData[] {
   const data: PlayerPropsData[] = [];
 
   // Loop through all of the players
@@ -40,7 +41,7 @@ function transformAllPlayerCountsMLB(propsCounts: AllPlayersPropsCountsMLB): Pla
       // Loop through the stat's lines
       for (const line of Object.keys(playerData.stats[stat])) {
         const lineNumber = parseFloat(line);
-        const lineData = transformPlayerStatLinesPropsCountsMLB(playerName, stat, lineNumber, playerData.stats[stat][lineNumber], teamName);
+        const lineData = transformPlayerStatLinesPropsCountsMLB(playerName, stat, lineNumber, playerData.stats[stat][lineNumber], teamName, roiDemandDecimal);
         data.push(lineData);
       }
     }
@@ -49,7 +50,7 @@ function transformAllPlayerCountsMLB(propsCounts: AllPlayersPropsCountsMLB): Pla
   return data;
 }
 
-function transformPlayerStatLinesPropsCountsMLB(playerName: string, statName: string, lineNumber: number, statData: OutcomeCounts, teamName: string): PlayerPropsData {
+function transformPlayerStatLinesPropsCountsMLB(playerName: string, statName: string, lineNumber: number, statData: OutcomeCounts, teamName: string, roiDemandDecimal?: number): PlayerPropsData {
   // Return values for the given line
   const { success, failure, push, total } = statData;
   const pushCt = push || 0;
@@ -58,6 +59,7 @@ function transformPlayerStatLinesPropsCountsMLB(playerName: string, statName: st
   const usaOdds = countsToAmericanOdds(success, failure, pushCt);
   const varianceProportion = Math.min(Math.max(overPercent - moe, 0), 1);
   const varianceOdds = proportionToAmericanOdds(varianceProportion);
+  const usaDemandPrice = typeof roiDemandDecimal === 'number' ? calculateROIDemandPrice(overPercent, moe, roiDemandDecimal) : null;
 
   return {
     playerName: playerName,
@@ -67,7 +69,8 @@ function transformPlayerStatLinesPropsCountsMLB(playerName: string, statName: st
     overPercent: overPercent,
     marginOfError: moe,
     usaFair: usaOdds,
-    varianceOdds: varianceOdds
+    varianceOdds: varianceOdds,
+    usaDemandPrice: usaDemandPrice
   };
 }
 
