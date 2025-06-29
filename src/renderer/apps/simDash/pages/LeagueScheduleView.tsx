@@ -105,17 +105,17 @@ const createSimResultsColumn = (scheduleData: ScheduleItem[], league: string): C
                     event.preventDefault();
                     event.stopPropagation();
                     try {
-                        const todayMatchups = getTodayMatchups(scheduleData, item);
-                        const daySequence = todayMatchups.length > 1 ? item.DaySequence : undefined;
+                                            const todayMatchups = getTodayMatchups(scheduleData, item);
+                    const daySequence = todayMatchups.length > 1 ? item.GameNumber : undefined;
 
-                        await window.electronAPI.createSimWindow({ 
-                            league,
-                            matchupId: item.Match,
-                            timestamp: simResults[0].timestamp,
-                            awayTeamName: item.Participant1,
-                            homeTeamName: item.Participant2,
-                            daySequence: daySequence
-                        });
+                    await window.electronAPI.createSimWindow({ 
+                        league,
+                        matchupId: item.Match,
+                        timestamp: simResults[0].timestamp,
+                        awayTeamName: item.Participant1,
+                        homeTeamName: item.Participant2,
+                        daySequence: daySequence
+                    });
                     } catch (error) {
                         console.error('Failed to create simulation window:', error);
                     }
@@ -144,24 +144,36 @@ const commonColumns: ColumnDefinition[] = [
 
 const getColumns = (scheduleData: ScheduleItem[], league: string): ColumnDefinition[] => {
     if (league === 'MLB') {
-        const daySeqCol: ColumnDefinition = {
-            key: 'DaySequence',
-            label: 'Day Seq.',
+        const gameNumberCol: ColumnDefinition = {
+            key: 'GameNumber',
+            label: 'Gm#',
             align: 'right',
-            render: (item: ScheduleItem) => item.DaySequence ?? 'N/A'
+            render: (item: ScheduleItem) => item.GameNumber ?? 'N/A'
         };
-        return [...commonColumns, daySeqCol, createSimResultsColumn(scheduleData, league)];
+        const seriesGameCol: ColumnDefinition = {
+            key: 'SeriesGameNumber', 
+            label: 'SerGm#',
+            align: 'center',
+            render: (item: ScheduleItem) => item.SeriesGameNumber ?? 'N/A'
+        };
+        const statusCol: ColumnDefinition = {
+            key: 'Status',
+            label: 'Status',
+            align: 'center',
+            render: (item: ScheduleItem) => item.Status ?? 'N/A'
+        };
+        return [...commonColumns, gameNumberCol, seriesGameCol, statusCol, createSimResultsColumn(scheduleData, league)];
     }
     return commonColumns;
 };
 
 const mlbSortFunction = (a: ScheduleItem, b: ScheduleItem): number => {
-    if (a.DaySequence !== undefined && b.DaySequence !== undefined) {
-        if (a.DaySequence !== b.DaySequence) {
-            return a.DaySequence - b.DaySequence;
+    if (a.GameNumber !== undefined && b.GameNumber !== undefined) {
+        if (a.GameNumber !== b.GameNumber) {
+            return a.GameNumber - b.GameNumber;
         }
     }
-    // Fallback to sorting by time if DaySequence is missing or equal
+    // Fallback to sorting by time if GameNumber is missing or equal
     return dayjs(a.PostDtmUTC).valueOf() - dayjs(b.PostDtmUTC).valueOf();
 };
 
@@ -247,7 +259,7 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
                 dateTime: item.PostDtmUTC,
                 participant1: item.Participant1,
                 participant2: item.Participant2,
-                daySequence: todayMatchups.length > 1 ? item.DaySequence : undefined,
+                daySequence: todayMatchups.length > 1 ? item.GameNumber : undefined,
             }));
         } else {
             console.log('Row click ignored (not MLB or no date selected)');

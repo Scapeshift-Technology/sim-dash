@@ -41,24 +41,37 @@ const handleFetchSchedule = async (event, { league, date }, getCurrentPool) => {
     }
 
     try {
-        // Basic columns common to all leagues
-        let columns = 'Match,PostDtmUTC, Participant1, Participant2';
-        // Add MLB-specific columns
+        let query;
+        let request = currentPool.request();
+
         if (league === 'MLB') {
-            columns += ', DaySequence';
+            // Use MLBScheduleForDay_tvf for MLB
+            query = `
+                SELECT 
+                    Our# as Match,
+                    SchedulePostDtm as PostDtmUTC,
+                    Away as Participant1,
+                    Home as Participant2,
+                    [Gm#] as GameNumber,
+                    [SerGm#] as SeriesGameNumber,
+                    Status,
+                    [MLB#] as MLBGameId
+                FROM dbo.MLBScheduleForDay_tvf(@date)
+                ORDER BY [Gm#] ASC
+            `;
+            request.input('date', sql.VarChar, date); // Send date as string for the table-valued function
+        } else {
+            // Use Match_V for other leagues
+            query = `
+                SELECT Match, PostDtmUTC, Participant1, Participant2
+                FROM dbo.Match_V
+                WHERE League = @league
+                AND ScheduledDate = @date
+                ORDER BY PostDtmUTC ASC
+            `;
+            request.input('league', sql.VarChar, league);
+            request.input('date', sql.Date, date);
         }
-
-        const query = `
-            SELECT ${columns}
-            FROM dbo.Match_V
-            WHERE League = @league
-            AND ScheduledDate = @date -- Assuming PostDtmUTC should be compared date-wise
-            ORDER BY PostDtmUTC ASC -- Or DaySequence for MLB if needed? TBD
-        `; // Note: Using CAST(... AS DATE) might impact performance. Consider dedicated ScheduledDate column if available.
-
-        const request = currentPool.request();
-        request.input('league', sql.VarChar, league);
-        request.input('date', sql.Date, date); // Send date as Date type
 
         const result = await request.query(query);
 

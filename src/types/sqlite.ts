@@ -30,7 +30,12 @@ export interface ScheduleItem {
   PostDtmUTC: string;
   Participant1: string;
   Participant2: string;
-  DaySequence?: number; // Optional for MLB
+  DaySequence?: number; // Optional for MLB (legacy field)
+  // New MLB-specific fields from MLBScheduleForDay_tvf
+  GameNumber?: number; // Gm# column
+  SeriesGameNumber?: string; // SerGm# column  
+  Status?: string; // Status column
+  MLBGameId?: number; // MLB# column - the gamePk used for MLB API calls
   // Add other potential fields returned by the query
 }
 
