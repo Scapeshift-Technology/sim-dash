@@ -143,3 +143,6 @@ dist
 
 # CSV files
 *.csv
+
+# Linked projects directory
+linked_projects/
