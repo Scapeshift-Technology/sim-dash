@@ -54,58 +54,59 @@ interface LeagueScheduleViewProps {
     league: string;
 }
 
-// --- Column and Sort Definitions ---
+// --- Wrapper Component for Sim Results Cell ---
+interface SimResultsCellProps {
+    item: ScheduleItem;
+    league: string;
+    scheduleData: ScheduleItem[];
+}
 
-const createSimResultsColumn = (scheduleData: ScheduleItem[], league: string): ColumnDefinition => ({
-    key: 'simResults',
-    label: 'Sim Results',
-    align: 'center',
-    render: (item: ScheduleItem) => {
-        const simResults = useSelector((state: RootState) => 
-            selectMatchSimResults(state, league, item.Match)
-        );
-        const simStatus = useSelector((state: RootState) => 
-            selectMatchSimStatus(state, league, item.Match)
-        );
+const SimResultsCell: React.FC<SimResultsCellProps> = ({ item, league, scheduleData }) => {
+    const simResults = useSelector((state: RootState) => 
+        selectMatchSimResults(state, league, item.Match)
+    );
+    const simStatus = useSelector((state: RootState) => 
+        selectMatchSimStatus(state, league, item.Match)
+    );
 
-        if (simStatus === 'loading') {
-            return <Typography variant="body2" color="text.secondary">Loading...</Typography>;
-        }
+    if (simStatus === 'loading') {
+        return <Typography variant="body2" color="text.secondary">Loading...</Typography>;
+    }
 
-        if (!simResults || simResults.length === 0) {
-            return <Typography variant="body2" color="text.secondary">No sim data</Typography>;
-        }
+    if (!simResults || simResults.length === 0) {
+        return <Typography variant="body2" color="text.secondary">No sim data</Typography>;
+    }
 
-        // Get the appropriate display function based on league
-        let display;
-        switch (league) {
-            case 'MLB':
-                display = calculateResultsSummaryDisplayMLB(
-                    simResults[0].simResults,
-                    item.Participant1,
-                    item.Participant2
-                );
-                break;
-            // Add other leagues here as they are implemented
-            default:
-                return <Typography variant="body2" color="text.secondary">Not implemented</Typography>;
-        }
+    // Get the appropriate display function based on league
+    let display;
+    switch (league) {
+        case 'MLB':
+            display = calculateResultsSummaryDisplayMLB(
+                simResults[0].simResults,
+                item.Participant1,
+                item.Participant2
+            );
+            break;
+        // Add other leagues here as they are implemented
+        default:
+            return <Typography variant="body2" color="text.secondary">Not implemented</Typography>;
+    }
 
-        return (
-            <Box 
-                sx={{ 
-                    cursor: 'pointer',
-                    '&:hover': {
-                        backgroundColor: 'action.hover',
-                    },
-                    p: 1,
-                    borderRadius: 1
-                }}
-                onClick={async (event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    try {
-                                            const todayMatchups = getTodayMatchups(scheduleData, item);
+    return (
+        <Box 
+            sx={{ 
+                cursor: 'pointer',
+                '&:hover': {
+                    backgroundColor: 'action.hover',
+                },
+                p: 1,
+                borderRadius: 1
+            }}
+            onClick={async (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                try {
+                    const todayMatchups = getTodayMatchups(scheduleData, item);
                     const daySequence = todayMatchups.length > 1 ? item.GameNumber : undefined;
 
                     await window.electronAPI.createSimWindow({ 
@@ -116,20 +117,30 @@ const createSimResultsColumn = (scheduleData: ScheduleItem[], league: string): C
                         homeTeamName: item.Participant2,
                         daySequence: daySequence
                     });
-                    } catch (error) {
-                        console.error('Failed to create simulation window:', error);
-                    }
-                }}
-            >
-                <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-                    {display.topLine}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                    {display.bottomLine}
-                </Typography>
-            </Box>
-        );
-    }
+                } catch (error) {
+                    console.error('Failed to create simulation window:', error);
+                }
+            }}
+        >
+            <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+                {display.topLine}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+                {display.bottomLine}
+            </Typography>
+        </Box>
+    );
+};
+
+// --- Column and Sort Definitions ---
+
+const createSimResultsColumn = (scheduleData: ScheduleItem[], league: string): ColumnDefinition => ({
+    key: 'simResults',
+    label: 'Sim Results',
+    align: 'center',
+    render: (item: ScheduleItem) => (
+        <SimResultsCell item={item} league={league} scheduleData={scheduleData} />
+    )
 });
 
 const commonColumns: ColumnDefinition[] = [
