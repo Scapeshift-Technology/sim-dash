@@ -69,14 +69,66 @@ const handleFetchSchedule = async (event, { league, date }, getCurrentPool) => {
                 AND ScheduledDate = @date
                 ORDER BY PostDtmUTC ASC
             `;
-            request.input('league', sql.VarChar, league);
+        request.input('league', sql.VarChar, league);
             request.input('date', sql.Date, date);
         }
 
         const result = await request.query(query);
+        let scheduleData = result.recordset;
 
-        log.info(`Schedule fetched for ${league} on ${date}:`, result.recordset.length, 'matches');
-        return result.recordset; // Return the array of matches
+        log.info(`Schedule fetched for ${league} on ${date}:`, scheduleData.length, 'matches');
+
+        // For MLB games on today's date, fetch current status from MLB API and update the data
+        if (league === 'MLB') {
+            const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format
+            if (date === today) {
+                log.info(`Fetching current status for today's MLB games from MLB API`);
+                try {
+                    // Fetch current status from MLB API
+                    const url = `https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=${date}`;
+                    const mlbScheduleResponse = await fetch(url);
+                    
+                    let mlbScheduleData;
+                    if (mlbScheduleResponse.ok) {
+                        mlbScheduleData = await mlbScheduleResponse.json();
+                    } else {
+                        throw new Error(`HTTP ${mlbScheduleResponse.status}`);
+                    }
+                    
+                    if (mlbScheduleData) {
+                        const mlbGames = mlbScheduleData.dates?.[0]?.games || [];
+                        
+                        // Create a map of gamePk to current status
+                        const gameStatusMap = new Map();
+                        mlbGames.forEach((game) => {
+                            gameStatusMap.set(game.gamePk, {
+                                abstractGameState: game.status?.abstractGameState || 'Unknown',
+                                detailedState: game.status?.detailedState || 'Unknown'
+                            });
+                        });
+
+                        // Update our schedule data with current status
+                        scheduleData = scheduleData.map(game => {
+                            const currentStatus = gameStatusMap.get(game.MLBGameId);
+                            if (currentStatus) {
+                                log.info(`Updated status for game ${game.MLBGameId} (${game.Participant1}@${game.Participant2}): ${game.Status} -> ${currentStatus.detailedState}`);
+                                return {
+                                    ...game,
+                                    Status: currentStatus.detailedState // Use detailedState as the primary status
+                                };
+                            }
+                            return game;
+                        });
+
+                        log.info(`Updated ${scheduleData.filter(g => gameStatusMap.has(g.MLBGameId)).length} games with current MLB API status`);
+                    }
+                } catch (apiError) {
+                    log.warn('Error fetching current status from MLB API, using database status:', apiError);
+                }
+            }
+        }
+
+        return scheduleData;
     } catch (err) {
         log.error(`Error fetching schedule for ${league} on ${date}:`, err);
         throw err; // Rethrow the error to be handled by the renderer

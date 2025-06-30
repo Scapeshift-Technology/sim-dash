@@ -10,8 +10,15 @@ import { SimHistoryEntry } from '@/types/simHistory';
 
 // ---------- Types ----------
 
+interface LiveStatus {
+  abstractGameState: string;
+  detailedState: string;
+  reason?: string;
+}
+
 interface ScheduleItemWithDisplayedSimOdds extends ScheduleItem {
   simResults?: SimHistoryEntry[];
+  liveStatus?: LiveStatus;
   status?: 'idle' | 'loading' | 'succeeded' | 'failed';
   error?: string | null;
 }
@@ -41,6 +48,7 @@ const initialLeagueState: LeagueScheduleState = {
 export const fetchSchedule = createAsyncThunk<ScheduleItem[], { league: string; date: string }>(
   'schedule/fetchSchedule',
   async ({ league, date }) => {
+    console.log(`[fetchSchedule] Fetching data for ${league} on ${date}`);
     const response = await window.electronAPI.fetchSchedule({ league, date });
     // Ensure all dates are serialized as strings
     return response.map(item => ({
@@ -73,6 +81,15 @@ const scheduleSlice = createSlice({
       const league = action.payload.league;
       if (state[league]) {
         state[league].date = action.payload.date;
+      }
+    },
+    updateLiveStatus: (state, action: PayloadAction<{ league: string; matchId: number; status: LiveStatus }>) => {
+      const { league, matchId, status } = action.payload;
+      if (state[league]) {
+        const match = state[league].schedule.find(m => m.Match === matchId);
+        if (match) {
+          match.liveStatus = status;
+        }
       }
     }
   },
@@ -139,7 +156,8 @@ const scheduleSlice = createSlice({
 
 export const { 
   initializeLeague,
-  updateLeagueDate
+  updateLeagueDate,
+  updateLiveStatus
 } = scheduleSlice.actions;
 
 // ---------- Selectors ----------
@@ -162,6 +180,12 @@ export const selectMatchSimStatus = (state: RootState, league: string, matchId: 
 export const selectMatchSimError = (state: RootState, league: string, matchId: number) => {
     const match = state.simDash.schedule[league]?.schedule.find(m => m.Match === matchId);
     return match?.error ?? null;
+};
+
+// ----- Live Status -----
+export const selectMatchLiveStatus = (state: RootState, league: string, matchId: number) => {
+    const match = state.simDash.schedule[league]?.schedule.find(m => m.Match === matchId);
+    return match?.liveStatus;
 };
 
 // Export the reducer

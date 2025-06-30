@@ -1,10 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Box, CircularProgress, Alert, Paper, Typography } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs, { Dayjs } from 'dayjs';
+import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 // Import the configurable table component and its column definition type
 import GenericScheduleTable, { ColumnDefinition } from '@/simDash/components/GenericScheduleTable';
@@ -37,6 +42,8 @@ import {
     selectActiveConfigError
 } from '@/simDash/store/slices/statCaptureSettingsSlice';
 import { LeagueName } from '@@/types/league';
+import { getMLBWebSocketManager } from '@/simDash/services/mlbWebSocketManager';
+import StatusCell from '@/simDash/components/StatusCell';
 
 // ---------- Helper functions ----------
 
@@ -61,7 +68,7 @@ interface SimResultsCellProps {
     scheduleData: ScheduleItem[];
 }
 
-const SimResultsCell: React.FC<SimResultsCellProps> = ({ item, league, scheduleData }) => {
+const SimResultsCell: React.FC<SimResultsCellProps> = React.memo(({ item, league, scheduleData }) => {
     const simResults = useSelector((state: RootState) => 
         selectMatchSimResults(state, league, item.Match)
     );
@@ -130,7 +137,16 @@ const SimResultsCell: React.FC<SimResultsCellProps> = ({ item, league, scheduleD
             </Typography>
         </Box>
     );
-};
+}, (prevProps, nextProps) => {
+    // Custom equality check - only re-render if the specific match data changed
+    return (
+        prevProps.item.Match === nextProps.item.Match &&
+        prevProps.item.Participant1 === nextProps.item.Participant1 &&
+        prevProps.item.Participant2 === nextProps.item.Participant2 &&
+        prevProps.item.GameNumber === nextProps.item.GameNumber &&
+        prevProps.league === nextProps.league
+    );
+});
 
 // --- Column and Sort Definitions ---
 
@@ -171,7 +187,7 @@ const getColumns = (scheduleData: ScheduleItem[], league: string): ColumnDefinit
             key: 'Status',
             label: 'Status',
             align: 'center',
-            render: (item: ScheduleItem) => item.Status ?? 'N/A'
+            render: (item: ScheduleItem) => <StatusCell item={item} league={league} />
         };
         return [...commonColumns, gameNumberCol, seriesGameCol, statusCol, createSimResultsColumn(scheduleData, league)];
     }
@@ -203,6 +219,16 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
     const databaseStatus = useSelector((state: RootState) => selectDatabaseConnectionStatus(state));
     const error = useSelector((state: RootState) => selectLeagueScheduleError(state, league));
     const [currentDate, setCurrentDate] = useState<Dayjs | null>(null);
+    const lastWebSocketUpdateDate = useRef<string | null>(null);
+
+    // Add mount/unmount logging for debugging
+    useEffect(() => {
+        console.log(`[LeagueScheduleView] Component mounted for league: ${league}`);
+        return () => {
+            console.log(`[LeagueScheduleView] Component unmounting for league: ${league}`);
+        };
+    }, [league]);
+
 
     const activeConfig = useSelector((state: RootState) => selectActiveConfig(state, league));
     const activeConfigLoading = useSelector((state: RootState) => selectActiveConfigLoading(state, league));
@@ -211,14 +237,36 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
     // ---------- UseEffects ----------
 
     useEffect(() => {
-        if (selectedDate && currentDate !== selectedDate && databaseStatus === 'connected') {
+        const dateString = selectedDate.format('YYYY-MM-DD');
+        
+        console.log(`[LeagueScheduleView] useEffect triggered for ${league}:`, {
+            dateString,
+            databaseStatus,
+            selectedDate: selectedDate?.format('YYYY-MM-DD'),
+            leagueScheduleStatus,
+            currentDate: currentDate?.format('YYYY-MM-DD')
+        });
+        
+        // Only fetch if we need to and database is connected
+        const needsFetch = databaseStatus === 'connected' && 
+                          selectedDate && 
+                          (leagueScheduleStatus === 'idle' ||
+                           leagueScheduleStatus === 'failed' ||
+                           !currentDate?.isSame(selectedDate, 'day'));
+        
+        console.log(`[LeagueScheduleView] needsFetch for ${league}:`, needsFetch);
+        
+        if (needsFetch) {
+            console.log(`[LeagueScheduleView] Dispatching fetchSchedule for ${league} on ${dateString}`);
             dispatch(fetchSchedule({ 
                 league, 
-                date: selectedDate.format('YYYY-MM-DD')
+                date: dateString
             }));
             setCurrentDate(selectedDate);
+            // Reset WebSocket update tracking when fetching new data
+            lastWebSocketUpdateDate.current = null;
         }
-    }, [dispatch, league, selectedDate, databaseStatus]);
+    }, [dispatch, league, selectedDate, databaseStatus, currentDate, leagueScheduleStatus]);
 
     const prevStatus = usePrevious(leagueScheduleStatus);
     useEffect(() => {
@@ -239,26 +287,81 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
         }
     }, [dispatch, league, activeConfig, activeConfigLoading, activeConfigError]);
 
+    // Notify WebSocket manager about schedule updates for open tabs
+    // Only trigger on meaningful changes: initial load or date change, not on sim results updates
+    useEffect(() => {
+        const dateString = selectedDate.format('YYYY-MM-DD');
+        
+        if (league === 'MLB' && 
+            scheduleData.length > 0 && 
+            leagueScheduleStatus === 'succeeded' &&
+            lastWebSocketUpdateDate.current !== dateString) {
+            
+            console.log(`[LeagueScheduleView] Calling handleScheduleUpdate for ${league} on ${dateString}`);
+            lastWebSocketUpdateDate.current = dateString;
+            
+            const manager = getMLBWebSocketManager();
+            if (manager) {
+                manager.handleScheduleUpdate(league, scheduleData).catch(error => {
+                    console.error('Failed to handle schedule update:', error);
+                });
+            }
+        }
+    }, [league, selectedDate, leagueScheduleStatus]);
+
+
+
     // ---------- Handlers ----------
 
-    const handleDateChange = (newValue: Dayjs | null) => {
+    const handleDateChange = useCallback((newValue: Dayjs | null) => {
         if (newValue) {
           dispatch(updateLeagueDate({ 
             league, 
             date: newValue.format('YYYY-MM-DD')
           }));
         }
-    };
+    }, [dispatch, league]);
 
     // Determine configuration based on league
     const isMLB = league === 'MLB';
-    const columns = useMemo(() => getColumns(scheduleData, league), [scheduleData, league]);
+    
+    // Memoize the sim results column separately to avoid recreating all columns
+    const simResultsColumn = useMemo(() => 
+        createSimResultsColumn(scheduleData, league), 
+        [scheduleData, league]
+    );
+    
+    const columns = useMemo(() => {
+        if (league === 'MLB') {
+            const gameNumberCol: ColumnDefinition = {
+                key: 'GameNumber',
+                label: 'Gm#',
+                align: 'right',
+                render: (item: ScheduleItem) => item.GameNumber ?? 'N/A'
+            };
+            const seriesGameCol: ColumnDefinition = {
+                key: 'SeriesGameNumber', 
+                label: 'SerGm#',
+                align: 'center',
+                render: (item: ScheduleItem) => item.SeriesGameNumber ?? 'N/A'
+            };
+            const statusCol: ColumnDefinition = {
+                key: 'Status',
+                label: 'Status',
+                align: 'center',
+                render: (item: ScheduleItem) => <StatusCell item={item} league={league} />
+            };
+            return [...commonColumns, gameNumberCol, seriesGameCol, statusCol, simResultsColumn];
+        }
+        return commonColumns;
+    }, [league, simResultsColumn]);
+    
     const sortFunction = isMLB ? mlbSortFunction : genericSortFunction;
     const emptyMessage = `No ${league} schedule data available for this date.`;
     const ariaLabel = `${league.toLowerCase()} schedule table`;
 
     // Updated Row Click Handler
-    const handleRowClick = (item: ScheduleItem) => {
+    const handleRowClick = useCallback((item: ScheduleItem) => {
         if (league === 'MLB' && selectedDate) {
             // Find all matchups between these teams today
             const todayMatchups = getTodayMatchups(scheduleData, item);
@@ -275,12 +378,15 @@ const LeagueScheduleView: React.FC<LeagueScheduleViewProps> = ({ league }) => {
         } else {
             console.log('Row click ignored (not MLB or no date selected)');
         }
-    };
+    }, [dispatch, league, selectedDate, scheduleData]);
 
     // ---------- Render Functions ----------
 
     const renderScheduleTable = () => {
-        if (leagueScheduleStatus === 'loading' || databaseStatus === 'attempting') return <CircularProgress />;
+        if (leagueScheduleStatus === 'loading' || databaseStatus === 'attempting') {
+            return <CircularProgress />;
+        }
+        
         if (error) return <Alert severity="error">{error}</Alert>;
 
         return (

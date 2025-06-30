@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
     Table,
     TableBody,
@@ -31,7 +31,7 @@ interface GenericScheduleTableProps {
     ariaLabel?: string;
 }
 
-const GenericScheduleTable: React.FC<GenericScheduleTableProps> = ({
+const GenericScheduleTable: React.FC<GenericScheduleTableProps> = React.memo(({
     scheduleData,
     columns,
     onRowClick = (item) => { console.log('Clicked Row:', item); }, // Default click handler
@@ -44,14 +44,18 @@ const GenericScheduleTable: React.FC<GenericScheduleTableProps> = ({
         return <Typography>{emptyMessage}</Typography>;
     }
 
-    // Sort data if a sort function is provided
-    const sortedData = sortFunction ? [...scheduleData].sort(sortFunction) : scheduleData;
+    // Sort data if a sort function is provided - memoize this operation
+    const sortedData = useMemo(() => {
+        return sortFunction ? [...scheduleData].sort(sortFunction) : scheduleData;
+    }, [scheduleData, sortFunction]);
 
-    // Generate a unique key for the row
-    const getRowKey = (item: ScheduleItem, index: number): string => {
-        // Attempt to use common unique fields, fallback to index
-        return `${item.PostDtmUTC}-${item.Participant1}-${item.Participant2}-${index}`;
-    };
+    // Generate a unique key for the row - memoize this function
+    const getRowKey = useMemo(() => {
+        return (item: ScheduleItem): string => {
+            // Use Match ID if available, otherwise fallback to composite key
+            return item.Match ? `match-${item.Match}` : `${item.PostDtmUTC}-${item.Participant1}-${item.Participant2}`;
+        };
+    }, []);
 
     return (
         <TableContainer component={Paper}>
@@ -66,15 +70,15 @@ const GenericScheduleTable: React.FC<GenericScheduleTableProps> = ({
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {sortedData.map((item, index) => (
+                    {sortedData.map((item) => (
                         <TableRow
-                            key={getRowKey(item, index)}
+                            key={getRowKey(item)}
                             hover
                             onClick={() => onRowClick(item)}
                             sx={{ '&:last-child td, &:last-child th': { border: 0 }, cursor: 'pointer' }}
                         >
                             {columns.map((col) => (
-                                <TableCell key={`${col.key.toString()}-${index}`} component="td" scope="row" align={col.align ?? 'inherit'}>
+                                <TableCell key={`${col.key.toString()}-${item.Match}`} component="td" scope="row" align={col.align ?? 'inherit'}>
                                     {col.render
                                         ? col.render(item) // Use custom render function if provided
                                         : item[col.key as keyof ScheduleItem] !== undefined // Access data using key
@@ -89,6 +93,8 @@ const GenericScheduleTable: React.FC<GenericScheduleTableProps> = ({
             </Table>
         </TableContainer>
     );
-};
+});
+
+GenericScheduleTable.displayName = 'GenericScheduleTable';
 
 export default GenericScheduleTable; 

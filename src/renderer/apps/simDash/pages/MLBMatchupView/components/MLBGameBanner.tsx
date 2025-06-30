@@ -30,6 +30,19 @@ const MLBGameBanner = ({ liveGameData, lineupData, isEditable = false, onGameSta
   const gameStatus = liveGameData.gameData.status.abstractGameState;
   if (gameStatus !== "Live" && gameStatus !== "Final") return null;
 
+  // Log when component renders with live data for debugging
+  console.log(`[MLBGameBanner] Rendering with live data:`, {
+    gameStatus,
+    detailedState: liveGameData.gameData.status.detailedState,
+    inning: liveGameData.liveData?.linescore?.currentInning,
+    inningHalf: liveGameData.liveData?.linescore?.inningHalf,
+    balls: liveGameData.liveData?.linescore?.balls,
+    strikes: liveGameData.liveData?.linescore?.strikes,
+    outs: liveGameData.liveData?.linescore?.outs,
+    awayScore: liveGameData.liveData?.linescore?.teams?.away?.runs,
+    homeScore: liveGameData.liveData?.linescore?.teams?.home?.runs
+  });
+
   const awayTeam = teamNameToAbbreviationMLB(liveGameData.gameData.teams.away.name);
   const homeTeam = teamNameToAbbreviationMLB(liveGameData.gameData.teams.home.name);
   const awayScore = liveGameData.liveData.linescore.teams.away.runs;

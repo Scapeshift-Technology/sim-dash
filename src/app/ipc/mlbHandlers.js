@@ -57,6 +57,7 @@ const handleFetchMLBPlayerStats = async (event, { matchupLineups, date }, getCur
 // Handler for connecting to MLB WebSocket
 const handleConnectToWebSocket = async (event, { gameId }, getMlbWebSocketManager) => {
     log.info(`Connecting to MLB WebSocket for game ${gameId}`);
+    
     const mlbWebSocketManager = getMlbWebSocketManager();
     if (!mlbWebSocketManager) {
         const error = new Error('WebSocket manager not initialized');

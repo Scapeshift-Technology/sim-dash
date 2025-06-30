@@ -170,6 +170,14 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const [hasHistoricalStats, setHasHistoricalStats] = useState(false);
     const [liveGameData, setLiveGameData] = useState<MlbLiveDataApiResponse | undefined>(undefined);
 
+    // Add mount/unmount logging for debugging
+    useEffect(() => {
+        console.log(`[MLBMatchupView] Component mounted for match ${matchId} (${participant1}@${participant2})`);
+        return () => {
+            console.log(`[MLBMatchupView] Component unmounting for match ${matchId} (${participant1}@${participant2})`);
+        };
+    }, [matchId, participant1, participant2]);
+
     const { usedLineups } = useLineupFinder({
         standardGameLineups: gameLineups,
         liveGameData,

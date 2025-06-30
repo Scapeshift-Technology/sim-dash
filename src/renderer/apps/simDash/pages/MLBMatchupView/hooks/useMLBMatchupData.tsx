@@ -13,6 +13,7 @@ import { fetchSimResults } from '@/apps/simDash/store/slices/scheduleSlice';
 import { LeagueName } from '@@/types/league';
 import { MatchupLineups, MlbLiveDataApiResponse, Player, TeamLineup } from '@@/types/mlb';
 import { MLBGameContainer } from '@@/types/simInputs';
+import { getMLBWebSocketManager } from '@/simDash/services/mlbWebSocketManager';
 
 // ---------- Main hook ----------
 
@@ -144,34 +145,76 @@ export const useMLBMatchupData = (props: UseMLBMatchupDataProps) => {
     useEffect(() => { // Gets live game data
         if (!mlbGameId) return;
 
-        // Fetch initial live data (We don't want to rely on the websocket to start quickly)
+        // Fetch initial live data first to check game status
         async function fetchInitialLiveData() {
             try {
-                const liveData = await window.electronAPI.fetchInitialMLBLiveData({ gameId: mlbGameId as number });
-                setLiveGameData(liveData); // Slight type mismatch here
+                const liveData = await window.electronAPI.fetchInitialMLBLiveData({ gameId: mlbGameId! });
+                setLiveGameData(liveData);
+                
+                // Check if game is Final before connecting to WebSocket
+                const gameStatus = liveData.gameData?.status?.abstractGameState;
+                const detailedState = liveData.gameData?.status?.detailedState;
+                
+                if (gameStatus === 'Final' || detailedState === 'Final') {
+                    console.log(`[MLBMatchupView] Game ${mlbGameId} is Final, skipping WebSocket connection`);
+                    return null; // Don't connect to WebSocket for Final games
+                }
+                
+                // Only connect to WebSocket for non-Final games using the manager
+                console.log(`[MLBMatchupView] Game ${mlbGameId} status: ${detailedState}, subscribing via WebSocket manager`);
+                
+                const manager = getMLBWebSocketManager();
+                if (manager) {
+                    await manager.subscribeToGame(mlbGameId!, league, matchId, `matchup-${matchId}`);
+                } else {
+                    console.error('WebSocket manager not available');
+                }
+                
+                // Set up update listener
+                const cleanup = window.electronAPI.onMLBGameUpdate((gameData: { data: MlbLiveDataApiResponse, gameId: number }) => {
+                  if (mlbGameId! === gameData.gameId) {
+                    console.log(`[MLBMatchupView] Received live data update for game ${gameData.gameId}:`, {
+                      inning: gameData.data.liveData?.linescore?.currentInning,
+                      inningHalf: gameData.data.liveData?.linescore?.inningHalf,
+                      balls: gameData.data.liveData?.linescore?.balls,
+                      strikes: gameData.data.liveData?.linescore?.strikes,
+                      outs: gameData.data.liveData?.linescore?.outs,
+                      awayScore: gameData.data.liveData?.linescore?.teams?.away?.runs,
+                      homeScore: gameData.data.liveData?.linescore?.teams?.home?.runs,
+                      gameStatus: gameData.data.gameData?.status?.detailedState
+                    });
+                    setLiveGameData(gameData.data);
+                    console.log(`[MLBMatchupView] Live game data state updated for game ${gameData.gameId}`);
+                  }
+                });
+                
+                return cleanup;
             } catch (error) {
                 console.error('Error fetching initial live data:', error);
+                return null;
             }
         }
 
-        fetchInitialLiveData();
-    
-        // Connect to WebSocket
-        window.electronAPI.connectToWebSocketMLB({ gameId: mlbGameId });
-    
-        // Set up update listener
-        const cleanup = window.electronAPI.onMLBGameUpdate((gameData: { data: MlbLiveDataApiResponse, gameId: number }) => {
-          if (mlbGameId === gameData.gameId) {
-            setLiveGameData(gameData.data);
-          }
+        // Execute async function and handle cleanup
+        let cleanupFunction: (() => void) | null = null;
+        
+        fetchInitialLiveData().then(cleanup => {
+            cleanupFunction = cleanup;
         });
     
         // Cleanup function
         return () => {
-          console.log('Disconnecting from WebSocket');
-          cleanup(); // Remove the update listener
-          window.electronAPI.disconnectFromWebSocketMLB({ gameId: mlbGameId });
+          console.log(`[MLBMatchupView] Unsubscribing from WebSocket for game ${mlbGameId}`);
+          if (cleanupFunction) {
+            cleanupFunction(); // Remove the update listener
+          }
+          
+          // Unsubscribe from WebSocket manager
+          const manager = getMLBWebSocketManager();
+          if (manager && mlbGameId) {
+            manager.unsubscribeFromGame(mlbGameId, `matchup-${matchId}`);
+          }
         };
-      }, [mlbGameId]);
+              }, [mlbGameId, league, matchId]);
 };
 

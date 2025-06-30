@@ -21,7 +21,6 @@ const LeagueDetailPage: React.FC = () => {
 
     useEffect(() => {
         if (decodedLeagueName) {
-            console.log("LeagueDetailPage: Initializing league:", decodedLeagueName);
             dispatch(initializeLeague(decodedLeagueName));
             dispatch(initializeLeagueSimInputs(decodedLeagueName as LeagueName));
             
