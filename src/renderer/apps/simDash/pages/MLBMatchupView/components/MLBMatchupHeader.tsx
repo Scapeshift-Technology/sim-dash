@@ -174,6 +174,7 @@ const MLBMatchupHeader: React.FC<MLBMatchupHeaderProps> = ({
                         awayTeamName={participant1}
                         homeTeamName={participant2}
                         daySequence={daySequence}
+                        matchId={matchId}
                         displayHistory={true}
                         simHistory={simResults || []}
                         isLoading={simStatus === 'loading'}

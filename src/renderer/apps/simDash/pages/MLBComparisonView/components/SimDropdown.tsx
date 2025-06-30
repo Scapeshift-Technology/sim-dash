@@ -1,6 +1,6 @@
 import { Box, MenuItem, Select, FormControl, InputLabel, Typography } from "@mui/material";
 import { SimHistoryEntry } from "@@/types/simHistory";
-import { calculateResultsSummaryDisplayMLB } from "@/apps/simDash/utils/oddsUtilsMLB";
+import { calculateResultsSummaryDisplayMLB, formatBettingBoundsDisplay, isBettingBoundsComplete } from "@/apps/simDash/utils/oddsUtilsMLB";
 
 // ---------- Sub-component ----------
 
@@ -11,58 +11,56 @@ interface SimDropdownProps {
   label: string;
   awayTeamName: string;
   homeTeamName: string;
-};
+}
 
-const SimDropdown: React.FC<SimDropdownProps> = ({ 
-  simHistory, 
-  selectedSim, 
-  onSelectionChange, 
-  label, 
-  awayTeamName, 
-  homeTeamName 
-}) => {
+const SimDropdown: React.FC<SimDropdownProps> = ({ simHistory, selectedSim, onSelectionChange, label, awayTeamName, homeTeamName }) => {
+
+  // ---------- Helper function to get display info for any simulation ----------
+  const getDisplayInfo = (simEntry: SimHistoryEntry) => {
+    // Always start with simulation results as the base
+    const simDisplayInfo = calculateResultsSummaryDisplayMLB(simEntry.simResults, awayTeamName, homeTeamName);
+    
+    // Try to enhance with betting bounds from the sim entry's input data
+    const simBettingBounds = simEntry.inputData?.gameInfo?.bettingBounds;
+    
+    if (simBettingBounds) {
+      const boundsData = {
+        awayML: simBettingBounds.awayML.toString(),
+        homeML: simBettingBounds.homeML.toString(),
+        totalLine: simBettingBounds.over.line.toString(),
+        overOdds: simBettingBounds.over.odds.toString(),
+        underOdds: simBettingBounds.under.odds.toString()
+      };
+      
+      if (isBettingBoundsComplete(boundsData)) {
+        return formatBettingBoundsDisplay(boundsData, awayTeamName, homeTeamName);
+      }
+    }
+    
+    // Fall back to simulation results
+    return simDisplayInfo;
+  };
+
+  const handleSelectionChange = (event: any) => {
+    const selectedTimestamp = event.target.value;
+    const selected = simHistory.find(sim => sim.timestamp === selectedTimestamp) || null;
+    onSelectionChange(selected);
+  };
+
   return (
-    <FormControl 
-      fullWidth 
-      variant="outlined" 
-      sx={{ 
-        minWidth: 210,
-        '& .MuiInputBase-root': {
-          height: '60px',
-        },
-        '& .MuiSelect-select': {
-          paddingTop: '12px',
-          paddingBottom: '12px',
-        }
-      }}
-    >
-      <InputLabel sx={{ fontSize: '1rem' }}>{label}</InputLabel>
+    <FormControl fullWidth variant="outlined" sx={{ minWidth: 200 }}>
+      <InputLabel>{label}</InputLabel>
       <Select
         value={selectedSim?.timestamp || ''}
+        onChange={handleSelectionChange}
         label={label}
-        onChange={(e) => {
-          const timestamp = e.target.value;
-          const sim = simHistory.find(s => s.timestamp === timestamp) || null;
-          onSelectionChange(sim);
-        }}
-        sx={{ fontSize: '0.95rem' }}
-        MenuProps={{
-          PaperProps: {
-            sx: {
-              maxHeight: 300,
-              '& .MuiMenuItem-root': {
-                padding: '4px 16px',
-                minHeight: 'auto',
-              }
-            }
-          }
-        }}
+        displayEmpty
       >
-        <MenuItem value="" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
-          Select a simulation
+        <MenuItem value="">
+          <em>Select a simulation</em>
         </MenuItem>
         {simHistory.map((sim) => {
-          const summary = calculateResultsSummaryDisplayMLB(sim.simResults, awayTeamName, homeTeamName);
+          const summary = getDisplayInfo(sim);
           const date = new Date(sim.timestamp).toLocaleString();
           return (
             <MenuItem key={sim.timestamp} value={sim.timestamp}>

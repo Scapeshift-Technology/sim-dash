@@ -109,3 +109,71 @@ function displayTotalsLine(totalsLine: {
   return `${typeAbbreviation}${totalsLine.line} ${displayOdds}`;
 }
 
+// ---------- Betting bounds formatting ----------
+
+// Format USA prices with the requested rules
+function formatUSAPrice(value: string): string {
+  const num = parseFloat(value);
+  
+  // Handle exactly 100 case
+  if (Math.abs(num) === 100) {
+    return 'EV';
+  }
+  
+  // Handle values between [100, 200) - drop leading 1 digit
+  if (Math.abs(num) >= 100 && Math.abs(num) < 200) {
+    const lastTwoDigits = Math.abs(num) % 100;
+    const sign = num >= 0 ? '+' : '-';
+    return `${sign}${lastTwoDigits}`;
+  }
+  
+  // For all other values, show + for positive, - for negative
+  if (num >= 0) {
+    return `+${num}`;
+  } else {
+    return `${num}`;
+  }
+}
+
+export function formatBettingBoundsDisplay(
+  bettingBounds: { awayML: string; homeML: string; totalLine: string; overOdds: string; underOdds: string },
+  awayTeamName: string,
+  homeTeamName: string
+): {
+  topLine: string;
+  bottomLine: string;
+} {
+  const awayAbbrev = teamNameToAbbreviationMLB(awayTeamName);
+  const homeAbbrev = teamNameToAbbreviationMLB(homeTeamName);
+  
+  // Format moneyline: [NYM+50 PIT-70] (always away team first, single space between teams)
+  const awayML = formatUSAPrice(bettingBounds.awayML);
+  const homeML = formatUSAPrice(bettingBounds.homeML);
+  const moneyline = `[${awayAbbrev}${awayML} ${homeAbbrev}${homeML}]`;
+  
+  // Format totals: 8 o-20 uEV (spaces after main number and after over price)
+  const overOdds = formatUSAPrice(bettingBounds.overOdds);
+  const underOdds = formatUSAPrice(bettingBounds.underOdds);
+  const totals = `${bettingBounds.totalLine} o${overOdds} u${underOdds}`;
+  
+  return {
+    topLine: moneyline,
+    bottomLine: totals
+  };
+}
+
+// Check if betting bounds data is complete and valid
+export function isBettingBoundsComplete(
+  bettingBounds: { awayML: string; homeML: string; totalLine: string; overOdds: string; underOdds: string } | null
+): boolean {
+  if (!bettingBounds) return false;
+  
+  return !!(
+    bettingBounds.awayML.trim() &&
+    bettingBounds.homeML.trim() &&
+    bettingBounds.totalLine.trim() &&
+    bettingBounds.overOdds.trim() &&
+    bettingBounds.underOdds.trim()
+  );
+}
+

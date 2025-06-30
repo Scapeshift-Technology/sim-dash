@@ -2,8 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Box, Typography, SxProps, Theme, TypographyVariant, Paper, IconButton, Menu, MenuItem, ListItemText, ListItemIcon } from '@mui/material';
 import HistoryIcon from '@mui/icons-material/History';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import { useSelector } from 'react-redux';
+import type { RootState } from '@/store/store';
 import type { SimHistoryEntry } from '@/types/simHistory';
-import { calculateResultsSummaryDisplayMLB } from '@/simDash/utils/oddsUtilsMLB';
+import { calculateResultsSummaryDisplayMLB, formatBettingBoundsDisplay, isBettingBoundsComplete } from '@/simDash/utils/oddsUtilsMLB';
+import { selectBettingBoundsValues } from '@/simDash/store/slices/bettingBoundsSlice';
 
 interface MLBSimulationResultsSummaryProps {
   simHistory: SimHistoryEntry[];
@@ -11,6 +14,7 @@ interface MLBSimulationResultsSummaryProps {
   awayTeamName: string;
   homeTeamName: string;
   daySequence: number | undefined;
+  matchId?: number; // Optional for backward compatibility
   sx?: SxProps<Theme>;
   className?: string;
   size?: 'small' | 'medium' | 'large';
@@ -23,11 +27,17 @@ const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = 
   awayTeamName,
   homeTeamName,
   daySequence,
+  matchId,
   sx = {},
   className,
   size = 'medium',
   displayHistory = false
 }) => {
+  // ---------- Redux State ----------
+  const bettingBounds = useSelector((state: RootState) => 
+    matchId ? selectBettingBoundsValues(state, 'MLB', matchId) : null
+  );
+
   // ---------- State ----------
   const [display, setDisplay] = useState<{
     topLine: string;
@@ -35,6 +45,32 @@ const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = 
   } | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedSim, setSelectedSim] = useState<SimHistoryEntry | null>(null);
+
+  // ---------- Helper function to get display info for any simulation ----------
+  const getHistoryDisplayInfo = (simEntry: SimHistoryEntry) => {
+    // Always start with simulation results as the base
+    const simDisplayInfo = calculateResultsSummaryDisplayMLB(simEntry.simResults, awayTeamName, homeTeamName);
+    
+    // Try to enhance with betting bounds from the sim entry's input data
+    const simBettingBounds = simEntry.inputData?.gameInfo?.bettingBounds;
+    
+    if (simBettingBounds) {
+      const boundsData = {
+        awayML: simBettingBounds.awayML.toString(),
+        homeML: simBettingBounds.homeML.toString(),
+        totalLine: simBettingBounds.over.line.toString(),
+        overOdds: simBettingBounds.over.odds.toString(),
+        underOdds: simBettingBounds.under.odds.toString()
+      };
+      
+      if (isBettingBoundsComplete(boundsData)) {
+        return formatBettingBoundsDisplay(boundsData, awayTeamName, homeTeamName);
+      }
+    }
+    
+    // Fall back to simulation results
+    return simDisplayInfo;
+  };
 
   // ---------- Effect ----------
   useEffect(() => {
@@ -46,9 +82,38 @@ const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = 
 
   useEffect(() => {
     if (selectedSim) {
-      setDisplay(calculateResultsSummaryDisplayMLB(selectedSim.simResults, awayTeamName, homeTeamName));
+      // Always start with simulation results as the base
+      const simDisplayInfo = calculateResultsSummaryDisplayMLB(selectedSim.simResults, awayTeamName, homeTeamName);
+      
+      // Try to enhance with betting bounds if available and complete
+      if (bettingBounds && isBettingBoundsComplete(bettingBounds)) {
+        setDisplay(formatBettingBoundsDisplay(bettingBounds, awayTeamName, homeTeamName));
+      } else {
+        // Check if the selected sim has betting bounds in its input data
+        const simBettingBounds = selectedSim.inputData?.gameInfo?.bettingBounds;
+        
+        if (simBettingBounds) {
+          const boundsData = {
+            awayML: simBettingBounds.awayML.toString(),
+            homeML: simBettingBounds.homeML.toString(),
+            totalLine: simBettingBounds.over.line.toString(),
+            overOdds: simBettingBounds.over.odds.toString(),
+            underOdds: simBettingBounds.under.odds.toString()
+          };
+          
+          if (isBettingBoundsComplete(boundsData)) {
+            setDisplay(formatBettingBoundsDisplay(boundsData, awayTeamName, homeTeamName));
+          } else {
+            // Fall back to simulation results
+            setDisplay(simDisplayInfo);
+          }
+        } else {
+          // Fall back to simulation results
+          setDisplay(simDisplayInfo);
+        }
+      }
     }
-  }, [selectedSim, awayTeamName, homeTeamName]);
+  }, [selectedSim, awayTeamName, homeTeamName, bettingBounds]);
 
   // ---------- Styles ----------
   const sizeStyles: Record<string, { py: number | string; px: number | string; typography: TypographyVariant }> = {
@@ -193,7 +258,7 @@ const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = 
               </MenuItem>
             ) : (
               simHistory.map((entry) => {
-                const displayInfo = calculateResultsSummaryDisplayMLB(entry.simResults, awayTeamName, homeTeamName);
+                const displayInfo = getHistoryDisplayInfo(entry);
                 return (
                   <MenuItem 
                     key={entry.timestamp} 

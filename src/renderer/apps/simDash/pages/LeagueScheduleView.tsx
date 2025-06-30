@@ -32,7 +32,7 @@ import {
     selectMatchSimStatus
 } from '@/simDash/store/slices/scheduleSlice';
 import { selectDatabaseConnectionStatus } from '@/store/slices/authSlice';
-import { calculateResultsSummaryDisplayMLB } from '@/simDash/utils/oddsUtilsMLB';
+import { calculateResultsSummaryDisplayMLB, formatBettingBoundsDisplay, isBettingBoundsComplete } from '@/simDash/utils/oddsUtilsMLB';
 import { usePrevious } from '@dnd-kit/utilities';
 import { 
     initializeLeague,
@@ -44,6 +44,7 @@ import {
 import { LeagueName } from '@@/types/league';
 import { getMLBWebSocketManager } from '@/simDash/services/mlbWebSocketManager';
 import StatusCell from '@/simDash/components/StatusCell';
+import type { SimHistoryEntry } from '@/types/simHistory';
 
 // ---------- Helper functions ----------
 
@@ -76,6 +77,41 @@ const SimResultsCell: React.FC<SimResultsCellProps> = React.memo(({ item, league
         selectMatchSimStatus(state, league, item.Match)
     );
 
+    // ---------- Helper function to get display info for any simulation ----------
+    const getDisplayInfo = (simEntry: SimHistoryEntry) => {
+        // Always start with simulation results as the base based on league
+        const simDisplayInfo = (() => {
+            switch (league) {
+                case 'MLB':
+                    return calculateResultsSummaryDisplayMLB(simEntry.simResults, item.Participant1, item.Participant2);
+                default:
+                    return { topLine: 'Not implemented', bottomLine: '' };
+            }
+        })();
+        
+        // Try to enhance with betting bounds from the sim entry's input data (only for MLB)
+        if (league === 'MLB') {
+            const simBettingBounds = simEntry.inputData?.gameInfo?.bettingBounds;
+            
+            if (simBettingBounds) {
+                const boundsData = {
+                    awayML: simBettingBounds.awayML.toString(),
+                    homeML: simBettingBounds.homeML.toString(),
+                    totalLine: simBettingBounds.over.line.toString(),
+                    overOdds: simBettingBounds.over.odds.toString(),
+                    underOdds: simBettingBounds.under.odds.toString()
+                };
+                
+                if (isBettingBoundsComplete(boundsData)) {
+                    return formatBettingBoundsDisplay(boundsData, item.Participant1, item.Participant2);
+                }
+            }
+        }
+        
+        // Fall back to simulation results
+        return simDisplayInfo;
+    };
+
     if (simStatus === 'loading') {
         return <Typography variant="body2" color="text.secondary">Loading...</Typography>;
     }
@@ -84,20 +120,8 @@ const SimResultsCell: React.FC<SimResultsCellProps> = React.memo(({ item, league
         return <Typography variant="body2" color="text.secondary">No sim data</Typography>;
     }
 
-    // Get the appropriate display function based on league
-    let display;
-    switch (league) {
-        case 'MLB':
-            display = calculateResultsSummaryDisplayMLB(
-                simResults[0].simResults,
-                item.Participant1,
-                item.Participant2
-            );
-            break;
-        // Add other leagues here as they are implemented
-        default:
-            return <Typography variant="body2" color="text.secondary">Not implemented</Typography>;
-    }
+    // Get the display using the new helper function
+    const display = getDisplayInfo(simResults[0]);
 
     return (
         <Box 
