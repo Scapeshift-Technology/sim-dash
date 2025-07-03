@@ -1,23 +1,37 @@
-import { useEffect, useState } from 'react';
-import { SimHistoryEntry } from "@@/types/simHistory";
+import React, { useState, useEffect } from 'react';
 import { Box, Typography, CircularProgress, Divider } from '@mui/material';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import SimDropdown from './components/SimDropdown';
-import { 
-  teamNameToAbbreviationMLB, 
-  transformComparisonSidesCountsMLB, 
-  transformComparisonTotalsCountsMLB, 
+import { ArrowForward as ArrowForwardIcon } from '@mui/icons-material';
+import { teamNameToAbbreviationMLB } from '@/simDash/utils/displayMLB';
+import {
+  transformComparisonSidesCountsMLB,
+  transformComparisonTotalsCountsMLB,
   transformComparisonFirstInningPropsCountsMLB,
   transformComparisonPlayerPropsCountsMLB,
   transformComparisonScoringOrderPropsCountsMLB
 } from '@/simDash/utils/displayMLB';
 
+// NEW: Import unified BettingTable with comparison column configs
+import BettingTable, {
+  getComparisonSidesColumns,
+  getComparisonTotalsColumns,
+  getComparisonPlayerPropsColumns,
+  getComparisonFirstInningPropsColumns,
+  getComparisonScoringOrderPropsColumns
+} from '@/simDash/components/BettingTable';
+
+// Import comparison data formatters
+import {
+  formatComparisonSidesData,
+  formatComparisonTotalsData,
+  formatComparisonPlayerPropsData,
+  formatComparisonFirstInningPropsData,
+  formatComparisonScoringOrderPropsData
+} from '@/simDash/utils/tableFormatters';
+
+import { COLOR_MAX_VALUES } from '@/simDash/utils/comparisonTableColors';
 import CollapsibleSection from '@/simDash/components/CollapsibleSection';
-import ComparisonSidesTable from '@/simDash/components/comparison/ComparisonSidesTable';
-import ComparisonTotalsTable from '@/simDash/components/comparison/ComparisonTotalsTable';
-import ComparisonFirstInningPropsTable from '@/simDash/components/comparison/ComparisonFirstInningPropsTable';
-import ComparisonPlayerPropsTable from '@/simDash/components/comparison/ComparisonPlayerPropsTable';
-import ComparisonScoringOrderPropsTable from '@/simDash/components/comparison/ComparisonScoringOrderPropsTable';
+import SimDropdown from './components/SimDropdown';
+import { SimHistoryEntry } from '@@/types/simHistory';
 
 // ---------- Helper function ----------
 const getUrlParams = () => {
@@ -70,23 +84,79 @@ const MLBComparisonView: React.FC = () => {
     const playerPropsComparisonData = transformComparisonPlayerPropsCountsMLB(selectedSim1.simResults.props.player, selectedSim2.simResults.props.player, awayTeamAbbrev, homeTeamAbbrev);
     const scoringOrderPropsComparisonData = transformComparisonScoringOrderPropsCountsMLB(selectedSim1.simResults.props.scoringOrder, selectedSim2.simResults.props.scoringOrder, awayTeamAbbrev, homeTeamAbbrev);
 
+    // Format comparison data
+    const formattedSidesComparison = formatComparisonSidesData(sidesComparisonData);
+    const formattedTotalsComparison = formatComparisonTotalsData(totalsComparisonData);
+    const formattedFirstInningComparison = formatComparisonFirstInningPropsData(firstInningPropsComparisonData);
+    const formattedPlayerPropsComparison = formatComparisonPlayerPropsData(playerPropsComparisonData);
+    const formattedScoringOrderComparison = formatComparisonScoringOrderPropsData(scoringOrderPropsComparisonData);
+
     return (
       <>
         <CollapsibleSection title="Sides Difference" isOpen={sectionVisibility.sides} onToggle={() => {setSectionVisibility({...sectionVisibility, sides: !sectionVisibility.sides})}}>
-          <ComparisonSidesTable data={sidesComparisonData} />
+          <BettingTable 
+            data={formattedSidesComparison} 
+            columns={getComparisonSidesColumns(sidesComparisonData)}
+            comparison={true}
+                      comparisonConfig={{
+            colorFields: ['coverPercent'],
+            matchKeys: ['team', 'period', 'line'],
+            maxValues: { coverPercent: COLOR_MAX_VALUES.percent }
+          }}
+          />
         </CollapsibleSection>
         <CollapsibleSection title="Totals Difference" isOpen={sectionVisibility.totals} onToggle={() => {setSectionVisibility({...sectionVisibility, totals: !sectionVisibility.totals})}}>
-          <ComparisonTotalsTable data={totalsComparisonData} />
+          <BettingTable 
+            data={formattedTotalsComparison} 
+            columns={getComparisonTotalsColumns(totalsComparisonData)}
+            comparison={true}
+                      comparisonConfig={{
+            colorFields: ['overPercent', 'underPercent', 'pushPercent'],
+            matchKeys: ['team', 'period', 'line'],
+            maxValues: { 
+              overPercent: COLOR_MAX_VALUES.percent,
+              underPercent: COLOR_MAX_VALUES.percent,
+              pushPercent: COLOR_MAX_VALUES.percent
+            }
+          }}
+          />
         </CollapsibleSection>
         <CollapsibleSection title="First Inning Props Difference" isOpen={sectionVisibility.firstInningProps} onToggle={() => {setSectionVisibility({...sectionVisibility, firstInningProps: !sectionVisibility.firstInningProps})}}>
-          <ComparisonFirstInningPropsTable data={firstInningPropsComparisonData} />
+          <BettingTable 
+            data={formattedFirstInningComparison} 
+            columns={getComparisonFirstInningPropsColumns(firstInningPropsComparisonData)}
+            comparison={true}
+                      comparisonConfig={{
+            colorFields: ['scorePercent'],
+            matchKeys: ['team'],
+            maxValues: { scorePercent: COLOR_MAX_VALUES.percent }
+          }}
+          />
         </CollapsibleSection>
         <CollapsibleSection title="Player Props Difference" isOpen={sectionVisibility.playerProps} onToggle={() => {setSectionVisibility({...sectionVisibility, playerProps: !sectionVisibility.playerProps})}}>
-          <ComparisonPlayerPropsTable data={playerPropsComparisonData} />
+          <BettingTable 
+            data={formattedPlayerPropsComparison} 
+            columns={getComparisonPlayerPropsColumns(playerPropsComparisonData)}
+            comparison={true}
+                      comparisonConfig={{
+            colorFields: ['overPercent'],
+            matchKeys: ['playerName', 'teamName', 'statName', 'line'],
+            maxValues: { overPercent: COLOR_MAX_VALUES.percent }
+          }}
+          />
         </CollapsibleSection>
         {scoringOrderPropsComparisonData.length > 0 && (
           <CollapsibleSection title="Scoring Order Props Difference" isOpen={sectionVisibility.scoringOrderProps} onToggle={() => {setSectionVisibility({...sectionVisibility, scoringOrderProps: !sectionVisibility.scoringOrderProps})}}>
-            <ComparisonScoringOrderPropsTable data={scoringOrderPropsComparisonData} />
+            <BettingTable 
+              data={formattedScoringOrderComparison} 
+              columns={getComparisonScoringOrderPropsColumns(scoringOrderPropsComparisonData)}
+              comparison={true}
+              comparisonConfig={{
+                colorFields: ['percent'],
+                matchKeys: ['team', 'propType'],
+                maxValues: { percent: COLOR_MAX_VALUES.percent }
+              }}
+            />
           </CollapsibleSection>
         )}
       </>

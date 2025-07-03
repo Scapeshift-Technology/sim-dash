@@ -2,12 +2,14 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-// Import comparison table components
-import ComparisonSidesTable from '../../src/renderer/apps/simDash/components/comparison/ComparisonSidesTable';
-import ComparisonTotalsTable from '../../src/renderer/apps/simDash/components/comparison/ComparisonTotalsTable';
-import ComparisonPlayerPropsTable from '../../src/renderer/apps/simDash/components/comparison/ComparisonPlayerPropsTable';
-import ComparisonFirstInningPropsTable from '../../src/renderer/apps/simDash/components/comparison/ComparisonFirstInningPropsTable';
-import ComparisonScoringOrderPropsTable from '../../src/renderer/apps/simDash/components/comparison/ComparisonScoringOrderPropsTable';
+// Import the new unified BettingTable component with comparison functions  
+import BettingTable, {
+  getComparisonSidesColumns,
+  getComparisonTotalsColumns,
+  getComparisonPlayerPropsColumns,
+  getComparisonFirstInningPropsColumns,
+  getComparisonScoringOrderPropsColumns
+} from '../../src/renderer/apps/simDash/components/BettingTable';
 
 // Import color logic functions
 import { 
@@ -16,6 +18,15 @@ import {
   createComparisonColorRules,
   COLOR_MAX_VALUES 
 } from '../../src/renderer/apps/simDash/utils/comparisonTableColors';
+
+// Import comparison data formatters
+import {
+  formatComparisonSidesData,
+  formatComparisonTotalsData,
+  formatComparisonPlayerPropsData,
+  formatComparisonFirstInningPropsData,
+  formatComparisonScoringOrderPropsData
+} from '../../src/renderer/apps/simDash/utils/tableFormatters';
 
 // Import test fixtures
 import {
@@ -47,49 +58,49 @@ jest.mock('../../src/renderer/apps/simDash/components/Inline', () => {
 describe('Comparison Table Color Logic', () => {
   describe('calculateIntensity', () => {
     test('should return 0 for zero values', () => {
-      expect(calculateIntensity(0, 0.25)).toBe(0);
+      expect(calculateIntensity(0, 0.20)).toBe(0);
     });
 
     test('should calculate square root scaling correctly', () => {
-      // Test with coverPercent maxValue of 0.25
-      expect(calculateIntensity(0.25, 0.25)).toBe(1); // sqrt(0.25/0.25) = 1
-      expect(calculateIntensity(0.0625, 0.25)).toBe(0.5); // sqrt(0.0625/0.25) = 0.5
-      expect(calculateIntensity(0.01, 0.25)).toBeCloseTo(0.2); // sqrt(0.01/0.25) ≈ 0.2
+      // Test with 20% maxValue
+      expect(calculateIntensity(0.20, 0.20)).toBe(1); // sqrt(0.20/0.20) = 1
+      expect(calculateIntensity(0.05, 0.20)).toBe(0.5); // sqrt(0.05/0.20) = 0.5
+      expect(calculateIntensity(0.008, 0.20)).toBeCloseTo(0.2); // sqrt(0.008/0.20) ≈ 0.2
     });
 
     test('should cap intensity at 1.0 for values above maxValue', () => {
-      expect(calculateIntensity(0.5, 0.25)).toBe(1); // Capped at 1
-      expect(calculateIntensity(1.0, 0.25)).toBe(1); // Capped at 1
+      expect(calculateIntensity(0.4, 0.20)).toBe(1); // Capped at 1
+      expect(calculateIntensity(1.0, 0.20)).toBe(1); // Capped at 1
     });
 
     test('should handle negative values by using absolute value', () => {
-      expect(calculateIntensity(-0.25, 0.25)).toBe(1);
-      expect(calculateIntensity(-0.0625, 0.25)).toBe(0.5);
+      expect(calculateIntensity(-0.20, 0.20)).toBe(1);
+      expect(calculateIntensity(-0.05, 0.20)).toBe(0.5);
     });
   });
 
   describe('generateBackgroundColor', () => {
     test('should return transparent for zero values', () => {
-      expect(generateBackgroundColor(0, 0.25)).toBe('transparent');
+      expect(generateBackgroundColor(0, 0.20)).toBe('transparent');
     });
 
     test('should generate green colors for positive values', () => {
-      const color = generateBackgroundColor(0.25, 0.25); // Maximum intensity
+      const color = generateBackgroundColor(0.20, 0.20); // Maximum intensity
       expect(color).toBe('rgba(46, 125, 50, 0.5)');
     });
 
     test('should generate red colors for negative values', () => {
-      const color = generateBackgroundColor(-0.25, 0.25); // Maximum intensity
+      const color = generateBackgroundColor(-0.20, 0.20); // Maximum intensity
       expect(color).toBe('rgba(211, 47, 47, 0.5)');
     });
 
     test('should vary alpha intensity correctly', () => {
-      // Low intensity (0.0625 / 0.25 = 0.25, sqrt(0.25) = 0.5, alpha = 0.1 + 0.5*0.4 = 0.3)
-      const lowIntensity = generateBackgroundColor(0.0625, 0.25);
+      // Low intensity (0.05 / 0.20 = 0.25, sqrt(0.25) = 0.5, alpha = 0.1 + 0.5*0.4 = 0.3)
+      const lowIntensity = generateBackgroundColor(0.05, 0.20);
       expect(lowIntensity).toMatch(/rgba\(46, 125, 50, 0\.3\d*\)/);
       
-      // Very low intensity (0.01 / 0.25 = 0.04, sqrt(0.04) = 0.2, alpha = 0.1 + 0.2*0.4 = 0.18)
-      const veryLowIntensity = generateBackgroundColor(0.01, 0.25);
+      // Very low intensity (0.008 / 0.20 = 0.04, sqrt(0.04) = 0.2, alpha = 0.1 + 0.2*0.4 = 0.18)
+      const veryLowIntensity = generateBackgroundColor(0.008, 0.20);
       expect(veryLowIntensity).toMatch(/rgba\(46, 125, 50, 0\.18\d*\)/);
     });
   });
@@ -102,7 +113,7 @@ describe('Comparison Table Color Logic', () => {
       const rules = createComparisonColorRules(
         mockData, 
         'coverPercent', 
-        COLOR_MAX_VALUES.coverPercent,
+        COLOR_MAX_VALUES.percent,
         ['team', 'period', 'line']
       );
       
@@ -118,7 +129,7 @@ describe('Comparison Table Color Logic', () => {
       const rules = createComparisonColorRules(
         mockData, 
         'coverPercent', 
-        COLOR_MAX_VALUES.coverPercent,
+        COLOR_MAX_VALUES.percent,
         ['team', 'period', 'line']
       );
       
@@ -144,7 +155,7 @@ describe('Comparison Table Color Logic', () => {
       const rules = createComparisonColorRules(
         mockData, 
         'coverPercent', 
-        COLOR_MAX_VALUES.coverPercent,
+        COLOR_MAX_VALUES.percent,
         ['team']
       );
       
@@ -163,17 +174,45 @@ describe('Comparison Table Color Logic', () => {
   });
 });
 
-describe('Comparison Table Component Rendering', () => {
-  describe('ComparisonSidesTable', () => {
+describe('Unified BettingTable Comparison Mode', () => {
+  describe('ComparisonSidesTable functionality', () => {
     test('should render with comparison data', () => {
-      render(<ComparisonSidesTable data={mockComparisonSidesData} />);
+      const formattedData = formatComparisonSidesData(mockComparisonSidesData);
+      const columns = getComparisonSidesColumns(mockComparisonSidesData);
+      
+      render(
+        <BettingTable 
+          data={formattedData} 
+          columns={columns}
+          comparison={true}
+          comparisonConfig={{
+            colorFields: ['coverPercent'],
+            matchKeys: ['team', 'period', 'line'],
+            maxValues: { coverPercent: COLOR_MAX_VALUES.percent }
+          }}
+        />
+      );
       
       expect(screen.getByTestId('mock-table')).toBeInTheDocument();
       expect(screen.getByTestId('table-columns')).toHaveTextContent('["team","period","line","coverPercent"]');
     });
 
     test('should format percentage data correctly', () => {
-      render(<ComparisonSidesTable data={mockComparisonSidesData} />);
+      const formattedData = formatComparisonSidesData(mockComparisonSidesData);
+      const columns = getComparisonSidesColumns(mockComparisonSidesData);
+      
+      render(
+        <BettingTable 
+          data={formattedData} 
+          columns={columns}
+          comparison={true}
+          comparisonConfig={{
+            colorFields: ['coverPercent'],
+            matchKeys: ['team', 'period', 'line'],
+            maxValues: { coverPercent: COLOR_MAX_VALUES.percent }
+          }}
+        />
+      );
       
       const tableData = screen.getByTestId('table-data').textContent;
       expect(tableData).toContain('5.23%');  // Positive difference
@@ -182,23 +221,72 @@ describe('Comparison Table Component Rendering', () => {
     });
 
     test('should handle empty data', () => {
-      render(<ComparisonSidesTable data={[]} />);
+      const columns = getComparisonSidesColumns([]);
+      
+      render(
+        <BettingTable 
+          data={[]} 
+          columns={columns}
+          comparison={true}
+          comparisonConfig={{
+            colorFields: ['coverPercent'],
+            matchKeys: ['team', 'period', 'line'],
+            maxValues: { coverPercent: COLOR_MAX_VALUES.percent }
+          }}
+        />
+      );
       
       expect(screen.getByTestId('mock-table')).toBeInTheDocument();
       expect(screen.getByTestId('table-data')).toBeEmptyDOMElement();
     });
   });
 
-  describe('ComparisonTotalsTable', () => {
+  describe('ComparisonTotalsTable functionality', () => {
     test('should render with comparison data', () => {
-      render(<ComparisonTotalsTable data={mockComparisonTotalsData} />);
+      const formattedData = formatComparisonTotalsData(mockComparisonTotalsData);
+      const columns = getComparisonTotalsColumns(mockComparisonTotalsData);
+      
+      render(
+        <BettingTable 
+          data={formattedData} 
+          columns={columns}
+          comparison={true}
+          comparisonConfig={{
+            colorFields: ['overPercent', 'underPercent', 'pushPercent'],
+            matchKeys: ['team', 'period', 'line'],
+            maxValues: { 
+              overPercent: COLOR_MAX_VALUES.percent,
+              underPercent: COLOR_MAX_VALUES.percent,
+              pushPercent: COLOR_MAX_VALUES.percent
+            }
+          }}
+        />
+      );
       
       expect(screen.getByTestId('mock-table')).toBeInTheDocument();
       expect(screen.getByTestId('table-columns')).toHaveTextContent('["team","period","line","overPercent","underPercent","pushPercent"]');
     });
 
     test('should format over/under/push percentages', () => {
-      render(<ComparisonTotalsTable data={mockComparisonTotalsData} />);
+      const formattedData = formatComparisonTotalsData(mockComparisonTotalsData);
+      const columns = getComparisonTotalsColumns(mockComparisonTotalsData);
+      
+      render(
+        <BettingTable 
+          data={formattedData} 
+          columns={columns}
+          comparison={true}
+          comparisonConfig={{
+            colorFields: ['overPercent', 'underPercent', 'pushPercent'],
+            matchKeys: ['team', 'period', 'line'],
+            maxValues: { 
+              overPercent: COLOR_MAX_VALUES.percent,
+              underPercent: COLOR_MAX_VALUES.percent,
+              pushPercent: COLOR_MAX_VALUES.percent
+            }
+          }}
+        />
+      );
       
       const tableData = screen.getByTestId('table-data').textContent;
       expect(tableData).toContain('3.45%');   // Over positive difference
@@ -207,16 +295,44 @@ describe('Comparison Table Component Rendering', () => {
     });
   });
 
-  describe('ComparisonPlayerPropsTable', () => {
+  describe('ComparisonPlayerPropsTable functionality', () => {
     test('should render with player props comparison data', () => {
-      render(<ComparisonPlayerPropsTable data={mockComparisonPlayerPropsData} />);
+      const formattedData = formatComparisonPlayerPropsData(mockComparisonPlayerPropsData);
+      const columns = getComparisonPlayerPropsColumns(mockComparisonPlayerPropsData);
+      
+      render(
+        <BettingTable 
+          data={formattedData} 
+          columns={columns}
+          comparison={true}
+          comparisonConfig={{
+            colorFields: ['overPercent'],
+            matchKeys: ['playerName', 'teamName', 'statName', 'line'],
+            maxValues: { overPercent: COLOR_MAX_VALUES.percent }
+          }}
+        />
+      );
       
       expect(screen.getByTestId('mock-table')).toBeInTheDocument();
       expect(screen.getByTestId('table-columns')).toHaveTextContent('["playerName","teamName","statName","line","overPercent"]');
     });
 
     test('should format player prop percentages', () => {
-      render(<ComparisonPlayerPropsTable data={mockComparisonPlayerPropsData} />);
+      const formattedData = formatComparisonPlayerPropsData(mockComparisonPlayerPropsData);
+      const columns = getComparisonPlayerPropsColumns(mockComparisonPlayerPropsData);
+      
+      render(
+        <BettingTable 
+          data={formattedData} 
+          columns={columns}
+          comparison={true}
+          comparisonConfig={{
+            colorFields: ['overPercent'],
+            matchKeys: ['playerName', 'teamName', 'statName', 'line'],
+            maxValues: { overPercent: COLOR_MAX_VALUES.percent }
+          }}
+        />
+      );
       
       const tableData = screen.getByTestId('table-data').textContent;
       expect(tableData).toContain('Aaron Judge');
@@ -225,16 +341,44 @@ describe('Comparison Table Component Rendering', () => {
     });
   });
 
-  describe('ComparisonFirstInningPropsTable', () => {
+  describe('ComparisonFirstInningPropsTable functionality', () => {
     test('should render with first inning comparison data', () => {
-      render(<ComparisonFirstInningPropsTable data={mockComparisonFirstInningData} />);
+      const formattedData = formatComparisonFirstInningPropsData(mockComparisonFirstInningData);
+      const columns = getComparisonFirstInningPropsColumns(mockComparisonFirstInningData);
+      
+      render(
+        <BettingTable 
+          data={formattedData} 
+          columns={columns}
+          comparison={true}
+          comparisonConfig={{
+            colorFields: ['scorePercent'],
+            matchKeys: ['team'],
+            maxValues: { scorePercent: COLOR_MAX_VALUES.percent }
+          }}
+        />
+      );
       
       expect(screen.getByTestId('mock-table')).toBeInTheDocument();
       expect(screen.getByTestId('table-columns')).toHaveTextContent('["team","scorePercent"]');
     });
 
     test('should format score percentages', () => {
-      render(<ComparisonFirstInningPropsTable data={mockComparisonFirstInningData} />);
+      const formattedData = formatComparisonFirstInningPropsData(mockComparisonFirstInningData);
+      const columns = getComparisonFirstInningPropsColumns(mockComparisonFirstInningData);
+      
+      render(
+        <BettingTable 
+          data={formattedData} 
+          columns={columns}
+          comparison={true}
+          comparisonConfig={{
+            colorFields: ['scorePercent'],
+            matchKeys: ['team'],
+            maxValues: { scorePercent: COLOR_MAX_VALUES.percent }
+          }}
+        />
+      );
       
       const tableData = screen.getByTestId('table-data').textContent;
       expect(tableData).toContain('1.23%');   // Positive difference
@@ -242,16 +386,44 @@ describe('Comparison Table Component Rendering', () => {
     });
   });
 
-  describe('ComparisonScoringOrderPropsTable', () => {
+  describe('ComparisonScoringOrderPropsTable functionality', () => {
     test('should render with scoring order comparison data', () => {
-      render(<ComparisonScoringOrderPropsTable data={mockComparisonScoringOrderData} />);
+      const formattedData = formatComparisonScoringOrderPropsData(mockComparisonScoringOrderData);
+      const columns = getComparisonScoringOrderPropsColumns(mockComparisonScoringOrderData);
+      
+      render(
+        <BettingTable 
+          data={formattedData} 
+          columns={columns}
+          comparison={true}
+          comparisonConfig={{
+            colorFields: ['percent'],
+            matchKeys: ['team', 'propType'],
+            maxValues: { percent: COLOR_MAX_VALUES.percent }
+          }}
+        />
+      );
       
       expect(screen.getByTestId('mock-table')).toBeInTheDocument();
       expect(screen.getByTestId('table-columns')).toHaveTextContent('["team","propType","percent"]');
     });
 
     test('should format scoring order percentages', () => {
-      render(<ComparisonScoringOrderPropsTable data={mockComparisonScoringOrderData} />);
+      const formattedData = formatComparisonScoringOrderPropsData(mockComparisonScoringOrderData);
+      const columns = getComparisonScoringOrderPropsColumns(mockComparisonScoringOrderData);
+      
+      render(
+        <BettingTable 
+          data={formattedData} 
+          columns={columns}
+          comparison={true}
+          comparisonConfig={{
+            colorFields: ['percent'],
+            matchKeys: ['team', 'propType'],
+            maxValues: { percent: COLOR_MAX_VALUES.percent }
+          }}
+        />
+      );
       
       const tableData = screen.getByTestId('table-data').textContent;
       expect(tableData).toContain('FirstToScore');
@@ -271,7 +443,21 @@ describe('Comparison Table Edge Cases', () => {
         coverPercent: 0.0000  // Zero difference
       }];
       
-      render(<ComparisonSidesTable data={zeroData} />);
+      const formattedData = formatComparisonSidesData(zeroData);
+      const columns = getComparisonSidesColumns(zeroData);
+      
+      render(
+        <BettingTable 
+          data={formattedData} 
+          columns={columns}
+          comparison={true}
+          comparisonConfig={{
+            colorFields: ['coverPercent'],
+            matchKeys: ['team', 'period', 'line'],
+            maxValues: { coverPercent: COLOR_MAX_VALUES.percent }
+          }}
+        />
+      );
       
       const tableData = screen.getByTestId('table-data').textContent;
       expect(tableData).toContain('0.00%');
@@ -287,7 +473,21 @@ describe('Comparison Table Edge Cases', () => {
         coverPercent: 0.5000  // 50% difference (very large)
       }];
       
-      render(<ComparisonSidesTable data={largeData} />);
+      const formattedData = formatComparisonSidesData(largeData);
+      const columns = getComparisonSidesColumns(largeData);
+      
+      render(
+        <BettingTable 
+          data={formattedData} 
+          columns={columns}
+          comparison={true}
+          comparisonConfig={{
+            colorFields: ['coverPercent'],
+            matchKeys: ['team', 'period', 'line'],
+            maxValues: { coverPercent: COLOR_MAX_VALUES.percent }
+          }}
+        />
+      );
       
       const tableData = screen.getByTestId('table-data').textContent;
       expect(tableData).toContain('50.00%');
@@ -301,7 +501,21 @@ describe('Comparison Table Edge Cases', () => {
         coverPercent: -0.5000  // -50% difference (very large)
       }];
       
-      render(<ComparisonSidesTable data={largeNegativeData} />);
+      const formattedData = formatComparisonSidesData(largeNegativeData);
+      const columns = getComparisonSidesColumns(largeNegativeData);
+      
+      render(
+        <BettingTable 
+          data={formattedData} 
+          columns={columns}
+          comparison={true}
+          comparisonConfig={{
+            colorFields: ['coverPercent'],
+            matchKeys: ['team', 'period', 'line'],
+            maxValues: { coverPercent: COLOR_MAX_VALUES.percent }
+          }}
+        />
+      );
       
       const tableData = screen.getByTestId('table-data').textContent;
       expect(tableData).toContain('-50.00%');
@@ -309,27 +523,23 @@ describe('Comparison Table Edge Cases', () => {
   });
 
   describe('Color Max Values', () => {
-    test('should have correct max values for different data types', () => {
-      expect(COLOR_MAX_VALUES.coverPercent).toBe(0.25);
-      expect(COLOR_MAX_VALUES.usaFair).toBe(80);
-      expect(COLOR_MAX_VALUES.overPercent).toBe(0.25);
-      expect(COLOR_MAX_VALUES.scorePercent).toBe(0.25);
-      expect(COLOR_MAX_VALUES.percent).toBe(0.25);
+    test('should have correct max values for simplified structure', () => {
+      expect(COLOR_MAX_VALUES.percent).toBe(0.20);
     });
 
-    test('should apply different max values for different table types', () => {
-      // Test that different tables use appropriate max values
+    test('should apply single max value for all table types', () => {
+      // Test that different tables use the same max value
       const sidesRules = createComparisonColorRules(
         mockComparisonSidesData,
         'coverPercent',
-        COLOR_MAX_VALUES.coverPercent,
+        COLOR_MAX_VALUES.percent,
         ['team', 'period', 'line']
       );
       
       const totalsRules = createComparisonColorRules(
         mockComparisonTotalsData,
         'overPercent',
-        COLOR_MAX_VALUES.overPercent,
+        COLOR_MAX_VALUES.percent,
         ['team', 'period', 'line']
       );
       

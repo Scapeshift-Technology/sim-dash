@@ -15,14 +15,19 @@ import {
     formatSeriesData, 
     formatScoringOrderPropsData 
 } from '@/simDash/utils/tableFormatters';
-import { firstInningColumns } from '@/simDash/components/FirstInningTable';
-import { sidesColumns } from '@/simDash/components/SidesTable';
-import { totalsColumns } from '@/simDash/components/TotalsTable';
-import { seriesColumns } from '@/simDash/components/SeriesTable';
-import { scoringOrderPropsColumns } from '@/simDash/components/ScoringOrderPropsTable';
+
+// NEW: Import column configurations from unified BettingTable
+import {
+    firstInningColumns,
+    sidesColumns,
+    totalsColumns,
+    seriesColumns,
+    scoringOrderPropsColumns
+} from '@/simDash/components/BettingTable';
+
 import { convertLineupsToTSV } from '@/simDash/utils/copyUtils';
 import { MarketLinesMLB } from '@@/types/mlb';
-import { formatDecimal, formatAmericanOdds } from '@/simDash/utils/display';
+import { formatAmericanOdds } from '@/simDash/utils/display';
 import { MLBGameSimInputs, MLBGameSimInputsTeam } from '@@/types/simInputs';
 import { teamNameToAbbreviationMLB } from '@@/services/mlb/utils/teamName';
 

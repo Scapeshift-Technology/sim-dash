@@ -8,22 +8,33 @@ import {
   transformPropsCountsMLB,
   transformSeriesProbsMLB
 } from '@/simDash/utils/displayMLB';
-import SidesTable from '@/simDash/components/SidesTable';
 import { Box, Typography, CircularProgress, Button, Snackbar } from '@mui/material';
-import TotalsTable from '@/simDash/components/TotalsTable';
-import FirstInningTable from '@/simDash/components/FirstInningTable';
-import PlayerPropsTable from '@/simDash/components/PlayerPropsTable';
-import SeriesTable from '@/simDash/components/SeriesTable';
 import { ReducedMatchupLineups, SimMetadataMLB } from '@@/types/simHistory';
 import { MLBGameSimInputs } from '@/types/simInputs';
 import CollapsibleSection from '@/simDash/components/CollapsibleSection';
 import SimInputs from './components/SimInputs';
 import LineupSection from './components/LineupSection';
 import { copyAllResults } from './utils/copier';
-import ScoringOrderPropsTable from '../../components/ScoringOrderPropsTable';
+
 import ROIDemandInput from '@/simDash/components/ROIDemandInput';
 import { selectROIDemandDecimal } from '@/simDash/store/slices/userPreferencesSlice';
 import type { RootState } from '@/store/store';
+import BettingTable, { 
+  sidesColumns,
+  totalsColumns,
+  firstInningColumns,
+  playerPropsColumns,
+  seriesColumns,
+  scoringOrderPropsColumns
+} from '@/simDash/components/BettingTable';
+import {
+  formatSidesData,
+  formatTotalsData,
+  formatFirstInningData,
+  formatPlayerPropsData,
+  formatSeriesData,
+  formatScoringOrderPropsData
+} from '@/simDash/utils/tableFormatters';
 
 // ---------- Main component ----------
 
@@ -161,6 +172,14 @@ const MLBSimulationView: React.FC = () => {
   const propsData = transformPropsCountsMLB(simData.props, awayTeamAbbreviation, homeTeamAbbreviation, roiDemandDecimal);
   const seriesData = simData.series ? transformSeriesProbsMLB(simData.series, awayTeamAbbreviation, homeTeamAbbreviation, roiDemandDecimal) : [];
 
+  // Format data for display
+  const formattedSidesData = formatSidesData(sidesData);
+  const formattedTotalsData = formatTotalsData(totalsData);
+  const formattedFirstInningData = formatFirstInningData(propsData.firstInning);
+  const formattedPlayerPropsData = formatPlayerPropsData(propsData.player);
+  const formattedSeriesData = formatSeriesData(seriesData);
+  const formattedScoringOrderData = propsData.scoringOrder ? formatScoringOrderPropsData(propsData.scoringOrder) : [];
+
   return (
     <div style={{ padding: '20px' }}>
       <Box sx={{ 
@@ -231,7 +250,7 @@ const MLBSimulationView: React.FC = () => {
           isOpen={sectionVisibility.series}
           onToggle={() => toggleSection('series')}
         >
-          <SeriesTable data={seriesData} />
+          <BettingTable data={formattedSeriesData} columns={seriesColumns} />
         </CollapsibleSection>
       )}
       
@@ -240,7 +259,7 @@ const MLBSimulationView: React.FC = () => {
         isOpen={sectionVisibility.sides}
         onToggle={() => toggleSection('sides')}
       >
-        <SidesTable data={sidesData} />
+        <BettingTable data={formattedSidesData} columns={sidesColumns} />
       </CollapsibleSection>
 
       <CollapsibleSection
@@ -248,7 +267,7 @@ const MLBSimulationView: React.FC = () => {
         isOpen={sectionVisibility.totals}
         onToggle={() => toggleSection('totals')}
       >
-        <TotalsTable data={totalsData} />
+        <BettingTable data={formattedTotalsData} columns={totalsColumns} />
       </CollapsibleSection>
 
       <CollapsibleSection
@@ -256,7 +275,7 @@ const MLBSimulationView: React.FC = () => {
         isOpen={sectionVisibility.firstInningProps}
         onToggle={() => toggleSection('firstInningProps')}
       >
-        <FirstInningTable data={propsData.firstInning} />
+        <BettingTable data={formattedFirstInningData} columns={firstInningColumns} />
       </CollapsibleSection>
 
       <CollapsibleSection
@@ -264,7 +283,7 @@ const MLBSimulationView: React.FC = () => {
         isOpen={sectionVisibility.playerProps}
         onToggle={() => toggleSection('playerProps')}
       >
-        <PlayerPropsTable data={propsData.player} />
+        <BettingTable data={formattedPlayerPropsData} columns={playerPropsColumns} />
       </CollapsibleSection>
 
       {propsData.scoringOrder && (
@@ -273,7 +292,7 @@ const MLBSimulationView: React.FC = () => {
           isOpen={sectionVisibility.scoringOrderProps}
           onToggle={() => toggleSection('scoringOrderProps')}
         >
-          <ScoringOrderPropsTable data={propsData.scoringOrder} />
+          <BettingTable data={formattedScoringOrderData} columns={scoringOrderPropsColumns} />
         </CollapsibleSection>
       )}
 
