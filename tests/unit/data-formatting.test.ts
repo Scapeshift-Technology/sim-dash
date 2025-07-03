@@ -33,6 +33,149 @@ describe('Data Formatting Functions', () => {
       expect(formatAmericanOdds(0.1)).toBe('+0.10');
       expect(formatAmericanOdds(-0.1)).toBe('-0.10');
     });
+
+    // NEW TESTS FOR SHORTENED OPTION
+    describe('shortened option', () => {
+      test('should shorten values in [100, 200) range with proper 2-digit padding', () => {
+        expect(formatAmericanOdds(105, { shortened: true })).toBe('+05');
+        expect(formatAmericanOdds(-105, { shortened: true })).toBe('-05');
+        expect(formatAmericanOdds(150, { shortened: true })).toBe('+50');
+        expect(formatAmericanOdds(-150, { shortened: true })).toBe('-50');
+        expect(formatAmericanOdds(199, { shortened: true })).toBe('+99');
+        expect(formatAmericanOdds(-199, { shortened: true })).toBe('-99');
+      });
+
+      test('should not shorten values >= 200', () => {
+        expect(formatAmericanOdds(200, { shortened: true })).toBe('+200');
+        expect(formatAmericanOdds(-200, { shortened: true })).toBe('-200');
+        expect(formatAmericanOdds(250, { shortened: true })).toBe('+250');
+        expect(formatAmericanOdds(-250, { shortened: true })).toBe('-250');
+      });
+
+      test('should handle exactly 100/-100 as EV when shortened', () => {
+        expect(formatAmericanOdds(100, { shortened: true })).toBe('EV');
+        expect(formatAmericanOdds(-100, { shortened: true })).toBe('EV');
+      });
+
+      test('should handle invalid American odds values as N/A when shortened', () => {
+        // Zero is always invalid
+        expect(formatAmericanOdds(0, { shortened: true })).toBe('N/A');
+        
+        // Any absolute value < 100 is invalid in American odds
+        expect(formatAmericanOdds(99, { shortened: true })).toBe('N/A');
+        expect(formatAmericanOdds(-99, { shortened: true })).toBe('N/A');
+        expect(formatAmericanOdds(50, { shortened: true })).toBe('N/A');
+        expect(formatAmericanOdds(-50, { shortened: true })).toBe('N/A');
+        expect(formatAmericanOdds(1, { shortened: true })).toBe('N/A');
+        expect(formatAmericanOdds(-1, { shortened: true })).toBe('N/A');
+      });
+    });
+
+    // NEW TESTS FOR SIGN NEUTRAL OPTION
+    describe('signNeutral option', () => {
+      test('should display absolute values without signs', () => {
+        expect(formatAmericanOdds(150, { signNeutral: true })).toBe('150.00');
+        expect(formatAmericanOdds(-150, { signNeutral: true })).toBe('150.00');
+        expect(formatAmericanOdds(250, { signNeutral: true })).toBe('250.00');
+        expect(formatAmericanOdds(-250, { signNeutral: true })).toBe('250.00');
+      });
+
+      test('should handle exactly 100/-100 normally when signNeutral (but not shortened)', () => {
+        expect(formatAmericanOdds(100, { signNeutral: true })).toBe('100.00');
+        expect(formatAmericanOdds(-100, { signNeutral: true })).toBe('100.00');
+      });
+
+      test('should still handle zero as N/A when signNeutral', () => {
+        expect(formatAmericanOdds(0, { signNeutral: true })).toBe('N/A');
+      });
+      
+      test('should handle invalid American odds values when signNeutral + shortened', () => {
+        // Zero is always invalid
+        expect(formatAmericanOdds(0, { signNeutral: true, shortened: true })).toBe('N/A');
+        
+        // Any absolute value < 100 is invalid when shortened
+        expect(formatAmericanOdds(99, { signNeutral: true, shortened: true })).toBe('N/A');
+        expect(formatAmericanOdds(-99, { signNeutral: true, shortened: true })).toBe('N/A');
+        expect(formatAmericanOdds(50, { signNeutral: true, shortened: true })).toBe('N/A');
+        expect(formatAmericanOdds(-50, { signNeutral: true, shortened: true })).toBe('N/A');
+      });
+    });
+
+    // NEW TESTS FOR COMBINED OPTIONS
+    describe('shortened + signNeutral options (for fair values in parentheses)', () => {
+      test('should shorten and remove signs for values in [100, 200) range', () => {
+        expect(formatAmericanOdds(105, { shortened: true, signNeutral: true })).toBe('05');
+        expect(formatAmericanOdds(-105, { shortened: true, signNeutral: true })).toBe('05');
+        expect(formatAmericanOdds(150, { shortened: true, signNeutral: true })).toBe('50');
+        expect(formatAmericanOdds(-150, { shortened: true, signNeutral: true })).toBe('50');
+        expect(formatAmericanOdds(199, { shortened: true, signNeutral: true })).toBe('99');
+        expect(formatAmericanOdds(-199, { shortened: true, signNeutral: true })).toBe('99');
+      });
+
+      test('should remove signs but not shorten for values >= 200', () => {
+        expect(formatAmericanOdds(200, { shortened: true, signNeutral: true })).toBe('200');
+        expect(formatAmericanOdds(-200, { shortened: true, signNeutral: true })).toBe('200');
+        expect(formatAmericanOdds(250, { shortened: true, signNeutral: true })).toBe('250');
+        expect(formatAmericanOdds(-250, { shortened: true, signNeutral: true })).toBe('250');
+      });
+
+      test('should handle exactly 100/-100 as EV when both shortened and signNeutral', () => {
+        expect(formatAmericanOdds(100, { shortened: true, signNeutral: true })).toBe('EV');
+        expect(formatAmericanOdds(-100, { shortened: true, signNeutral: true })).toBe('EV');
+      });
+    });
+
+    // NEW TESTS FOR DECIMAL PLACES OPTION
+    describe('decimalPlaces option', () => {
+      test('should respect custom decimal places for non-shortened formatting', () => {
+        expect(formatAmericanOdds(150.5678, { decimalPlaces: 0 })).toBe('+151');
+        expect(formatAmericanOdds(150.5678, { decimalPlaces: 1 })).toBe('+150.6');
+        expect(formatAmericanOdds(150.5678, { decimalPlaces: 3 })).toBe('+150.568');
+        expect(formatAmericanOdds(-150.5678, { decimalPlaces: 0 })).toBe('-151');
+        expect(formatAmericanOdds(-150.5678, { decimalPlaces: 1 })).toBe('-150.6');
+      });
+
+      test('should default to 2 decimal places for non-shortened formatting', () => {
+        expect(formatAmericanOdds(150.5678)).toBe('+150.57');
+        expect(formatAmericanOdds(-150.5678)).toBe('-150.57');
+      });
+
+      test('should ignore decimalPlaces option when shortened is true', () => {
+        expect(formatAmericanOdds(150.5678, { shortened: true, decimalPlaces: 3 })).toBe('+51');
+        expect(formatAmericanOdds(-150.5678, { shortened: true, decimalPlaces: 3 })).toBe('-51');
+      });
+    });
+
+    // NEW TESTS FOR SIMULATION SUMMARY USAGE PATTERNS
+    describe('simulation summary usage patterns', () => {
+      test('should format betting bounds with shortened option', () => {
+        // Pattern used in formatBettingBoundsDisplay
+        expect(formatAmericanOdds(145, { shortened: true })).toBe('+45');
+        expect(formatAmericanOdds(-165, { shortened: true })).toBe('-65');
+        expect(formatAmericanOdds(250, { shortened: true })).toBe('+250');
+        expect(formatAmericanOdds(-250, { shortened: true })).toBe('-250');
+      });
+
+      test('should format fair moneyline values with shortened + signNeutral', () => {
+        // Pattern used for fair values in parentheses on sides line
+        expect(formatAmericanOdds(145, { shortened: true, signNeutral: true })).toBe('45');
+        expect(formatAmericanOdds(-165, { shortened: true, signNeutral: true })).toBe('65');
+        expect(formatAmericanOdds(250, { shortened: true, signNeutral: true })).toBe('250');
+        expect(formatAmericanOdds(-250, { shortened: true, signNeutral: true })).toBe('250');
+        
+        // Invalid values should return N/A even with signNeutral
+        expect(formatAmericanOdds(99, { shortened: true, signNeutral: true })).toBe('N/A');
+        expect(formatAmericanOdds(-50, { shortened: true, signNeutral: true })).toBe('N/A');
+      });
+
+      test('should format fair totals values with shortened but NOT signNeutral', () => {
+        // Pattern used for fair values in parentheses on totals line
+        expect(formatAmericanOdds(145, { shortened: true })).toBe('+45');
+        expect(formatAmericanOdds(-165, { shortened: true })).toBe('-65');
+        expect(formatAmericanOdds(-104, { shortened: true })).toBe('-04');
+        expect(formatAmericanOdds(104, { shortened: true })).toBe('+04');
+      });
+    });
   });
 
   describe('formatDecimal', () => {

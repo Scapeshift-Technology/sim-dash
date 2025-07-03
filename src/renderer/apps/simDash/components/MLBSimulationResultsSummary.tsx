@@ -21,7 +21,7 @@ interface MLBSimulationResultsSummaryProps {
   displayHistory?: boolean;
 }
 
-const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = ({
+const MLBSimulationResultsSummary: FC<MLBSimulationResultsSummaryProps> = ({
   simHistory,
   isLoading = false,
   awayTeamName,
@@ -64,7 +64,7 @@ const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = 
       };
       
       if (isBettingBoundsComplete(boundsData)) {
-        return formatBettingBoundsDisplay(boundsData, awayTeamName, homeTeamName);
+        return formatBettingBoundsDisplay(boundsData, awayTeamName, homeTeamName, simEntry.simResults);
       }
     }
     
@@ -87,7 +87,7 @@ const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = 
       
       // Try to enhance with betting bounds if available and complete
       if (bettingBounds && isBettingBoundsComplete(bettingBounds)) {
-        setDisplay(formatBettingBoundsDisplay(bettingBounds, awayTeamName, homeTeamName));
+        setDisplay(formatBettingBoundsDisplay(bettingBounds, awayTeamName, homeTeamName, selectedSim.simResults));
       } else {
         // Check if the selected sim has betting bounds in its input data
         const simBettingBounds = selectedSim.inputData?.gameInfo?.bettingBounds;
@@ -102,7 +102,7 @@ const MLBSimulationResultsSummary: React.FC<MLBSimulationResultsSummaryProps> = 
           };
           
           if (isBettingBoundsComplete(boundsData)) {
-            setDisplay(formatBettingBoundsDisplay(boundsData, awayTeamName, homeTeamName));
+            setDisplay(formatBettingBoundsDisplay(boundsData, awayTeamName, homeTeamName, selectedSim.simResults));
           } else {
             // Fall back to simulation results
             setDisplay(simDisplayInfo);

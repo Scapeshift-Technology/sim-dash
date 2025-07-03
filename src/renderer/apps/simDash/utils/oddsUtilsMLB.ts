@@ -1,40 +1,49 @@
 import { SimResultsMLB, TotalsLinesMLB } from "@/types/bettingResults";
 import { countsToAmericanOdds, proportionToAmericanOdds, countsToProbability } from "./oddsCalculations";
 import { teamNameToAbbreviationMLB } from "./displayMLB";
-import { formatDecimal, formatAmericanOdds } from "./display";
+import { formatAmericanOdds } from "./display";
 
-// ---------- Summary display ----------
-// ----- Main function -----
+// ========================================
+// SIMULATION SUMMARY DISPLAY
+// ========================================
 
+/**
+ * Calculate display lines for simulation results summary
+ * Returns fair odds in shortened format for display
+ */
 function calculateResultsSummaryDisplayMLB(simResults: SimResultsMLB, awayTeamName: string, homeTeamName: string): {
   topLine: string;
   bottomLine: string;
 } {
+  // Validate required simulation data
   if (
-    !simResults.sides || !simResults.sides?.away.fullGame?.['0'] || !simResults.sides?.home?.fullGame?.['0'] ||
+    !simResults.sides?.away.fullGame?.['0'] || 
+    !simResults.sides?.home.fullGame?.['0'] ||
     !simResults.totals.combined.fullGame
-  ) return { topLine: 'N/A', bottomLine: 'N/A' };
+  ) {
+    return { topLine: 'N/A', bottomLine: 'N/A' };
+  }
+
   const { home, away } = simResults.sides;
   const homeWinCt = home.fullGame['0'].success;
   const awayWinCt = away.fullGame['0'].success;
   const totalsLine = findBreakevenTotalsLineMLB(simResults.totals.combined.fullGame);
 
+  // Display the favored team (higher win count)
   if (homeWinCt >= awayWinCt) {
     const homeOdds = countsToAmericanOdds(homeWinCt, awayWinCt);
-    const shortenedOdds = Math.round(homeOdds);
-    const displayTeamOdds = formatAmericanOdds(shortenedOdds);
+    const displayTeamOdds = formatAmericanOdds(homeOdds, { shortened: true });
     const teamAbbreviation = teamNameToAbbreviationMLB(homeTeamName);
     return {
       topLine: displayTotalsLine(totalsLine),
-      bottomLine: `${teamAbbreviation}: ${displayTeamOdds}`
+      bottomLine: `${teamAbbreviation} ${displayTeamOdds}`
     }
   } else {
     const awayOdds = countsToAmericanOdds(awayWinCt, homeWinCt);
-    const shortenedOdds = Math.round(awayOdds);
-    const displayTeamOdds = formatAmericanOdds(shortenedOdds);
+    const displayTeamOdds = formatAmericanOdds(awayOdds, { shortened: true });
     const teamAbbreviation = teamNameToAbbreviationMLB(awayTeamName);
     return {
-      topLine: `${teamAbbreviation}: ${displayTeamOdds}`,
+      topLine: `${teamAbbreviation} ${displayTeamOdds}`,
       bottomLine: displayTotalsLine(totalsLine)
     }
   }
@@ -42,8 +51,13 @@ function calculateResultsSummaryDisplayMLB(simResults: SimResultsMLB, awayTeamNa
 
 export { calculateResultsSummaryDisplayMLB };
 
-// ----- Helper functions -----
+// ========================================
+// HELPER FUNCTIONS
+// ========================================
 
+/**
+ * Find the totals line closest to even odds (50/50)
+ */
 function findBreakevenTotalsLineMLB(totalsLines: TotalsLinesMLB): {
   line: number;
   type: 'over' | 'under';
@@ -56,7 +70,7 @@ function findBreakevenTotalsLineMLB(totalsLines: TotalsLinesMLB): {
     difference: Infinity
   };
 
-  // Find the line with closest over/under odds
+  // Find the line with probabilities closest to 0.5
   Object.keys(totalsLines.over).forEach(lineStr => {
     const line = Number(lineStr);
     const overCounts = totalsLines.over[line];
@@ -98,47 +112,70 @@ function findBreakevenTotalsLineMLB(totalsLines: TotalsLinesMLB): {
   };
 }
 
+/**
+ * Format a totals line for display (e.g., "o8 +105")
+ */
 function displayTotalsLine(totalsLine: {
   line: number;
   type: 'over' | 'under';
   odds: number;
 }) {
   const typeAbbreviation = totalsLine.type === 'over' ? 'o' : 'u';
-  const shortenedOdds = Math.round(totalsLine.odds);
-  const displayOdds = shortenedOdds > 0 ? `+${shortenedOdds}` : shortenedOdds;
+  const displayOdds = formatAmericanOdds(totalsLine.odds, { shortened: true });
   return `${typeAbbreviation}${totalsLine.line} ${displayOdds}`;
 }
 
-// ---------- Betting bounds formatting ----------
+// ========================================
+// BETTING BOUNDS DISPLAY
+// ========================================
 
-// Format USA prices with the requested rules
-function formatUSAPrice(value: string): string {
-  const num = parseFloat(value);
-  
-  // Handle exactly 100 case
-  if (Math.abs(num) === 100) {
-    return 'EV';
+/**
+ * Calculate fair values from simulation results
+ * Returns raw numbers for formatting in display functions
+ */
+function calculateFairValues(simResults: SimResultsMLB): {
+  favoredSideOdds: number;        // Fair odds for the favored side (for sign-neutral display)
+  totalFavoredType: 'over' | 'under';  // Which side is favored for totals
+  totalFavoredOdds: number;       // Fair odds for the favored totals side
+  totalLine: number;              // The total line number
+} | null {
+  // Validate required simulation data
+  if (
+    !simResults.sides?.away.fullGame?.['0'] || 
+    !simResults.sides?.home.fullGame?.['0'] ||
+    !simResults.totals.combined.fullGame
+  ) {
+    return null;
   }
-  
-  // Handle values between [100, 200) - drop leading 1 digit
-  if (Math.abs(num) >= 100 && Math.abs(num) < 200) {
-    const lastTwoDigits = Math.abs(num) % 100;
-    const sign = num >= 0 ? '+' : '-';
-    return `${sign}${lastTwoDigits}`;
-  }
-  
-  // For all other values, show + for positive, - for negative
-  if (num >= 0) {
-    return `+${num}`;
-  } else {
-    return `${num}`;
-  }
+
+  const { home, away } = simResults.sides;
+  const homeWinCt = home.fullGame['0'].success;
+  const awayWinCt = away.fullGame['0'].success;
+  const totalsLine = findBreakevenTotalsLineMLB(simResults.totals.combined.fullGame);
+
+  // Get the favored side (better odds) for moneyline display
+  const favoredSideOdds = homeWinCt >= awayWinCt 
+    ? countsToAmericanOdds(homeWinCt, awayWinCt)
+    : countsToAmericanOdds(awayWinCt, homeWinCt);
+
+  // Use the totals information directly from the breakeven calculation
+  return {
+    favoredSideOdds,
+    totalFavoredType: totalsLine.type,
+    totalFavoredOdds: Math.round(totalsLine.odds),
+    totalLine: totalsLine.line
+  };
 }
 
+/**
+ * Format betting bounds with optional fair values for simulation summary display
+ * Returns shortened format suitable for compact display
+ */
 export function formatBettingBoundsDisplay(
   bettingBounds: { awayML: string; homeML: string; totalLine: string; overOdds: string; underOdds: string },
   awayTeamName: string,
-  homeTeamName: string
+  homeTeamName: string,
+  simResults?: SimResultsMLB
 ): {
   topLine: string;
   bottomLine: string;
@@ -146,15 +183,31 @@ export function formatBettingBoundsDisplay(
   const awayAbbrev = teamNameToAbbreviationMLB(awayTeamName);
   const homeAbbrev = teamNameToAbbreviationMLB(homeTeamName);
   
-  // Format moneyline: [NYM+50 PIT-70] (always away team first, single space between teams)
-  const awayML = formatUSAPrice(bettingBounds.awayML);
-  const homeML = formatUSAPrice(bettingBounds.homeML);
-  const moneyline = `[${awayAbbrev}${awayML} ${homeAbbrev}${homeML}]`;
+  // Format the betting bounds odds (shortened for summary display)
+  const awayML = formatAmericanOdds(parseFloat(bettingBounds.awayML), { shortened: true });
+  const homeML = formatAmericanOdds(parseFloat(bettingBounds.homeML), { shortened: true });
+  const overOdds = formatAmericanOdds(parseFloat(bettingBounds.overOdds), { shortened: true });
+  const underOdds = formatAmericanOdds(parseFloat(bettingBounds.underOdds), { shortened: true });
   
-  // Format totals: 8 o-20 uEV (spaces after main number and after over price)
-  const overOdds = formatUSAPrice(bettingBounds.overOdds);
-  const underOdds = formatUSAPrice(bettingBounds.underOdds);
-  const totals = `${bettingBounds.totalLine} o${overOdds} u${underOdds}`;
+  // Calculate fair values if simulation results are available
+  const fairValues = simResults ? calculateFairValues(simResults) : null;
+  
+  let moneyline: string;
+  let totals: string;
+  
+  if (fairValues) {
+    // Format with fair values in parentheses
+    // Moneyline: MIL +44 (50) NYM -56  (fair value is sign-neutral)
+    moneyline = `${awayAbbrev} ${awayML} (${formatAmericanOdds(fairValues.favoredSideOdds, { shortened: true, signNeutral: true })}) ${homeAbbrev} ${homeML}`;
+    
+    // Totals: 8 o -15 (o -04) u -5  (fair value shows the favored side)
+    const favoredTypeAbbrev = fairValues.totalFavoredType === 'over' ? 'o' : 'u';
+    totals = `${bettingBounds.totalLine} o ${overOdds} (${favoredTypeAbbrev} ${formatAmericanOdds(fairValues.totalFavoredOdds, { shortened: true })}) u ${underOdds}`;
+  } else {
+    // Format without fair values
+    moneyline = `${awayAbbrev} ${awayML} ${homeAbbrev} ${homeML}`;
+    totals = `${bettingBounds.totalLine} o ${overOdds} u ${underOdds}`;
+  }
   
   return {
     topLine: moneyline,
@@ -162,7 +215,9 @@ export function formatBettingBoundsDisplay(
   };
 }
 
-// Check if betting bounds data is complete and valid
+/**
+ * Validate that all required betting bounds fields are present and non-empty
+ */
 export function isBettingBoundsComplete(
   bettingBounds: { awayML: string; homeML: string; totalLine: string; overOdds: string; underOdds: string } | null
 ): boolean {

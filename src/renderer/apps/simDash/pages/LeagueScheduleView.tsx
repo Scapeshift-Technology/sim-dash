@@ -103,7 +103,7 @@ const SimResultsCell: React.FC<SimResultsCellProps> = React.memo(({ item, league
                 };
                 
                 if (isBettingBoundsComplete(boundsData)) {
-                    return formatBettingBoundsDisplay(boundsData, item.Participant1, item.Participant2);
+                    return formatBettingBoundsDisplay(boundsData, item.Participant1, item.Participant2, simEntry.simResults);
                 }
             }
         }

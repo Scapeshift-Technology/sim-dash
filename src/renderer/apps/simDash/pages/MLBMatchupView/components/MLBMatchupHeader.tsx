@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
-import MLBSimulationResultsSummary from '@/simDash/components/simulation/MLBSimulationResultsSummary';
+import MLBSimulationResultsSummary from '@/simDash/components/MLBSimulationResultsSummary';
 import SimulationButton from './SimulationButton';
 import AdvancedSimulationSettings from './AdvancedSimulationSettings';
 import NumberOfGamesSettings from './NumberOfGamesSettings';
