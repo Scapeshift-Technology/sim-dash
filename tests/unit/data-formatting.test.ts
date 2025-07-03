@@ -1,37 +1,37 @@
-import { displayAmericanOdds, formatDecimal } from '../../src/renderer/apps/simDash/utils/display';
+import { formatAmericanOdds, formatDecimal } from '../../src/renderer/apps/simDash/utils/display';
 import { formatROIDemandPrice } from '../../src/renderer/apps/simDash/utils/roiCalculations';
 
 describe('Data Formatting Functions', () => {
-  describe('displayAmericanOdds', () => {
+  describe('formatAmericanOdds', () => {
     test('should format positive odds with + sign', () => {
-      expect(displayAmericanOdds(150)).toBe('+150');
-      expect(displayAmericanOdds(100)).toBe('+100');
-      expect(displayAmericanOdds(999)).toBe('+999');
+      expect(formatAmericanOdds(150)).toBe('+150.00');
+      expect(formatAmericanOdds(100)).toBe('+100.00');
+      expect(formatAmericanOdds(999)).toBe('+999.00');
     });
 
     test('should format negative odds without changing sign', () => {
-      expect(displayAmericanOdds(-150)).toBe('-150');
-      expect(displayAmericanOdds(-100)).toBe('-100');
-      expect(displayAmericanOdds(-999)).toBe('-999');
+      expect(formatAmericanOdds(-150)).toBe('-150.00');
+      expect(formatAmericanOdds(-100)).toBe('-100.00');
+      expect(formatAmericanOdds(-999)).toBe('-999.00');
     });
 
     test('should handle zero odds', () => {
-      expect(displayAmericanOdds(0)).toBe('0');
+      expect(formatAmericanOdds(0)).toBe('N/A');
     });
 
-    test('should handle decimal odds by converting to string', () => {
-      expect(displayAmericanOdds(150.5)).toBe('+150.5');
-      expect(displayAmericanOdds(-200.3)).toBe('-200.3');
+    test('should handle decimal odds with proper formatting', () => {
+      expect(formatAmericanOdds(150.5)).toBe('+150.50');
+      expect(formatAmericanOdds(-200.3)).toBe('-200.30');
     });
 
     test('should handle very large numbers', () => {
-      expect(displayAmericanOdds(999999)).toBe('+999999');
-      expect(displayAmericanOdds(-999999)).toBe('-999999');
+      expect(formatAmericanOdds(999999)).toBe('+999999.00');
+      expect(formatAmericanOdds(-999999)).toBe('-999999.00');
     });
 
     test('should handle edge cases', () => {
-      expect(displayAmericanOdds(0.1)).toBe('+0.1');
-      expect(displayAmericanOdds(-0.1)).toBe('-0.1');
+      expect(formatAmericanOdds(0.1)).toBe('+0.10');
+      expect(formatAmericanOdds(-0.1)).toBe('-0.10');
     });
   });
 
@@ -137,23 +137,23 @@ describe('Data Formatting Functions', () => {
   });
 
   describe('American Odds Formatting Pattern', () => {
-    // Test the common pattern used in tables: displayAmericanOdds(Number(formatDecimal(value)))
+    // Test the common pattern used in tables: formatAmericanOdds(Number(formatDecimal(value)))
     test('should handle the compound formatting pattern', () => {
       const usaFair = 150.5234;
-      const result = displayAmericanOdds(Number(formatDecimal(usaFair)));
+      const result = formatAmericanOdds(Number(formatDecimal(usaFair)));
       expect(result).toBe('+150.52');
     });
 
     test('should handle negative odds in compound pattern', () => {
       const usaFair = -200.7891;
-      const result = displayAmericanOdds(Number(formatDecimal(usaFair)));
+      const result = formatAmericanOdds(Number(formatDecimal(usaFair)));
       expect(result).toBe('-200.79');
     });
 
     test('should handle edge cases in compound pattern', () => {
-      expect(displayAmericanOdds(Number(formatDecimal(0)))).toBe('0');
-      expect(displayAmericanOdds(Number(formatDecimal(-0.01)))).toBe('-0.01');
-      expect(displayAmericanOdds(Number(formatDecimal(0.01)))).toBe('+0.01');
+      expect(formatAmericanOdds(Number(formatDecimal(0)))).toBe('N/A');
+      expect(formatAmericanOdds(Number(formatDecimal(-0.01)))).toBe('-0.01');
+      expect(formatAmericanOdds(Number(formatDecimal(0.01)))).toBe('+0.01');
     });
   });
 }); 

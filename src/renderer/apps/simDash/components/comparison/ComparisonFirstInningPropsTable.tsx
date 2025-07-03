@@ -1,12 +1,12 @@
 import React from 'react';
 import { ColumnConfig } from '@/apps/simDash/components/Inline';
 import Inline from '@/apps/simDash/components/Inline';
-import { displayAmericanOdds, formatDecimal } from '@/simDash/utils/display';
 import { ComparisonFirstInningPropsData } from '@/types/bettingResults';
 import { 
   createComparisonColorRules, 
   COLOR_MAX_VALUES 
 } from '@/simDash/utils/comparisonTableColors';
+import { formatComparisonFirstInningPropsData, FormattedComparisonFirstInningPropsData } from '@/simDash/utils/tableFormatters';
 
 // ---------- Types ----------
 
@@ -14,13 +14,10 @@ interface ComparisonFirstInningPropsTableProps {
   data: ComparisonFirstInningPropsData[];
 }
 
-interface FormattedComparisonFirstInningPropsData extends Omit<ComparisonFirstInningPropsData, 'scorePercent'> {
-  scorePercent: string;
-}
-
 // ---------- Column config ----------
 
 function getComparisonFirstInningPropsColumns(data: ComparisonFirstInningPropsData[]): ColumnConfig[] {
+  // Identify match keys for this table type
   const matchKeys: (keyof ComparisonFirstInningPropsData)[] = ['team'];
   
   return [
@@ -28,6 +25,7 @@ function getComparisonFirstInningPropsColumns(data: ComparisonFirstInningPropsDa
       name: 'team', 
       type: 'string', 
       label: 'Team',
+      width: 80,
       display: {
         rules: [
           {
@@ -41,7 +39,8 @@ function getComparisonFirstInningPropsColumns(data: ComparisonFirstInningPropsDa
     {
       name: 'scorePercent',
       type: 'string',
-      label: 'Score %',
+      label: 'Score % Δ',
+      width: 80,
       display: {
         rules: [
           {
@@ -61,15 +60,6 @@ function getComparisonFirstInningPropsColumns(data: ComparisonFirstInningPropsDa
   ];
 }
 
-// ---------- Data format function ----------
-
-function formatComparisonFirstInningPropsData(data: ComparisonFirstInningPropsData[]): FormattedComparisonFirstInningPropsData[] {
-  return data.map(row => ({
-    ...row,
-    scorePercent: `${formatDecimal(100 * row.scorePercent)}%`
-  }));
-}
-
 // ---------- Component ----------
 
 const ComparisonFirstInningPropsTable: React.FC<ComparisonFirstInningPropsTableProps> = ({ data }) => {
@@ -84,5 +74,5 @@ const ComparisonFirstInningPropsTable: React.FC<ComparisonFirstInningPropsTableP
   );
 };
 
-export default ComparisonFirstInningPropsTable; 
-export { getComparisonFirstInningPropsColumns, formatComparisonFirstInningPropsData }; 
+export default ComparisonFirstInningPropsTable;
+export { getComparisonFirstInningPropsColumns }; 

@@ -1,22 +1,13 @@
 import React from 'react';
 import { ColumnConfig } from './Inline';
 import Inline from './Inline';
-import { displayAmericanOdds, formatDecimal } from '@/simDash/utils/display';
-import { formatROIDemandPrice } from '@/simDash/utils/roiCalculations';
 import { SidesData } from '@/types/bettingResults';
+import { formatSidesData, FormattedSidesData } from '@/simDash/utils/tableFormatters';
 
 // ---------- Types ----------
 
 interface SidesTableProps {
   data: SidesData[];
-}
-
-interface FormattedSidesData extends Omit<SidesData, 'coverPercent' | 'marginOfError' | 'usaFair' | 'varianceOdds' | 'usaDemandPrice'> {
-  coverPercent: string;
-  marginOfError: string;
-  usaFair: string;
-  varianceOdds: string;
-  usaDemandPrice: string;
 }
 
 // ---------- Column config ----------
@@ -129,19 +120,6 @@ const sidesColumns: ColumnConfig[] = [
   }
 ];
 
-// ---------- Data format function ----------
-
-function formatSidesData(data: SidesData[]): FormattedSidesData[] {
-  return data.map(row => ({
-    ...row,
-    coverPercent: `${formatDecimal(100 * row.coverPercent)}%`,
-    marginOfError: `${formatDecimal(100 * row.marginOfError)}%`,
-    usaFair: displayAmericanOdds(Number(formatDecimal(row.usaFair))),
-    varianceOdds: displayAmericanOdds(Number(formatDecimal(row.varianceOdds))),
-    usaDemandPrice: formatROIDemandPrice(row.usaDemandPrice)
-  }));
-}
-
 // ---------- Component ----------
 
 const SidesTable: React.FC<SidesTableProps> = ({ data }) => {
@@ -157,4 +135,4 @@ const SidesTable: React.FC<SidesTableProps> = ({ data }) => {
 };
 
 export default SidesTable; 
-export { sidesColumns, formatSidesData };
+export { sidesColumns };

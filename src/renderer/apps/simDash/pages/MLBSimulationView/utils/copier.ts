@@ -8,14 +8,21 @@ import {
     FirstInningPropsData,
 } from '@/types/bettingResults';
 import { convertTableToTSV } from '@/simDash/utils/copyUtils';
-import { formatFirstInningData, firstInningColumns } from '@/simDash/components/FirstInningTable';
-import { formatSidesData, sidesColumns } from '@/simDash/components/SidesTable';
-import { formatTotalsData, totalsColumns } from '@/simDash/components/TotalsTable';
-import { formatSeriesData, seriesColumns } from '@/simDash/components/SeriesTable';
-import { formatScoringOrderPropsData, scoringOrderPropsColumns } from '@/simDash/components/ScoringOrderPropsTable';
+import { 
+    formatFirstInningData, 
+    formatSidesData, 
+    formatTotalsData, 
+    formatSeriesData, 
+    formatScoringOrderPropsData 
+} from '@/simDash/utils/tableFormatters';
+import { firstInningColumns } from '@/simDash/components/FirstInningTable';
+import { sidesColumns } from '@/simDash/components/SidesTable';
+import { totalsColumns } from '@/simDash/components/TotalsTable';
+import { seriesColumns } from '@/simDash/components/SeriesTable';
+import { scoringOrderPropsColumns } from '@/simDash/components/ScoringOrderPropsTable';
 import { convertLineupsToTSV } from '@/simDash/utils/copyUtils';
 import { MarketLinesMLB } from '@@/types/mlb';
-import { displayAmericanOdds } from '@/simDash/utils/display';
+import { formatDecimal, formatAmericanOdds } from '@/simDash/utils/display';
 import { MLBGameSimInputs, MLBGameSimInputsTeam } from '@@/types/simInputs';
 import { teamNameToAbbreviationMLB } from '@@/services/mlb/utils/teamName';
 
@@ -123,8 +130,8 @@ const copyGameAndSimInfo = (awayTeamName: string, homeTeamName: string, simTimes
 const copyBettingBounds = (bettingBounds: MarketLinesMLB): string => {
     const { awayML, homeML, over, under } = bettingBounds;
     const rows: string[] = [
-        `ML\t${displayAmericanOdds(awayML)}\t${displayAmericanOdds(homeML)}`,
-        `Tot=${over.line}\tu${displayAmericanOdds(under.odds)}\to${displayAmericanOdds(over.odds)}`
+        `ML\t${formatAmericanOdds(awayML)}\t${formatAmericanOdds(homeML)}`,
+        `Tot=${over.line}\tu${formatAmericanOdds(under.odds)}\to${formatAmericanOdds(over.odds)}`
     ];
     return rows.join('\n');
 };

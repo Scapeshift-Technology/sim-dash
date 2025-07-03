@@ -1,7 +1,7 @@
 import { SimResultsMLB, TotalsLinesMLB } from "@/types/bettingResults";
 import { countsToAmericanOdds, proportionToAmericanOdds, countsToProbability } from "./oddsCalculations";
 import { teamNameToAbbreviationMLB } from "./displayMLB";
-import { displayAmericanOdds } from "./display";
+import { formatDecimal, formatAmericanOdds } from "./display";
 
 // ---------- Summary display ----------
 // ----- Main function -----
@@ -22,7 +22,7 @@ function calculateResultsSummaryDisplayMLB(simResults: SimResultsMLB, awayTeamNa
   if (homeWinCt >= awayWinCt) {
     const homeOdds = countsToAmericanOdds(homeWinCt, awayWinCt);
     const shortenedOdds = Math.round(homeOdds);
-    const displayTeamOdds = displayAmericanOdds(shortenedOdds);
+    const displayTeamOdds = formatAmericanOdds(shortenedOdds);
     const teamAbbreviation = teamNameToAbbreviationMLB(homeTeamName);
     return {
       topLine: displayTotalsLine(totalsLine),
@@ -31,7 +31,7 @@ function calculateResultsSummaryDisplayMLB(simResults: SimResultsMLB, awayTeamNa
   } else {
     const awayOdds = countsToAmericanOdds(awayWinCt, homeWinCt);
     const shortenedOdds = Math.round(awayOdds);
-    const displayTeamOdds = displayAmericanOdds(shortenedOdds);
+    const displayTeamOdds = formatAmericanOdds(shortenedOdds);
     const teamAbbreviation = teamNameToAbbreviationMLB(awayTeamName);
     return {
       topLine: `${teamAbbreviation}: ${displayTeamOdds}`,
@@ -176,4 +176,3 @@ export function isBettingBoundsComplete(
     bettingBounds.underOdds.trim()
   );
 }
-

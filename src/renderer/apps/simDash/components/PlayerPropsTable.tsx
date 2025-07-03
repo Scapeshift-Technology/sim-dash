@@ -1,9 +1,8 @@
 import React from 'react';
 import { ColumnConfig } from './Inline';
 import Inline from './Inline';
-import { displayAmericanOdds, formatDecimal } from '@/simDash/utils/display';
-import { formatROIDemandPrice } from '@/simDash/utils/roiCalculations';
 import { PlayerPropsData } from '@/types/bettingResults';
+import { formatPlayerPropsData, FormattedPlayerPropsData } from '@/simDash/utils/tableFormatters';
 
 // ---------- Types ----------
 
@@ -11,15 +10,7 @@ interface PlayerPropsTableProps {
   data: PlayerPropsData[];
 }
 
-interface FormattedPlayerPropsData extends Omit<PlayerPropsData, 'overPercent' | 'marginOfError' | 'usaFair' | 'varianceOdds' | 'usaDemandPrice'> {
-  overPercent: string;
-  marginOfError: string;
-  usaFair: string;
-  varianceOdds: string;
-  usaDemandPrice: string;
-}
-
-// ---------- Column Config ----------
+// ---------- Column config ----------
 
 const playerPropsColumns: ColumnConfig[] = [
   { 
@@ -58,8 +49,17 @@ const playerPropsColumns: ColumnConfig[] = [
     name: 'statName', 
     type: 'string', 
     label: 'Stat',
-    width: 100,
-    frozen: true
+    width: 80,
+    frozen: true,
+    display: {
+      rules: [
+        {
+          condition: () => true,
+          style: { fontWeight: 'medium' },
+          type: 'text'
+        }
+      ]
+    }
   },
   { 
     name: 'line', 
@@ -116,22 +116,7 @@ const playerPropsColumns: ColumnConfig[] = [
     label: 'ROI Demand Price',
     width: 120
   }
-]
-
-// ---------- Data format function ----------
-
-function formatPlayerPropsData(data: PlayerPropsData[]): FormattedPlayerPropsData[] {
-  const formattedData = data.map(row => ({
-    ...row,
-    overPercent: `${formatDecimal(100 * row.overPercent)}%`,
-    marginOfError: `${formatDecimal(100 * row.marginOfError)}%`,
-    usaFair: displayAmericanOdds(Number(formatDecimal(row.usaFair))),
-    varianceOdds: displayAmericanOdds(Number(formatDecimal(row.varianceOdds))),
-    usaDemandPrice: formatROIDemandPrice(row.usaDemandPrice)
-  }));
-
-  return formattedData;
-}
+];
 
 // ---------- Component ----------
 
@@ -146,5 +131,5 @@ const PlayerPropsTable: React.FC<PlayerPropsTableProps> = ({ data }) => {
   );
 };
 
-export default PlayerPropsTable; 
-export { playerPropsColumns, formatPlayerPropsData };
+export default PlayerPropsTable;
+export { playerPropsColumns };

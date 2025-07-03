@@ -1,27 +1,14 @@
 import React from 'react';
 import { ColumnConfig } from './Inline';
 import Inline from './Inline';
-import { displayAmericanOdds, formatDecimal } from '@/simDash/utils/display';
-import { formatROIDemandPrice } from '@/simDash/utils/roiCalculations';
 import { FirstInningPropsData } from '@@/types/bettingResults';
-import { proportionToAmericanOdds } from '@/simDash/utils/oddsCalculations';
+import { formatFirstInningData, FormattedFirstInningData } from '@/simDash/utils/tableFormatters';
 
 // ---------- Types ----------
 
 interface FirstInningTableProps {
   data: FirstInningPropsData[];
 }
-
-interface FormattedFirstInningData extends Omit<FirstInningPropsData, 'scorePercent' | 'marginOfError' | 'usaFair' | 'varianceOdds' | 'usaDemandPrice'> {
-  scorePercent: string;
-  marginOfError: string;
-  usaFair: string;
-  varianceOddsOver: string;
-  varianceOddsUnder: string;
-  usaDemandPrice: string;
-}
-
-
 
 // ---------- Column Config ----------
 
@@ -125,34 +112,6 @@ const firstInningColumns: ColumnConfig[] = [
   }
 ];
 
-// ---------- Data format function ----------
-
-function formatFirstInningData(data: FirstInningPropsData[]): FormattedFirstInningData[] {
-  const formattedData = data.map(row => {
-    const probScore = row.scorePercent; // This is a fraction (0-1)
-    const moe = row.marginOfError;     // This is a fraction (0-1)
-
-    const probForOverCalc = probScore - moe;
-    const probForUnderCalc = 1-(probScore + moe);
-
-    const americanOddsOver = proportionToAmericanOdds(probForOverCalc);
-    const americanOddsUnder = proportionToAmericanOdds(probForUnderCalc);
-
-    return {
-      ...row,
-      scorePercent: `${formatDecimal(100 * probScore)}%`,
-      marginOfError: `${formatDecimal(100 * moe)}%`,
-      usaFair: displayAmericanOdds(Number(formatDecimal(row.usaFair))),
-      // Note: row.varianceOdds is part of FirstInningPropsData but not directly used for these new columns
-      varianceOddsOver: displayAmericanOdds(Number(formatDecimal(americanOddsOver))),
-      varianceOddsUnder: displayAmericanOdds(Number(formatDecimal(americanOddsUnder))),
-      usaDemandPrice: formatROIDemandPrice(row.usaDemandPrice)
-    };
-  });
-
-  return formattedData;
-};
-
 // ---------- Component ----------
 
 const FirstInningTable: React.FC<FirstInningTableProps> = ({ data }) => {
@@ -168,4 +127,4 @@ const FirstInningTable: React.FC<FirstInningTableProps> = ({ data }) => {
 };
 
 export default FirstInningTable;
-export { firstInningColumns, formatFirstInningData };
+export { firstInningColumns };

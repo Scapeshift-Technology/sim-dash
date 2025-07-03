@@ -1,12 +1,12 @@
 import React from 'react';
 import { ColumnConfig } from '@/apps/simDash/components/Inline';
 import Inline from '@/apps/simDash/components/Inline';
-import { displayAmericanOdds, formatDecimal } from '@/simDash/utils/display';
 import { ComparisonTotalsData } from '@/types/bettingResults';
 import { 
   createComparisonColorRules, 
   COLOR_MAX_VALUES 
 } from '@/simDash/utils/comparisonTableColors';
+import { formatComparisonTotalsData, FormattedComparisonTotalsData } from '@/simDash/utils/tableFormatters';
 
 // ---------- Types ----------
 
@@ -14,15 +14,10 @@ interface ComparisonTotalsTableProps {
   data: ComparisonTotalsData[];
 }
 
-interface FormattedComparisonTotalsData extends Omit<ComparisonTotalsData, 'overPercent' | 'underPercent' | 'pushPercent'> {
-  overPercent: string;
-  underPercent: string;
-  pushPercent: string;
-}
-
 // ---------- Column config ----------
 
 function getComparisonTotalsColumns(data: ComparisonTotalsData[]): ColumnConfig[] {
+  // Identify match keys for this table type
   const matchKeys: (keyof ComparisonTotalsData)[] = ['team', 'period', 'line'];
   
   return [
@@ -30,6 +25,7 @@ function getComparisonTotalsColumns(data: ComparisonTotalsData[]): ColumnConfig[
       name: 'team', 
       type: 'string', 
       label: 'Team',
+      width: 80,
       display: {
         rules: [
           {
@@ -44,6 +40,7 @@ function getComparisonTotalsColumns(data: ComparisonTotalsData[]): ColumnConfig[
       name: 'period', 
       type: 'string', 
       label: 'Period',
+      width: 90,
       display: {
         rules: [
           {
@@ -57,12 +54,14 @@ function getComparisonTotalsColumns(data: ComparisonTotalsData[]): ColumnConfig[
     { 
       name: 'line', 
       type: 'number', 
-      label: 'Line'
+      label: 'Line',
+      width: 70
     },
     {
       name: 'overPercent',
       type: 'string',
-      label: 'Over %',
+      label: 'Over % Δ',
+      width: 80,
       display: {
         rules: [
           {
@@ -73,7 +72,7 @@ function getComparisonTotalsColumns(data: ComparisonTotalsData[]): ColumnConfig[
           ...createComparisonColorRules(
             data, 
             'overPercent', 
-            COLOR_MAX_VALUES.percent,
+            COLOR_MAX_VALUES.overPercent,
             matchKeys
           )
         ]
@@ -82,41 +81,46 @@ function getComparisonTotalsColumns(data: ComparisonTotalsData[]): ColumnConfig[
     {
       name: 'underPercent',
       type: 'string',
-      label: 'Under %',
+      label: 'Under % Δ',
+      width: 80,
       display: {
-        rules: createComparisonColorRules(
-          data, 
-          'underPercent', 
-          COLOR_MAX_VALUES.percent,
-          matchKeys
-        )
+        rules: [
+          {
+            condition: () => true,
+            style: { textAlign: 'right' },
+            type: 'text'
+          },
+          ...createComparisonColorRules(
+            data, 
+            'underPercent', 
+            COLOR_MAX_VALUES.overPercent, // Use same max value
+            matchKeys
+          )
+        ]
       }
     },
     {
       name: 'pushPercent',
       type: 'string',
-      label: 'Push %',
+      label: 'Push % Δ',
+      width: 80,
       display: {
-        rules: createComparisonColorRules(
-          data, 
-          'pushPercent', 
-          COLOR_MAX_VALUES.percent,
-          matchKeys
-        )
+        rules: [
+          {
+            condition: () => true,
+            style: { textAlign: 'right' },
+            type: 'text'
+          },
+          ...createComparisonColorRules(
+            data, 
+            'pushPercent', 
+            COLOR_MAX_VALUES.overPercent, // Use same max value
+            matchKeys
+          )
+        ]
       }
     }
   ];
-}
-
-// ---------- Data format function ----------
-
-function formatComparisonTotalsData(data: ComparisonTotalsData[]): FormattedComparisonTotalsData[] {
-  return data.map(row => ({
-    ...row,
-    overPercent: `${formatDecimal(100 * row.overPercent)}%`,
-    underPercent: `${formatDecimal(100 * row.underPercent)}%`,
-    pushPercent: `${formatDecimal(100 * row.pushPercent)}%`
-  }));
 }
 
 // ---------- Component ----------
@@ -133,5 +137,5 @@ const ComparisonTotalsTable: React.FC<ComparisonTotalsTableProps> = ({ data }) =
   );
 };
 
-export default ComparisonTotalsTable; 
-export { getComparisonTotalsColumns, formatComparisonTotalsData };
+export default ComparisonTotalsTable;
+export { getComparisonTotalsColumns };

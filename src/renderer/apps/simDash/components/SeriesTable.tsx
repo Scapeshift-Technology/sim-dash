@@ -1,20 +1,13 @@
 import React from 'react';
 import { ColumnConfig } from './Inline';
 import Inline from './Inline';
-import { displayAmericanOdds, formatDecimal } from '@/simDash/utils/display';
-import { formatROIDemandPrice } from '@/simDash/utils/roiCalculations';
 import { SeriesData } from '@/types/bettingResults';
+import { formatSeriesData, FormattedSeriesData } from '@/simDash/utils/tableFormatters';
 
 // ---------- Types ----------
 
 interface SeriesTableProps {
   data: SeriesData[];
-}
-
-interface FormattedSeriesData extends Omit<SeriesData, 'winPercent' | 'usaFair' | 'usaDemandPrice'> {
-  winPercent: string;
-  usaFair: string;
-  usaDemandPrice: string;
 }
 
 // ---------- Column config ----------
@@ -64,17 +57,6 @@ const seriesColumns: ColumnConfig[] = [
   }
 ];
 
-// ---------- Data format function ----------
-
-function formatSeriesData(data: SeriesData[]): FormattedSeriesData[] {
-  return data.map(row => ({
-    ...row,
-    winPercent: `${formatDecimal(100 * row.winPercent)}%`,
-    usaFair: displayAmericanOdds(Number(formatDecimal(row.usaFair))),
-    usaDemandPrice: formatROIDemandPrice(row.usaDemandPrice)
-  }));
-}
-
 // ---------- Component ----------
 
 const SeriesTable: React.FC<SeriesTableProps> = ({ data }) => {
@@ -90,4 +72,4 @@ const SeriesTable: React.FC<SeriesTableProps> = ({ data }) => {
 };
 
 export default SeriesTable;
-export { seriesColumns, formatSeriesData };
+export { seriesColumns };

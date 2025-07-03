@@ -1,22 +1,13 @@
 import React from 'react';
 import { ColumnConfig } from './Inline';
 import Inline from './Inline';
-import { displayAmericanOdds, formatDecimal } from '@/simDash/utils/display';
-import { formatROIDemandPrice } from '@/simDash/utils/roiCalculations';
 import { ScoringOrderPropsData } from '@/types/bettingResults';
+import { formatScoringOrderPropsData, FormattedScoringOrderPropsData } from '@/simDash/utils/tableFormatters';
 
 // ---------- Types ----------
 
 interface ScoringOrderTableProps {
   data: ScoringOrderPropsData[];
-}
-
-interface FormattedScoringOrderPropsData extends Omit<ScoringOrderPropsData, 'percent' | 'usaFair' | 'varianceOdds' | 'marginOfError' | 'usaDemandPrice'> {
-  percent: string;
-  marginOfError: string;
-  usaFair: string;
-  varianceOdds: string;
-  usaDemandPrice: string;
 }
 
 // ---------- Column Config ----------
@@ -93,21 +84,6 @@ const scoringOrderPropsColumns: ColumnConfig[] = [
   }
 ]
 
-// ---------- Data format function ----------
-
-function formatScoringOrderPropsData(data: ScoringOrderPropsData[]): FormattedScoringOrderPropsData[] {
-  const formattedData = data.map(row => ({
-    ...row,
-    marginOfError: `${formatDecimal(100 * row.marginOfError)}%`,
-    percent: `${formatDecimal(100 * row.percent)}%`,
-    usaFair: displayAmericanOdds(Number(formatDecimal(row.usaFair))),
-    varianceOdds: displayAmericanOdds(Number(formatDecimal(row.varianceOdds))),
-    usaDemandPrice: formatROIDemandPrice(row.usaDemandPrice)
-  }));
-
-  return formattedData;
-}
-
 // ---------- Component ----------
 
 const ScoringOrderPropsTable: React.FC<ScoringOrderTableProps> = ({ data }) => {
@@ -121,5 +97,5 @@ const ScoringOrderPropsTable: React.FC<ScoringOrderTableProps> = ({ data }) => {
   );
 };
 
-export default ScoringOrderPropsTable; 
-export { scoringOrderPropsColumns, formatScoringOrderPropsData };
+export default ScoringOrderPropsTable;
+export { scoringOrderPropsColumns };

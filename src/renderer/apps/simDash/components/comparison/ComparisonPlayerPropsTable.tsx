@@ -1,12 +1,12 @@
 import React from 'react';
 import { ColumnConfig } from '@/apps/simDash/components/Inline';
 import Inline from '@/apps/simDash/components/Inline';
-import { displayAmericanOdds, formatDecimal } from '@/simDash/utils/display';
 import { ComparisonPlayerPropsData } from '@/types/bettingResults';
 import { 
   createComparisonColorRules, 
   COLOR_MAX_VALUES 
 } from '@/simDash/utils/comparisonTableColors';
+import { formatComparisonPlayerPropsData, FormattedComparisonPlayerPropsData } from '@/simDash/utils/tableFormatters';
 
 // ---------- Types ----------
 
@@ -14,13 +14,10 @@ interface ComparisonPlayerPropsTableProps {
   data: ComparisonPlayerPropsData[];
 }
 
-interface FormattedComparisonPlayerPropsData extends Omit<ComparisonPlayerPropsData, 'overPercent'> {
-  overPercent: string;
-}
-
 // ---------- Column config ----------
 
 function getComparisonPlayerPropsColumns(data: ComparisonPlayerPropsData[]): ColumnConfig[] {
+  // Identify match keys for this table type
   const matchKeys: (keyof ComparisonPlayerPropsData)[] = ['playerName', 'teamName', 'statName', 'line'];
   
   return [
@@ -28,6 +25,7 @@ function getComparisonPlayerPropsColumns(data: ComparisonPlayerPropsData[]): Col
       name: 'playerName', 
       type: 'string', 
       label: 'Player',
+      width: 130,
       display: {
         rules: [
           {
@@ -42,6 +40,7 @@ function getComparisonPlayerPropsColumns(data: ComparisonPlayerPropsData[]): Col
       name: 'teamName', 
       type: 'string', 
       label: 'Team',
+      width: 80,
       display: {
         rules: [
           {
@@ -55,17 +54,20 @@ function getComparisonPlayerPropsColumns(data: ComparisonPlayerPropsData[]): Col
     { 
       name: 'statName', 
       type: 'string', 
-      label: 'Stat'
+      label: 'Stat',
+      width: 80
     },
     { 
       name: 'line', 
       type: 'number', 
-      label: 'Line'
+      label: 'Line',
+      width: 70
     },
     {
       name: 'overPercent',
       type: 'string',
-      label: 'Over %',
+      label: 'Over % Δ',
+      width: 80,
       display: {
         rules: [
           {
@@ -85,15 +87,6 @@ function getComparisonPlayerPropsColumns(data: ComparisonPlayerPropsData[]): Col
   ];
 }
 
-// ---------- Data format function ----------
-
-function formatComparisonPlayerPropsData(data: ComparisonPlayerPropsData[]): FormattedComparisonPlayerPropsData[] {
-  return data.map(row => ({
-    ...row,
-    overPercent: `${formatDecimal(100 * row.overPercent)}%`
-  }));
-}
-
 // ---------- Component ----------
 
 const ComparisonPlayerPropsTable: React.FC<ComparisonPlayerPropsTableProps> = ({ data }) => {
@@ -108,5 +101,5 @@ const ComparisonPlayerPropsTable: React.FC<ComparisonPlayerPropsTableProps> = ({
   );
 };
 
-export default ComparisonPlayerPropsTable; 
-export { getComparisonPlayerPropsColumns, formatComparisonPlayerPropsData }; 
+export default ComparisonPlayerPropsTable;
+export { getComparisonPlayerPropsColumns }; 

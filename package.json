@@ -15,7 +15,6 @@
     "electron:debug": "npm run build:electron && cross-env NODE_ENV=development electron . --inspect=5858 --remote-debugging-port=9223",
     "debug": "npm run electron:debug",
     "test:playwright": "playwright test",
-    "test:jest": "jest --config scripts/jest.config.js scripts/",
     "test:unit": "jest --config tests/jest.config.js",
     "test:unit:watch": "jest --config tests/jest.config.js --watch",
     "test:unit:coverage": "jest --config tests/jest.config.js --coverage",

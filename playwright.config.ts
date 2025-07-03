@@ -35,6 +35,6 @@ export default defineConfig({
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
   },
-  /* Exclude scripts directory from test discovery */
-  testIgnore: ['**/scripts/**'],
+  /* Exclude unit tests and scripts directory from test discovery */
+  testIgnore: ['**/scripts/**', '**/unit/**'],
 }); 

@@ -1,27 +1,13 @@
 import React from 'react';
 import { ColumnConfig } from './Inline';
 import Inline from './Inline';
-import { displayAmericanOdds } from '@/simDash/utils/display';
-import { formatROIDemandPrice } from '@/simDash/utils/roiCalculations';
 import { TotalsData } from '@/types/bettingResults';
+import { formatTotalsData, FormattedTotalsData } from '@/simDash/utils/tableFormatters';
 
 // ---------- Types ----------
 
 interface TotalsTableProps {
   data: TotalsData[];
-}
-
-interface FormattedTotalsData extends Omit<TotalsData, 'overPercent' | 'underPercent' | 'pushPercent' | 'marginOfError' | 'usaFairOver' | 'usaFairUnder' | 'varianceOddsOver' | 'varianceOddsUnder' | 'usaDemandPriceOver' | 'usaDemandPriceUnder'> {
-  overPercent: string;
-  underPercent: string;
-  pushPercent: string;
-  marginOfError: string;
-  usaFairOver: string;
-  usaFairUnder: string;
-  varianceOddsOver: string;
-  varianceOddsUnder: string;
-  usaDemandPriceOver: string;
-  usaDemandPriceUnder: string;
 }
 
 // ---------- Column config ----------
@@ -164,24 +150,6 @@ const totalsColumns: ColumnConfig[] = [
   }
 ];
 
-// ---------- Data format function ----------
-
-function formatTotalsData(data: TotalsData[]): FormattedTotalsData[] {
-  return data.map(row => ({
-    ...row,
-    overPercent: `${(100 * row.overPercent).toFixed(2)}%`,
-    underPercent: `${(100 * row.underPercent).toFixed(2)}%`,
-    pushPercent: `${(100 * row.pushPercent).toFixed(2)}%`,
-    marginOfError: `${(100 * row.marginOfError).toFixed(2)}%`,
-    usaFairOver: displayAmericanOdds(Number(row.usaFairOver.toFixed(2))),
-    usaFairUnder: displayAmericanOdds(Number(row.usaFairUnder.toFixed(2))),
-    varianceOddsOver: displayAmericanOdds(Number(row.varianceOddsOver.toFixed(2))),
-    varianceOddsUnder: displayAmericanOdds(Number(row.varianceOddsUnder.toFixed(2))),
-    usaDemandPriceOver: formatROIDemandPrice(row.usaDemandPriceOver),
-    usaDemandPriceUnder: formatROIDemandPrice(row.usaDemandPriceUnder)
-  }));
-}
-
 // ---------- Component ----------
 
 const TotalsTable: React.FC<TotalsTableProps> = ({ data }) => {
@@ -197,4 +165,4 @@ const TotalsTable: React.FC<TotalsTableProps> = ({ data }) => {
 };
 
 export default TotalsTable; 
-export { totalsColumns, formatTotalsData };
+export { totalsColumns };

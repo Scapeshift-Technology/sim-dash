@@ -38,8 +38,8 @@ jest.mock('@/simDash/utils/copyUtils', () => ({
 }));
 
 jest.mock('@/simDash/utils/display', () => ({
-  displayAmericanOdds: jest.fn((value: number) => value >= 0 ? `+${value.toFixed(2)}` : `${value.toFixed(2)}`),
-  formatDecimal: jest.fn((value: number, decimals = 2) => value.toFixed(decimals))
+  formatDecimal: jest.fn((value: number, places: number = 2) => value.toFixed(places)),
+  formatAmericanOdds: jest.fn((value: number) => value >= 0 ? `+${value.toFixed(2)}` : `${value.toFixed(2)}`),
 }));
 
 jest.mock('@/simDash/utils/roiCalculations', () => ({

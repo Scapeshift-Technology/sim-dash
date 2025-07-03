@@ -1,12 +1,12 @@
 import React from 'react';
 import { ColumnConfig } from '@/apps/simDash/components/Inline';
 import Inline from '@/apps/simDash/components/Inline';
-import { displayAmericanOdds, formatDecimal } from '@/simDash/utils/display';
 import { ComparisonSidesData } from '@/types/bettingResults';
 import { 
   createComparisonColorRules, 
   COLOR_MAX_VALUES 
 } from '@/simDash/utils/comparisonTableColors';
+import { formatComparisonSidesData, FormattedComparisonSidesData } from '@/simDash/utils/tableFormatters';
 
 // ---------- Types ----------
 
@@ -14,13 +14,10 @@ interface ComparisonSidesTableProps {
   data: ComparisonSidesData[];
 }
 
-interface FormattedComparisonSidesData extends Omit<ComparisonSidesData, 'coverPercent'> {
-  coverPercent: string;
-}
-
 // ---------- Column config ----------
 
 function getComparisonSidesColumns(data: ComparisonSidesData[]): ColumnConfig[] {
+  // Identify match keys for this table type
   const matchKeys: (keyof ComparisonSidesData)[] = ['team', 'period', 'line'];
   
   return [
@@ -28,6 +25,7 @@ function getComparisonSidesColumns(data: ComparisonSidesData[]): ColumnConfig[] 
       name: 'team', 
       type: 'string', 
       label: 'Team',
+      width: 80,
       display: {
         rules: [
           {
@@ -42,6 +40,7 @@ function getComparisonSidesColumns(data: ComparisonSidesData[]): ColumnConfig[] 
       name: 'period', 
       type: 'string', 
       label: 'Period',
+      width: 90,
       display: {
         rules: [
           {
@@ -55,12 +54,14 @@ function getComparisonSidesColumns(data: ComparisonSidesData[]): ColumnConfig[] 
     { 
       name: 'line', 
       type: 'number', 
-      label: 'Line'
+      label: 'Line',
+      width: 70
     },
-    { 
-      name: 'coverPercent', 
-      type: 'string', 
-      label: 'Cover %',
+    {
+      name: 'coverPercent',
+      type: 'string',
+      label: 'Cover % Δ',
+      width: 80,
       display: {
         rules: [
           {
@@ -80,15 +81,6 @@ function getComparisonSidesColumns(data: ComparisonSidesData[]): ColumnConfig[] 
   ];
 }
 
-// ---------- Data format function ----------
-
-function formatComparisonSidesData(data: ComparisonSidesData[]): FormattedComparisonSidesData[] {
-  return data.map(row => ({
-    ...row,
-    coverPercent: `${formatDecimal(100 * row.coverPercent)}%`
-  }));
-}
-
 // ---------- Component ----------
 
 const ComparisonSidesTable: React.FC<ComparisonSidesTableProps> = ({ data }) => {
@@ -103,5 +95,5 @@ const ComparisonSidesTable: React.FC<ComparisonSidesTableProps> = ({ data }) => 
   );
 };
 
-export default ComparisonSidesTable; 
-export { getComparisonSidesColumns, formatComparisonSidesData };
+export default ComparisonSidesTable;
+export { getComparisonSidesColumns };

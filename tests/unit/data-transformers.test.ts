@@ -1,4 +1,18 @@
 import {
+  formatSidesData,
+  formatTotalsData,
+  formatPlayerPropsData,
+  formatFirstInningData,
+  formatScoringOrderPropsData,
+  formatSeriesData,
+  formatComparisonSidesData,
+  formatComparisonTotalsData,
+  formatComparisonPlayerPropsData,
+  formatComparisonFirstInningPropsData,
+  formatComparisonScoringOrderPropsData
+} from '../../src/renderer/apps/simDash/utils/tableFormatters';
+
+import {
   mockSidesData,
   mockTotalsData,
   mockPlayerPropsData,
@@ -22,20 +36,6 @@ import {
 describe('Data Transformation Functions', () => {
   
   describe('formatSidesData', () => {
-    // Mock implementation based on actual SidesTable.tsx
-    const formatSidesData = (data: typeof mockSidesData) => {
-      return data.map(row => ({
-        ...row,
-        coverPercent: `${(100 * row.coverPercent).toFixed(2)}%`,
-        marginOfError: `${(100 * row.marginOfError).toFixed(2)}%`,
-        usaFair: row.usaFair >= 0 ? `+${row.usaFair.toFixed(2)}` : `${row.usaFair.toFixed(2)}`,
-        varianceOdds: row.varianceOdds >= 0 ? `+${row.varianceOdds.toFixed(2)}` : `${row.varianceOdds.toFixed(2)}`,
-        usaDemandPrice: row.usaDemandPrice !== null 
-          ? (row.usaDemandPrice >= 0 ? `+${row.usaDemandPrice.toFixed(2)}` : `${row.usaDemandPrice.toFixed(2)}`)
-          : 'N/A'
-      }));
-    };
-
     test('should convert decimal percentages to formatted strings', () => {
       const input = [createMockSidesData({
         coverPercent: 0.6543,
@@ -100,33 +100,12 @@ describe('Data Transformation Functions', () => {
       
       expect(result[0].coverPercent).toBe('0.00%');
       expect(result[0].marginOfError).toBe('100.00%');
-      expect(result[0].usaFair).toBe('+0.00');
-      expect(result[0].varianceOdds).toBe('+0.00');
+      expect(result[0].usaFair).toBe('N/A');
+      expect(result[0].varianceOdds).toBe('N/A');
     });
   });
 
   describe('formatTotalsData', () => {
-    // Mock implementation based on actual TotalsTable.tsx
-    const formatTotalsData = (data: typeof mockTotalsData) => {
-      return data.map(row => ({
-        ...row,
-        overPercent: `${(100 * row.overPercent).toFixed(2)}%`,
-        underPercent: `${(100 * row.underPercent).toFixed(2)}%`,
-        pushPercent: `${(100 * row.pushPercent).toFixed(2)}%`,
-        marginOfError: `${(100 * row.marginOfError).toFixed(2)}%`,
-        usaFairOver: row.usaFairOver >= 0 ? `+${row.usaFairOver.toFixed(2)}` : `${row.usaFairOver.toFixed(2)}`,
-        usaFairUnder: row.usaFairUnder >= 0 ? `+${row.usaFairUnder.toFixed(2)}` : `${row.usaFairUnder.toFixed(2)}`,
-        varianceOddsOver: row.varianceOddsOver >= 0 ? `+${row.varianceOddsOver.toFixed(2)}` : `${row.varianceOddsOver.toFixed(2)}`,
-        varianceOddsUnder: row.varianceOddsUnder >= 0 ? `+${row.varianceOddsUnder.toFixed(2)}` : `${row.varianceOddsUnder.toFixed(2)}`,
-        usaDemandPriceOver: row.usaDemandPriceOver !== null 
-          ? (row.usaDemandPriceOver >= 0 ? `+${row.usaDemandPriceOver.toFixed(2)}` : `${row.usaDemandPriceOver.toFixed(2)}`)
-          : 'N/A',
-        usaDemandPriceUnder: row.usaDemandPriceUnder !== null 
-          ? (row.usaDemandPriceUnder >= 0 ? `+${row.usaDemandPriceUnder.toFixed(2)}` : `${row.usaDemandPriceUnder.toFixed(2)}`)
-          : 'N/A'
-      }));
-    };
-
     test('should format over/under/push percentages', () => {
       const result = formatTotalsData(mockTotalsData);
       
@@ -162,20 +141,6 @@ describe('Data Transformation Functions', () => {
   });
 
   describe('formatPlayerPropsData', () => {
-    // Mock implementation based on actual PlayerPropsTable.tsx
-    const formatPlayerPropsData = (data: typeof mockPlayerPropsData) => {
-      return data.map(row => ({
-        ...row,
-        overPercent: `${(100 * row.overPercent).toFixed(2)}%`,
-        marginOfError: `${(100 * row.marginOfError).toFixed(2)}%`,
-        usaFair: row.usaFair >= 0 ? `+${row.usaFair.toFixed(2)}` : `${row.usaFair.toFixed(2)}`,
-        varianceOdds: row.varianceOdds >= 0 ? `+${row.varianceOdds.toFixed(2)}` : `${row.varianceOdds.toFixed(2)}`,
-        usaDemandPrice: row.usaDemandPrice !== null 
-          ? (row.usaDemandPrice >= 0 ? `+${row.usaDemandPrice.toFixed(2)}` : `${row.usaDemandPrice.toFixed(2)}`)
-          : 'N/A'
-      }));
-    };
-
     test('should format player props percentages', () => {
       const result = formatPlayerPropsData(mockPlayerPropsData);
       
@@ -202,18 +167,6 @@ describe('Data Transformation Functions', () => {
   });
 
   describe('formatSeriesData', () => {
-    // Mock implementation based on actual SeriesTable.tsx
-    const formatSeriesData = (data: typeof mockSeriesData) => {
-      return data.map(row => ({
-        ...row,
-        winPercent: `${(100 * row.winPercent).toFixed(2)}%`,
-        usaFair: row.usaFair >= 0 ? `+${row.usaFair.toFixed(2)}` : `${row.usaFair.toFixed(2)}`,
-        usaDemandPrice: row.usaDemandPrice !== null 
-          ? (row.usaDemandPrice >= 0 ? `+${row.usaDemandPrice.toFixed(2)}` : `${row.usaDemandPrice.toFixed(2)}`)
-          : 'N/A'
-      }));
-    };
-
     test('should format series win percentages', () => {
       const result = formatSeriesData(mockSeriesData);
       
@@ -235,20 +188,6 @@ describe('Data Transformation Functions', () => {
   });
 
   describe('formatFirstInningData', () => {
-    // Mock implementation based on FirstInningTable.tsx pattern
-    const formatFirstInningData = (data: typeof mockFirstInningData) => {
-      return data.map(row => ({
-        ...row,
-        scorePercent: `${(100 * row.scorePercent).toFixed(2)}%`,
-        marginOfError: `${(100 * row.marginOfError).toFixed(2)}%`,
-        usaFair: row.usaFair >= 0 ? `+${row.usaFair.toFixed(2)}` : `${row.usaFair.toFixed(2)}`,
-        varianceOdds: row.varianceOdds >= 0 ? `+${row.varianceOdds.toFixed(2)}` : `${row.varianceOdds.toFixed(2)}`,
-        usaDemandPrice: row.usaDemandPrice !== null 
-          ? (row.usaDemandPrice >= 0 ? `+${row.usaDemandPrice.toFixed(2)}` : `${row.usaDemandPrice.toFixed(2)}`)
-          : 'N/A'
-      }));
-    };
-
     test('should format first inning score percentages', () => {
       const result = formatFirstInningData(mockFirstInningData);
       
@@ -262,23 +201,19 @@ describe('Data Transformation Functions', () => {
       expect(result[0].team).toBe('Yankees');
       expect(result[1].team).toBe('Red Sox');
     });
+
+    test('should calculate variance odds over/under', () => {
+      const result = formatFirstInningData(mockFirstInningData);
+      
+      // The formatter calculates over/under odds from scorePercent and marginOfError
+      expect(result[0]).toHaveProperty('varianceOddsOver');
+      expect(result[0]).toHaveProperty('varianceOddsUnder');
+      expect(typeof result[0].varianceOddsOver).toBe('string');
+      expect(typeof result[0].varianceOddsUnder).toBe('string');
+    });
   });
 
   describe('formatScoringOrderPropsData', () => {
-    // Mock implementation based on ScoringOrderPropsTable.tsx pattern
-    const formatScoringOrderPropsData = (data: typeof mockScoringOrderPropsData) => {
-      return data.map(row => ({
-        ...row,
-        percent: `${(100 * row.percent).toFixed(2)}%`,
-        marginOfError: `${(100 * row.marginOfError).toFixed(2)}%`,
-        usaFair: row.usaFair >= 0 ? `+${row.usaFair.toFixed(2)}` : `${row.usaFair.toFixed(2)}`,
-        varianceOdds: row.varianceOdds >= 0 ? `+${row.varianceOdds.toFixed(2)}` : `${row.varianceOdds.toFixed(2)}`,
-        usaDemandPrice: row.usaDemandPrice !== null 
-          ? (row.usaDemandPrice >= 0 ? `+${row.usaDemandPrice.toFixed(2)}` : `${row.usaDemandPrice.toFixed(2)}`)
-          : 'N/A'
-      }));
-    };
-
     test('should format scoring order props percentages', () => {
       const result = formatScoringOrderPropsData(mockScoringOrderPropsData);
       
@@ -298,14 +233,6 @@ describe('Data Transformation Functions', () => {
 
   describe('Comparison Table Formatters', () => {
     describe('formatComparisonSidesData', () => {
-      // Mock implementation for comparison sides
-      const formatComparisonSidesData = (data: typeof mockComparisonSidesData) => {
-        return data.map(row => ({
-          ...row,
-          coverPercent: `${(100 * row.coverPercent).toFixed(2)}%`
-        }));
-      };
-
       test('should format comparison percentages (including negative)', () => {
         const result = formatComparisonSidesData(mockComparisonSidesData);
         
@@ -324,16 +251,6 @@ describe('Data Transformation Functions', () => {
     });
 
     describe('formatComparisonTotalsData', () => {
-      // Mock implementation for comparison totals
-      const formatComparisonTotalsData = (data: typeof mockComparisonTotalsData) => {
-        return data.map(row => ({
-          ...row,
-          overPercent: `${(100 * row.overPercent).toFixed(2)}%`,
-          underPercent: `${(100 * row.underPercent).toFixed(2)}%`,
-          pushPercent: `${(100 * row.pushPercent).toFixed(2)}%`
-        }));
-      };
-
       test('should format comparison over/under percentages', () => {
         const result = formatComparisonTotalsData(mockComparisonTotalsData);
         
@@ -344,14 +261,6 @@ describe('Data Transformation Functions', () => {
     });
 
     describe('formatComparisonPlayerPropsData', () => {
-      // Mock implementation for comparison player props
-      const formatComparisonPlayerPropsData = (data: typeof mockComparisonPlayerPropsData) => {
-        return data.map(row => ({
-          ...row,
-          overPercent: `${(100 * row.overPercent).toFixed(2)}%`
-        }));
-      };
-
       test('should format comparison player props', () => {
         const result = formatComparisonPlayerPropsData(mockComparisonPlayerPropsData);
         
@@ -368,38 +277,43 @@ describe('Data Transformation Functions', () => {
         expect(result[0].line).toBe(1.5);
       });
     });
+
+    describe('formatComparisonFirstInningPropsData', () => {
+      test('should format comparison first inning data', () => {
+        const result = formatComparisonFirstInningPropsData(mockComparisonFirstInningData);
+        
+        expect(result[0].scorePercent).toBe('1.23%');   // Positive difference
+        expect(result[1].scorePercent).toBe('-0.98%');  // Negative difference
+      });
+    });
+
+    describe('formatComparisonScoringOrderPropsData', () => {
+      test('should format comparison scoring order data', () => {
+        const result = formatComparisonScoringOrderPropsData(mockComparisonScoringOrderData);
+        
+        expect(result[0].percent).toBe('2.34%');   // Positive difference
+        expect(result[1].percent).toBe('-2.34%');  // Negative difference
+      });
+    });
   });
 
   describe('Error Handling and Edge Cases', () => {
     test('should handle empty data arrays', () => {
-      const formatEmpty = (data: any[]) => data.map(row => ({ ...row }));
-      
-      expect(formatEmpty([])).toEqual([]);
+      expect(formatSidesData([])).toEqual([]);
+      expect(formatTotalsData([])).toEqual([]);
+      expect(formatPlayerPropsData([])).toEqual([]);
+      expect(formatFirstInningData([])).toEqual([]);
+      expect(formatScoringOrderPropsData([])).toEqual([]);
+      expect(formatSeriesData([])).toEqual([]);
     });
 
     test('should handle null values gracefully', () => {
-      const formatWithNulls = (data: any[]) => {
-        return data.map(row => ({
-          ...row,
-          usaDemandPrice: row.usaDemandPrice !== null 
-            ? (row.usaDemandPrice >= 0 ? `+${row.usaDemandPrice.toFixed(2)}` : `${row.usaDemandPrice.toFixed(2)}`)
-            : 'N/A'
-        }));
-      };
-      
-      const result = formatWithNulls(mockDataWithNulls);
+      const result = formatSidesData(mockDataWithNulls);
       expect(result[0].usaDemandPrice).toBe('N/A');
     });
 
     test('should handle extreme values', () => {
-      const formatExtreme = (data: any[]) => {
-        return data.map(row => ({
-          ...row,
-          overPercent: `${(100 * row.overPercent).toFixed(2)}%`
-        }));
-      };
-      
-      const result = formatExtreme(mockDataWithEdgeCases);
+      const result = formatPlayerPropsData(mockDataWithEdgeCases);
       expect(result[0].overPercent).toBe('0.00%');    // 0% probability
       expect(result[1].overPercent).toBe('100.00%');  // 100% probability
     });
@@ -409,10 +323,12 @@ describe('Data Transformation Functions', () => {
     test('should apply consistent percentage formatting across all tables', () => {
       // Test that all percentage fields use the same format pattern
       const testPercentage = 0.1234;
-      const expectedFormat = '12.34%';
       
-      const percentageFormat = `${(100 * testPercentage).toFixed(2)}%`;
-      expect(percentageFormat).toBe(expectedFormat);
+      const sidesResult = formatSidesData([createMockSidesData({ coverPercent: testPercentage })]);
+      const playerResult = formatPlayerPropsData([createMockPlayerPropsData({ overPercent: testPercentage })]);
+      
+      expect(sidesResult[0].coverPercent).toBe('12.34%');
+      expect(playerResult[0].overPercent).toBe('12.34%');
     });
 
     test('should apply consistent odds formatting across all tables', () => {
@@ -420,11 +336,13 @@ describe('Data Transformation Functions', () => {
       const positiveOdds = 150.5;
       const negativeOdds = -200.3;
       
-      const positiveFormat = positiveOdds >= 0 ? `+${positiveOdds.toFixed(2)}` : `${positiveOdds.toFixed(2)}`;
-      const negativeFormat = negativeOdds >= 0 ? `+${negativeOdds.toFixed(2)}` : `${negativeOdds.toFixed(2)}`;
+      const sidesResult = formatSidesData([createMockSidesData({ 
+        usaFair: positiveOdds, 
+        varianceOdds: negativeOdds 
+      })]);
       
-      expect(positiveFormat).toBe('+150.50');
-      expect(negativeFormat).toBe('-200.30');
+      expect(sidesResult[0].usaFair).toBe('+150.50');
+      expect(sidesResult[0].varianceOdds).toBe('-200.30');
     });
 
     test('should apply consistent ROI demand price formatting', () => {
@@ -433,19 +351,15 @@ describe('Data Transformation Functions', () => {
       const negativePrice = -165.8;
       const nullPrice = null;
       
-      const positiveFormat = positivePrice !== null 
-        ? (positivePrice >= 0 ? `+${positivePrice.toFixed(2)}` : `${positivePrice.toFixed(2)}`)
-        : 'N/A';
-      const negativeFormat = negativePrice !== null 
-        ? (negativePrice >= 0 ? `+${negativePrice.toFixed(2)}` : `${negativePrice.toFixed(2)}`)
-        : 'N/A';
-      const nullFormat = nullPrice !== null 
-        ? (nullPrice >= 0 ? `+${nullPrice.toFixed(2)}` : `${nullPrice.toFixed(2)}`)
-        : 'N/A';
+      const result = formatSidesData([
+        createMockSidesData({ usaDemandPrice: positivePrice }),
+        createMockSidesData({ usaDemandPrice: negativePrice }),
+        createMockSidesData({ usaDemandPrice: nullPrice })
+      ]);
       
-      expect(positiveFormat).toBe('+145.20');
-      expect(negativeFormat).toBe('-165.80');
-      expect(nullFormat).toBe('N/A');
+      expect(result[0].usaDemandPrice).toBe('+145.20');
+      expect(result[1].usaDemandPrice).toBe('-165.80');
+      expect(result[2].usaDemandPrice).toBe('N/A');
     });
   });
 }); 
