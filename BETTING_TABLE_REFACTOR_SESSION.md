@@ -113,6 +113,17 @@ Create a generic `BettingTable<T>` component that accepts:
 - [ ] Fix critical issues that would interfere with refactor
 - [ ] **MILESTONE**: Complete test coverage of existing behavior
 
+#### Step 2.4: Comparison Table Tests (Color Logic)
+- [x] **File**: `tests/unit/comparison-tables.test.tsx`
+- [x] Test color-coding logic for comparison tables:
+  - [x] `ComparisonSidesTable` - verify color rules for positive/negative differences
+  - [x] `ComparisonTotalsTable` - verify over/under difference colors
+  - [x] `ComparisonPlayerPropsTable` - verify player prop difference colors
+  - [x] `ComparisonFirstInningPropsTable` - verify first inning difference colors
+  - [x] `ComparisonScoringOrderPropsTable` - verify scoring order difference colors
+- [x] Test edge cases: zero differences, very large differences
+- [x] Verify CSS class application for color rules
+
 ### **PHASE 3: Generic Component Design** ⏱️ *Week 2*
 
 #### Step 3.1: Interface Design
@@ -244,6 +255,7 @@ Create a generic `BettingTable<T>` component that accepts:
 - [x] **Phase 2 Step 2.1**: Component Rendering Tests - 24/24 tests passing
 - [x] **Phase 2 Step 2.2**: Integration Tests - Comprehensive component integration coverage
 - [x] **Phase 2 Step 2.3**: Baseline Test Run - Complete test coverage established
+- [x] **Phase 2 Step 2.4**: Comparison Table Tests - Color logic and component rendering tests completed
 
 ### In Progress 🔄
 - [ ] **Phase 3**: Generic Component Design
