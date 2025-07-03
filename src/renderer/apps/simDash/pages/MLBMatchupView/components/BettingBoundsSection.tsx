@@ -213,6 +213,7 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                                 onChange={(e) => handleBoundsChange(e.target.value, 'awayML')}
                                 error={!!errors.awayML}
                                 helperText={errors.awayML}
+                                tabIndex={1}
                                 sx={{ flex: 1, minWidth: '250px' }}
                             />
                             <TextField
@@ -224,6 +225,7 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                                 onChange={(e) => handleBoundsChange(e.target.value, 'homeML')}
                                 error={!!errors.homeML}
                                 helperText={errors.homeML}
+                                tabIndex={2}
                                 sx={{ flex: 1, minWidth: '250px' }}
                             />
                         </Box>
@@ -236,7 +238,7 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                         <Typography variant="subtitle1" sx={{ mb: 1, color: 'text.secondary' }}>
                             Totals
                         </Typography>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
                             <TextField
                                 label="Total Line"
                                 variant="outlined"
@@ -246,20 +248,10 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                                 onChange={(e) => handleBoundsChange(e.target.value, 'totalLine')}
                                 error={!!errors.totalLine}
                                 helperText={errors.totalLine}
+                                tabIndex={3}
                                 sx={{ flex: 1 }}
                             />
-                            <Box sx={{ display: 'flex', gap: 2 }}>
-                                <TextField
-                                    label="Under Odds"
-                                    variant="outlined"
-                                    size="small"
-                                    placeholder="e.g. -110"
-                                    value={bounds.underOdds}
-                                    onChange={(e) => handleBoundsChange(e.target.value, 'underOdds')}
-                                    error={!!errors.underOdds}
-                                    helperText={errors.underOdds}
-                                    sx={{ flex: 1 }}
-                                />
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
                                 <TextField
                                     label="Over Odds"
                                     variant="outlined"
@@ -269,7 +261,18 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                                     onChange={(e) => handleBoundsChange(e.target.value, 'overOdds')}
                                     error={!!errors.overOdds}
                                     helperText={errors.overOdds}
-                                    sx={{ flex: 1 }}
+                                    tabIndex={4}
+                                />
+                                <TextField
+                                    label="Under Odds"
+                                    variant="outlined"
+                                    size="small"
+                                    placeholder="e.g. -110"
+                                    value={bounds.underOdds}
+                                    onChange={(e) => handleBoundsChange(e.target.value, 'underOdds')}
+                                    error={!!errors.underOdds}
+                                    helperText={errors.underOdds}
+                                    tabIndex={5}
                                 />
                             </Box>
                         </Box>
