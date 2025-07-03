@@ -1,5 +1,5 @@
 import React from 'react';
-import { MenuItem, Select, InputLabel, FormControl, Box } from "@mui/material";
+import { MenuItem, Select, InputLabel, FormControl, Box, SelectChangeEvent } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { BaseRunningModel } from "@@/types/mlb/mlb-sim";
@@ -11,10 +11,10 @@ interface BaseRunningModelSettingsProps {
     matchId: number;
 }
 
-const BaseRunningModelSettings: React.FC<BaseRunningModelSettingsProps> = ({
+const BaseRunningModelSettings = ({
     leagueName,
     matchId
-}) => {
+}: BaseRunningModelSettingsProps) => {
     const dispatch = useDispatch<AppDispatch>();
 
     // ---------- State & Variables ----------
@@ -58,9 +58,9 @@ const BaseRunningModelSettings: React.FC<BaseRunningModelSettingsProps> = ({
                 <Select
                     value={currentModel}
                     label="Base Running Model"
-                    onChange={(e) => handleModelChange(e.target.value as BaseRunningModel)}
+                    onChange={(e: SelectChangeEvent<BaseRunningModel>) => handleModelChange(e.target.value as BaseRunningModel)}
                     sx={{ fontSize: '0.875rem' }}
-                    renderValue={(value) => {
+                    renderValue={(value: BaseRunningModel) => {
                         const selectedModel = baseRunningModels.find(model => model.value === value);
                         return selectedModel?.label || value;
                     }}

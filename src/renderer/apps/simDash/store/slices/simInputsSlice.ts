@@ -54,7 +54,7 @@ const initialMLBGameContainer: MLBGameContainer = {
   simMode: 'game',
   parkEffectsEnabled: false,
   umpireEffectsEnabled: false,
-  baseRunningModel: 'avg_stolen_bases' as BaseRunningModel
+  baseRunningModel: 'ind_stolen_bases' as BaseRunningModel
 }
 
 // ---------- Helpers ----------
@@ -680,7 +680,7 @@ export const selectUmpireEffectsEnabled = (state: RootState, league: LeagueName,
   state.simDash.simInputs[league]?.[matchId]?.umpireEffectsEnabled ?? false;
 
 export const selectBaseRunningModel = (state: RootState, league: LeagueName, matchId: number): BaseRunningModel => 
-  state.simDash.simInputs[league]?.[matchId]?.baseRunningModel ?? 'avg_stolen_bases';
+  state.simDash.simInputs[league]?.[matchId]?.baseRunningModel ?? 'ind_stolen_bases';
 
 export default simInputsSlice.reducer;
 
