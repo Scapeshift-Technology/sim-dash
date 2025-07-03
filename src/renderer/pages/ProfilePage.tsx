@@ -18,9 +18,9 @@ import {
     loadAuthState
 } from '@/store/slices/authSlice';
 import type { AppDispatch } from '@/store/store';
-import PartySelector from '@/layouts/components/profile/PartySelector';
-import GrantAgentPermission from '@/layouts/components/profile/GrantAgentPermission';
-import ManageAgents from '@/layouts/components/profile/ManageAgents';
+import PartySelector from '@/components/profile/PartySelector';
+import GrantAgentPermission from '@/components/profile/GrantAgentPermission';
+import ManageAgents from '@/components/profile/ManageAgents';
 
 const ProfilePage: React.FC = () => {
     const username = useSelector(selectUsername);

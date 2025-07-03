@@ -1,9 +1,9 @@
 import ComingSoonView from "@/accounting/pages/ComingSoonView";
 import { Route, Routes } from "react-router-dom";
-import MainLayout from "@/layouts/MainLayout";
+import MainLayout from "@/MainLayout";
 import AccountingSidebar from "@/accounting/components/AccountingSidebar";
-import ProfilePage from '@/layouts/pages/ProfilePage';
-import SettingsPage from '@/layouts/pages/SettingsPage';
+import ProfilePage from '@/pages/ProfilePage';
+import SettingsPage from '@/pages/SettingsPage';
 import { CounterpartiesListPage } from "@/accounting/pages/CounterpartiesListPage";
 import { CounterpartyFormPage } from "@/accounting/pages/CounterpartyFormPage";
 import { CounterpartyDetailPage } from "@/accounting/pages/CounterpartyDetailPage";
@@ -43,4 +43,4 @@ const AccountingRouter: React.FC = () => {
   );
 };
 
-export default AccountingRouter;
+export default AccountingRouter; 

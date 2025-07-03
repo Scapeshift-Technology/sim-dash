@@ -4,7 +4,7 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { store, persistor } from './store/store'; // Import the Redux store and persistor
-import { theme } from './theme/theme';
+import { theme } from './theme';
 import App from './App';
 import './styles.css'; // Keep global styles if needed, or rely solely on MUI/Emotion
 

@@ -2,10 +2,10 @@ import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import MLBSimulationView from '@/simDash/pages/MLBSimulationView/MLBSimulationView';
 import MLBComparisonView from '@/simDash/pages/MLBComparisonView/MLBComparisonView';
-import MainLayout from '@/layouts/MainLayout';
+import MainLayout from '@/MainLayout';
 import LeagueSidebar from '@/simDash/components/LeagueSidebar';
-import ProfilePage from '@/layouts/pages/ProfilePage';
-import SettingsPage from '@/layouts/pages/SettingsPage';
+import ProfilePage from '@/pages/ProfilePage';
+import SettingsPage from '@/pages/SettingsPage';
 import LeaguesHomePage from '@/simDash/pages/LeaguesHomePage';
 import LeagueDetailPage from '@/simDash/pages/LeagueDetailPage';
 

@@ -7,7 +7,7 @@ import { initializeLeague } from '@/simDash/store/slices/scheduleSlice';
 import { initializeLeagueSimInputs } from '@/simDash/store/slices/simInputsSlice';
 import { openLeagueTab, selectOpenTabs } from '@/simDash/store/slices/tabSlice';
 import { LeagueName } from '@@/types/league';
-import TabViewContainers from '@/simDash/containers/TabViewContainers';
+import TabViewContainer from '@/simDash/components/TabViewContainer';
 
 const LeagueDetailPage: React.FC = () => {
     const { leagueName } = useParams<{ leagueName: string }>();
@@ -43,7 +43,7 @@ const LeagueDetailPage: React.FC = () => {
 
     return (
         <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <TabViewContainers />
+            <TabViewContainer />
         </Box>
     );
 };

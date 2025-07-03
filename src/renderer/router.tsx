@@ -2,9 +2,9 @@ import React from 'react';
 import { HashRouter } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectIsAuthenticated } from '@/store/slices/authSlice';
-import SimDashRouter from '@/simDash/routes/router';
+import SimDashRouter from '@/simDash/router';
 import LoginView from '@/simDash/pages/LoginView/LoginView';
-import AccountingRouter from '@/accounting/routes/router';
+import AccountingRouter from '@/accounting/router';
 import { selectCurrentApp } from '@/store/slices/appSlice';
 
 const AppContent: React.FC = () => {
@@ -33,4 +33,4 @@ const AppRouter: React.FC = () => {
   );
 };
 
-export default AppRouter;
+export default AppRouter; 

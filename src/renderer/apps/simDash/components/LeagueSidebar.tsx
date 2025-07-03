@@ -13,7 +13,7 @@ import { selectIsAuthenticated, selectDatabaseConnectionStatus } from '@/store/s
 
 import { League, LeagueName } from '@@/types/league';
 
-import GenericSidebar from '@/layouts/components/GenericSidebar';
+import GenericSidebar from '@/components/GenericSidebar';
 
 // ---------- Main component ----------
 
