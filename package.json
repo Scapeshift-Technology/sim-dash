@@ -60,6 +60,7 @@
     "@mui/material": "^7.0.2",
     "@mui/x-date-pickers": "^8.2.0",
     "@reduxjs/toolkit": "^2.7.0",
+    "@swc/core": "^1.12.7",
     "@swc/register": "^0.1.10",
     "@tanstack/react-table": "^8.21.3",
     "@types/ws": "^8.18.1",
