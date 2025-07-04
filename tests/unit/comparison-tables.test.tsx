@@ -186,15 +186,15 @@ describe('Unified BettingTable Comparison Mode', () => {
           columns={columns}
           comparison={true}
           comparisonConfig={{
-            colorFields: ['coverPercent'],
+            colorFields: ['coverPercent', 'pushPercent'],
             matchKeys: ['team', 'period', 'line'],
-            maxValues: { coverPercent: COLOR_MAX_VALUES.percent }
+            maxValues: { coverPercent: COLOR_MAX_VALUES.percent, pushPercent: COLOR_MAX_VALUES.percent }
           }}
         />
       );
       
       expect(screen.getByTestId('mock-table')).toBeInTheDocument();
-      expect(screen.getByTestId('table-columns')).toHaveTextContent('["team","period","line","coverPercent"]');
+      expect(screen.getByTestId('table-columns')).toHaveTextContent('["team","period","line","coverPercent","pushPercent"]');
     });
 
     test('should format percentage data correctly', () => {
@@ -207,9 +207,9 @@ describe('Unified BettingTable Comparison Mode', () => {
           columns={columns}
           comparison={true}
           comparisonConfig={{
-            colorFields: ['coverPercent'],
+            colorFields: ['coverPercent', 'pushPercent'],
             matchKeys: ['team', 'period', 'line'],
-            maxValues: { coverPercent: COLOR_MAX_VALUES.percent }
+            maxValues: { coverPercent: COLOR_MAX_VALUES.percent, pushPercent: COLOR_MAX_VALUES.percent }
           }}
         />
       );
@@ -229,9 +229,9 @@ describe('Unified BettingTable Comparison Mode', () => {
           columns={columns}
           comparison={true}
           comparisonConfig={{
-            colorFields: ['coverPercent'],
+            colorFields: ['coverPercent', 'pushPercent'],
             matchKeys: ['team', 'period', 'line'],
-            maxValues: { coverPercent: COLOR_MAX_VALUES.percent }
+            maxValues: { coverPercent: COLOR_MAX_VALUES.percent, pushPercent: COLOR_MAX_VALUES.percent }
           }}
         />
       );
@@ -306,15 +306,15 @@ describe('Unified BettingTable Comparison Mode', () => {
           columns={columns}
           comparison={true}
           comparisonConfig={{
-            colorFields: ['overPercent'],
+            colorFields: ['overPercent', 'pushPercent'],
             matchKeys: ['playerName', 'teamName', 'statName', 'line'],
-            maxValues: { overPercent: COLOR_MAX_VALUES.percent }
+            maxValues: { overPercent: COLOR_MAX_VALUES.percent, pushPercent: COLOR_MAX_VALUES.percent }
           }}
         />
       );
       
       expect(screen.getByTestId('mock-table')).toBeInTheDocument();
-      expect(screen.getByTestId('table-columns')).toHaveTextContent('["playerName","teamName","statName","line","overPercent"]');
+      expect(screen.getByTestId('table-columns')).toHaveTextContent('["playerName","teamName","statName","line","overPercent","pushPercent"]');
     });
 
     test('should format player prop percentages', () => {
@@ -327,9 +327,9 @@ describe('Unified BettingTable Comparison Mode', () => {
           columns={columns}
           comparison={true}
           comparisonConfig={{
-            colorFields: ['overPercent'],
+            colorFields: ['overPercent', 'pushPercent'],
             matchKeys: ['playerName', 'teamName', 'statName', 'line'],
-            maxValues: { overPercent: COLOR_MAX_VALUES.percent }
+            maxValues: { overPercent: COLOR_MAX_VALUES.percent, pushPercent: COLOR_MAX_VALUES.percent }
           }}
         />
       );

@@ -204,7 +204,7 @@ describe('Unified BettingTable Component Tests', () => {
       
       // Should render table container
       expect(screen.getByTestId('table-container')).toBeInTheDocument();
-      expect(screen.getByTestId('column-count')).toHaveTextContent('Columns: 8');
+      expect(screen.getByTestId('column-count')).toHaveTextContent('Columns: 9');
       expect(screen.getByTestId('row-count')).toHaveTextContent('Rows: 3');
       expect(screen.getByTestId('first-column')).toHaveTextContent('team');
       
@@ -228,7 +228,7 @@ describe('Unified BettingTable Component Tests', () => {
       render(<BettingTable data={formattedData} columns={playerPropsColumns} />);
       
       expect(screen.getByTestId('table-container')).toBeInTheDocument();
-      expect(screen.getByTestId('column-count')).toHaveTextContent('Columns: 9');
+      expect(screen.getByTestId('column-count')).toHaveTextContent('Columns: 10');
       expect(screen.getByTestId('first-column')).toHaveTextContent('playerName');
     });
 
@@ -271,15 +271,15 @@ describe('Unified BettingTable Component Tests', () => {
           columns={columns}
           comparison={true}
           comparisonConfig={{
-            colorFields: ['coverPercent'],
+            colorFields: ['coverPercent', 'pushPercent'],
             matchKeys: ['team', 'period', 'line'],
-            maxValues: { coverPercent: 0.25 }
+            maxValues: { coverPercent: 0.25, pushPercent: 0.25 }
           }}
         />
       );
       
       expect(screen.getByTestId('table-container')).toBeInTheDocument();
-      expect(screen.getByTestId('column-count')).toHaveTextContent('Columns: 4');
+      expect(screen.getByTestId('column-count')).toHaveTextContent('Columns: 5');
       expect(screen.getByTestId('first-column')).toHaveTextContent('team');
     });
 
@@ -315,15 +315,15 @@ describe('Unified BettingTable Component Tests', () => {
           columns={columns}
           comparison={true}
           comparisonConfig={{
-            colorFields: ['overPercent'],
+            colorFields: ['overPercent', 'pushPercent'],
             matchKeys: ['playerName', 'teamName', 'statName', 'line'],
-            maxValues: { overPercent: 0.25 }
+            maxValues: { overPercent: 0.25, pushPercent: 0.25 }
           }}
         />
       );
       
       expect(screen.getByTestId('table-container')).toBeInTheDocument();
-      expect(screen.getByTestId('column-count')).toHaveTextContent('Columns: 5');
+      expect(screen.getByTestId('column-count')).toHaveTextContent('Columns: 6');
       expect(screen.getByTestId('first-column')).toHaveTextContent('playerName');
     });
 

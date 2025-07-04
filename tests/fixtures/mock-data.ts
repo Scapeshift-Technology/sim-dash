@@ -21,6 +21,7 @@ export const mockSidesData: SidesData[] = [
     period: 'FG',
     line: -1.5,
     coverPercent: 0.6543,
+    pushPercent: 0.0000,
     marginOfError: 0.0234,
     usaFair: 150.5,
     varianceOdds: -200.3,
@@ -31,6 +32,7 @@ export const mockSidesData: SidesData[] = [
     period: 'F5',
     line: -0.5,
     coverPercent: 0.5789,
+    pushPercent: 0.0000,
     marginOfError: 0.0312,
     usaFair: 120.7,
     varianceOdds: -180.1,
@@ -41,6 +43,7 @@ export const mockSidesData: SidesData[] = [
     period: 'FG',
     line: 1.5,
     coverPercent: 0.3457,
+    pushPercent: 0.0000,
     marginOfError: 0.0234,
     usaFair: -170.5,
     varianceOdds: 180.3,
@@ -88,6 +91,7 @@ export const mockPlayerPropsData: PlayerPropsData[] = [
     statName: 'Hits',
     line: 1.5,
     overPercent: 0.6234,
+    pushPercent: 0.0000,
     marginOfError: 0.0156,
     usaFair: 165.2,
     varianceOdds: -195.8,
@@ -99,6 +103,7 @@ export const mockPlayerPropsData: PlayerPropsData[] = [
     statName: 'RBIs',
     line: 0.5,
     overPercent: 0.4567,
+    pushPercent: 0.0000,
     marginOfError: 0.0243,
     usaFair: 118.9,
     varianceOdds: -140.5,
@@ -110,6 +115,7 @@ export const mockPlayerPropsData: PlayerPropsData[] = [
     statName: 'Runs',
     line: 0.5,
     overPercent: 0.5432,
+    pushPercent: 0.0000,
     marginOfError: 0.0189,
     usaFair: 137.8,
     varianceOdds: -165.3,
@@ -188,19 +194,22 @@ export const mockComparisonSidesData: ComparisonSidesData[] = [
     team: 'Yankees',
     period: 'FG',
     line: -1.5,
-    coverPercent: 0.0523  // Difference: +5.23%
+    coverPercent: 0.0523,  // Difference: +5.23%
+    pushPercent: 0.0000    // No difference
   },
   {
     team: 'Yankees',
     period: 'F5',
     line: -0.5,
-    coverPercent: -0.0234  // Difference: -2.34%
+    coverPercent: -0.0234, // Difference: -2.34%
+    pushPercent: 0.0000    // No difference
   },
   {
     team: 'Red Sox',
     period: 'FG',
     line: 1.5,
-    coverPercent: -0.0523  // Difference: -5.23%
+    coverPercent: -0.0523, // Difference: -5.23%
+    pushPercent: 0.0000    // No difference
   }
 ];
 
@@ -229,14 +238,16 @@ export const mockComparisonPlayerPropsData: ComparisonPlayerPropsData[] = [
     teamName: 'Yankees',
     statName: 'Hits',
     line: 1.5,
-    overPercent: 0.0234  // Difference: +2.34%
+    overPercent: 0.0234,  // Difference: +2.34%
+    pushPercent: 0.0000   // No difference
   },
   {
     playerName: 'Rafael Devers',
     teamName: 'Red Sox',
     statName: 'RBIs',
     line: 0.5,
-    overPercent: -0.0156  // Difference: -1.56%
+    overPercent: -0.0156, // Difference: -1.56%
+    pushPercent: 0.0000   // No difference
   }
 ];
 
@@ -281,6 +292,7 @@ export const mockDataWithNulls: SidesData[] = [
     period: 'FG',
     line: -1.5,
     coverPercent: 0.6543,
+    pushPercent: 0.0000,
     marginOfError: 0.0234,
     usaFair: 150.5,
     varianceOdds: -200.3,
@@ -295,6 +307,7 @@ export const mockDataWithEdgeCases: PlayerPropsData[] = [
     statName: 'Hits',
     line: 0.5,
     overPercent: 0.0000,  // 0% probability
+    pushPercent: 0.0000,
     marginOfError: 0.0000,
     usaFair: 0,  // Zero odds
     varianceOdds: 0,
@@ -306,6 +319,7 @@ export const mockDataWithEdgeCases: PlayerPropsData[] = [
     statName: 'RBIs',
     line: 5.5,
     overPercent: 1.0000,  // 100% probability
+    pushPercent: 0.0000,
     marginOfError: 0.0001,
     usaFair: 999999,  // Very large odds
     varianceOdds: -999999,
@@ -320,6 +334,7 @@ export const createMockSidesData = (overrides: Partial<SidesData> = {}): SidesDa
   period: 'FG',
   line: -1.5,
   coverPercent: 0.6543,
+  pushPercent: 0.0000,
   marginOfError: 0.0234,
   usaFair: 150.5,
   varianceOdds: -200.3,
@@ -333,6 +348,7 @@ export const createMockPlayerPropsData = (overrides: Partial<PlayerPropsData> = 
   statName: 'Hits',
   line: 1.5,
   overPercent: 0.6234,
+  pushPercent: 0.0000,
   marginOfError: 0.0156,
   usaFair: 165.2,
   varianceOdds: -195.8,

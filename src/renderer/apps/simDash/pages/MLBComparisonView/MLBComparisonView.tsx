@@ -99,9 +99,12 @@ const MLBComparisonView: React.FC = () => {
             columns={getComparisonSidesColumns(sidesComparisonData)}
             comparison={true}
                       comparisonConfig={{
-            colorFields: ['coverPercent'],
+            colorFields: ['coverPercent', 'pushPercent'],
             matchKeys: ['team', 'period', 'line'],
-            maxValues: { coverPercent: COLOR_MAX_VALUES.percent }
+            maxValues: { 
+              coverPercent: COLOR_MAX_VALUES.percent,
+              pushPercent: COLOR_MAX_VALUES.percent
+            }
           }}
           />
         </CollapsibleSection>
@@ -139,9 +142,12 @@ const MLBComparisonView: React.FC = () => {
             columns={getComparisonPlayerPropsColumns(playerPropsComparisonData)}
             comparison={true}
                       comparisonConfig={{
-            colorFields: ['overPercent'],
+            colorFields: ['overPercent', 'pushPercent'],
             matchKeys: ['playerName', 'teamName', 'statName', 'line'],
-            maxValues: { overPercent: COLOR_MAX_VALUES.percent }
+            maxValues: { 
+              overPercent: COLOR_MAX_VALUES.percent,
+              pushPercent: COLOR_MAX_VALUES.percent
+            }
           }}
           />
         </CollapsibleSection>

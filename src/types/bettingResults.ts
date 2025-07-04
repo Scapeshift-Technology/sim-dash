@@ -21,6 +21,7 @@ export interface SidesData {
   period: string;
   line: number;
   coverPercent: number;
+  pushPercent: number;
   marginOfError: number;
   usaFair: number;
   varianceOdds: number;
@@ -64,6 +65,7 @@ export interface PlayerPropsData {
   statName: string;
   line: number;
   overPercent: number;
+  pushPercent: number;
   marginOfError: number;
   usaFair: number;
   varianceOdds: number;
@@ -87,6 +89,7 @@ export interface ComparisonSidesData {
   period: string;
   line: number;
   coverPercent: number;
+  pushPercent: number;
 }
 
 export interface ComparisonTotalsData {
@@ -115,6 +118,7 @@ export interface ComparisonPlayerPropsData {
   statName: string;
   line: number;
   overPercent: number;
+  pushPercent: number;
 }
 
 export interface ComparisonScoringOrderPropsData {
