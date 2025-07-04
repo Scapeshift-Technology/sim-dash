@@ -200,9 +200,9 @@ export function formatBettingBoundsDisplay(
     // Moneyline: MIL +44 (50) NYM -56  (fair value is sign-neutral)
     moneyline = `${awayAbbrev} ${awayML} (${formatAmericanOdds(fairValues.favoredSideOdds, { shortened: true, signNeutral: true })}) ${homeAbbrev} ${homeML}`;
     
-    // Totals: 8 o -15 (o -04) u -5  (fair value shows the favored side)
+    // Totals: 8 o -15 (o8.5 -04) u -5  (fair value shows the favored side with median line)
     const favoredTypeAbbrev = fairValues.totalFavoredType === 'over' ? 'o' : 'u';
-    totals = `${bettingBounds.totalLine} o ${overOdds} (${favoredTypeAbbrev} ${formatAmericanOdds(fairValues.totalFavoredOdds, { shortened: true })}) u ${underOdds}`;
+    totals = `${bettingBounds.totalLine} o ${overOdds} (${favoredTypeAbbrev}${fairValues.totalLine} ${formatAmericanOdds(fairValues.totalFavoredOdds, { shortened: true })}) u ${underOdds}`;
   } else {
     // Format without fair values
     moneyline = `${awayAbbrev} ${awayML} ${homeAbbrev} ${homeML}`;
