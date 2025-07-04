@@ -72,5 +72,8 @@ export interface MLBGameContainer { // Very similar to MLBGameDataResponse(type 
 
   // Base running model
   baseRunningModel: BaseRunningModel;
+
+  // Leans state tracking
+  leansState: 'initial' | 'applied';
 }
 

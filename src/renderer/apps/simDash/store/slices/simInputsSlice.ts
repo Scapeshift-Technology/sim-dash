@@ -54,7 +54,8 @@ const initialMLBGameContainer: MLBGameContainer = {
   simMode: 'game',
   parkEffectsEnabled: false,
   umpireEffectsEnabled: false,
-  baseRunningModel: 'ind_stolen_bases' as BaseRunningModel
+  baseRunningModel: 'ind_stolen_bases' as BaseRunningModel,
+  leansState: 'initial'
 }
 
 // ---------- Helpers ----------
@@ -319,6 +320,8 @@ const simInputsSlice = createSlice({
         } else {
           state[league][matchId].currentGame.simInputs[teamType].teamPitcherLean = value;
         }
+        // Mark leans as applied when manually updated
+        state[league][matchId].leansState = 'applied';
         syncCurrentGameEdit(state, matchId);
       }
     },
@@ -341,7 +344,49 @@ const simInputsSlice = createSlice({
         } else {
           state[league][matchId].currentGame.simInputs[teamType].individualPitcherLeans[playerId] = value;
         }
+        // Mark leans as applied when manually updated
+        state[league][matchId].leansState = 'applied';
         syncCurrentGameEdit(state, matchId);
+      }
+    },
+    resetAllLeans: (state, action: {
+      payload: {
+        league: LeagueName;
+        matchId: number;
+      }
+    }) => {
+      const { league, matchId } = action.payload;
+      
+      // Only handle MLB for now
+      if (league === 'MLB' && state[league]?.[matchId]?.currentGame) {
+        // Reset all team leans to 0
+        state[league][matchId].currentGame.simInputs.away.teamHitterLean = 0;
+        state[league][matchId].currentGame.simInputs.away.teamPitcherLean = 0;
+        state[league][matchId].currentGame.simInputs.home.teamHitterLean = 0;
+        state[league][matchId].currentGame.simInputs.home.teamPitcherLean = 0;
+        
+        // Reset all individual leans
+        state[league][matchId].currentGame.simInputs.away.individualHitterLeans = {};
+        state[league][matchId].currentGame.simInputs.away.individualPitcherLeans = {};
+        state[league][matchId].currentGame.simInputs.home.individualHitterLeans = {};
+        state[league][matchId].currentGame.simInputs.home.individualPitcherLeans = {};
+        
+        // Set leans state to initial
+        state[league][matchId].leansState = 'initial';
+        syncCurrentGameEdit(state, matchId);
+      }
+    },
+    setLeansApplied: (state, action: {
+      payload: {
+        league: LeagueName;
+        matchId: number;
+      }
+    }) => {
+      const { league, matchId } = action.payload;
+      
+      // Only handle MLB for now
+      if (league === 'MLB' && state[league]?.[matchId]) {
+        state[league][matchId].leansState = 'applied';
       }
     },
     switchCurrentSeriesGame: (state, action: {
@@ -613,6 +658,8 @@ export const {
   initializeLeagueSimInputs,
   updateTeamLean,
   updatePlayerLean,
+  resetAllLeans,
+  setLeansApplied,
   editMLBStartingPitcher,
   editMLBBullpen,
   editMLBUnavailablePitchers,
@@ -681,6 +728,9 @@ export const selectUmpireEffectsEnabled = (state: RootState, league: LeagueName,
 
 export const selectBaseRunningModel = (state: RootState, league: LeagueName, matchId: number): BaseRunningModel => 
   state.simDash.simInputs[league]?.[matchId]?.baseRunningModel ?? 'ind_stolen_bases';
+
+export const selectAreLeansInInitialState = (state: RootState, league: LeagueName, matchId: number): boolean => 
+  state.simDash.simInputs[league]?.[matchId]?.leansState === 'initial';
 
 export default simInputsSlice.reducer;
 

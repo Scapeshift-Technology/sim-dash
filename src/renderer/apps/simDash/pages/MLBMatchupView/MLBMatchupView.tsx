@@ -50,7 +50,8 @@ import {
     selectGameCustomModeDataGameState,
     updateCustomModeGameState,
     selectGameParkEffectsStatus,
-    selectBaseRunningModel
+    selectBaseRunningModel,
+    selectAreLeansInInitialState
 } from '@/simDash/store/slices/simInputsSlice';
 import { useLeanValidation } from './hooks/leanValidation';
 import { 
@@ -69,6 +70,7 @@ import {
     selectActiveConfigLoading,
     selectActiveConfigError
 } from '@/simDash/store/slices/statCaptureSettingsSlice';
+import { selectBettingBoundsValues } from '@/simDash/store/slices/bettingBoundsSlice';
 
 import { LeagueName } from '@@/types/league';
 import { MLBGameInputs2 } from '@@/types/simInputs';
@@ -76,7 +78,8 @@ import { MLBGameSimInputData } from '@@/types/simHistory';
 import { SimHistoryEntry } from '@@/types/simHistory';
 import { SimResultsMLB } from '@@/types/bettingResults';
 import { SimType } from '@@/types/mlb/mlb-sim';
-import type { MatchupLineups, MlbLiveDataApiResponse, Player, Position } from '@/types/mlb';
+import type { MatchupLineups, MlbLiveDataApiResponse, Player, Position, MarketLinesMLB } from '@/types/mlb';
+import { isBettingBoundsComplete } from '@/simDash/utils/oddsUtilsMLB';
 
 import { transformMLBGameInputs2ToDB } from '@/simDash/utils/transformers';
 import { convertLineupsToTSV } from '@/simDash/utils/copyUtils';
@@ -164,6 +167,8 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
     const activeConfigError = useSelector((state: RootState) => selectActiveConfigError(state, league));
     const numGames = useSelector((state: RootState) => selectNumGames(state));
     const baseRunningModel = useSelector((state: RootState) => selectBaseRunningModel(state, league, matchId));
+    const areLeansInInitialState = useSelector((state: RootState) => selectAreLeansInInitialState(state, league, matchId));
+    const currentBettingBounds = useSelector((state: RootState) => selectBettingBoundsValues(state, league, matchId));
 
     const [selectedGameTab, setSelectedGameTab] = useState(0);
     const [showCopySuccess, setShowCopySuccess] = useState(false);
@@ -246,9 +251,18 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         }));
     };
 
-    const saveAndUpdateHistory = async (simResults: SimResultsMLB, inputData: MLBGameInputs2, liveGameData?: MlbLiveDataApiResponse) => {
+    const saveAndUpdateHistory = async (simResults: SimResultsMLB, inputData: MLBGameInputs2, liveGameData?: MlbLiveDataApiResponse, capturedBettingBounds?: any) => {
+        // Create a copy of input data and add captured betting bounds if provided
+        const inputDataWithBounds = { ...inputData };
+        if (capturedBettingBounds) {
+            inputDataWithBounds.gameInfo = {
+                ...inputDataWithBounds.gameInfo,
+                bettingBounds: capturedBettingBounds
+            };
+        }
+
         // Transform data to specific DB types
-        const dbInputData: MLBGameSimInputData = transformMLBGameInputs2ToDB(inputData, liveGameData);
+        const dbInputData: MLBGameSimInputData = transformMLBGameInputs2ToDB(inputDataWithBounds, liveGameData);
         const timestamp = new Date().toISOString();
 
         const simHistoryEntry: SimHistoryEntry = {
@@ -280,6 +294,23 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
         } as MLBGameInputs2;
         const parkEffects = gameContainer.parkEffectsEnabled ? gameContainer.parkEffects : undefined;
         const umpireEffects = gameContainer.umpireEffectsEnabled ? gameContainer.umpireEffects : undefined;
+
+        // Capture betting bounds at simulation time
+        let capturedBettingBounds: MarketLinesMLB | undefined = undefined;
+        if (currentBettingBounds && isBettingBoundsComplete(currentBettingBounds)) {
+            capturedBettingBounds = {
+                awayML: parseFloat(currentBettingBounds.awayML),
+                homeML: parseFloat(currentBettingBounds.homeML),
+                over: {
+                    line: parseFloat(currentBettingBounds.totalLine),
+                    odds: parseFloat(currentBettingBounds.overOdds)
+                },
+                under: {
+                    line: parseFloat(currentBettingBounds.totalLine),
+                    odds: parseFloat(currentBettingBounds.underOdds)
+                }
+            };
+        }
         
         if (simType === 'series') {
             if (!gameContainer.seriesGames) return;
@@ -307,7 +338,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 umpireEffects: umpireEffects
             })).unwrap();
 
-            await saveAndUpdateHistory(result, gameContainer.currentGame as MLBGameInputs2, liveGameData);
+            await saveAndUpdateHistory(result, gameContainer.currentGame as MLBGameInputs2, liveGameData, capturedBettingBounds);
             return;
         } else if (simType === 'custom') {
             if (!gameContainer.customModeData) return;
@@ -324,7 +355,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             })).unwrap();
             console.log('result', result);
 
-            await saveAndUpdateHistory(result, gameInputs, bannerLiveGameData);
+            await saveAndUpdateHistory(result, gameInputs, bannerLiveGameData, capturedBettingBounds);
             return;
         } else {
             if (!gameContainer.currentGame) return;
@@ -340,7 +371,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
             })).unwrap();
         }
 
-        await saveAndUpdateHistory(result, gameContainer.currentGame as MLBGameInputs2);
+        await saveAndUpdateHistory(result, gameContainer.currentGame as MLBGameInputs2, undefined, capturedBettingBounds);
     };
 
     const handleRefresh = () => {
@@ -542,7 +573,7 @@ const MLBMatchupView: React.FC<MLBMatchupViewProps> = ({
                 simStatus={simHistoryStatus}
                 simType={simType}
                 lineupData={usedLineups}
-                hasInvalidLeans={hasInvalidLeans}
+                hasInvalidLeans={hasInvalidLeans || areLeansInInitialState}
                 seriesGames={seriesGames}
                 liveGameData={liveGameData}
                 leagueName={league}

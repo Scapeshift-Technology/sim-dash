@@ -15,7 +15,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import type { MLBGameContainer } from "@/types/simInputs";
 import { MarketLinesMLB, MatchupLineups } from '@@/types/mlb';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateMLBMarketLines, selectGameAutomatedLeans, updateMLBAutomatedLeans, selectBaseRunningModel } from '@/simDash/store/slices/simInputsSlice';
+import { resetAllLeans, setLeansApplied, selectGameAutomatedLeans, updateMLBAutomatedLeans, selectBaseRunningModel, selectAreLeansInInitialState } from '@/simDash/store/slices/simInputsSlice';
 import { AppDispatch, RootState } from '@/store/store';
 import { findLeansThunk, selectFindLeansStatus, selectFindLeansError } from '@/simDash/store/slices/simulationStatusSlice';
 import { selectBettingBoundsValues, selectBettingBoundsErrors, setBettingBounds } from '@/simDash/store/slices/bettingBoundsSlice';
@@ -42,6 +42,7 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
     const findLeansStatus = useSelector((state: RootState) => selectFindLeansStatus(state, 'MLB', matchId));
     const findLeansError = useSelector((state: RootState) => selectFindLeansError(state, 'MLB', matchId));
     const baseRunningModel = useSelector((state: RootState) => selectBaseRunningModel(state, 'MLB', matchId));
+    const areLeansInInitialState = useSelector((state: RootState) => selectAreLeansInInitialState(state, 'MLB', matchId));
     const bounds = useSelector((state: RootState) => selectBettingBoundsValues(state, 'MLB', matchId)) || {
         awayML: '',
         homeML: '',
@@ -69,6 +70,12 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                 values: { ...bounds, [field]: value },
                 errors
             }
+        }));
+        
+        // Reset all leans when any betting bound changes
+        dispatch(resetAllLeans({
+            league: 'MLB',
+            matchId
         }));
     };
 
@@ -140,12 +147,6 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                 }
             };
 
-            dispatch(updateMLBMarketLines({
-                league: 'MLB',
-                matchId,
-                marketLines: marketLines
-            }));
-
             const parkEffects = gameContainer?.parkEffectsEnabled ? gameContainer?.parkEffects : undefined;
             const umpireEffects = gameContainer?.umpireEffectsEnabled ? gameContainer?.umpireEffects : undefined;
 
@@ -159,24 +160,40 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                 umpireEffects: umpireEffects
             })).unwrap();
 
+            // Store the automated leans
             dispatch(updateMLBAutomatedLeans({
                 league: 'MLB',
                 matchId,
                 automatedLeans: optimalLeansResult
             }));
+
+            // Auto-apply the leans
+            if (optimalLeansResult) {
+                onUpdateTeamLean('away', 'offense', optimalLeansResult.away.teamHitterLean);
+                onUpdateTeamLean('away', 'defense', optimalLeansResult.away.teamPitcherLean);
+                onUpdateTeamLean('home', 'offense', optimalLeansResult.home.teamHitterLean);
+                onUpdateTeamLean('home', 'defense', optimalLeansResult.home.teamPitcherLean);
+            }
         } catch (error) {
             console.error('Error finding optimal leans:', error);
         }
     };
 
-    const handleApplyLeans = () => {
-        if (!automatedLeans) return;
-
-        onUpdateTeamLean('away', 'offense', automatedLeans.away.teamHitterLean);
-        onUpdateTeamLean('away', 'defense', automatedLeans.away.teamPitcherLean);
-        onUpdateTeamLean('home', 'offense', automatedLeans.home.teamHitterLean);
-        onUpdateTeamLean('home', 'defense', automatedLeans.home.teamPitcherLean);
+    const handleResetLeans = () => {
+        dispatch(resetAllLeans({
+            league: 'MLB',
+            matchId
+        }));
     };
+
+    // Check if all bounds are filled
+    const areBoundsComplete = !!(
+        bounds.awayML.trim() &&
+        bounds.homeML.trim() &&
+        bounds.totalLine.trim() &&
+        bounds.overOdds.trim() &&
+        bounds.underOdds.trim()
+    );
 
     // ---------- Render ----------
 
@@ -190,7 +207,7 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
         >
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                    Find Leans
+                    Betting Bounds & Leans
                 </Typography>
                 <IconButton onClick={() => setIsExpanded(!isExpanded)}>
                     {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
@@ -291,20 +308,19 @@ const BettingBoundsSection: React.FC<BettingBoundsSectionProps> = ({
                             <Button
                                 variant="contained"
                                 onClick={handleFindLeans}
-                                disabled={findLeansStatus === 'loading'}
+                                disabled={findLeansStatus === 'loading' || !areBoundsComplete}
                                 startIcon={findLeansStatus === 'loading' ? <CircularProgress size={20} /> : null}
                             >
-                                {findLeansStatus === 'loading' ? 'Finding Optimal Leans...' : 'Find Optimal Leans'}
+                                {findLeansStatus === 'loading' ? 'Finding Optimal Leans...' : 'Use Optimal Leans'}
                             </Button>
-                            {automatedLeans && !findLeansError && (
-                                <Button
-                                    variant="outlined"
-                                    color="primary"
-                                    onClick={handleApplyLeans}
-                                >
-                                    Apply Leans
-                                </Button>
-                            )}
+                            <Button
+                                variant="outlined"
+                                color="secondary"
+                                onClick={handleResetLeans}
+                                disabled={areLeansInInitialState}
+                            >
+                                Reset Leans
+                            </Button>
                         </Box>
                     </Box>
 

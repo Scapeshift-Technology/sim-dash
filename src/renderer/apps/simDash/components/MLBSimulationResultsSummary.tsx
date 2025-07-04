@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { Box, Typography, SxProps, Theme, TypographyVariant, Paper, IconButton, Menu, MenuItem, ListItemText, ListItemIcon } from '@mui/material';
 import HistoryIcon from '@mui/icons-material/History';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -32,7 +32,7 @@ const MLBSimulationResultsSummary: FC<MLBSimulationResultsSummaryProps> = ({
   className,
   size = 'medium',
   displayHistory = false
-}) => {
+}: MLBSimulationResultsSummaryProps) => {
   // ---------- Redux State ----------
   const bettingBounds = useSelector((state: RootState) => 
     matchId ? selectBettingBoundsValues(state, 'MLB', matchId) : null
@@ -257,7 +257,7 @@ const MLBSimulationResultsSummary: FC<MLBSimulationResultsSummaryProps> = ({
                 <ListItemText primary="No history available" />
               </MenuItem>
             ) : (
-              simHistory.map((entry) => {
+              simHistory.map((entry: SimHistoryEntry) => {
                 const displayInfo = getHistoryDisplayInfo(entry);
                 return (
                   <MenuItem 
