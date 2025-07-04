@@ -100,19 +100,36 @@ function transformSidesPeriodCountsMLB(gamePeriodCounts: SidesPeriodCountsMLB, t
 function transformSidesOutcomeCountsMLB(outcomeCounts: OutcomeCounts, teamName: string, period: string, line: string, roiDemandDecimal?: number): SidesData {
   const { success, failure, push, total } = outcomeCounts;
   const pushCt = push || 0;
-  const coverPercent = countsToProbability(success, failure, pushCt);
-  const moe = marginOfError(total - pushCt, coverPercent);
-  const usaOdds = countsToAmericanOdds(success, failure, pushCt);
-  const varianceProportion = Math.min(Math.max(coverPercent - moe, 0), 1);
+  
+  // For Cover%: pushes count as losses (pushesFail = true)
+  const coverPercent = countsToProbability(success, failure, pushCt, true);
+  
+  // For fair value calculations: pushes are refunds (pushesFail = false)
+  const fairWinPercent = countsToProbability(success, failure, pushCt, false);
+  
+  // Push% is just the percentage of pushes
+  const pushPercent = pushCt / total;
+  
+  // For margin of error: use total excluding pushes and the fair win percent (pushes as refunds)
+  const moe = marginOfError(total - pushCt, fairWinPercent);
+  
+  // For USA-Fair odds: pushes are refunds, not losses (pushesFail = false) 
+  const usaOdds = countsToAmericanOdds(success, failure, pushCt, false);
+  
+  // For variance odds: use fair win percent with margin of error
+  const varianceProportion = Math.min(Math.max(fairWinPercent - moe, 0), 1);
   const varianceOdds = proportionToAmericanOdds(varianceProportion);
   const lineNumber = parseFloat(line);
-  const usaDemandPrice = typeof roiDemandDecimal === 'number' ? calculateROIDemandPrice(coverPercent, moe, roiDemandDecimal) : null;
+  
+  // For ROI demand price: use fair win percent and margin of error
+  const usaDemandPrice = typeof roiDemandDecimal === 'number' ? calculateROIDemandPrice(fairWinPercent, moe, roiDemandDecimal) : null;
 
   return {
     team: teamName,
     period: period,
     line: lineNumber,
     coverPercent: coverPercent,
+    pushPercent: pushPercent,
     marginOfError: moe,
     usaFair: usaOdds,
     varianceOdds: varianceOdds,

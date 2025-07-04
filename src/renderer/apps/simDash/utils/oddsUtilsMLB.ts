@@ -27,11 +27,13 @@ function calculateResultsSummaryDisplayMLB(simResults: SimResultsMLB, awayTeamNa
   const { home, away } = simResults.sides;
   const homeWinCt = home.fullGame['0'].success;
   const awayWinCt = away.fullGame['0'].success;
+  const homePushCt = home.fullGame['0'].push || 0;
+  const awayPushCt = away.fullGame['0'].push || 0;
   const totalsLine = findBreakevenTotalsLineMLB(simResults.totals.combined.fullGame);
 
   // Display the favored team (higher win count)
   if (homeWinCt >= awayWinCt) {
-    const homeOdds = countsToAmericanOdds(homeWinCt, awayWinCt);
+    const homeOdds = countsToAmericanOdds(homeWinCt, awayWinCt, homePushCt, false);
     const displayTeamOdds = formatAmericanOdds(homeOdds, { shortened: true });
     const teamAbbreviation = teamNameToAbbreviationMLB(homeTeamName);
     return {
@@ -39,7 +41,7 @@ function calculateResultsSummaryDisplayMLB(simResults: SimResultsMLB, awayTeamNa
       bottomLine: `${teamAbbreviation} ${displayTeamOdds}`
     }
   } else {
-    const awayOdds = countsToAmericanOdds(awayWinCt, homeWinCt);
+    const awayOdds = countsToAmericanOdds(awayWinCt, homeWinCt, awayPushCt, false);
     const displayTeamOdds = formatAmericanOdds(awayOdds, { shortened: true });
     const teamAbbreviation = teamNameToAbbreviationMLB(awayTeamName);
     return {
@@ -151,12 +153,14 @@ function calculateFairValues(simResults: SimResultsMLB): {
   const { home, away } = simResults.sides;
   const homeWinCt = home.fullGame['0'].success;
   const awayWinCt = away.fullGame['0'].success;
+  const homePushCt = home.fullGame['0'].push || 0;
+  const awayPushCt = away.fullGame['0'].push || 0;
   const totalsLine = findBreakevenTotalsLineMLB(simResults.totals.combined.fullGame);
 
   // Get the favored side (better odds) for moneyline display
   const favoredSideOdds = homeWinCt >= awayWinCt 
-    ? countsToAmericanOdds(homeWinCt, awayWinCt)
-    : countsToAmericanOdds(awayWinCt, homeWinCt);
+    ? countsToAmericanOdds(homeWinCt, awayWinCt, homePushCt, false)
+    : countsToAmericanOdds(awayWinCt, homeWinCt, awayPushCt, false);
 
   // Use the totals information directly from the breakeven calculation
   return {

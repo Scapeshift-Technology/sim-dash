@@ -73,24 +73,38 @@ function transformTotalsOutcomeCountsMLB(
   line: string,
   roiDemandDecimal?: number
 ): TotalsData {
-  const overPercent = countsToProbability(overCounts.success, overCounts.failure, overCounts.push || 0);
-  const underPercent = countsToProbability(underCounts.success, underCounts.failure, underCounts.push || 0);
-  const pushPercent = (overCounts.push || 0) / overCounts.total;
-  const moe = marginOfError(overCounts.total - (overCounts.push || 0), overPercent);
+  const pushCt = overCounts.push || 0;
   
-  const usaFairOver = countsToAmericanOdds(overCounts.success, overCounts.failure, overCounts.push || 0);
-  const usaFairUnder = countsToAmericanOdds(underCounts.success, underCounts.failure, underCounts.push || 0);
+  // For display percentages: pushes count as losses (pushesFail = true)
+  const overPercent = countsToProbability(overCounts.success, overCounts.failure, pushCt, true);
+  const underPercent = countsToProbability(underCounts.success, underCounts.failure, pushCt, true);
   
-  const varianceProportionOver = Math.min(Math.max(overPercent - moe, 0), 1);
-  const varianceProportionUnder = Math.min(Math.max(underPercent - moe, 0), 1);
+  // For fair value calculations: pushes are refunds (pushesFail = false)
+  const fairOverPercent = countsToProbability(overCounts.success, overCounts.failure, pushCt, false);
+  const fairUnderPercent = countsToProbability(underCounts.success, underCounts.failure, pushCt, false);
+  
+  const pushPercent = pushCt / overCounts.total;
+  
+  // For margin of error: use total excluding pushes and the fair percentages (pushes as refunds)
+  const moeOver = marginOfError(overCounts.total - pushCt, fairOverPercent);
+  const moeUnder = marginOfError(underCounts.total - pushCt, fairUnderPercent);
+  
+  // For USA-Fair odds: pushes are refunds, not losses (pushesFail = false)
+  const usaFairOver = countsToAmericanOdds(overCounts.success, overCounts.failure, pushCt, false);
+  const usaFairUnder = countsToAmericanOdds(underCounts.success, underCounts.failure, pushCt, false);
+  
+  // For variance odds: use fair percentages with margin of error
+  const varianceProportionOver = Math.min(Math.max(fairOverPercent - moeOver, 0), 1);
+  const varianceProportionUnder = Math.min(Math.max(fairUnderPercent - moeUnder, 0), 1);
   const varianceOddsOver = proportionToAmericanOdds(varianceProportionOver);
   const varianceOddsUnder = proportionToAmericanOdds(varianceProportionUnder);
   
   const lineNumber = parseFloat(line);
   const displayTeamName = teamName;
   
-  const usaDemandPriceOver = typeof roiDemandDecimal === 'number' ? calculateROIDemandPrice(overPercent, moe, roiDemandDecimal) : null;
-  const usaDemandPriceUnder = typeof roiDemandDecimal === 'number' ? calculateROIDemandPrice(underPercent, moe, roiDemandDecimal) : null;
+  // For ROI demand price: use fair percentages and margin of error
+  const usaDemandPriceOver = typeof roiDemandDecimal === 'number' ? calculateROIDemandPrice(fairOverPercent, moeOver, roiDemandDecimal) : null;
+  const usaDemandPriceUnder = typeof roiDemandDecimal === 'number' ? calculateROIDemandPrice(fairUnderPercent, moeUnder, roiDemandDecimal) : null;
 
   return {
     team: displayTeamName,
@@ -99,7 +113,7 @@ function transformTotalsOutcomeCountsMLB(
     overPercent: overPercent,
     underPercent: underPercent,
     pushPercent: pushPercent,
-    marginOfError: moe,
+    marginOfError: moeOver, // Use over MOE as representative
     usaFairOver: usaFairOver,
     usaFairUnder: usaFairUnder,
     varianceOddsOver: varianceOddsOver,

@@ -26,6 +26,7 @@ export const sidesColumns: ColumnConfig[] = [
   { name: 'period', type: 'string', label: 'Period', width: 90, frozen: true, display: { rules: [{ condition: () => true, style: { color: 'text.secondary' }, type: 'text' }] } },
   { name: 'line', type: 'number', label: 'Line', width: 70, frozen: true },
   { name: 'coverPercent', type: 'string', label: 'Cover %', width: 80, display: { rules: [{ condition: () => true, style: { textAlign: 'right' }, type: 'text' }] } },
+  { name: 'pushPercent', type: 'string', label: 'Push %', width: 80, display: { rules: [{ condition: () => true, style: { textAlign: 'right' }, type: 'text' }] } },
   { name: 'marginOfError', type: 'string', label: 'MOE', width: 70, display: { rules: [{ condition: () => true, style: { textAlign: 'right' }, type: 'text' }] } },
   { name: 'usaFair', type: 'string', label: 'USA-Fair', width: 90 },
   { name: 'varianceOdds', type: 'number', label: 'USA-MOE-PESSIMISTIC', width: 120, display: { rules: [{ condition: () => true, style: { textAlign: 'left' }, type: 'text' }] } },
@@ -54,6 +55,7 @@ export const playerPropsColumns: ColumnConfig[] = [
   { name: 'statName', type: 'string', label: 'Stat', width: 80, frozen: true, display: { rules: [{ condition: () => true, style: { fontWeight: 'medium' }, type: 'text' }] } },
   { name: 'line', type: 'number', label: 'Line', width: 70, frozen: true },
   { name: 'overPercent', type: 'string', label: 'Over %', width: 80, display: { rules: [{ condition: () => true, style: { textAlign: 'right' }, type: 'text' }] } },
+  { name: 'pushPercent', type: 'string', label: 'Push %', width: 80, display: { rules: [{ condition: () => true, style: { textAlign: 'right' }, type: 'text' }] } },
   { name: 'marginOfError', type: 'string', label: 'MOE', width: 70, display: { rules: [{ condition: () => true, style: { textAlign: 'right' }, type: 'text' }] } },
   { name: 'usaFair', type: 'string', label: 'USA-Fair', width: 90 },
   { name: 'varianceOdds', type: 'string', label: 'USA-MOE-PESSIMISTIC', width: 120 },
@@ -124,10 +126,11 @@ export const getComparisonSidesColumns = (data: any[]): ColumnConfig[] =>
       sidesColumns[0], // team
       sidesColumns[1], // period 
       sidesColumns[2], // line
-      sidesColumns[3]  // coverPercent
+      sidesColumns[3], // coverPercent
+      sidesColumns[4]  // pushPercent
     ],
     data,
-    ['coverPercent'],
+    ['coverPercent', 'pushPercent'],
     ['team', 'period', 'line']
   );
 
@@ -153,10 +156,11 @@ export const getComparisonPlayerPropsColumns = (data: any[]): ColumnConfig[] =>
       playerPropsColumns[1], // teamName
       playerPropsColumns[2], // statName
       playerPropsColumns[3], // line
-      playerPropsColumns[4]  // overPercent
+      playerPropsColumns[4], // overPercent
+      playerPropsColumns[5]  // pushPercent
     ],
     data,
-    ['overPercent'],
+    ['overPercent', 'pushPercent'],
     ['playerName', 'teamName', 'statName', 'line']
   );
 

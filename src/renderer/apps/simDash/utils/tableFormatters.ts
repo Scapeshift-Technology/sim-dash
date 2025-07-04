@@ -23,11 +23,11 @@ type StringifyFields<T, K extends keyof T> = Omit<T, K> & {
 }
 
 // Clean type definitions using the utility type
-export type FormattedSidesData = StringifyFields<SidesData, 'coverPercent' | 'marginOfError' | 'usaFair' | 'varianceOdds' | 'usaDemandPrice'>;
+export type FormattedSidesData = StringifyFields<SidesData, 'coverPercent' | 'pushPercent' | 'marginOfError' | 'usaFair' | 'varianceOdds' | 'usaDemandPrice'>;
 
 export type FormattedTotalsData = StringifyFields<TotalsData, 'overPercent' | 'underPercent' | 'pushPercent' | 'marginOfError' | 'usaFairOver' | 'usaFairUnder' | 'varianceOddsOver' | 'varianceOddsUnder' | 'usaDemandPriceOver' | 'usaDemandPriceUnder'>;
 
-export type FormattedPlayerPropsData = StringifyFields<PlayerPropsData, 'overPercent' | 'marginOfError' | 'usaFair' | 'varianceOdds' | 'usaDemandPrice'>;
+export type FormattedPlayerPropsData = StringifyFields<PlayerPropsData, 'overPercent' | 'pushPercent' | 'marginOfError' | 'usaFair' | 'varianceOdds' | 'usaDemandPrice'>;
 
 // FirstInning adds variance odds fields, so we need a custom interface
 export interface FormattedFirstInningData extends StringifyFields<FirstInningPropsData, 'scorePercent' | 'marginOfError' | 'usaFair' | 'usaDemandPrice'> {
@@ -40,11 +40,11 @@ export type FormattedScoringOrderPropsData = StringifyFields<ScoringOrderPropsDa
 export type FormattedSeriesData = StringifyFields<SeriesData, 'winPercent' | 'usaFair' | 'usaDemandPrice'>;
 
 // Comparison table types
-export type FormattedComparisonSidesData = StringifyFields<ComparisonSidesData, 'coverPercent'>;
+export type FormattedComparisonSidesData = StringifyFields<ComparisonSidesData, 'coverPercent' | 'pushPercent'>;
 
 export type FormattedComparisonTotalsData = StringifyFields<ComparisonTotalsData, 'overPercent' | 'underPercent' | 'pushPercent'>;
 
-export type FormattedComparisonPlayerPropsData = StringifyFields<ComparisonPlayerPropsData, 'overPercent'>;
+export type FormattedComparisonPlayerPropsData = StringifyFields<ComparisonPlayerPropsData, 'overPercent' | 'pushPercent'>;
 
 export type FormattedComparisonFirstInningPropsData = StringifyFields<ComparisonFirstInningPropsData, 'scorePercent'>;
 
@@ -56,6 +56,7 @@ export function formatSidesData(data: SidesData[]): FormattedSidesData[] {
   return data.map(row => ({
     ...row,
     coverPercent: `${formatDecimal(100 * row.coverPercent)}%`,
+    pushPercent: `${formatDecimal(100 * row.pushPercent)}%`,
     marginOfError: `${formatDecimal(100 * row.marginOfError)}%`,
     usaFair: formatAmericanOdds(row.usaFair),
     varianceOdds: formatAmericanOdds(row.varianceOdds),
@@ -83,6 +84,7 @@ export function formatPlayerPropsData(data: PlayerPropsData[]): FormattedPlayerP
   return data.map(row => ({
     ...row,
     overPercent: `${formatDecimal(100 * row.overPercent)}%`,
+    pushPercent: `${formatDecimal(100 * row.pushPercent)}%`,
     marginOfError: `${formatDecimal(100 * row.marginOfError)}%`,
     usaFair: formatAmericanOdds(row.usaFair),
     varianceOdds: formatAmericanOdds(row.varianceOdds),
@@ -138,7 +140,8 @@ export function formatSeriesData(data: SeriesData[]): FormattedSeriesData[] {
 export function formatComparisonSidesData(data: ComparisonSidesData[]): FormattedComparisonSidesData[] {
   return data.map(row => ({
     ...row,
-    coverPercent: `${formatDecimal(100 * row.coverPercent)}%`
+    coverPercent: `${formatDecimal(100 * row.coverPercent)}%`,
+    pushPercent: `${formatDecimal(100 * row.pushPercent)}%`
   }));
 }
 
@@ -154,7 +157,8 @@ export function formatComparisonTotalsData(data: ComparisonTotalsData[]): Format
 export function formatComparisonPlayerPropsData(data: ComparisonPlayerPropsData[]): FormattedComparisonPlayerPropsData[] {
   return data.map(row => ({
     ...row,
-    overPercent: `${formatDecimal(100 * row.overPercent)}%`
+    overPercent: `${formatDecimal(100 * row.overPercent)}%`,
+    pushPercent: `${formatDecimal(100 * row.pushPercent)}%`
   }));
 }
 

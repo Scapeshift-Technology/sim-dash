@@ -54,12 +54,28 @@ function transformPlayerStatLinesPropsCountsMLB(playerName: string, statName: st
   // Return values for the given line
   const { success, failure, push, total } = statData;
   const pushCt = push || 0;
-  const overPercent = countsToProbability(success, failure, pushCt);
-  const moe = marginOfError(total - pushCt, overPercent);
-  const usaOdds = countsToAmericanOdds(success, failure, pushCt);
-  const varianceProportion = Math.min(Math.max(overPercent - moe, 0), 1);
+  
+  // For Over%: pushes count as losses (pushesFail = true)
+  const overPercent = countsToProbability(success, failure, pushCt, true);
+  
+  // For fair value calculations: pushes are refunds (pushesFail = false)
+  const fairOverPercent = countsToProbability(success, failure, pushCt, false);
+  
+  // Push% is just the percentage of pushes
+  const pushPercent = pushCt / total;
+  
+  // For margin of error: use total excluding pushes and the fair over percent (pushes as refunds)
+  const moe = marginOfError(total - pushCt, fairOverPercent);
+  
+  // For USA-Fair odds: pushes are refunds, not losses (pushesFail = false)
+  const usaOdds = countsToAmericanOdds(success, failure, pushCt, false);
+  
+  // For variance odds: use fair over percent with margin of error
+  const varianceProportion = Math.min(Math.max(fairOverPercent - moe, 0), 1);
   const varianceOdds = proportionToAmericanOdds(varianceProportion);
-  const usaDemandPrice = typeof roiDemandDecimal === 'number' ? calculateROIDemandPrice(overPercent, moe, roiDemandDecimal) : null;
+  
+  // For ROI demand price: use fair over percent and margin of error
+  const usaDemandPrice = typeof roiDemandDecimal === 'number' ? calculateROIDemandPrice(fairOverPercent, moe, roiDemandDecimal) : null;
 
   return {
     playerName: playerName,
@@ -67,6 +83,7 @@ function transformPlayerStatLinesPropsCountsMLB(playerName: string, statName: st
     statName: statName,
     line: lineNumber,
     overPercent: overPercent,
+    pushPercent: pushPercent,
     marginOfError: moe,
     usaFair: usaOdds,
     varianceOdds: varianceOdds,
